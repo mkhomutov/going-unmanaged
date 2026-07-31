@@ -10,5 +10,6 @@ alphabetically. That one sentence forces: file I/O, `unordered_map` counting, th
 map-to-vector transfer, a two-key sort lambda, filtering, and bounded output.
 
 Build: g++ -std=c++20 -Wall -Wextra -fsanitize=address,undefined -g your.cpp -o task
-  (C++20 for std::erase_if; or: STD=c++20 scripts/check.sh your.cpp words_sample.txt)
+  (C++20 for std::erase_if;
+   or: STD=c++20 ../../scripts/check.sh your.cpp words_sample.txt — from this directory)
 Run:   ./task words_sample.txt

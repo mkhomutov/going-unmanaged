@@ -15,4 +15,4 @@ reallocation, and `b = std::move(b)`. Then the sabotage runs under ASan
 (Chapter 15, "Experiments").
 
 Build: g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g your.cpp -o task
-  (or: scripts/check.sh your.cpp — from the repo root)
+  (or: ../../scripts/check.sh your.cpp — from this directory)

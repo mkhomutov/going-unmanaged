@@ -10,3 +10,4 @@ bridged through the void* trampoline. Prove: samples arrive; callbacks survive a
 session (predict what breaks first!); error paths; `FakeDevice_OpenHandles() == 0` at the end.
 
 Build: g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g FakeDevice.cpp your.cpp -o task
+  (or: ../../scripts/check.sh your.cpp fakedevice — from this directory)

@@ -15,4 +15,4 @@ The three tasks:
 3. Capture-by-move: a lambda that OWNS a `unique_ptr` (something copies can't do).
 
 Build: g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g your.cpp -o task
-  (or: scripts/check.sh your.cpp — from the repo root)
+  (or: ../../scripts/check.sh your.cpp — from this directory)

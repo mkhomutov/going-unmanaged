@@ -25,8 +25,11 @@ Chapter 24 (the practice plan) sequences these into a one-week schedule.
 
 ## Building your attempt
 
-From the repo root, `scripts/check.sh` builds (and runs) your code with the
-handbook's canonical flags — strict warnings plus Address/UB sanitizers:
+`scripts/check.sh` builds (and runs) your code with the handbook's canonical
+flags — strict warnings plus Address/UB sanitizers. Run it from wherever your
+attempt lives (from inside an exercise directory that is
+`../../scripts/check.sh`); your file and any run arguments resolve relative to
+where you stand:
 
 ```bash
 scripts/check.sh path/to/your.cpp                 # plain exercises

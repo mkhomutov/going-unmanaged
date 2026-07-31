@@ -12,4 +12,4 @@ The three tasks:
 
 Build: g++ -std=c++20 -Wall -Wextra -fsanitize=address,undefined -g your.cpp -o task
   (C++20 for std::erase_if, the modern fix for task 1;
-   or: STD=c++20 scripts/check.sh your.cpp — from the repo root)
+   or: STD=c++20 ../../scripts/check.sh your.cpp — from this directory)
