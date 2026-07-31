@@ -24,12 +24,26 @@ Where this text disagrees with [cppreference](https://cppreference.com) or the [
 ## How to use it
 
 1. Read Parts I–IV once; return by chapter when a topic resurfaces at work.
-2. Do the exercises in Part V **cold** — compiler, debugger, sanitizer, and offline docs as your only feedback loops. Read each chapter's reference solution and pitfalls only *after* your own attempt.
+2. Do the exercises in Part V **cold** — compiler, debugger, sanitizer, and offline docs as your only feedback loops. Each exercise has a task card under [exercises/](exercises/README.md) so you can attempt it without the book's solution on the next screen; read each chapter's reference solution and pitfalls only *after* your own attempt.
 3. Keep your own notes file. When an exercise teaches you something the book missed — that's a Finding, and Findings are the contribution this project most wants.
 
 ### Running the exercises
 
-Every solution builds with:
+First, verify your toolchain — from the repo root:
+
+```bash
+./scripts/build_all.sh
+```
+
+`ALL GREEN` means your compiler, sanitizers, and this repo agree; the same script is the CI gate.
+
+[exercises/README.md](exercises/README.md) is the index: every exercise's task card, chapter, and time estimate. Build your own attempts with the canonical flags via the helper:
+
+```bash
+scripts/check.sh path/to/your_attempt.cpp
+```
+
+(`scripts/check.sh your.cpp fakesdk` links the vendor code for the SDK labs.) Every solution builds with:
 
 ```bash
 g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g <files> -o out

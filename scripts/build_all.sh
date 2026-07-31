@@ -19,14 +19,17 @@ run "words"    $CXX $FLAGS20 solutions/words.cpp                     -o $OUT/wor
 run "shapes"   $CXX $FLAGS   solutions/shapes.cpp                    -o $OUT/shapes
 run "invalid"  $CXX $FLAGS20 solutions/invalid.cpp                   -o $OUT/invalid
 run "lambdas"  $CXX $FLAGS   solutions/lambdas.cpp                   -o $OUT/lambdas
+# buildlab is exercise scaffolding, not a solution — but its starting point must stay green
+run "buildlab" $CXX $FLAGS   exercises/buildlab/Greeter.cpp exercises/buildlab/main.cpp -o $OUT/buildlab
 
 echo "== running =="
 $OUT/tracer > /dev/null
 $OUT/buffer > /dev/null
 $OUT/fakesdk > /dev/null
 $OUT/device > /dev/null
-$OUT/words exercises/words_sample.txt > /dev/null
+$OUT/words exercises/words/words_sample.txt > /dev/null
 $OUT/shapes > /dev/null
 $OUT/invalid > /dev/null
 $OUT/lambdas > /dev/null
+$OUT/buildlab > /dev/null
 echo "ALL GREEN"

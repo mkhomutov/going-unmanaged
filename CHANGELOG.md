@@ -10,6 +10,22 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [Unreleased]
+
+Navigation and usability; no chapter or Finding numbers moved.
+
+- **Book:** the Contents now links to every part, chapter, and appendix;
+  headings form a real hierarchy (parts H1, chapters H2, sections H3) so
+  outline views work; reference solutions in exercise chapters are collapsed
+  behind spoiler folds, making the "do it cold" rule structural; Part V opens
+  with a pointer to the Chapter 24 practice plan.
+- **Exercises:** every exercise now has a task card —
+  `exercises/README.md` is the index (exercise ↔ chapter ↔ time ↔ solution);
+  the Build-Model Lab ships its Greeter starting point;
+  `words_sample.txt` moved to `exercises/words/`.
+- **Tooling:** `scripts/check.sh` builds and runs a learner attempt under the
+  canonical flags; `build_all.sh` also builds the buildlab scaffold.
+
 ## [0.1.0] — 2026-07-31
 
 Initial public import.

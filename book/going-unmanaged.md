@@ -10,52 +10,52 @@ You have spent years in managed code — the runtime tracked your objects, the G
 
 ## Contents
 
-**Part I — The Mental Shift**
+**[Part I — The Mental Shift](#part-i--the-mental-shift)**
 
-1. Ownership and RAII
-2. Value Semantics
-3. Stack, Heap, and Undefined Behavior
+1. [Ownership and RAII](#chapter-1--ownership-and-raii)
+2. [Value Semantics](#chapter-2--value-semantics)
+3. [Stack, Heap, and Undefined Behavior](#chapter-3--stack-heap-and-undefined-behavior)
 
-**Part II — The Language, Side by Side**
+**[Part II — The Language, Side by Side](#part-ii--the-language-side-by-side)**
 
-4. Classes, Inheritance, Interfaces
-5. Virtual Dispatch and the Virtual Destructor
-6. The Rule of Five and Move Semantics
-7. Templates vs C# Generics
-8. Error Handling: Exceptions and Error Codes
-9. Casts, Conversions, and Strings
+4. [Classes, Inheritance, Interfaces](#chapter-4--classes-inheritance-interfaces)
+5. [Virtual Dispatch and the Virtual Destructor](#chapter-5--virtual-dispatch-and-the-virtual-destructor)
+6. [The Rule of Five and Move Semantics](#chapter-6--the-rule-of-five-and-move-semantics)
+7. [Templates vs C# Generics](#chapter-7--templates-vs-c-generics)
+8. [Error Handling: Exceptions and Error Codes](#chapter-8--error-handling-exceptions-and-error-codes)
+9. [Casts, Conversions, and Strings](#chapter-9--casts-conversions-and-strings)
 
-**Part III — The Standard Library**
+**[Part III — The Standard Library](#part-iii--the-standard-library)**
 
-10. Modern C++ Fluency
-11. STL Containers, Algorithms, and Iterator Invalidation
+10. [Modern C++ Fluency](#chapter-10--modern-c-fluency)
+11. [STL Containers, Algorithms, and Iterator Invalidation](#chapter-11--stl-containers-algorithms-and-iterator-invalidation)
 
-**Part IV — The Build and the Toolchain**
+**[Part IV — The Build and the Toolchain](#part-iv--the-build-and-the-toolchain)**
 
-12. The Compilation Model
-13. Toolchain Quick Reference
+12. [The Compilation Model](#chapter-12--the-compilation-model)
+13. [Toolchain Quick Reference](#chapter-13--toolchain-quick-reference)
 
-**Part V — Learning by Doing**
+**[Part V — Learning by Doing](#part-v--learning-by-doing)**
 
-14. Exercise: The Lifetime Tracer — seeing every copy, move, and death
-15. Exercise: The Buffer — the Rule of Five, for real
-16. The SDK Bestiary — the shapes vendor APIs take in the wild
-17. Exercise: The FakeSDK — error codes and owned payloads (desktop-app style)
-18. Exercise: The Device SDK — opaque handles and C callbacks (peripheral style)
-19. Exercise: The Word Counter — STL fluency end to end
-20. Exercise: Slicing and Polymorphism — the container that loses your data
-21. Exercise: Iterator Invalidation — mutating while iterating, safely
-22. Exercise: Lambda Lifetimes — captures that outlive their scope
-23. Exercise: The Build-Model Lab — provoking and reading every error stage
-24. Practice Plan
-25. Findings from Practice — a Living Log
+14. [Exercise: The Lifetime Tracer](#chapter-14--exercise-the-lifetime-tracer) — seeing every copy, move, and death
+15. [Exercise: The Buffer](#chapter-15--exercise-the-buffer) — the Rule of Five, for real
+16. [The SDK Bestiary](#chapter-16--the-sdk-bestiary) — the shapes vendor APIs take in the wild
+17. [Exercise: The FakeSDK](#chapter-17--exercise-the-fakesdk) — error codes and owned payloads (desktop-app style)
+18. [Exercise: The Device SDK](#chapter-18--exercise-the-device-sdk) — opaque handles and C callbacks (peripheral style)
+19. [Exercise: The Word Counter](#chapter-19--exercise-the-word-counter) — STL fluency end to end
+20. [Exercise: Slicing and Polymorphism](#chapter-20--exercise-slicing-and-polymorphism) — the container that loses your data
+21. [Exercise: Iterator Invalidation](#chapter-21--exercise-iterator-invalidation) — mutating while iterating, safely
+22. [Exercise: Lambda Lifetimes](#chapter-22--exercise-lambda-lifetimes) — captures that outlive their scope
+23. [Exercise: The Build-Model Lab](#chapter-23--exercise-the-build-model-lab) — provoking and reading every error stage
+24. [Practice Plan](#chapter-24--practice-plan)
+25. [Findings from Practice — a Living Log](#chapter-25--findings-from-practice-a-living-log)
 
-**Appendices**
+**[Appendices](#appendices)**
 
-- A. Fundamentals Refresher: pointers, references, explicit, = delete, const, .lib files
-- B. Core Principles — the one-page cheat sheet
-- C. Working Without AI Assistants
-- D. Resources, Further Reading, and First-Week Tips
+- A. [Fundamentals Refresher](#appendix-a--fundamentals-refresher): pointers, references, explicit, = delete, const, .lib files
+- B. [Core Principles](#appendix-b--core-principles-cheat-sheet) — the one-page cheat sheet
+- C. [Working Without AI Assistants](#appendix-c--working-without-ai-assistants)
+- D. [Resources, Further Reading, and First-Week Tips](#appendix-d--resources-further-reading-and-first-week-tips)
 
 ---
 
@@ -63,7 +63,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 
 ---
 
-# Chapter 1 — Ownership and RAII
+## Chapter 1 — Ownership and RAII
 
 In C#, you create objects and forget about them — the garbage collector cleans up eventually. In C++, **someone** must be responsible for deleting every object. That someone is the **owner**. RAII is the technique that makes ownership automatic instead of manual.
 
@@ -76,7 +76,7 @@ void ProcessFile() {
 }   // <- destructor runs HERE, file closed. Always. No finally needed.
 ```
 
-## The old bad way that RAII replaces
+### The old bad way that RAII replaces
 
 ```cpp
 Widget* w = new Widget();
@@ -84,7 +84,7 @@ DoStuff(w);      // if this throws...
 delete w;        // ...this never runs. Memory leak.
 ```
 
-## Smart pointers — RAII for heap memory
+### Smart pointers — RAII for heap memory
 
 **`std::unique_ptr<T>`** — your default. Exactly one owner. Cannot be copied, only *moved* (ownership transfers). Zero runtime cost — compiles down to a raw pointer with an automatic delete.
 
@@ -97,7 +97,7 @@ auto w = std::make_unique<Widget>();
 
 **`std::weak_ptr<T>`** — observes a shared_ptr without owning it. Solves the cycle problem: two objects holding shared_ptrs to each other never hit zero and leak — there is no GC to detect cycles like in C#. Pattern: parent holds shared_ptr to child, child holds weak_ptr back.
 
-## Transferring ownership with unique_ptr
+### Transferring ownership with unique_ptr
 
 ```cpp
 std::unique_ptr<Widget> MakeWidget() {
@@ -113,7 +113,7 @@ int main() {
 }   // nothing to clean up - Take's parameter deleted it
 ```
 
-## The shared_ptr cycle trap
+### The shared_ptr cycle trap
 
 ```cpp
 struct Child;
@@ -124,7 +124,7 @@ struct Child  {
 };
 ```
 
-## Writing your own RAII wrapper (a shape to know cold)
+### Writing your own RAII wrapper (a shape to know cold)
 
 ```cpp
 class FileHandle {
@@ -145,7 +145,7 @@ public:
 
 The shape: acquire in constructor, release in destructor, delete the copy operations.
 
-## RAII for a lock — compare to C# lock statement
+### RAII for a lock — compare to C# lock statement
 
 ```cpp
 std::mutex m;
@@ -155,7 +155,7 @@ void AddItem() {
 }                                          // unlocks here, always
 ```
 
-## In the wild: C-style SDKs
+### In the wild: C-style SDKs
 
 Vendor SDKs — plug-in APIs, device SDKs, OS APIs — hand you raw resources (allocated payloads, handles, sessions) that you must release manually via a matching dispose/close/free function. The pro move is a small RAII guard per resource type, so the release runs on every path, including early error returns. Here is the shape against the miniature SDK you will meet in Chapter 17 (`ThingData` is a struct whose payload the SDK allocates and you must dispose):
 
@@ -187,7 +187,7 @@ Without the guard, every early `return` needs its own dispose call — the exact
 
 ---
 
-# Chapter 2 — Value Semantics
+## Chapter 2 — Value Semantics
 
 **The single biggest mental shift from C#.** In C#, the type decides: class = reference, struct = value. In C++, **everything behaves like a C# struct by default** — assignment copies, passing copies, returning copies. Whether something is shared is decided *at the point of use*, not by the type's author.
 
@@ -205,7 +205,7 @@ std::cout << a.name;     // still "first"
 
 (In C++, class and struct are identical except default visibility — private vs public. Nothing to do with copy semantics.)
 
-## You choose the semantics per variable
+### You choose the semantics per variable
 
 ```cpp
 Widget b = a;    // copy - independent object
@@ -214,7 +214,7 @@ Widget* p = &a;  // pointer - same object, can be null / reseated
 auto s = std::make_shared<Widget>();  // shared ownership, closest to C# feel
 ```
 
-## Trap 1 — accidental copies in loops
+### Trap 1 — accidental copies in loops
 
 ```cpp
 for (auto w : widgets)         // copies EVERY widget
@@ -229,14 +229,14 @@ for (const auto& w : widgets)  // read-only pass - the idiom for viewing
 
 > **Trap:** The missing `&` is dead silent — compiles, runs, does nothing. One of the most common real-world C++ bugs.
 
-## Trap 2 — modifying a copy returned from a function
+### Trap 2 — modifying a copy returned from a function
 
 ```cpp
 Widget GetSelected() { return selected_; }   // returns a COPY
 GetSelected().name = "new";  // edits a temporary that dies instantly. No-op.
 ```
 
-## Trap 3 — object slicing (the nastiest)
+### Trap 3 — object slicing (the nastiest)
 
 ```cpp
 class Shape  { public: virtual void Draw(); int x, y; };
@@ -263,11 +263,11 @@ shapes[0]->Draw();    // Circle::Draw
 
 Rule: **value types for data, pointers/references for polymorphism.** In C# every class object lives behind a reference automatically, so slicing cannot happen; in C++ you must ask for reference behavior.
 
-## Why C++ is built this way — the payoff
+### Why C++ is built this way — the payoff
 
 Value semantics means objects live on the stack or inline inside containers — contiguous memory, no GC pressure, no pointer-chasing. A `std::vector<Point>` of a million points is one solid block of memory, cache-friendly and fast. The equivalent `List<Point>` with a Point class in C# is a million scattered heap objects. This is a big part of why C++ is the language of CAD engines — geometry code lives and dies by this. Copies also mean isolation: a function taking Widget by value cannot cause spooky action at a distance.
 
-## In the wild: C-style SDKs
+### In the wild: C-style SDKs
 
 SDK structs are typically plain value types — created on the stack, zeroed with `= {}`, address passed to API functions to fill in. No heap, no ownership questions. But some structs *contain pointers to SDK-allocated data* (like Chapter 17's `ThingData.values`) — those need the RAII treatment from Chapter 1. Reading a vendor header and classifying each struct — pure value, or value-with-owned-payload? — is a daily skill in SDK work.
 
@@ -277,11 +277,11 @@ SDK structs are typically plain value types — created on the stack, zeroed wit
 
 ---
 
-# Chapter 3 — Stack, Heap, and Undefined Behavior
+## Chapter 3 — Stack, Heap, and Undefined Behavior
 
 The physical model underneath everything else in this book. C# hides it behind the GC; C++ makes you its manager — and punishes ignorance with undefined behavior.
 
-## Stack vs heap, explicitly
+### Stack vs heap, explicitly
 
 A question worth being able to answer instantly: "where does this variable live?"
 
@@ -299,7 +299,7 @@ void F() {
 
 Contrast to internalize: in C# every class instance is heap + GC, full stop. In C++ heap use is a deliberate choice — and good C++ minimizes it. "Why is this on the heap?" is a legitimate code review question.
 
-## Undefined behavior (UB) as a concept
+### Undefined behavior (UB) as a concept
 
 UB is not "an exception is thrown" and not "the program crashes". It means **the standard places no requirements whatsoever** on what happens — and crucially, **the compiler is allowed to assume UB never occurs** and optimize accordingly. Result: code that works in Debug, breaks in Release; works on your machine, corrupts data in production; appears to work for years.
 
@@ -332,11 +332,11 @@ The plug-in angle: when your code runs inside a host application — a CAD packa
 
 ---
 
-# Chapter 4 — Classes, Inheritance, Interfaces
+## Chapter 4 — Classes, Inheritance, Interfaces
 
 The mechanics you already know, in C++ spelling — plus the parts C# doesn't have at all.
 
-## Class anatomy — the differences at a glance
+### Class anatomy — the differences at a glance
 
 ```cpp
 class Widget : public Shape {   // 'public' inheritance - see below
@@ -363,7 +363,7 @@ Widget::Widget() : Widget(0, "unnamed") {} // delegating ctor (C++11)
 
 Key deltas from C#: access specifiers label whole sections rather than each member; there are no properties (write Get/Set methods — no `get; set;` sugar); static data members need a separate definition in a .cpp (pre-C++17; `inline static` fixes it now); and the closing brace takes a **semicolon** — the classic returning-developer stumble.
 
-## Constructors and the member initializer list
+### Constructors and the member initializer list
 
 ```cpp
 class Widget {
@@ -384,7 +384,7 @@ public:
 
 In C# assigning fields in the constructor body is normal. In C++ the **member initializer list** is the proper way: members are constructed once, directly, in **declaration order** (not list order — a compiler warning and a common surprise). const and reference members can ONLY be initialized here.
 
-## Calling the base class
+### Calling the base class
 
 ```cpp
 class Circle : public Shape {
@@ -402,7 +402,7 @@ private:
 };
 ```
 
-## Inheritance access — public / protected / private
+### Inheritance access — public / protected / private
 
 C# has one kind of inheritance. C++ has three; the keyword before the base name sets a ceiling on inherited member visibility:
 
@@ -415,7 +415,7 @@ class Circle : private Shape   { };  // "implemented-in-terms-of" - outsiders
 
 > **Trap:** For 'class' the DEFAULT is private inheritance — writing `class Circle : Shape` silently breaks polymorphism (`Shape* p = &circle;` won't compile). Always write `public` explicitly.
 
-## Interfaces — no keyword, just a convention
+### Interfaces — no keyword, just a convention
 
 ```cpp
 // C#: interface IDrawable { void Draw(); }
@@ -434,7 +434,7 @@ public:
 };
 ```
 
-## Multiple inheritance and the diamond
+### Multiple inheritance and the diamond
 
 C# forbids multiple base classes; C++ allows them — which is exactly how it does "implementing multiple interfaces". Full multiple inheritance of classes *with data* brings the famous diamond problem:
 
@@ -452,7 +452,7 @@ class Printer : virtual public Device { };
 
 The stance to hold: "I keep multiple inheritance to interface-style bases — pure virtual, no data — which sidesteps the diamond entirely. Virtual inheritance exists but I treat needing it as a design smell."
 
-## Odds and ends worth 10 seconds each
+### Odds and ends worth 10 seconds each
 
 ```cpp
 struct Point { double x, y; };  // struct == class, just public by default;
@@ -482,7 +482,7 @@ friend class Serializer;        // 'friend': grants ANOTHER class/function
 | Field init | assign in ctor body | member initializer list (required for const/refs) |
 | Default inheritance | always public | private for class! Write 'public' explicitly |
 
-## In the wild: C-style SDKs
+### In the wild: C-style SDKs
 
 C++-side SDK layers use these patterns heavily: vendor base classes, interface-style pure virtual classes for observers and callbacks, and the occasional 'friend' in container internals. Your own model layer on top of any SDK is where you apply this — interface bases behind unique_ptr, always public inheritance, always virtual destructors.
 
@@ -490,7 +490,7 @@ C++-side SDK layers use these patterns heavily: vendor base classes, interface-s
 
 ---
 
-# Chapter 5 — Virtual Dispatch and the Virtual Destructor
+## Chapter 5 — Virtual Dispatch and the Virtual Destructor
 
 If a method is not marked **virtual**, the compiler decides which function to call based on the **variable's type, not the object's actual type**. C# would at least warn about hiding; C++ silently does the wrong thing.
 
@@ -512,7 +512,7 @@ class Circle : public Shape {
 public: void Draw() override { std::cout << "Circle"; } };  // prints "Circle"
 ```
 
-## Always write override
+### Always write override
 
 It makes the compiler verify you are actually overriding. Without it, this classic bug compiles silently:
 
@@ -526,11 +526,11 @@ public:
     void Draw() const override;        // ERROR: doesn't override anything
 ```
 
-## Under the hood — the vtable
+### Under the hood — the vtable
 
 Each class with virtual functions gets a **vtable** — a hidden array of function pointers. Each object carries one hidden pointer to its class's vtable. A virtual call is a lookup through that pointer. Cost: one pointer per object, one indirection per call, no inlining. That is why C++ makes it opt-in — you do not pay unless you ask.
 
-## The question that always comes up: why must a base destructor be virtual?
+### The question that always comes up: why must a base destructor be virtual?
 
 ```cpp
 class Shape { public: ~Shape() {} };            // NOT virtual - bug incoming
@@ -555,7 +555,7 @@ public:
 
 Destructors chain automatically — derived first, then base. You never call the base destructor manually.
 
-## Smaller relatives
+### Smaller relatives
 
 ```cpp
 class Circle final : public Shape { ... };  // 'final' = C# sealed
@@ -570,7 +570,7 @@ public:
 
 > **Surprise for C# devs:** Virtual calls inside constructors/destructors do NOT dispatch to the derived class — during base construction the object still IS just the base. C# dispatches to the derived override (its own famous pitfall, in the opposite direction).
 
-## In the wild: C-style SDKs
+### In the wild: C-style SDKs
 
 SDK surfaces are mostly C-style callbacks, but their C++ layers — and everything you build on top — use polymorphic hierarchies. Any class hierarchy you design for your own model needs virtual destructors the moment you store `unique_ptr<Base>` in a container. Which you will.
 
@@ -578,11 +578,11 @@ SDK surfaces are mostly C-style callbacks, but their C++ layers — and everythi
 
 ---
 
-# Chapter 6 — The Rule of Five and Move Semantics
+## Chapter 6 — The Rule of Five and Move Semantics
 
 The heart of resource-owning classes — and the explanation of what `std::move` actually does.
 
-## Setup: the special member functions
+### Setup: the special member functions
 
 The compiler auto-generates up to five functions for every class. The generated versions copy/move each member field:
 
@@ -597,7 +597,7 @@ public:
 };
 ```
 
-## The Rule of Zero (the modern ideal)
+### The Rule of Zero (the modern ideal)
 
 **Write none of the five.** Compose your class out of members that manage themselves (std::string, std::vector, unique_ptr) and the compiler-generated versions are automatically correct:
 
@@ -611,11 +611,11 @@ class Document {
 };
 ```
 
-## The Rule of Five
+### The Rule of Five
 
 **If you must write any one of the five** (usually because you hold a raw resource), **you almost certainly need to write — or explicitly delete — all five.** Destructor without copy operations = the double-free bug. Copy without move = silent performance loss everywhere.
 
-## What "move" actually means
+### What "move" actually means
 
 Copying a resource-owning object duplicates the resource — expensive. Moving means **stealing**: the new object takes the guts (the pointer), the old object is left empty but valid.
 
@@ -628,7 +628,7 @@ std::vector<int> c = std::move(a);  // MOVE: c takes a's pointer.
 
 > **The big reveal:** std::move moves nothing. It is just a cast — it marks a value as "you may steal from this", making the compiler select the move overload instead of the copy one. The stealing happens inside the move constructor. After moving from a variable, don't use it except to assign or destroy it.
 
-## Rvalue references — the && syntax
+### Rvalue references — the && syntax
 
 `Buffer&&` means "reference to something I'm allowed to steal from": a temporary, or something explicitly marked with `std::move`.
 
@@ -644,7 +644,7 @@ Take(MakeBuffer());   // second - temporaries are fair game automatically
 
 That last line is why C++11 made returning containers by value cheap — the return value is a temporary, so it is moved, not copied. Often not even that: compilers elide the move entirely ("RVO").
 
-## The canonical exercise: Rule of Five for a raw buffer
+### The canonical exercise: Rule of Five for a raw buffer
 
 Learn this shape cold:
 
@@ -702,7 +702,7 @@ private:
 };
 ```
 
-## Details that separate working code from correct code
+### Details that separate working code from correct code
 
 - **Nulling out the source in moves.** Forget it and the moved-from object's destructor deletes the data you just stole — double-free. The #1 bug in first attempts.
 - **noexcept on move operations.** Not decoration: std::vector checks it. When reallocating, vector only moves your elements if the move can't throw — otherwise it falls back to copying for exception-safety. Omit noexcept and your type silently copies inside vectors.
@@ -711,7 +711,7 @@ private:
 
 > **The stance to hold:** "In real code I'd never write this class — I'd hold `std::vector<int>` or `unique_ptr<int[]>` and get all five for free. Rule of Zero beats Rule of Five." Hand-rolling the five is a last resort; knowing how is what makes the shortcut safe.
 
-## Where moves matter in daily code
+### Where moves matter in daily code
 
 ```cpp
 std::vector<Buffer> buffers;
@@ -724,7 +724,7 @@ shapes.push_back(std::move(s));          // unique_ptr can ONLY move - this
                                          // is how ownership transfer is spelled
 ```
 
-## In the wild: C-style SDKs
+### In the wild: C-style SDKs
 
 Large C++ SDKs often ship their own unique_ptr analog (an "Owner" or "ScopedRef" type) with the same move-only behavior. Any RAII guard you write around SDK handles is exactly the "class holding a raw resource" case — either delete copy/move entirely (simplest, as in Chapter 1's guard), or implement moves properly when guards must be stored in containers or returned from factories (as Chapter 18's DeviceSession does — with a subtle twist worth meeting there).
 
@@ -732,7 +732,7 @@ Large C++ SDKs often ship their own unique_ptr analog (an "Owner" or "ScopedRef"
 
 ---
 
-# Chapter 7 — Templates vs C# Generics
+## Chapter 7 — Templates vs C# Generics
 
 They look identical — `List<T>` vs `std::vector<T>` — but the machinery is completely different. **C# generics are one compiled thing that works for any T at runtime; C++ templates are a code-generation machine** — the compiler stamps out a separate, fully compiled version for *each* T you use, at compile time. This is called **instantiation**.
 
@@ -747,7 +747,7 @@ Max(str1, str2);  // generates a std::string version
 
 Nothing is decided at runtime — no boxing, no type checks, zero overhead. That is why `std::sort` on a `vector<int>` beats C's qsort: the comparison inlines completely.
 
-## Consequence 1 — duck typing (and C++20 concepts)
+### Consequence 1 — duck typing (and C++20 concepts)
 
 C# demands constraints up front (`where T : IComparable<T>`). Templates declare nothing — the compiler just tries to compile your code with T. If T has `operator>`, it works; if not, you get an error at the point of use, often a notoriously long one ("template error novels").
 
@@ -760,11 +760,11 @@ T Max(T a, T b) { return a > b ? a : b; }
 void Sort(std::ranges::range auto& container);   // terse form
 ```
 
-## Consequence 2 — templates live in headers
+### Consequence 2 — templates live in headers
 
 The compiler must see the full template source to stamp out a version for your T, so template code cannot hide in a .cpp file — implementation and all go in the header. Put it in a .cpp and consumers get **linker errors** (unresolved external).
 
-## Consequence 3 — templates are more powerful than generics
+### Consequence 3 — templates are more powerful than generics
 
 ```cpp
 template <typename T, int N>       // value parameters! C# cannot do this
@@ -776,7 +776,7 @@ FixedArray<double, 3> vec3;        // this is how std::array works
 
 Non-type parameters, specialization, compile-time metaprogramming. Modern C++ prefers constexpr functions and concepts over the old arcane template tricks.
 
-## Consequence 4 — no runtime type info via templates
+### Consequence 4 — no runtime type info via templates
 
 `typeof(T)`, reflection, `GetType()` — none of that exists. T is gone after compilation. The little runtime typing C++ has is RTTI, working only on polymorphic types:
 
@@ -788,7 +788,7 @@ if (c) c->radius = 5;
 
 > **Key principle:** dynamic_cast is legal but culturally frowned upon — needing it often signals the virtual interface is designed wrong. "I'd prefer adding a virtual method over dynamic_cast chains."
 
-## Trade-off summary
+### Trade-off summary
 
 | | C# generics | C++ templates |
 |---|---|---|
@@ -799,7 +799,7 @@ if (c) c->radius = 5;
 | Cost | — | slower builds, bigger binaries, ugly errors |
 | Reflection on T | yes | no |
 
-## In the wild: C-style SDKs
+### In the wild: C-style SDKs
 
 Established C++ SDKs frequently ship their own template container libraries paralleling the STL — Qt's `QVector`/`QMap`, Unreal's `TArray`/`TMap`, and many vendor equivalents born before the STL was trustworthy on all platforms. STL fluency translates directly: the concepts (and the invalidation rules) are the same, only the spelling differs. Expect to read the vendor's containers in API samples and convert at the boundary.
 
@@ -807,7 +807,7 @@ Established C++ SDKs frequently ship their own template container libraries para
 
 ---
 
-# Chapter 8 — Error Handling: Exceptions and Error Codes
+## Chapter 8 — Error Handling: Exceptions and Error Codes
 
 C# is exceptions everywhere. C++ is split-brained: exceptions exist, but large parts of the ecosystem — most C-flavored SDKs, OS APIs, and plug-in interfaces — use C-style **error codes**. You need both.
 
@@ -847,9 +847,9 @@ Exception-safety guarantees (worth knowing cold): **basic** — no leaks, object
 
 ---
 
-# Chapter 9 — Casts, Conversions, and Strings
+## Chapter 9 — Casts, Conversions, and Strings
 
-## The four C++ casts
+### The four C++ casts
 
 C-style casts like `(int)x` work but are a red flag in reviews — they can silently do any of four different things. Modern C++ names the intent:
 
@@ -874,7 +874,7 @@ Derived* d2 = static_cast<Derived*>(s);   // UNchecked downcast: fast, but if
 
 > **Key principle:** "I use static_cast for conversions I can prove, dynamic_cast when I must query at runtime — and I treat const_cast or reinterpret_cast in a code review as a question mark."
 
-## Strings and encodings
+### Strings and encodings
 
 C# strings are immutable, interned, UTF-16 objects. **std::string is a mutable byte buffer with no encoding awareness** — it stores bytes; whether they're ASCII, UTF-8, or garbage is your problem. The modern convention: keep std::string as UTF-8 everywhere.
 
@@ -909,11 +909,11 @@ VendorString back = VendorString::FromUtf8(utf8);
 
 ---
 
-# Chapter 10 — Modern C++ Fluency
+## Chapter 10 — Modern C++ Fluency
 
 C++ has had a major update every 3 years since 2011 (C++11/14/17/20/23). These features, used casually, are the difference between current C++ and 2008-era C++.
 
-## auto — type inference (C#'s var)
+### auto — type inference (C#'s var)
 
 ```cpp
 auto count = 42;                 // int
@@ -924,7 +924,7 @@ const auto& name = GetName();    // the read-only idiom
 
 > **Trap:** auto strips references: `auto w = widgets[0]` is a copy. Muscle memory: `const auto&` for reading, `auto&` for modifying, plain `auto` only when you want a copy.
 
-## Lambdas — capture is explicit (no GC to keep captures alive)
+### Lambdas — capture is explicit (no GC to keep captures alive)
 
 ```cpp
 int threshold = 10;
@@ -943,7 +943,7 @@ auto MakeGetter() {
 
 > **Key principle:** "Capture by reference only when the lambda won't outlive the scope; by copy (or move) when it escapes — stored, returned, or run async."
 
-## Algorithms + lambdas (C++'s LINQ, roughly)
+### Algorithms + lambdas (C++'s LINQ, roughly)
 
 ```cpp
 auto it = std::find_if(v.begin(), v.end(),
@@ -957,7 +957,7 @@ auto big = v | std::views::filter([](auto& w){ return w.size > 10; })
              | std::views::transform([](auto& w){ return w.name; });
 ```
 
-## std::optional\<T\> — "maybe a value" (C#'s T?)
+### std::optional\<T\> — "maybe a value" (C#'s T?)
 
 ```cpp
 std::optional<Widget> FindByName(const std::string& name);
@@ -970,7 +970,7 @@ auto w2 = FindByName("x").value_or(Widget{});  // ?? equivalent
 
 > **Key principle:** "A function that can fail to produce a value returns optional\<T\>, not a null pointer or a magic value like -1."
 
-## std::string_view — non-owning view of a string
+### std::string_view — non-owning view of a string
 
 ```cpp
 void Print(std::string_view sv);  // accepts std::string, literals,
@@ -979,7 +979,7 @@ void Print(std::string_view sv);  // accepts std::string, literals,
 
 A pointer + length, like C#'s `ReadOnlySpan<char>`. Replaces `const std::string&` for read-only string parameters. Danger: non-owning means it can dangle — never store a string_view to a temporary.
 
-## Structured bindings (C# 7 deconstruction)
+### Structured bindings (C# 7 deconstruction)
 
 ```cpp
 auto [it, inserted] = myMap.insert({key, value});
@@ -989,7 +989,7 @@ for (const auto& [name, widget] : widgetMap) {  // KeyValuePair unpacked
 }
 ```
 
-## constexpr — computation at compile time
+### constexpr — computation at compile time
 
 ```cpp
 constexpr int Square(int x) { return x * x; }
@@ -997,7 +997,7 @@ constexpr int area = Square(12);    // computed by the COMPILER
 std::array<int, Square(4)> buffer;  // usable where constants are required
 ```
 
-## Small but telling details
+### Small but telling details
 
 ```cpp
 nullptr                          // never NULL or 0
@@ -1007,7 +1007,7 @@ uint32_t, int64_t                // from <cstdint>: 'int' size isn't
                                  // guaranteed! (C# int is always 32-bit)
 ```
 
-## In the wild: C-style SDKs
+### In the wild: C-style SDKs
 
 Most actively maintained SDKs now require C++17, so all of this is usable in your plug-in or driver code. The professional style: modern C++ in *your* logic — optional, lambdas, RAII wrappers — with a thin, disciplined layer where you touch the raw C API. The older the SDK's surface, the more valuable the modern layer you build on top of it.
 
@@ -1015,9 +1015,9 @@ Most actively maintained SDKs now require C++17, so all of this is usable in you
 
 ---
 
-# Chapter 11 — STL Containers, Algorithms, and Iterator Invalidation
+## Chapter 11 — STL Containers, Algorithms, and Iterator Invalidation
 
-## The container map
+### The container map
 
 | C# | C++ | Notes |
 |---|---|---|
@@ -1031,11 +1031,11 @@ Most actively maintained SDKs now require C++17, so all of this is usable in you
 
 > **Gotcha:** plain `std::map` is the TREE (sorted, O(log n)); the Dictionary equivalent is `unordered_map`. "I'd use unordered_map for lookups unless I need sorted order."
 
-## Why vector dominates — cache locality
+### Why vector dominates — cache locality
 
 A vector is one contiguous memory block. Even where a list is theoretically better, vector usually wins because CPUs prefetch contiguous memory. `push_back` is amortized O(1): when capacity runs out, the vector **reallocates** (typically doubling) and moves everything to a new block — remember that reallocation, it matters below.
 
-## Key operations
+### Key operations
 
 ```cpp
 std::vector<Widget> v;
@@ -1052,7 +1052,7 @@ if (it != m.end()) Use(it->second);   // ->first key, ->second value
 if (m.contains("wall")) ...  // C++20, like ContainsKey
 ```
 
-## Iterators
+### Iterators
 
 An iterator is a generalized pointer: `begin()` points at the first element, `end()` points **one past the last** (a sentinel — never dereference it). The half-open range [begin, end) is the universal STL currency.
 
@@ -1063,7 +1063,7 @@ if (it != v.end()) {   // "not found" == end, the idiom
 }
 ```
 
-## Algorithms — LINQ's rough equivalent
+### Algorithms — LINQ's rough equivalent
 
 | LINQ | STL (`<algorithm>` / `<numeric>`) |
 |---|---|
@@ -1088,7 +1088,7 @@ v.erase(std::remove_if(v.begin(), v.end(),
 std::erase_if(v, [](const Widget& w){ return w.size < 10; });  // C++20
 ```
 
-## THE trap: iterator invalidation
+### THE trap: iterator invalidation
 
 The C# equivalent — modifying a collection during foreach — throws immediately. C++ gives you **undefined behavior**: maybe a crash, maybe silent corruption, maybe it works on your machine and dies in production.
 
@@ -1113,7 +1113,7 @@ Worse — **push_back can invalidate everything too**: if the vector grows, the 
 
 Invalidation rules to memorize: **vector** — insert/erase invalidates iterators at/after the point, and ALL of them if reallocation happens. **unordered_map** — insertion can invalidate iterators (rehash) but references survive; erase kills only the erased. **map/list** — iterators stable except the erased element.
 
-## In the wild: C-style SDKs
+### In the wild: C-style SDKs
 
 Vendor container libraries (Qt, Unreal, and countless in-house ones) mirror the STL: same concepts, same invalidation logic, different spelling. C APIs additionally return dynamic arrays via pointer+count pairs or opaque handles (Chapter 17's payload pattern), which you often immediately wrap or copy into proper containers so the rest of your code lives in STL-land.
 
@@ -1125,17 +1125,17 @@ Vendor container libraries (Qt, Unreal, and countless in-house ones) mirror the 
 
 ---
 
-# Chapter 12 — The Compilation Model
+## Chapter 12 — The Compilation Model
 
 In C# the compiler sees the whole project at once and assemblies carry metadata. C++ compilation is a relic of the 1970s that you must understand, because half of all confusing C++ errors are build-model errors, not logic errors.
 
-## The pipeline
+### The pipeline
 
 1. **Preprocessor** — dumb text machine. `#include "Widget.h"` literally copy-pastes the file's contents into your source.
 2. **Compiler** — compiles each .cpp file completely independently into an object file (.obj/.o). Each .cpp + everything it included = one **translation unit**. The compiler has no idea other .cpp files exist.
 3. **Linker** — stitches all object files together, matching "I call function X" with "here's the body of X".
 
-## Declarations, definitions, and why headers exist
+### Declarations, definitions, and why headers exist
 
 ```cpp
 // Widget.h - declarations: WHAT exists
@@ -1158,7 +1158,7 @@ int main() { Widget w; w.Draw(); }  // linker connects call to Widget.cpp's body
 
 A thing can be *declared* many times but *defined* exactly once across the program — the **One Definition Rule (ODR)**.
 
-## Compile errors vs linker errors — read which stage failed
+### Compile errors vs linker errors — read which stage failed
 
 ```text
 error C2065: 'Widget': undeclared identifier
@@ -1171,7 +1171,7 @@ error LNK2019: unresolved external symbol "void Widget::Draw(void)"
      (Also what you get putting a template's body in a .cpp.)
 ```
 
-## Include guards
+### Include guards
 
 Since #include is paste, a header included twice via diamond paths would define the class twice in one translation unit. Every header, always:
 
@@ -1184,7 +1184,7 @@ Since #include is paste, a header included twice via diamond paths would define 
 #endif
 ```
 
-## Forward declarations — the build-time optimization
+### Forward declarations — the build-time optimization
 
 ```cpp
 // Renderer.h
@@ -1203,7 +1203,7 @@ private:
 
 Why bother: **build times** — including Widget.h means every file including Renderer.h recompiles whenever Widget.h changes; in a CAD-sized codebase header hygiene is the difference between 5-minute and 2-hour builds. And **circular dependencies** — forward declarations break A-needs-B-needs-A deadlocks. Rule: include as little as possible in headers, forward-declare where you can, include fully in .cpp files.
 
-## Two more, 30 seconds each
+### Two more, 30 seconds each
 
 ```cpp
 namespace {                      // anonymous namespace in a .cpp:
@@ -1215,11 +1215,11 @@ namespace {                      // anonymous namespace in a .cpp:
 
 C++20 **modules** (import instead of #include) fix this whole mess — but adoption is slow and virtually every SDK ecosystem is headers all the way. Know they exist; expect to live in headers.
 
-## What is a .lib file? (see Appendix A for full detail)
+### What is a .lib file? (see Appendix A for full detail)
 
 A **static library**: an archive of .obj files. The linker copies needed code into your binary. On Windows, DLLs also ship a tiny companion .lib — an **import library** of stubs telling the linker "function X lives in Foo.dll". Same extension, two different animals.
 
-## In the wild: C-style SDKs
+### In the wild: C-style SDKs
 
 A plug-in is a DLL/bundle loaded by a host application; a device application links a vendor's driver library. Either way the trio applies: you compile against the SDK's headers, link against its .lib/.a files, and the host or driver exports the functions you call at runtime. Miss the header = compile error; miss the .lib = LNK2019; wrong SDK/runtime version = plug-in won't load or device won't open. Binary compatibility across DLL boundaries is a real C++ concern C# assemblies never have.
 
@@ -1227,9 +1227,9 @@ A plug-in is a DLL/bundle loaded by a host application; a device application lin
 
 ---
 
-# Chapter 13 — Toolchain Quick Reference
+## Chapter 13 — Toolchain Quick Reference
 
-## Compiler invocations
+### Compiler invocations
 
 ```bash
 # clang / gcc (Mac, Linux) - strict + sanitizers + debug info:
@@ -1244,7 +1244,7 @@ cl /std:c++17 /W4 /EHsc /Zi /fsanitize=address main.cpp
 - Sanitizer builds are for development runs; they slow execution ~2x and are not for shipping.
 - Debug vs Release matters more than in C#: UB often hides in Debug and detonates in Release. Test both.
 
-## Debugging a plug-in inside a host application
+### Debugging a plug-in inside a host application
 
 - **Visual Studio:** Debug > Attach to Process > the host's .exe (or set your plug-in project's debug command to launch the host directly). Breakpoints in your plug-in code hit once the DLL is loaded.
 - **Xcode:** edit the scheme's Run executable to point at the host .app; build-and-run then launches the host with your bundle debuggable.
@@ -1253,7 +1253,7 @@ cl /std:c++17 /W4 /EHsc /Zi /fsanitize=address main.cpp
 
 Learn your debugger's container visualizers (VS: built-in for vector/map; lldb: `frame variable`). Inspecting a vector without them is miserable; with them it's a C#-like experience.
 
-## Vendor SDK setup checklist
+### Vendor SDK setup checklist
 
 - SDK major version usually must match the host application's major version exactly — check before anything else.
 - Windows: check the required Visual Studio toolset version in the SDK docs; ABI mismatches produce baffling link and load errors.
@@ -1261,7 +1261,7 @@ Learn your debugger's container visualizers (VS: built-in for vector/map; lldb: 
 - Many SDKs have extra build steps beyond compiling (resource compilers, code generators, signing) — if UI elements or metadata don't appear, suspect those steps before the code.
 - Plug-in/developer IDs often must be registered with the vendor for real distribution; samples use placeholders. Your employer likely has this handled — ask.
 
-## Mac vs Windows for practice
+### Mac vs Windows for practice
 
 C++ practice transfers 100% either way (clang + ASan on Mac is first-class). Toolchain muscle memory does not: if the team is a Windows/Visual Studio shop, do the SDK days on Windows so project settings, attach-to-process, and MSVC's error dialect become familiar. Ask the team which platform(s) they develop on before investing setup time.
 
@@ -1271,13 +1271,15 @@ C++ practice transfers 100% either way (clang + ASan on Mac is first-class). Too
 
 # Part V — Learning by Doing
 
+Before starting, skim [Chapter 24](#chapter-24--practice-plan) — the practice plan — which sequences these chapters into a one-week schedule. Then work each exercise **cold**: compiler, debugger, sanitizer, and offline docs as your only feedback loops, opening a chapter's reference solution only after your own attempt. The repository's `exercises/` directory carries a task card for every exercise (plus the vendor code for Chapters 17 and 18), so you can attempt each one without the solution on the next screen.
+
 ---
 
-# Chapter 14 — Exercise: The Lifetime Tracer
+## Chapter 14 — Exercise: The Lifetime Tracer
 
 One small class makes every lifetime rule in this book visible: a **Tracer** that prints from all six special member functions, stamped with an instance ID and its own address. Build it once, keep it forever — it is a diagnostic instrument, not a toy. When container or call behavior is mysterious, drop a Tracer in and the output replaces guesswork. It needs no tools a locked-down work machine lacks.
 
-## The complete instrument
+### The complete instrument
 
 ```cpp
 // Tracer v2 - makes object identity, lifetime, and moves maximally visible.
@@ -1408,7 +1410,7 @@ int main() {
 // After main, statics persist; a final Report() via atexit would show 0 alive.
 ```
 
-## Design choices worth stealing
+### Design choices worth stealing
 
 - **Instance IDs separate identity from name.** Copies share a name; the `#id` makes each object unambiguous: `a#2 copy-CONSTRUCTED from a#1`.
 - **Addresses turn claims into proofs.** Same address across "constructed" and "destroyed" lines = same object. Stack addresses vs heap addresses are visibly different ranges.
@@ -1418,7 +1420,7 @@ int main() {
 - **`inline static` counters** (C++17) — static members defined in-class, no separate .cpp definition needed; the modern fix for the Chapter 4 annoyance.
 - **The alive counter is a leak detector**: every construction increments, every destruction decrements; a nonzero count at exit means RAII bookkeeping is broken somewhere.
 
-## Annotated output of a real run
+### Annotated output of a real run
 
 ```text
 --- singles ---
@@ -1471,7 +1473,7 @@ husk#2 destroyed  husk#1 destroyed        <- the gutted b and a, normal destruct
 
 Eleven constructions, eleven destructions — balanced books, no leaks. Destruction runs in reverse construction order within each scope. The husks in the roll-call are visual proof of which objects were genuinely emptied.
 
-## Three experiments to run
+### Three experiments to run
 
 1. **Delete `noexcept`** from the move constructor. The reallocation line flips from move to copy — vector's exception-safety rule, observed live.
 2. **Add `v.reserve(4);`** before the push_backs. The entire reallocation block vanishes — no growth, no transfer.
@@ -1479,11 +1481,11 @@ Eleven constructions, eleven destructions — balanced books, no leaks. Destruct
 
 ---
 
-# Chapter 15 — Exercise: The Buffer
+## Chapter 15 — Exercise: The Buffer
 
 The Tracer (Chapter 14) had `std::string` silently doing the dangerous work. The Buffer replaces it with a raw `int*` — the same five functions, but now every ordering mistake is a heap corruption instead of a style nit. This chapter contains the exercise, the reference solution, and the four findings a real first attempt produced (logged as Findings 6–9 in Chapter 25).
 
-## The exercise
+### The exercise
 
 Write from memory: a class owning a heap array of ints (`size_`, `data_`). Requirements: destructor frees; copy constructor deep-copies; copy assignment (aim for copy-and-swap); move constructor steals **and nulls the source**; move assignment frees own data, steals, nulls, self-move-safe; `noexcept` where it is *true*; `explicit` where it belongs; a zero-initialized buffer; and an element accessor.
 
@@ -1491,7 +1493,10 @@ Then: a `main` exercising all five paths with predictions written as comments be
 
 Then the sabotage runs under AddressSanitizer (see "Experiments" below).
 
-## Reference solution
+### Reference solution
+
+<details>
+<summary><strong>Show the solution — do the exercise cold first</strong></summary>
 
 ```cpp
 #include <algorithm>
@@ -1590,7 +1595,9 @@ Notes on the choices:
 - **Destructor is one line** — `delete[]` on `nullptr` is a safe no-op, and nulling members in a destructor is dead work: the object ceases to exist in the next instant (Finding 9).
 - The deliberate `c = std::move(c)` in `main` draws a compiler warning (`-Wself-move`) — good: the compiler flags suspicious code, and the class survives it anyway, which is the requirement.
 
-## The unhappy path, step by step
+</details>
+
+### The unhappy path, step by step
 
 The instructive bug from a real first attempt — release-before-acquire copy assignment:
 
@@ -1608,7 +1615,7 @@ Buffer& operator=(const Buffer& other) {
 
 If the allocation throws, the exception propagates out mid-function and the object is a zombie: `data_` still points at freed memory. During stack unwinding its destructor runs — `delete[] data_` — **freeing the same block twice**. The assignment didn't just fail to copy; it corrupted the heap on the way out. The principle: **do all the throwing work before touching your own state.** Copy-and-swap makes the correct ordering structural rather than a discipline to remember.
 
-## Experiments (sabotage runs under ASan)
+### Experiments (sabotage runs under ASan)
 
 Take a working copy, break one thing at a time, build with `-fsanitize=address -g`, run, and read each report until it makes sense:
 
@@ -1617,49 +1624,49 @@ Take a working copy, break one thing at a time, build with `-fsanitize=address -
 3. **Remove the self-move guard**, run `b = std::move(b)` → reason first about whether your implementation gives use-after-free or silent data loss, then verify.
 4. **Simulate the unhappy path**: revert to release-before-acquire and insert `throw std::bad_alloc{};` after the `delete[]` — watch Finding 6 detonate.
 
-## Why you would never ship this class
+### Why you would never ship this class
 
 `std::vector<int>` (or `std::unique_ptr<int[]>`) already is this class, written by experts, tested for decades — holding one of those as the member gives all five operations for free. Rule of Zero beats Rule of Five (Chapter 6). Hand-rolling the five is for the rare type that *is* the resource wrapper — and knowing how is precisely what makes the shortcut safe to take everywhere else.
 
 ---
 
-# Chapter 16 — The SDK Bestiary
+## Chapter 16 — The SDK Bestiary
 
 Native SDKs come in a small number of recurring shapes. Learn to recognize the shape and you already know half the SDK before opening its docs — the wrapping strategy, the failure modes, and where the RAII goes. This chapter is the field guide; Chapters 17 and 18 are hands-on training on the two most common shapes.
 
-## Shape 1 — Error codes + out-parameters + owned payloads (desktop-application plug-in SDKs)
+### Shape 1 — Error codes + out-parameters + owned payloads (desktop-application plug-in SDKs)
 
 Every function returns a status code; results come back through pointers you pass in; some structs carry SDK-allocated payloads with a matching dispose function. This is the classic shape of plug-in APIs for large desktop applications — CAD packages, DAWs, office suites — and of venerable C libraries like **SQLite** and **zlib**, which are worth reading as masterclasses in the style. Your job: check every code, zero-init every struct, guard every payload. **Trained in Chapter 17.**
 
-## Shape 2 — Opaque handles + open/close + callbacks (device and I/O SDKs)
+### Shape 2 — Opaque handles + open/close + callbacks (device and I/O SDKs)
 
 You receive a pointer to a type you cannot see inside (`typedef struct DeviceImpl* DeviceHandle`); a create/open function hands it out, a close/destroy function takes it back, and events arrive through registered C function pointers carrying a `void*` context. This is the shape of essentially every peripheral SDK: **libusb** and **HIDAPI** (USB/HID devices), **PortAudio** and ASIO (audio interfaces), serial-port and camera SDKs, **Vulkan** (`VkDevice`, `VkInstance` — a modern API deliberately built in this classic shape), and printer/scanner vendor SDKs. Your job: a move-only RAII session per handle, and a trampoline bridging the C callback into C++. **Trained in Chapter 18.**
 
 Two hazards specific to this shape, worth knowing before you meet them for real: **callback threading** — real device SDKs often invoke your callback from a driver thread, not yours, so everything the callback touches needs synchronization (the FakeDevice of Chapter 18 calls back synchronously to keep the exercise focused; the chapter notes what changes when it doesn't); and **callback lifetime** — the SDK holds your function pointer and context until you unregister; if the object behind the context dies first, the next event is a use-after-free delivered by the driver.
 
-## Shape 3 — Reference counting (COM and COM-flavored APIs)
+### Shape 3 — Reference counting (COM and COM-flavored APIs)
 
 Objects expose `AddRef`/`Release` (or retain/release) and you own one reference per acquisition; functions return `HRESULT` status codes; interfaces are queried by ID. This is **COM** — the substrate of huge parts of Windows: Office automation, DirectX, the shell, WinRT underneath its projections — and the retain/release pattern reappears in Core Foundation on Apple platforms. The C++ treatment: never call `Release` by hand; use the ecosystem's RAII smart pointers (`Microsoft::WRL::ComPtr`, `winrt::com_ptr`, `CComPtr`), which are exactly shared_ptr's discipline with a different spelling. If your work touches Windows deeply, this shape deserves dedicated study; recognizing it as "shared_ptr, someone else's implementation" is the starting point.
 
-## Shape 4 — Init/deinit lifecycles and status enums (embedded HALs and middleware)
+### Shape 4 — Init/deinit lifecycles and status enums (embedded HALs and middleware)
 
 A global or per-peripheral `X_Init(&config)` / `X_DeInit()` pair, status enums (`HAL_OK`, `HAL_ERROR`, `HAL_BUSY`, `HAL_TIMEOUT`), configuration structs you zero and fill, and callbacks that are actually interrupt handlers. This is the shape of microcontroller vendor HALs (**STM32 HAL**, **ESP-IDF**, Nordic's SDKs) and much industrial middleware (CAN stacks, Modbus libraries). It is Shape 1 wearing work boots: the same discipline applies, with two additions — callbacks may run in interrupt context (minimal work, no allocation, no blocking), and RAII must respect that some resources are singletons whose "ownership" is initialization order.
 
-## Shape 5 — C++-native SDKs (engines and frameworks)
+### Shape 5 — C++-native SDKs (engines and frameworks)
 
 Some SDKs are genuinely C++: **Qt**, **Unreal**, **JUCE**, many game and media engines. Here the vendor ships its own containers, strings, and smart pointers (Chapter 7's "In the wild"), its own object lifetime rules (Qt's parent-child ownership; Unreal's garbage collector for UObjects — yes, a GC in C++), and often its own build layer (moc, UnrealBuildTool). The transition skill: identify which of *their* mechanisms replaces which standard one, use theirs inside their world, and convert at the boundary. Fighting a framework's ownership model with raw standard idioms is a rite of passage best skipped.
 
-## The universal checklist, whatever the shape
+### The universal checklist, whatever the shape
 
 For every SDK function you meet, answer four questions before calling it: **Who allocates?** (me, via a struct I fill; or the SDK, via a payload I must release). **Who releases, and with which exact function?** (free/dispose/close/Release are not interchangeable). **What is the failure contract?** (code returned? struct touched or untouched on failure? — Chapter 17's documentation trap). **What threads can this be called on, and what thread calls me back?** Wrap the answers in a guard type, and the rest of your code never thinks about them again. That habit — one small RAII type per SDK resource — is the single highest-leverage practice in native SDK work, and it is what Chapters 17 and 18 drill.
 
 ---
 
-# Chapter 17 — Exercise: The FakeSDK
+## Chapter 17 — Exercise: The FakeSDK
 
 *Trains: Chapter 1 (RAII), Chapter 8 (error codes), Chapter 12 (multiple translation units). Time: ~90 min. This is the closest exercise to real plug-in work: the function you will write is structurally identical to "aggregate a property over all elements" against any desktop-application SDK.*
 
-## The vendor code
+### The vendor code
 
 Two files, `FakeSDK.h` and `FakeSDK.cpp` — **read them, compile them, link them, never edit them.** The header is the contract; every convention in it mirrors the classic desktop-SDK idiom: every function returns `ErrCode` (0 = success), "Get" functions fill caller-provided structs passed by address, and `Thing_GetData` allocates a payload the caller must release with `Thing_DisposeData` exactly once. The SDK has a built-in leak detector: `FakeSdk_LiveAllocations()` must be **0** after your code runs.
 
@@ -1724,7 +1731,7 @@ size_t FakeSdk_LiveAllocations();
 
 (The matching `FakeSDK.cpp` implements this contract and ships with the repository. Build with both translation units: `g++ -std=c++17 -Wall -Wextra -fsanitize=address -g FakeSDK.cpp yourfile.cpp -o task`.)
 
-## The task
+### The task
 
 **Part A** — `ThingDataGuard`: an RAII wrapper ensuring disposal on every path (the guard shape from Chapter 1). Decide and be ready to defend: copyable? movable? neither?
 
@@ -1741,7 +1748,10 @@ Check **every** return code; `ErrNoData` is a normal skip; other failures propag
 
 **Part C** — three scenarios in `main`, predictions computed **by hand** as comments before running, asserting *values* — not just "no crash" (Finding 10): a happy path with one empty Thing; a mid-loop transient failure (the critical check: were the payloads of the already-read Things disposed?); and an empty project (decide what "correct" even means there).
 
-## Reference solution
+### Reference solution
+
+<details>
+<summary><strong>Show the solution — do the exercise cold first</strong></summary>
 
 ```cpp
 // FakeSDK exercise - reference solution.
@@ -1823,7 +1833,9 @@ int main() {
 }
 ```
 
-## Pitfalls this exercise plants — and why they matter
+</details>
+
+### Pitfalls this exercise plants — and why they matter
 
 **The documentation trap.** The header states: *"on ANY failure, 'data' is left untouched and nothing is allocated."* That single sentence is what makes `continue` after `ErrNoData` — and `return` after other errors — safe *without* a guard at those points. Miss it, and you either dispose something never allocated (harmless here because `Thing_DisposeData` tolerates zeroed structs — but only because you zero-initialized with `= {}`), or you wrap the guard too early and reason about it wrongly. Vendor docs reward forensic reading; at work, verify such claims with a test before trusting them, because real SDKs are not always this honest.
 
@@ -1837,11 +1849,11 @@ int main() {
 
 ---
 
-# Chapter 18 — Exercise: The Device SDK
+## Chapter 18 — Exercise: The Device SDK
 
 *Trains: Chapter 1 (RAII), Chapter 6 (move-only types — with a twist), Chapter 10 (lambdas/std::function), Chapter 16 Shape 2. Time: ~2 h. This is the peripheral-SDK idiom: after this exercise, libusb, PortAudio, HIDAPI, and serial-port APIs will all look familiar.*
 
-## The vendor code
+### The vendor code
 
 `FakeDevice.h` / `FakeDevice.cpp` — vendor code, do not edit. Three idioms live in this header, each worth reading twice:
 
@@ -1897,7 +1909,7 @@ DevErr FakeDevice_InjectSamples(DeviceHandle h, size_t n);
 
 **The opaque handle** — `DeviceHandle` is a pointer to a struct whose definition you never see. You cannot copy the device, inspect it, or free it yourself; the handle is a claim ticket, and `Device_Close` is the only way to redeem it. **The open/close lifecycle** — open hands out the obligation; double-close is an *error*, not a no-op, so your wrapper must guarantee exactly-once. **The C callback pair** — a plain function pointer plus a `void*` context returned to you verbatim: this is how C delivers events into your code, because C has no closures. Bridging it to C++ closures is the heart of the exercise.
 
-## The task
+### The task
 
 **Part A — `DeviceSession`**: a **move-only** RAII wrapper. Unlike Chapter 17's guard (one struct, one scope, copy and move both deleted), a device session is an ownable resource you may want to store in containers or return from factories — so it gets the full Chapter 6 treatment: deleted copies, real moves, `noexcept`, exactly-once close. Opening can fail, and constructors can't return error codes — design around that (the reference uses a static factory writing into an out-parameter, the SDK's own style; returning `std::optional<DeviceSession>` is an equally defensible alternative).
 
@@ -1905,7 +1917,10 @@ DevErr FakeDevice_InjectSamples(DeviceHandle h, size_t n);
 
 **Part C — prove it**: open, register a lambda capturing a local vector, inject and poll, assert the exact samples arrived; **move the session and verify callbacks still land** (this is the twist — predict what breaks before testing); exercise the error paths (`DevBusy`, `DevNotFound`); and assert `FakeDevice_OpenHandles() == 0` at the end.
 
-## Reference solution
+### Reference solution
+
+<details>
+<summary><strong>Show the solution — do the exercise cold first</strong></summary>
 
 ```cpp
 // Device SDK exercise - reference solution.
@@ -2017,7 +2032,9 @@ int main() {
 }
 ```
 
-## The pitfalls, and what they generalize to
+</details>
+
+### The pitfalls, and what they generalize to
 
 **The trampoline pattern is the whole chapter.** A C API can store only a function pointer — no captures, no state. The trick: register a *static* function whose only job is to cast the `void*` back to your object and forward the call. The context pointer is the closure's state, threaded through the C API by hand. Every callback-based C SDK — every one — is wrapped this way; write it once here and you will recognize it forever.
 
@@ -2029,21 +2046,24 @@ int main() {
 
 **Double-close prevention is the wrapper's reason to exist.** The SDK punishes double-close with an error; the wrapper makes it structurally impossible — `std::exchange` nulls the handle on move, the destructor tolerates null, and there is no public `Close` to call twice (add one as a stretch goal, and make it idempotent).
 
-## Stretch goals
+### Stretch goals
 
 Add the `try/catch(...)` guard to the trampoline with a `LastError()` accessor. Add an idempotent public `Close()`. Store several sessions in a `std::vector<DeviceSession>` and verify callbacks survive the vector's reallocation (they will — because your move operations rebind; remove `Rebind()` and watch them silently die, then explain the mechanism). Hardest: simulate the threaded case — call `Device_Poll` from a `std::thread` and make the sample collection race-free with a mutex, then explain why the destructor now needs more than it has.
 
 ---
 
-# Chapter 19 — Exercise: The Word Counter
+## Chapter 19 — Exercise: The Word Counter
 
 *Trains: Chapter 10 (auto, lambdas, structured bindings), Chapter 11 (containers, algorithms, the map/vector dance). Time: ~60 min. Rule: cppreference only — this is the docs-navigation drill.*
 
-## The task
+### The task
 
 Read a text file; count word frequencies case-insensitively, stripping punctuation from word edges; print the top 10 words that occur at least twice, sorted by count descending, ties broken alphabetically. That one sentence forces: file I/O, `unordered_map` counting, the map-to-vector transfer, a two-key sort lambda, filtering, and bounded output.
 
-## Reference solution
+### Reference solution
+
+<details>
+<summary><strong>Show the solution — do the exercise cold first</strong></summary>
 
 ```cpp
 #include <algorithm>
@@ -2092,7 +2112,9 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-## What each part is really teaching
+</details>
+
+### What each part is really teaching
 
 **`++freq[word]` — the one place the map's insert-on-read trap is a feature.** Chapter 11 warns that `operator[]` silently inserts a default value on a missing key. Counting is the idiom where that behavior is exactly what you want: first sight of a word inserts 0, then increments to 1. Knowing when a trap is a tool is the difference between rule-following and fluency.
 
@@ -2104,21 +2126,21 @@ int main(int argc, char* argv[]) {
 
 **`std::erase_if` vs the erase-remove idiom.** The C++20 one-liner and its two-step ancestor from Chapter 11; the solution shows the modern form and names the classic in a comment because legacy codebases are full of it.
 
-## Stretch goals
+### Stretch goals
 
 Rewrite the pipeline with C++20 ranges (`views::filter` + `views::take`); time the difference between `map` and `unordered_map` on a large file (then explain it via Chapter 11's cache-locality argument); make the minimum count and top-N command-line arguments with proper validation.
 
 ---
 
-# Chapter 20 — Exercise: Slicing and Polymorphism
+## Chapter 20 — Exercise: Slicing and Polymorphism
 
 *Trains: Chapter 2 (slicing), Chapter 5 (virtual dispatch, virtual destructors). Time: ~45 min.*
 
-## The task
+### The task
 
 Build a small `Shape` hierarchy (`Circle`, `Rect`) with a virtual `Area()`. Then, deliberately, do it wrong first: put shapes into a `std::vector<Shape>` and total the areas. Predict what happens *before* compiling. Then fix the design so polymorphism actually works, and prove with output that the right `Area()` runs for each element. Finally: remove `virtual` from the base destructor and explain (then demonstrate under ASan with a heap-allocated derived object owning memory) what breaks.
 
-## The broken version, and what it teaches
+### The broken version, and what it teaches
 
 ```cpp
 std::vector<Shape> shapes;          // a vector of BASE OBJECTS
@@ -2127,7 +2149,10 @@ shapes.push_back(Circle(1.0));      // sliced: only the Shape part is stored
 
 Two outcomes depending on the base: if `Shape` is abstract (pure virtual `Area`), this **does not compile** — the container cannot hold instances of an abstract class, and the error message is your first taste of template error novels (Chapter 7). If `Shape` is concrete, it compiles and silently stores amputated objects: `radius` is gone, and `shapes[0].Area()` calls `Shape::Area`. Make the base abstract *first* so the compiler catches the design error — that is itself a design lesson: **pure virtual functions turn slicing from a runtime surprise into a compile error.**
 
-## Reference solution (the fixed design)
+### Reference solution (the fixed design)
+
+<details>
+<summary><strong>Show the solution — do the exercise cold first</strong></summary>
 
 ```cpp
 // Slicing & polymorphism lab - reference solution (the FIXED version).
@@ -2176,7 +2201,9 @@ int main() {
 }   // unique_ptrs delete through Shape* - virtual ~Shape makes it legal
 ```
 
-## The details that carry the weight
+</details>
+
+### The details that carry the weight
 
 **`vector<unique_ptr<Shape>>` is *the* polymorphic container.** Objects live on the heap behind pointers; the vector holds owners. Copying the vector is deleted (unique_ptr), which is honest: a hierarchy of polymorphic objects has no cheap, obvious copy semantics — if you need copying, you design a virtual `Clone()` method, explicitly.
 
@@ -2188,11 +2215,11 @@ int main() {
 
 ---
 
-# Chapter 21 — Exercise: Iterator Invalidation
+## Chapter 21 — Exercise: Iterator Invalidation
 
 *Trains: Chapter 11 (the trap section), Chapter 3 (UB). Time: ~45 min. Format: three broken loops to fix — write predictions, run broken versions under ASan, then fix.*
 
-## The three tasks
+### The three tasks
 
 1. Remove all odd numbers from a `vector<int>` while iterating.
 2. Append a copy of every element to the same vector while iterating it.
@@ -2200,7 +2227,10 @@ int main() {
 
 Write each the naive way first, predict the failure mode, run under ASan, and only then fix.
 
-## Reference solutions and the reasoning
+### Reference solutions and the reasoning
+
+<details>
+<summary><strong>Show the solutions — do the tasks cold first</strong></summary>
 
 ```cpp
 // Iterator invalidation lab - the FIXED patterns (broken ones live in comments).
@@ -2245,19 +2275,24 @@ int main() {
 
 **The rule to leave with:** after any potentially-reallocating operation, treat every iterator, pointer, and reference into that vector as dead. The invalidation table in Chapter 11 says which containers are gentler — and why `map`'s stable iterators are sometimes worth its slower lookups.
 
+</details>
+
 ---
 
-# Chapter 22 — Exercise: Lambda Lifetimes
+## Chapter 22 — Exercise: Lambda Lifetimes
 
 *Trains: Chapter 10 (captures), Chapter 1 (ownership), Chapter 3 (dangling). Time: ~45 min. The C# contrast is the whole point: C# closures keep captured objects alive via the GC; C++ captures do exactly what you wrote, including dangling.*
 
-## The three tasks
+### The three tasks
 
 1. `MakeCounter()`: return a lambda that returns 1, 2, 3... on successive calls. The naive `[&count]` version compiles and dangles — demonstrate, then fix.
 2. A `Button` struct storing a `std::function<void()>` callback that prints a label — where the label is created in a narrower scope than the click. Make it correct *by ownership design*, not by luck.
 3. Capture-by-move: a lambda that *owns* a `unique_ptr` (something copies can't do).
 
-## Reference solutions
+### Reference solutions
+
+<details>
+<summary><strong>Show the solutions — do the tasks cold first</strong></summary>
 
 ```cpp
 // Lambda lifetime lab - fixed patterns.
@@ -2299,7 +2334,9 @@ int main() {
 }
 ```
 
-## What each fix teaches
+</details>
+
+### What each fix teaches
 
 **Task 1 — `[count]() mutable`.** Two lessons in five characters. Capture by copy gives the lambda its *own* `count` that lives as long as the lambda does — the closure now owns its state, which is what the C# version was secretly doing via the heap. And `mutable`: captured copies are `const` inside the lambda by default; incrementing one requires opting out. C# has no equivalent because its captures are references to heap cells. Run the broken `[&count]` version too: it may even print plausible numbers (stack memory not yet reused) — dangling that *works in the demo* is the most dangerous kind, and ASan with `-fsanitize=address` flags the stack-use-after-return only with `ASAN_OPTIONS=detect_stack_use_after_return=1` — worth noting, since it is off by default on some toolchains.
 
@@ -2311,15 +2348,15 @@ int main() {
 
 ---
 
-# Chapter 23 — Exercise: The Build-Model Lab
+## Chapter 23 — Exercise: The Build-Model Lab
 
 *Trains: Chapter 12, hands-on. Time: ~45 min. No reference solution file — the artifact is your notes on what each error looks like, because reading build errors is the skill.*
 
-## The setup
+### The setup
 
 Split a trivial `Greeter` class across `Greeter.h` / `Greeter.cpp` with a `main.cpp` consumer. Get it building. Then break it seven ways, one at a time, and for each: predict the error *stage* (preprocessor / compile / link), provoke it, and paste the first error line into your notes with a one-line translation.
 
-## The seven breakages
+### The seven breakages
 
 1. **Delete the `#include "Greeter.h"` from main.cpp** → compile error, `undeclared identifier`. The translation unit never saw the declaration.
 2. **Delete Greeter.cpp from the build command** (compile main.cpp alone) → **linker** error, `undefined reference` / `LNK2019 unresolved external`. Everything compiled; the body is missing at link time. Learn to tell this apart from #1 at a glance — it is the single most practical build skill.
@@ -2329,17 +2366,17 @@ Split a trivial `Greeter` class across `Greeter.h` / `Greeter.cpp` with a `main.
 6. **Create a circular include** (A.h includes B.h includes A.h, guards present) and use B's type in A → confusing compile errors about incomplete types. Fix with a forward declaration in one of the headers — and note which usages permit forward declaration (pointers, references) and which demand the full definition (members by value, inheritance).
 7. **Change a class definition in the header, rebuild only main.cpp** (simulating a stale object file: compile Greeter.cpp, *then* edit the header, then compile only main.cpp and link both) → it links and misbehaves or crashes: an **ODR violation across translation units**, undetectable by the linker. This is why build systems track header dependencies and why "clean build fixes it" is a real phenomenon with a real cause — the moment you understand this breakage, incremental-build weirdness stops being mysterious.
 
-## Why this lab earns its place
+### Why this lab earns its place
 
 Half of all confusing C++ errors are build-model errors (Chapter 12). At work, against a vendor SDK with heavy headers and multi-project solutions, error-stage triage is the first move of every debugging session: *which tool complained — preprocessor, compiler, or linker — and therefore which file do I open?* After this lab, that triage takes five seconds.
 
 ---
 
-# Chapter 24 — Practice Plan
+## Chapter 24 — Practice Plan
 
 A one-week hands-on plan (compress or stretch as needed). Each day's exercise now has a full worked chapter: Day 1 → Chapter 14 (Tracer), Day 2 → Chapter 15 (Buffer), Day 3 → Chapter 19 (Word Counter), plus the SDK track — Chapter 16 (the Bestiary, read first), Chapter 17 (FakeSDK) and Chapter 18 (Device SDK) — and the standalone labs: Chapter 20 (Slicing), Chapter 21 (Invalidation), Chapter 22 (Lambdas), Chapter 23 (Build Model). Do exercises cold first; read the chapter's solution and pitfalls after. The rule that makes it work: **do the exercises cold** — compiler, debugger, sanitizer, and offline docs as your only feedback loops. That trains the self-sufficiency the job requires.
 
-## The week
+### The week
 
 - **Day 0 — Setup.** IDE with /W4 (or -Wall -Wextra) and C++17. Offline cppreference archive installed. If you are targeting a specific host application or device, download its SDK now. Create notes.md — your permanent gotcha file; first entry: today's setup steps.
 - **Day 1 — Hands.** From scratch, no lookups until stuck: a class printing from ctor/dtor (watch RAII fire under the debugger); pass it by value / by ref / by move and predict output before running. Then the FileHandle RAII wrapper from memory.
@@ -2350,7 +2387,7 @@ A one-week hands-on plan (compress or stretch as needed). Each day's exercise no
 - **Day 6 — Second build (cold).** Delete yesterday's code. Rebuild using only docs, examples, and your notes. The gap between the two builds tells you exactly what to add to the notes file. If fast: extend with an owned-payload read behind your RAII guard, or whatever transactional/undo mechanism your SDK offers.
 - **Day 7 — Consolidate, then stop.** Re-read Appendix B and your notes; rewrite the Buffer one last time from memory; tidy notes into sections (C++ gotchas / API recipes / toolchain steps). Rest. Walk in curious, not depleted.
 
-## Standing drills (repeatable any time)
+### Standing drills (repeatable any time)
 
 - **Bug hunt:** write each classic bug on purpose, watch it misbehave, fix it: missing virtual destructor; auto-without-& loop; dangling lambda capture; map operator[] silent insert; erase during iteration; use-after-move; shallow-copy double-free; double-close of an SDK handle.
 - **Predict-then-run:** before every run, say out loud what will print and where each object lives (stack/heap) and dies. Wrong predictions go in the notes file.
@@ -2361,11 +2398,11 @@ A one-week hands-on plan (compress or stretch as needed). Each day's exercise no
 
 ---
 
-# Chapter 25 — Findings from Practice: a Living Log
+## Chapter 25 — Findings from Practice: a Living Log
 
 *A living log: weak spots discovered during hands-on exercises, each with the theory behind it, the broken and fixed code side by side, and the habit to build. New findings get appended as practice continues — this appendix is meant to grow.*
 
-## Finding 1 — Copy-shaped moves: a move that doesn't steal is a copy with a misleading name
+### Finding 1 — Copy-shaped moves: a move that doesn't steal is a copy with a misleading name
 
 **Found in:** the Tracer exercise — move operations written as `name = "moved from " + t.name;`.
 
@@ -2413,7 +2450,7 @@ Two details visible only in tracing code: in the move *constructor*, by the time
 
 **Habit:** a move operation's body should contain `std::move(member)` for every resource-holding member — and nothing that allocates. If you can't write it that way, question whether the operation is really a move.
 
-## Finding 2 — Member initializer list vs assignment in the body — construction happens before the brace
+### Finding 2 — Member initializer list vs assignment in the body — construction happens before the brace
 
 **Found in:** the same Tracer — all four copy/move operations assigned `name` inside the body.
 
@@ -2437,7 +2474,7 @@ Tracer(const Tracer& t) : name("copy of " + t.name) {   // one step
 
 **Habit:** the constructor body is for logic (logging, validation, registration). Member *values* belong in the initializer list — and remember they initialize in declaration order, not list order.
 
-## Finding 3 — noexcept is a promise, not a decoration
+### Finding 3 — noexcept is a promise, not a decoration
 
 **Found in:** adding `noexcept` to a move that internally allocates.
 
@@ -2449,7 +2486,7 @@ Tracer(const Tracer& t) : name("copy of " + t.name) {   // one step
 
 **Habit:** `noexcept` on every move constructor and move assignment — and a body that justifies it.
 
-## Finding 4 — Assignment must deal with what you already hold
+### Finding 4 — Assignment must deal with what you already hold
 
 **Found in:** Tracer's assignment operators — bodies identical to the constructors', which *happened* to be safe.
 
@@ -2469,7 +2506,7 @@ Correct assignment must release-then-acquire — or better, sidestep the orderin
 
 **Habit:** whenever writing `operator=`, ask first: "what happens to what I'm currently holding?" If the answer is "a member type handles it," fine — but know *which* member and *how*, because the day the member is a raw pointer, nobody handles it but you.
 
-## Finding 5 — The moved-from state: valid but unspecified
+### Finding 5 — The moved-from state: valid but unspecified
 
 **Found in:** the question "what state is `a` in?" after `Tracer c = std::move(a);`.
 
@@ -2488,7 +2525,7 @@ One corner worth knowing: **self-move** (`a = std::move(a)`) must not corrupt th
 
 **Habit:** after `std::move(x)`, mentally mark `x` as a husk: assign or destroy, nothing else.
 
-## Finding 6 — Release-before-acquire assignment: exception safety is an ordering problem
+### Finding 6 — Release-before-acquire assignment: exception safety is an ordering problem
 
 **Found in:** the Buffer exercise — copy assignment that deleted the old block, then allocated the new one.
 
@@ -2520,7 +2557,7 @@ Swap(tmp);           // noexcept pointer exchanges
 
 **Habit:** in any assignment operator, find the first line that modifies `*this` and ask: "can anything after this line throw?" If yes, reorder.
 
-## Finding 7 — `new T[n]` does not zero: indeterminate values are UB to read
+### Finding 7 — `new T[n]` does not zero: indeterminate values are UB to read
 
 **Found in:** the Buffer constructor — `data_(new int[size])`.
 
@@ -2535,7 +2572,7 @@ C# contrast worth noting: `new int[5]` in C# is always zeroed — the runtime gu
 
 **Habit:** every `new T[n]` gets `{}` unless a measured reason says otherwise — and in real code, prefer `std::vector` which value-initializes anyway.
 
-## Finding 8 — Accessors: return by reference, and provide the const-overload pair
+### Finding 8 — Accessors: return by reference, and provide the const-overload pair
 
 **Found in:** the Buffer — `int At(size_t) const` returning a copy, making the buffer write-only through its own API.
 
@@ -2552,7 +2589,7 @@ Also decide the bounds contract explicitly: `assert` (documented precondition, f
 
 **Habit:** when writing any container-like accessor, write both overloads in one motion — needing the second is the rule, not the exception.
 
-## Finding 9 — Destructors: no null checks, no dead stores
+### Finding 9 — Destructors: no null checks, no dead stores
 
 **Found in:** the Buffer destructor — `if (data_) delete[] data_; data_ = nullptr; size_ = 0;`.
 
@@ -2566,7 +2603,7 @@ Beyond style, the busywork signals a mental model worth correcting: nulling memb
 
 **Habit:** a resource-owning destructor is one line per resource. If it is longer, ask what the extra lines think they are protecting against.
 
-## Finding 10 — A clean sanitizer run is not a correctness proof
+### Finding 10 — A clean sanitizer run is not a correctness proof
 
 **Found in:** the Buffer sabotage experiments — removing the self-move guard produced "no issues," which was itself the bug.
 
@@ -2595,7 +2632,7 @@ A related mechanical lesson from the same session: **ASan halts at the first err
 
 **Habit:** every experiment and every test states its expected *values*, not just "doesn't crash." The question "what should this print?" outranks "did ASan complain?" — and a run that surprises you by being clean deserves as much scrutiny as one that fails.
 
-## Finding 11 — The Tracer as a permanent diagnostic tool
+### Finding 11 — The Tracer as a permanent diagnostic tool
 
 The exercise that surfaced Findings 1–5 is worth keeping as a reusable instrument: a class that prints from all six special member functions makes the invisible visible. Drop a Tracer into any container, function signature, or algorithm and the output tells you exactly what the compiler chose to do. Findings it demonstrated on first run:
 
@@ -2617,9 +2654,9 @@ The exercise that surfaced Findings 1–5 is worth keeping as a reusable instrum
 
 ---
 
-# Appendix A — Fundamentals Refresher
+## Appendix A — Fundamentals Refresher
 
-## A.1 Pointers and the arrow operator
+### A.1 Pointers and the arrow operator
 
 A pointer is a variable that stores a **memory address**. Two operators: `&x` = "address of x"; `*p` = "dereference p" (go to the address and get the value).
 
@@ -2643,7 +2680,7 @@ p->Draw();
 
 Rule: **object → dot, pointer → arrow.** Smart pointers overload `->` and `*`, which is why unique_ptr feels like a raw pointer. C-style APIs ask for addresses to fill in: `Thing_GetData(index, &data)` (Chapter 17) means "here is where my struct lives, write into it".
 
-## A.2 References (the & in a type)
+### A.2 References (the & in a type)
 
 Same symbol, two meanings: `&x` in an *expression* = address-of; `T&` in a *type* = **reference** — an alias, another name for an existing object.
 
@@ -2660,7 +2697,7 @@ void Rename(Widget& w) { w.name = "new"; }  // caller's actual object (C# ref)
 
 Parameter decision guide: small type (int, double, GUID) — by value; big object, read only — **`const T&`** (the workhorse of C++); need to modify caller's object — `T&`; "no object" must be valid — pointer `T*` (can be null). C has no references, which is why C-style APIs use pointers.
 
-## A.3 explicit
+### A.3 explicit
 
 A single-argument constructor doubles as an *implicit conversion* in C++. **explicit** forbids the silent conversion — like C#'s explicit vs implicit conversion operators.
 
@@ -2676,7 +2713,7 @@ Send(Buffer(5));   // OK: you clearly meant it
 
 > **Key principle:** Mark every single-argument constructor explicit unless you deliberately want implicit conversion. It costs nothing and prevents a whole category of silent bugs.
 
-## A.4 = delete (and = default)
+### A.4 = delete (and = default)
 
 Not the delete operator (which frees memory). After a function declaration, **= delete** means "this function is forbidden; calling it is a compile error." Needed because the compiler **auto-generates** copy constructor, copy assignment, destructor, and move operations — and for a class owning a resource, the auto-generated shallow copy causes a double-free.
 
@@ -2695,7 +2732,7 @@ public:
 
 std::unique_ptr's copy operations are deleted — that IS the mechanism enforcing "unique". In C#, `b = a` on a class copies a reference, so this problem cannot exist.
 
-## A.5 const in parameters and methods
+### A.5 const in parameters and methods
 
 ```cpp
 void Save(Widget w);          // safe but copies - wasteful for big objects
@@ -2713,7 +2750,7 @@ public:
 
 `const char*` = pointer to characters I won't modify (data is const); `char* const` = the pointer itself is const. Read right-to-left. Write const by reflex — const-correctness is a visible marker of current, careful C++.
 
-## A.6 What is a .lib file?
+### A.6 What is a .lib file?
 
 A **static library** is just an archive of .obj files with a symbol index (Linux: .a). At link time the library's code is **copied into your binary** — after linking you don't need the .lib anymore.
 
@@ -2731,7 +2768,7 @@ The confusing part: on Windows, DLLs ship with a companion .lib — an **import 
 
 ---
 
-# Appendix B — Core Principles (Cheat Sheet)
+## Appendix B — Core Principles (Cheat Sheet)
 
 One line each. If you can say these fluently and back them with code, the concept is yours. Good for a quick re-read before code reviews, design discussions — or any morning.
 
@@ -2817,11 +2854,11 @@ One line each. If you can say these fluently and back them with code, the concep
 
 ---
 
-# Appendix C — Working Without AI Assistants
+## Appendix C — Working Without AI Assistants
 
 If your workplace doesn't permit AI tools, the skill to build is **self-sufficiency**: answering your own questions with docs, a debugger, and memory. It is slower but not weaker — retention runs deeper precisely because every answer costs effort. The lookup-and-reason loop is a muscle; it comes back.
 
-## Your offline lifelines
+### Your offline lifelines
 
 - **cppreference.com** — the canonical C++ reference; a downloadable offline archive exists. Practice navigating it: its style is terse and standards-flavored, and reading it fluently is itself a skill. Look up vector::erase (find the invalidation notes) and string::c_str (find the lifetime rules) as training.
 - **The vendor SDK documentation** — usually ships with the SDK as local HTML; your most-opened window. Learn its structure: functions grouped by subsystem, each with requirements and error codes.
@@ -2829,7 +2866,7 @@ If your workplace doesn't permit AI tools, the skill to build is **self-sufficie
 - **Your own notes file** — every gotcha, every conversion snippet (vendor-string/UTF-8), every "how do I attach the debugger again". One searchable file. Months of accumulated snippets are what experienced add-on developers actually run on.
 - **This book** — the chapters for re-learning, Appendix B for the morning re-read, Chapter 13 for toolchain commands.
 
-## The escalation ladder when stuck
+### The escalation ladder when stuck
 
 Practice this order deliberately; most "stuck" moments dissolve at steps 1–3 if you don't skip them:
 
@@ -2841,7 +2878,7 @@ Practice this order deliberately; most "stuck" moments dissolve at steps 1–3 i
 6. **The vendor's developer forum/community** — asking is normal and accepted; answers take days, not seconds, so ask early and keep working meanwhile.
 7. **A colleague** — with the error, what you tried, and what you ruled out. That framing earns respect and faster help.
 
-## What must live in your head vs what may live in the docs
+### What must live in your head vs what may live in the docs
 
 **In your head (Appendix B material):** the Rule of Five shape, const auto& reflex, catch-by-const-reference, the erase-during-iteration fix, member initializer lists, checking every SDK error code, virtual destructors on polymorphic bases. **In the docs, guilt-free:** exact signatures, container method names, algorithm spellings, API struct fields, format specifiers. Knowing which is which removes both cramming anxiety and lookup shame.
 
@@ -2851,29 +2888,29 @@ Practice this order deliberately; most "stuck" moments dissolve at steps 1–3 i
 
 ---
 
-# Appendix D — Resources, Further Reading, and First-Week Tips
+## Appendix D — Resources, Further Reading, and First-Week Tips
 
-## C++ references and learning
+### C++ references and learning
 
 - **cppreference.com** — the daily reference. Offline archive available.
 - **learncpp.com** — free, well-sequenced tutorials; excellent for re-deriving any single topic from scratch.
 - **C++ Core Guidelines** (isocpp.github.io/CppCoreGuidelines) — Stroustrup & Sutter's "what good modern C++ looks like"; skim the sections on ownership (R.*) and classes (C.*) — they echo this book's rules with rationale.
 - **Compiler Explorer** (godbolt.org) — paste code, see the assembly and try multiple compilers instantly; unbeatable for "does this copy or move?" questions. (Online tool — for home practice if work machines are restricted.)
 
-## Books worth owning
+### Books worth owning
 
 - **A Tour of C++** (Stroustrup) — thin, modern, exactly right for an experienced developer returning; readable in days.
 - **Effective Modern C++** (Scott Meyers) — 42 concrete items on C++11/14 (auto, moves, smart pointers, lambdas); the deep version of the ownership, modern-C++, and move chapters (1, 10, 6).
 - **C++ Concurrency in Action** (Williams) — when/if threading enters your work.
 
-## Working against a vendor SDK
+### Working against a vendor SDK
 
 - The SDK's own local documentation and example projects — installed with it; treat as primary sources, and grep the examples before searching the web.
 - The vendor's developer forum or community — where the tribal knowledge lives; search before asking, ask early when needed (answers take days, not seconds).
 - The vendor's GitHub organization, if one exists — example plug-ins and helper libraries often live there, more current than the shipped samples.
 - For device work, the open ecosystems are excellent study material even if your device is proprietary: **libusb** and **HIDAPI** (USB/HID), **PortAudio** (audio I/O), **SQLite** and **zlib** (canonical C API design) — all small enough to read.
 
-## First-week questions to ask the team
+### First-week questions to ask the team
 
 Asking these early is a strength signal, not a weakness:
 
@@ -2884,7 +2921,7 @@ Asking these early is a strength signal, not a weakness:
 - What's the code review process, and is there a house style (naming, vendor vs std:: containers, error-handling conventions)?
 - Which parts of the API does our product touch most — elements, attributes, listing, dialogs, I/O?
 
-## A closing note
+### A closing note
 
 Seventeen years of C# is not baggage here — it is architecture sense, debugging instinct, and professional judgment that transfer completely. The C++-specific layer on top is finite and learnable; most of it is in these pages. The rest arrives the way it always has: one compile error, one code review, one notes-file entry at a time.
 
