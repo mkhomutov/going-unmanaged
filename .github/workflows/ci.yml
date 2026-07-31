@@ -12,7 +12,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # The repo invariant: every solution compiles and runs clean under
       # -Wall -Wextra -fsanitize=address,undefined. Must print ALL GREEN.
       - run: ./scripts/build_all.sh
