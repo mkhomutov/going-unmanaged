@@ -54,10 +54,15 @@ itself stays free of meta-commentary.
 
 - COM-style refcounting exercise (Bestiary Shape 3 has no lab)
 - Threaded-callback lab (FakeDevice stretch goal promoted to an exercise)
-- CONTRIBUTING.md extracting the README's contribution section
 - Optional: split book per-chapter under `book/` with a build script that
   concatenates — only if contributor volume justifies it
-- LICENSE copyright line still has a placeholder
+
+## Versioning
+
+Semver-ish with chapter/Finding numbering as the public contract:
+renumbering = MAJOR, appended content = MINOR, corrections = PATCH.
+Releases are annotated git tags + a CHANGELOG.md entry. Numbering freezes
+at v1.0. Full policy in CONTRIBUTING.md.
 
 ## Working with the maintainer
 

@@ -47,7 +47,13 @@ Most-wanted contributions, in order:
 3. **New exercises** — especially new SDK shapes (a COM-style refcounting lab and a threaded-callback lab are known gaps).
 4. **Translations and tooling** — build scripts, per-platform notes, anything that lowers friction.
 
-All contributed code must compile clean under the flags above; CI enforces it.
+All contributed code must compile clean under the flags above; CI enforces it. The how — including the Finding template, the ground rules, and the versioning policy (chapter numbers are the public contract; append, don't insert) — is in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Contributors
+
+- **Maksim Khomutov** — maintainer and curator; the mistakes in Chapter 25 were made personally.
+
+Accepted contributors are added here — see [CONTRIBUTING.md](CONTRIBUTING.md#attribution).
 
 ## License
 
