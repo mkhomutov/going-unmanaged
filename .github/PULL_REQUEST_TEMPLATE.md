@@ -17,6 +17,6 @@
       renumbering is a MAJOR version event (open an issue first)
 - [ ] Findings follow the Chapter 25 shape exactly:
       **Found in / The theory / broken vs fixed code / Habit**
-      (template in [CONTRIBUTING.md](../CONTRIBUTING.md))
+      (template in CONTRIBUTING.md)
 - [ ] Matches the book's voice: first-person curator, C# comparisons,
       British-neutral English; solutions use the standard library only

@@ -2,6 +2,8 @@
 
 **A Hands-On C++ Handbook for C# Developers**
 
+[![CI](https://github.com/mkhomutov/going-unmanaged/actions/workflows/ci.yml/badge.svg)](https://github.com/mkhomutov/going-unmanaged/actions/workflows/ci.yml)
+
 You have spent years in managed code — the runtime tracked your objects, the GC cleaned up after you, and "unmanaged" was the scary word in the P/Invoke docs. This handbook is the journey to the other side.
 
 ## What this is, honestly
