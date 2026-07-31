@@ -2365,7 +2365,7 @@ A one-week hands-on plan (compress or stretch as needed). Each day's exercise no
 
 *A living log: weak spots discovered during hands-on exercises, each with the theory behind it, the broken and fixed code side by side, and the habit to build. New findings get appended as practice continues — this appendix is meant to grow.*
 
-## Finding 1 Copy-shaped moves: a move that doesn't steal is a copy with a misleading name
+## Finding 1 — Copy-shaped moves: a move that doesn't steal is a copy with a misleading name
 
 **Found in:** the Tracer exercise — move operations written as `name = "moved from " + t.name;`.
 
@@ -2413,7 +2413,7 @@ Two details visible only in tracing code: in the move *constructor*, by the time
 
 **Habit:** a move operation's body should contain `std::move(member)` for every resource-holding member — and nothing that allocates. If you can't write it that way, question whether the operation is really a move.
 
-## Finding 2 Member initializer list vs assignment in the body — construction happens before the brace
+## Finding 2 — Member initializer list vs assignment in the body — construction happens before the brace
 
 **Found in:** the same Tracer — all four copy/move operations assigned `name` inside the body.
 
@@ -2437,7 +2437,7 @@ Tracer(const Tracer& t) : name("copy of " + t.name) {   // one step
 
 **Habit:** the constructor body is for logic (logging, validation, registration). Member *values* belong in the initializer list — and remember they initialize in declaration order, not list order.
 
-## Finding 3 noexcept is a promise, not a decoration
+## Finding 3 — noexcept is a promise, not a decoration
 
 **Found in:** adding `noexcept` to a move that internally allocates.
 
@@ -2449,7 +2449,7 @@ Tracer(const Tracer& t) : name("copy of " + t.name) {   // one step
 
 **Habit:** `noexcept` on every move constructor and move assignment — and a body that justifies it.
 
-## Finding 4 Assignment must deal with what you already hold
+## Finding 4 — Assignment must deal with what you already hold
 
 **Found in:** Tracer's assignment operators — bodies identical to the constructors', which *happened* to be safe.
 
@@ -2469,7 +2469,7 @@ Correct assignment must release-then-acquire — or better, sidestep the orderin
 
 **Habit:** whenever writing `operator=`, ask first: "what happens to what I'm currently holding?" If the answer is "a member type handles it," fine — but know *which* member and *how*, because the day the member is a raw pointer, nobody handles it but you.
 
-## Finding 5 The moved-from state: valid but unspecified
+## Finding 5 — The moved-from state: valid but unspecified
 
 **Found in:** the question "what state is `a` in?" after `Tracer c = std::move(a);`.
 
@@ -2487,22 +2487,6 @@ s = "reborn";      // perfectly fine - assignment gives it a value again
 One corner worth knowing: **self-move** (`a = std::move(a)`) must not corrupt the object — which is why the Buffer's move assignment carries `if (this != &other)`. Standard types survive self-move (left valid-but-unspecified); your types should too.
 
 **Habit:** after `std::move(x)`, mentally mark `x` as a husk: assign or destroy, nothing else.
-
-## Finding 6 The Tracer as a permanent diagnostic tool
-
-The exercise that surfaced all of the above is worth keeping as a reusable instrument: a class that prints from all six special member functions makes the invisible visible. Drop a Tracer into any container, function signature, or algorithm and the output tells you exactly what the compiler chose to do. Findings it demonstrated on first run:
-
-| Observation in output | Concept confirmed |
-|---|---|
-| `Tracer d = MakeTracer()` printed ONE constructor, no copy, no move | RVO / copy elision — returning by value is free |
-| `ByRef(b)` printed *nothing* | `const T&` binds directly: no construction — why it's the default parameter idiom |
-| `ByValue(std::move(b))` printed a move, not a copy | std::move selects the move overload; the parameter steals |
-| Second `push_back` printed activity for v1 too | reallocation transfers existing elements to the new block |
-| That transfer was a COPY until the move ctor was noexcept | vector's exception-safety rule (Finding 3) |
-| Every constructor line paired with exactly one destructor line | RAII bookkeeping balances — no leaks, no doubles |
-| Destructors ran in reverse construction order per scope | stack unwinding order |
-
-**Habit:** when container or call behavior is mysterious at work, reach for the Tracer before reaching for theory. Ten lines of printing beat an hour of guessing — and it requires no tools a locked-down work machine lacks.
 
 ## Finding 6 — Release-before-acquire assignment: exception safety is an ordering problem
 
@@ -2610,6 +2594,22 @@ assert(c.Size() == 5 && c.At(2) == 42);   // catches what ASan cannot
 A related mechanical lesson from the same session: **ASan halts at the first error by default**, and leak detection runs at normal program exit — so a double-free report can mask a leak that would have been reported later. To see subsequent errors, either remove the first crime from the run, or use `ASAN_OPTIONS=halt_on_error=0` to report-and-continue. And note the report-shape asymmetry: a double-free carries three stacks (access, prior free, allocation); a leak carries exactly one — the allocation — because an orphaned block's birth is the only trace it ever leaves.
 
 **Habit:** every experiment and every test states its expected *values*, not just "doesn't crash." The question "what should this print?" outranks "did ASan complain?" — and a run that surprises you by being clean deserves as much scrutiny as one that fails.
+
+## Finding 11 — The Tracer as a permanent diagnostic tool
+
+The exercise that surfaced Findings 1–5 is worth keeping as a reusable instrument: a class that prints from all six special member functions makes the invisible visible. Drop a Tracer into any container, function signature, or algorithm and the output tells you exactly what the compiler chose to do. Findings it demonstrated on first run:
+
+| Observation in output | Concept confirmed |
+|---|---|
+| `Tracer d = MakeTracer()` printed ONE constructor, no copy, no move | RVO / copy elision — returning by value is free |
+| `ByRef(b)` printed *nothing* | `const T&` binds directly: no construction — why it's the default parameter idiom |
+| `ByValue(std::move(b))` printed a move, not a copy | std::move selects the move overload; the parameter steals |
+| Second `push_back` printed activity for v1 too | reallocation transfers existing elements to the new block |
+| That transfer was a COPY until the move ctor was noexcept | vector's exception-safety rule (Finding 3) |
+| Every constructor line paired with exactly one destructor line | RAII bookkeeping balances — no leaks, no doubles |
+| Destructors ran in reverse construction order per scope | stack unwinding order |
+
+**Habit:** when container or call behavior is mysterious at work, reach for the Tracer before reaching for theory. Ten lines of printing beat an hour of guessing — and it requires no tools a locked-down work machine lacks.
 
 ---
 
@@ -2793,6 +2793,7 @@ One line each. If you can say these fluently and back them with code, the concep
 - "An interface is an abstract class: all pure virtual, virtual destructor, no data."
 - "I keep multiple inheritance to interface-style bases — that sidesteps the diamond problem entirely."
 - "Default inheritance for 'class' is private — I always write ': public Base' explicitly."
+- "I mark every single-argument constructor explicit unless I deliberately want the implicit conversion."
 - "No universal Object root — no free ToString/Equals; comparison and printing are opt-in."
 
 **Errors, casts, strings, UB**
