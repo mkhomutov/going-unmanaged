@@ -67,3 +67,15 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# macOS
+.DS_Store
+
+# Editors & IDEs
+.vscode/
+.idea/
+*.swo
+*~
+
+# Sanitizer / debug artifacts
+*.dSYM/

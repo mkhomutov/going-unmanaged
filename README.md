@@ -1,2 +1,54 @@
-# going-unmanaged
-Going Unmanaged — a hands-on C++ handbook for C# developers. 13 chapters, 10 verified exercises, two miniature SDKs (desktop-plugin and device styles), all solutions CI-tested under AddressSanitizer. MIT.
+# Going Unmanaged
+
+**A Hands-On C++ Handbook for C# Developers**
+
+You have spent years in managed code — the runtime tracked your objects, the GC cleaned up after you, and "unmanaged" was the scary word in the P/Invoke docs. This handbook is the journey to the other side.
+
+## What this is, honestly
+
+This is not a book anyone sat down and wrote — it is a working handbook I *built*, with an AI assistant (Anthropic's Claude), during my own transition back to C++ after ~17 years in C#. The AI drafted the material; I drove the process, worked through the exercises, made the real mistakes that became the Findings log (Chapter 25), and every solution in this repository is verified under a compiler with `-Wall -Wextra` and AddressSanitizer.
+
+Think of it less as an authored book and more as a curated, battle-tested collection of hands-on material — the kind of thing scattered across the internet, gathered into one coherent path for one specific journey: **managed developer goes native**.
+
+Where this text disagrees with [cppreference](https://cppreference.com) or the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/), trust them. Where you catch it being wrong — fix it (see [Contributing](#contributing)).
+
+## What's inside
+
+- **Parts I–IV (Chapters 1–13):** the syllabus — ownership and RAII, value semantics, the Rule of Five, virtual dispatch, templates vs generics, error handling, the STL, the compilation model, and the toolchain — every topic anchored in the C# knowledge you already have.
+- **Part V (Chapters 14–23):** learning by doing — ten exercises with reference solutions and pitfall analyses, including two miniature vendor SDKs written in the real-world idioms: **FakeSDK** (error codes + owned payloads, the desktop-plugin style) and **FakeDevice** (opaque handles + C callbacks, the peripheral-device style).
+- **Chapter 25:** the Findings log — real mistakes made during real practice, each with the theory behind it, broken and fixed code, and the habit to build.
+- **Appendices:** a fundamentals refresher, a one-page cheat sheet, a playbook for working without AI assistants, and curated resources.
+
+## How to use it
+
+1. Read Parts I–IV once; return by chapter when a topic resurfaces at work.
+2. Do the exercises in Part V **cold** — compiler, debugger, sanitizer, and offline docs as your only feedback loops. Read each chapter's reference solution and pitfalls only *after* your own attempt.
+3. Keep your own notes file. When an exercise teaches you something the book missed — that's a Finding, and Findings are the contribution this project most wants.
+
+### Running the exercises
+
+Every solution builds with:
+
+```bash
+g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g <files> -o out
+# (clang++ works identically; MSVC: cl /std:c++17 /W4 /EHsc /fsanitize=address)
+```
+
+The SDK exercises are two translation units: `g++ ... FakeSDK.cpp your_solution.cpp`. Both fake SDKs have built-in leak detectors that must report zero when you finish — that check is part of the exercise.
+
+## Contributing
+
+This handbook is open in the fullest sense: **contribute, and become a co-author.**
+
+Most-wanted contributions, in order:
+
+1. **Findings** — you did an exercise, hit something instructive, and can write it up in the Chapter 25 shape (*found in / theory / broken vs fixed / habit*). This is the heart of the project.
+2. **Corrections** — anywhere the text is wrong, outdated, or misleading.
+3. **New exercises** — especially new SDK shapes (a COM-style refcounting lab and a threaded-callback lab are known gaps).
+4. **Translations and tooling** — build scripts, per-platform notes, anything that lowers friction.
+
+All contributed code must compile clean under the flags above; CI enforces it.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Use it, fork it, teach from it.
