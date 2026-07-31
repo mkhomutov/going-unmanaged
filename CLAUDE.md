@@ -12,11 +12,17 @@ itself stays free of meta-commentary.
 ## Layout
 
 - `book/going-unmanaged.md` — the whole book, single file, canonical
-- `exercises/fakesdk/`, `exercises/fakedevice/` — vendor-style code users must
-  NOT edit, plus TASK.md stubs pointing at book chapters 17/18
+- `exercises/` — one directory per exercise, each with a TASK.md task card;
+  `exercises/README.md` is the index (exercise ↔ chapter ↔ solution)
+- `exercises/fakesdk/`, `exercises/fakedevice/` — also carry vendor-style code
+  users must NOT edit (contracts quoted verbatim in chapters 17/18)
+- `exercises/buildlab/` — Greeter.h/.cpp + main.cpp, the Chapter 23 starting
+  point; built by build_all.sh so the scaffold stays green
 - `solutions/` — reference solutions for all exercises
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant
-- `.github/workflows/ci.yml` — runs that script on every push/PR
+- `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
+  flags (optional 2nd arg links fakesdk/fakedevice vendor code)
+- `.github/workflows/ci.yml` — runs build_all.sh on every push/PR
 
 ## Hard invariants (never break these)
 
@@ -49,6 +55,12 @@ itself stays free of meta-commentary.
   code...") — they double as a cheat sheet (Appendix B mirrors them; keep
   the two in sync when adding one).
 - Code style in the book: 4 spaces, `name_` members, comments explain WHY.
+- Book heading scheme: H1 = parts (and the title/Appendices separators),
+  H2 = chapters and appendices, H3 = sections. The Contents section links by
+  GitHub anchor — adding a chapter means adding its TOC link too.
+- Reference solutions in exercise chapters sit inside `<details>` spoiler
+  folds ("Show the solution — do the exercise cold first"); keep that shape
+  for new exercise chapters.
 
 ## Known gaps / roadmap (good first tasks)
 
