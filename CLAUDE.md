@@ -8,9 +8,16 @@ to C++ for SDK work) together with an AI assistant. The canonical content is
 ONE file: `book/going-unmanaged.md` (6 parts, 30 chapters, appendices A–D).
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
-concurrency, authoring an ABI boundary. Chapter 29 discharges the threading
-promises made in Ch 16/18; Chapter 30 is the authoring side of Ch 16's
-Bestiary (which only teaches consuming those shapes).
+concurrency, authoring an ABI boundary, reading tool output. Chapter 29
+discharges the threading promises made in Ch 16/18; Chapter 30 is the
+authoring side of Ch 16's Bestiary (which only teaches consuming those
+shapes); Chapter 31 supplies the sanitizer reports Ch 24's Day 2 tells the
+reader to study but never shows.
+
+NOTE (platform): LeakSanitizer is NOT supported on macOS/arm64 — a leaking
+program under ASan reports nothing there. Leak coverage comes from CI/Linux.
+Chapter 31 says so; Chapter 25's Finding 10 predates that and could use the
+caveat (maintainer's call — Findings record lived experience).
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 

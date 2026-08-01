@@ -12,9 +12,17 @@ numbers may still move.
 
 ## [Unreleased]
 
-Navigation and usability, one correction, and the first five appended
+Navigation and usability, one correction, and the first six appended
 chapters; no existing chapter or Finding number changed meaning.
 
+- **New: Chapter 31 — Reading What the Tools Tell You.** Chapter 24's Day 2
+  tells the reader to read sanitizer reports "until they make sense"; the
+  book never showed one. This does: report *shapes* as a diagnostic index
+  (three stacks / two / one / none), an annotated heap-use-after-free walked
+  line by line, UBSan's report-and-exit-0 default and the two ways to make
+  it fatal, how `-O2` deletes the frames you need, and watchpoints. Notes
+  that LeakSanitizer is unsupported on macOS/arm64, so leak coverage there
+  comes from CI. Three key principles added to Appendix B.
 - **New: Chapter 30 — Authoring an ABI Boundary.** The other side of the
   Chapter 16 Bestiary, which teaches consuming vendor shapes but never
   shipping one. API vs ABI; the one rule (nothing whose layout your compiler
