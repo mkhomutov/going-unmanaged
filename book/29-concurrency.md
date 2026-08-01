@@ -218,16 +218,13 @@ sequenceDiagram
     M->>M: unregister — Device_SetCallback with nullptr
     M->>M: Device_Close — closed exactly once, as Chapter 18
     M->>K: drop sink_ — the Sink dies here, or when the callback lets go
-    D->>K: weak_ptr lock — is the Sink still there?
-    alt Sink still there
-        D->>K: take the mutex, read alive
-        alt alive is true
-            D->>K: push the sample
-        else alive is false
-            D->>D: late callback — drop the sample and return
-        end
-    else Sink already gone
+    D->>K: weak_ptr lock — is the Sink still there? then the mutex, to read alive
+    alt Sink already gone
         D->>D: lock returned empty — return, touch nothing
+    else Sink there, alive is false
+        D->>D: late callback — drop the sample and return
+    else Sink there, alive is true
+        D->>K: push the sample
     end
     Note over M,D: ctx is never freed — the SDK read that pointer before anything you write could be ordered against it
 ```
