@@ -64,8 +64,19 @@ itself stays free of meta-commentary.
 
 ## Known gaps / roadmap (good first tasks)
 
-- COM-style refcounting exercise (Bestiary Shape 3 has no lab)
-- Threaded-callback lab (FakeDevice stretch goal promoted to an exercise)
+`ROADMAP.md` is the full ranked list of missing content, with evidence and a
+sketch of what each contribution looks like. Everything on it APPENDS
+(Chapter 26+, Appendix E+) — no item requires renumbering. Short version:
+
+- Tier 1 (load-bearing): build systems/CMake, dependency management, testing,
+  concurrency — all four are subjects the book promises or implies and never
+  delivers
+- Tier 2: a real debugging chapter (an annotated ASan report), authoring an
+  ABI boundary (PIMPL/`extern "C"`), byte-level protocol work,
+  consolidated const-correctness
+- Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E)
+- Carried over: COM-style refcounting exercise (Bestiary Shape 3 has no lab);
+  threaded-callback lab (FakeDevice stretch goal promoted to an exercise)
 - Optional: split book per-chapter under `book/` with a build script that
   concatenates — only if contributor volume justifies it
 

@@ -18,7 +18,12 @@ writing it down properly.
 3. **New exercises** — especially new SDK shapes. Known gaps: a COM-style
    refcounting lab (Bestiary Shape 3 has no lab yet) and a threaded-callback
    lab (currently only a FakeDevice stretch goal).
-4. **Translations and tooling** — build scripts, per-platform notes, anything
+4. **Missing chapters** — subjects the book does not cover yet.
+   [ROADMAP.md](ROADMAP.md) is the standing list, ranked by what they cost a
+   reader who hits them unprepared: build systems, dependency management,
+   testing, and concurrency are the big four. Open an issue before starting a
+   large one, so nobody writes the same chapter twice.
+5. **Translations and tooling** — build scripts, per-platform notes, anything
    that lowers friction.
 
 ## The Finding template
