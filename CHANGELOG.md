@@ -32,7 +32,11 @@ in changed.
   shape; the forms the chapter passes through on the way to it — the first
   single-executable build, the sanitizer flags before they move onto their own
   target — live in no file and stay unverified, which is the honest limit of
-  "the snippets are under CI". Without cmake on PATH that step prints SKIPPED and
+  "the snippets are under CI". A second CI job configures and builds the same
+  file with MSVC on Windows, both ways, because the `if(MSVC)` branches had
+  never been run by anything; the first run found that an instrumented binary
+  will not start outside a Developer Command Prompt, which the file now says.
+  Without cmake on PATH that step prints SKIPPED and
   the run stays green, the bargain `check_mermaid.sh` already makes with
   `mmdc`; CI passes the new `--require-cmake`, which refuses to skip, so the
   step can never quietly vanish there. The Greeter sources are untouched, and
