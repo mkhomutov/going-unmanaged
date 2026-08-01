@@ -33,6 +33,13 @@ run "invalid"  $CXX $FLAGS20 solutions/invalid.cpp                   -o $OUT/inv
 run "lambdas"  $CXX $FLAGS   solutions/lambdas.cpp                   -o $OUT/lambdas
 # buildlab is exercise scaffolding, not a solution — but its starting point must stay green
 run "buildlab" $CXX $FLAGS   exercises/buildlab/Greeter.cpp exercises/buildlab/main.cpp -o $OUT/buildlab
+# Chapter 28's harness and suite, verbatim from the chapter. -I solutions because
+# the class under test is the Chapter 15 solution, extracted into solutions/Buffer.h
+# so a demo with main() and a test binary with its own can both include it — the
+# extraction IS what the chapter teaches. Building it under the canonical flags is
+# the chapter's own key principle: the assertions supply the workload, the
+# sanitizers supply the verdict.
+run "buffer_test" $CXX $FLAGS exercises/testlab/buffer_test.cpp -I solutions -o $OUT/buffer_test
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -44,6 +51,10 @@ $OUT/shapes > /dev/null
 $OUT/invalid > /dev/null
 $OUT/lambdas > /dev/null
 $OUT/buildlab > /dev/null
+# Not silenced: the tally is the only line in this script that says how MUCH was
+# checked, and a non-zero exit (set -e, and pipefail for the tail) is the whole
+# contract between a test binary and CI.
+$OUT/buffer_test | tail -1
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from
