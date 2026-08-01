@@ -39,7 +39,7 @@ auto w = std::make_unique<Widget>();
 The whole decision, for any object you are about to create:
 
 ```mermaid
-flowchart TD
+flowchart LR
     Q1{"Does it need to outlive the scope that created it?"} -->|No| STK["Stack object — the destructor at the closing brace is the whole story"]
     Q1 -->|Yes| Q2{"Is there one clear owner?"}
     Q2 -->|Yes| UP["std::unique_ptr — ownership moves, never copies"]
