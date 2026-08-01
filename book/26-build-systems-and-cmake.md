@@ -44,15 +44,15 @@ The same contrast as a picture — one arrow on the C# side, an extra box on our
 
 ```mermaid
 flowchart LR
-    subgraph CSHARP["C# — one step"]
-        direction LR
-        CSPROJ[".csproj — the build description"] -->|"dotnet build"| MSB["MSBuild — reads it and builds"]
-        MSB --> CSBIN["binaries"]
-    end
     subgraph CPP["C++ with CMake — two steps"]
         direction LR
         CML["CMakeLists.txt — the build description"] -->|"configure: cmake -S . -B build"| GEN["generated build system — Makefile, Ninja, .vcxproj or Xcode project"]
         GEN -->|"build: cmake --build build"| CPPBIN["binaries"]
+    end
+    subgraph CSHARP["C# — one step"]
+        direction LR
+        CSPROJ[".csproj — the build description"] -->|"dotnet build"| MSB["MSBuild — reads it and builds"]
+        MSB --> CSBIN["binaries"]
     end
 ```
 

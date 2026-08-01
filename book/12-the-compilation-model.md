@@ -16,10 +16,10 @@ Two source files, the whole pipeline, and — the part worth memorising — whic
 
 ```mermaid
 flowchart TD
-    H["Widget.h — declarations: WHAT exists"] --> PP1
     M["Main.cpp"] --> PP1["Preprocessor — pastes the header in, textually"]
-    H --> PP2
-    W["Widget.cpp — definitions: HOW it works"] --> PP2["Preprocessor — pastes the header in, textually"]
+    H["Widget.h — declarations: WHAT exists"] --> PP1
+    H --> PP2["Preprocessor — pastes the header in, textually"]
+    W["Widget.cpp — definitions: HOW it works"] --> PP2
     PP1 --> TU1["Translation unit — Main.cpp plus everything it included"]
     PP2 --> TU2["Translation unit — Widget.cpp plus everything it included"]
     TU1 --> C1["Compiler — this TU alone, no idea the other exists"]
