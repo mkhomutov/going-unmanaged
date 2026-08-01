@@ -22,8 +22,8 @@ writing it down properly.
    [ROADMAP.md](ROADMAP.md) is the standing list, ranked by what they cost a
    reader who hits them unprepared: concurrency is the biggest still open
    (build systems landed as Chapter 26, dependency management as Chapter 27,
-   testing as Chapter 28). Open an issue before starting a large one, so nobody writes
-   the same chapter twice.
+   testing as Chapter 28). Open an issue before starting a large one, so
+   nobody writes the same chapter twice.
 5. **Translations and tooling** — build scripts, per-platform notes, anything
    that lowers friction.
 

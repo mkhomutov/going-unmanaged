@@ -3002,7 +3002,7 @@ Extend the Chapter 26 project. You need no network and no third-party code: writ
 
 In C# testing is free and assumed. A test project, an attribute on a method, `dotnet test`, and the IDE grows a green tree you click. Nobody argues about which framework, because any of them work the same way and the tooling discovers your tests by reflection without being told.
 
-C++ has no built-in testing story, for the reasons Chapter 27 laid out — no standard build system to hang a `test` command on, no standard package format to ship a framework in. What it has instead is a handful of good third-party frameworks and a decision you have to make.
+C++ has no built-in testing story, for the reasons Chapters 26 and 27 laid out — no standard build system to hang a `test` command on, no standard package format to ship a framework in. What it has instead is a handful of good third-party frameworks and a decision you have to make.
 
 And it needs testing more, not less. A C# test failure is an assertion message. A C++ bug may not fail *at all* on the machine where you wrote it: undefined behavior that works in Debug and breaks in Release (Chapter 3), a use-after-free that reads plausible stale data, an ODR violation that depends on link order (Chapter 27). The whole category of failure that C# eliminated by construction is the category your tests now have to hunt — and, as this chapter's central demonstration shows, assertions alone cannot do it.
 
@@ -3024,6 +3024,7 @@ Which means you can build one, and you should, once — the same way Chapter 18 
 #include <functional>
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace tiny {
@@ -3096,6 +3097,12 @@ With `Buffer.h` extracted, the assertions write themselves — and notice what t
 #include "tiny_test.h"
 #include <vector>
 
+TEST(ConstructorZeroInitializes) {
+    Buffer a(4);
+    CHECK(a.Size() == 4);
+    CHECK(a.At(0) == 0);             // new int[n]{} zero-fills (Finding 7)
+}
+
 TEST(CopyIsDeepNotShallow) {
     Buffer a(3);
     a.At(1) = 42;
@@ -3103,6 +3110,15 @@ TEST(CopyIsDeepNotShallow) {
     copy.At(1) = 99;                 // if this were a shallow copy...
     CHECK(a.At(1) == 42);            // ...the original would read 99
     CHECK(copy.At(1) == 99);
+}
+
+TEST(CopyAssignAcrossSizes) {
+    Buffer a(2);
+    Buffer b(5);
+    b.At(4) = 7;
+    a = b;                           // the old, smaller block must be freed
+    CHECK(a.Size() == 5);
+    CHECK(a.At(4) == 7);
 }
 
 TEST(SelfAssignmentIsHarmless) {
@@ -3141,7 +3157,10 @@ Green, that reads:
 ```text
   [ ok ] ConstructorZeroInitializes
   [ ok ] CopyIsDeepNotShallow
-  ...
+  [ ok ] CopyAssignAcrossSizes
+  [ ok ] SelfAssignmentIsHarmless
+  [ ok ] MoveLeavesSourceEmptyButValid
+  [ ok ] VectorReallocationPreservesContents
 6 tests, 0 failed
 ```
 
@@ -3156,7 +3175,7 @@ and red, with the expression and location the macro captured:
 
 Exit code 1. That exit code is the entire interface between your tests and CI.
 
-### The demonstration: a green suite that is still wrong
+### The demonstration: every assertion passes and the code is still wrong
 
 Now break the Buffer the subtle way. Not the copy constructor — that would fail an assertion honestly. Break only the *null-out* in the move constructor, leaving the size exchange intact:
 
@@ -3167,7 +3186,7 @@ Buffer(Buffer&& other) noexcept
 {}
 ```
 
-Every assertion in the suite still passes. `MoveLeavesSourceEmptyButValid` checks `a.Size() == 0`, and the size *was* zeroed — the only thing wrong is that two objects now own one block, which no assertion in the file can observe. There is no value to compare. The program is simply going to free the same memory twice.
+Every assertion in the suite still passes, and that is not a prediction — it is arithmetic. `MoveLeavesSourceEmptyButValid` checks `a.Size() == 0`, and the size *was* zeroed. The only thing wrong is that two objects now own one block, and there is no value anywhere in the file that differs because of it. There is nothing to compare. The program is simply going to free the same memory twice.
 
 Run it under `-fsanitize=address,undefined` and the truth arrives:
 
@@ -3176,10 +3195,21 @@ Run it under `-fsanitize=address,undefined` and the truth arrives:
     #0 ... operator delete[]
     #1 ... Buffer::~Buffer() Buffer.h:13
     #2 ... Buffer::~Buffer() Buffer.h:13
-    #3 ... MoveLeavesSourceEmptyButValid() buffer_test.cpp:46
+    #3 ... MoveLeavesSourceEmptyButValid() buffer_test.cpp:45
 ```
 
-Two destructor frames, and the third frame names the test that did it. Exit code 134 — the process aborted rather than finishing. Without the sanitizer, the same binary prints `6 tests, 0 failed` on a good day and corrupts the heap on a bad one.
+Two destructor frames — the same block deleted twice — and the third frame names the test that did it, at the closing brace where both objects go out of scope. Exit code 134: the process aborted rather than finishing.
+
+Now compare that with what you get *without* the sanitizer. Build the identical broken code with plain `-Wall -Wextra` and run it:
+
+```text
+$ ./buffer_test ; echo "exit=$?"
+exit=133
+```
+
+No output at all. Not one `[ ok ]` line, no summary, no message — the four tests that had already passed had printed into `std::cout`'s buffer, and that buffer was never flushed, because the allocator detected the double free and killed the process on the spot. All you are left with is a number that names no file, no line, and no test. (The exact number is your allocator's business: 133 here, where macOS traps; on glibc you typically get 134 and a terse `free(): double free detected` on stderr. Neither tells you which test.)
+
+The failure has two halves, and it is worth separating them. **The suite found nothing** — every `CHECK` in the file passed. Your assertions are not merely quiet about this bug; they are structurally incapable of seeing it. **And the runtime told you almost nothing** — an unexplained death during teardown, long after the line that caused it. The sanitizer cannot fix the first half; nothing can, short of writing a different kind of check. What it fixes is the second: same workload, same bug, but now a report that names the two destructor frames and the test that ran them.
 
 This is the difference in one page. In C# a passing suite is decent evidence the code is right. In C++ a passing suite that has never run under sanitizers is weak evidence, because the entire class of ownership bugs this book is about produces *no wrong values* — it produces undefined behavior. The tests supply the workload; the sanitizer supplies the verdict.
 
@@ -3211,10 +3241,13 @@ On the build side, Chapter 26's project grows a second executable, and CTest run
 
 ```cmake
 enable_testing()
+
 add_executable(buffer_test buffer_test.cpp)
-target_link_libraries(buffer_test PRIVATE greeter)
+target_link_libraries(buffer_test PRIVATE sanitizers)  # Ch 26's INTERFACE target
 add_test(NAME buffer_test COMMAND buffer_test)
 ```
+
+Note what `buffer_test` links and what it does not. `Buffer.h` is header-only, so there is no library of Buffer code to link — but there *is* the `sanitizers` INTERFACE target from Chapter 26, and the test binary is the one target in the project that must never be built without it. If you took the other extraction route and put the implementation in a `.cpp` compiled into a library, link that library here too: the test binary links the code under test, which is the whole reason the split had to happen first.
 
 `ctest --test-dir build` then runs every registered test binary and reports pass/fail from exit codes — the same contract your forty-line harness already honours. (`--test-dir` needs CMake 3.20 or newer; on older tooling, `cd build && ctest`.)
 
