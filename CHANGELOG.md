@@ -23,7 +23,6 @@ moved.
   Finding's own thesis is that a clean sanitizer run is not a correctness
   proof, so this is the same lesson in a new form rather than an exception
   to it.
-
 - **Book:** the Contents now links to every part, chapter, and appendix;
   headings form a real hierarchy (parts H1, chapters H2, sections H3) so
   outline views work; reference solutions in exercise chapters are collapsed
@@ -35,6 +34,11 @@ moved.
   `words_sample.txt` moved to `exercises/words/`.
 - **Tooling:** `scripts/check.sh` builds and runs a learner attempt under the
   canonical flags; `build_all.sh` also builds the buildlab scaffold.
+- **Project:** [ROADMAP.md](ROADMAP.md) records the ranked list of content
+  gaps — build systems, dependency management, testing, and concurrency
+  first — with the evidence for each and a sketch of the contribution that
+  would close it. Every item appends, so none of them moves a number.
+  CONTRIBUTING.md points at it as a contribution category.
 
 ## [0.1.0] — 2026-07-31
 
