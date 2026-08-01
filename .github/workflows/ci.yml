@@ -32,6 +32,11 @@ jobs:
       # do not exist, so only that pass catches it. Fail loudly if the build
       # step above stops producing the artifact.
       - run: test -f build/going-unmanaged.md
+      # Alerts and mermaid fences render on GitHub only in a particular shape,
+      # and every way of getting it wrong is silent: no build error, no broken
+      # link, and a diff that looks fine. Runs after the build so it covers the
+      # single file too. Cannot check mermaid grammar - see the script's header.
+      - run: ./scripts/check_markup.sh
       - name: Check internal links and anchors
         uses: lycheeverse/lychee-action@v2
         with:

@@ -44,6 +44,16 @@ in changed.
   (Chapter 26), and the destructor-versus-driver-thread teardown as a
   sequence diagram (Chapter 29). GitHub renders these natively and
   `build_book.sh` carries them into the single file unchanged.
+  - **New: `scripts/check_markup.sh`**, run by the `book` job after the
+    build, so it covers the single file as well as `book/`. It enforces the
+    shape both features need on GitHub: an alert marker is one of the five
+    known types, sits at column 1 outside any `<details>` fold, has a blank
+    line before it and a blockquote body after it; a mermaid fence is
+    unindented, preceded by a blank line, and likewise outside a fold. Every
+    one of those mistakes renders wrong on GitHub while producing no build
+    error, no broken link and a diff that looks fine, so nothing else in CI
+    was ever going to catch them. Mermaid *grammar* is still unchecked — a
+    diagram with a syntax error merges green and renders as an error box.
 - **Changed: the book is now one file per chapter.** `book/going-unmanaged.md`
   (4,256 lines) became `book/01-ownership-and-raii.md` …
   `book/31-reading-what-the-tools-tell-you.md` plus `A-`…`D-<slug>.md` for the

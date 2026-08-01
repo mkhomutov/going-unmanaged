@@ -41,11 +41,15 @@ Chapter 25's Finding 10.
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
   flags (optional 2nd arg links fakesdk/fakedevice vendor code)
+- `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
+  below over `book/` and the built single file; run by CI, and worth running
+  locally after touching either. Structure only, never mermaid grammar
 - `scripts/build_book.sh` — concatenates `book/` back into the single-file
   book at `build/going-unmanaged.md` (gitignored); `--write-nav` regenerates
   the nav footers, `--check-nav` fails if one is stale
 - `.github/workflows/ci.yml` — runs build_all.sh on every push/PR, plus a
-  `book` job: build_book.sh, --check-nav, and a lychee link check
+  `book` job: build_book.sh, --check-nav, check_markup.sh, and a lychee
+  link check
   (`--offline --include-fragments`: relative links and anchors are blocking,
   external URLs are not checked). The check covers the built single file too,
   on purpose — that is what catches a cross-file link the build does not
@@ -137,7 +141,8 @@ Chapter 25's Finding 10.
   - **Fence unindented, blank line before it**, and never inside a
     `<details>` fold or a list.
   - **Render it before committing; parsing is not enough.** `mermaid.parse()`
-    proves the grammar is legal and tells you nothing about the picture. CI
+    proves the grammar is legal and tells you nothing about the picture.
+    `check_markup.sh` covers the fence's shape and nothing inside it, so CI
     cannot check this. Extract the block from the committed file, render it
     in a browser (`mermaid.render`, then `getBBox()`), and look at it:
     layout bugs are only visible drawn. The ones already paid for — a
