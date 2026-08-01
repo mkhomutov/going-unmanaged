@@ -11,7 +11,11 @@ work and writes it up; an item may also be closed as "deliberately out of
 scope" — that decision belongs in an issue, and the entry moves to
 [Deliberately out of scope](#deliberately-out-of-scope) below with the reason.
 
-**Everything on this list appends.** New chapters go at the end (Chapter 26
+Delivered items stay where they are, marked **DONE** with a pointer to the
+chapter that closed them. Item numbers get cited in issues and commit
+messages, so they never shift.
+
+**Everything on this list appends.** New chapters go at the end (Chapter 27
 onward, in whatever order they land); new appendices continue from E. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
@@ -27,30 +31,27 @@ write the same chapter twice.
 These are places where the book's own scope, or its own promises, are not yet
 met. They cost the reader in week one.
 
-### 1. Build systems
+### 1. Build systems — DONE
 
-**Missing:** any treatment of how real C++ projects are built. The book
-carries no project-file material of any kind — CMake and `.vcxproj` are never
-mentioned, and Xcode appears once, in a Chapter 13 note about pointing a
-debugger scheme at a host application.
+**Delivered:** Chapter 26 — *Build Systems and CMake*, opening the new Part VI.
+The gap was that Part IV is called *The Build and the Toolchain* and stopped at
+raw `clang++` and `cl` invocations, leaving a reader who meets a
+`CMakeLists.txt` on day one with nothing.
 
-**Evidence:** Part IV is called *The Build and the Toolchain*. Chapter 12
-explains the compilation model, Chapter 13 gives raw `clang++` and `cl`
-invocations — and there it stops. A C# developer has never invoked a compiler
-by hand in their life; they have a project file and one build command. On day
-one against a real SDK they meet a `CMakeLists.txt` and none of it is here.
-This is the largest gap between what Part IV's title promises and what it
-delivers.
+The chapter covers why a build system exists at all (header-dependency
+tracking — the answer to Chapter 23's breakage 7), CMake as a *generator*
+rather than a build tool with `.csproj`/MSBuild as the spine of the
+comparison, a worked CMakeLists for the `exercises/buildlab/` Greeter trio,
+targets and PRIVATE/PUBLIC/INTERFACE propagation, Debug vs Release, the
+handbook's sanitizer flags behind a `-DGREETER_SANITIZE=ON` option,
+`find_package` for SDK config packages, and IDE-native project files as the
+alternative reality many SDK shops actually live in.
 
-**A contribution looks like:** a chapter that takes the existing
-`exercises/buildlab/` Greeter files — already a two-file-plus-header
-program, which is exactly the minimum interesting case — and builds them with
-CMake: one target, `target_include_directories`, `target_link_libraries`,
-Debug vs Release, and the handbook's sanitizer flags wired in as a build type.
-The `.csproj` comparison is the spine: what CMake does that MSBuild also does,
-and the one thing it does that MSBuild never has to (generate a *native*
-build system, then build with it). Mention IDE-native project files as the
-alternative reality, since many SDK shops live there.
+**Still open from this item:** the chapter's CMake snippets are the only code
+in the book that `scripts/build_all.sh` does not verify. A reference
+`CMakeLists.txt` for `exercises/buildlab/` plus a CI step that runs it when
+cmake is present would put them under the same protection as everything else.
+Small, self-contained, and a good first contribution.
 
 ### 2. Dependency management
 

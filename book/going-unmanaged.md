@@ -6,7 +6,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 
 *Who this is for:* developers with solid C# (or Java) experience who once knew C++ or are learning it now, and need to become productive in a real C++ codebase — typically one built around a vendor SDK: a plug-in API for a desktop application, a peripheral-device SDK, a game or media engine, an embedded HAL. Each chapter therefore ends with an "In the wild" section connecting the concept to the C-flavored APIs you will actually meet, and Part V trains on two miniature SDKs written in those idioms.
 
-*How to use it:* Parts I–IV are the syllabus — read once, then return by chapter when a topic resurfaces at work. Part V is where knowledge becomes skill: a worked example, a practice plan, and a growing log of real findings from real exercises. The appendices are the survival kit: the fundamentals refresher, the one-page cheat sheet for any morning, and the offline-work playbook.
+*How to use it:* Parts I–IV are the syllabus — read once, then return by chapter when a topic resurfaces at work. Part V is where knowledge becomes skill: a worked example, a practice plan, and a growing log of real findings from real exercises. Part VI is the real codebase — what a project has that an exercise does not; read it when you land in one, or when the thing it covers lands on you. The appendices are the survival kit: the fundamentals refresher, the one-page cheat sheet for any morning, and the offline-work playbook.
 
 ## Contents
 
@@ -2775,11 +2775,17 @@ To get this book's canonical sanitizer build as a switch rather than a memory:
 ```cmake
 option(GREETER_SANITIZE "Build with Address and UB sanitizers" OFF)
 
-if(GREETER_SANITIZE AND NOT MSVC)
-    # PUBLIC so the flags reach every target that links this one - a program
-    # is only sanitized if ALL of it is.
-    target_compile_options(greeter PUBLIC -fsanitize=address,undefined -g)
-    target_link_options(greeter PUBLIC -fsanitize=address,undefined)
+if(GREETER_SANITIZE)
+    if(MSVC)
+        # MSVC ships ASan only - there is no /fsanitize=undefined - and its
+        # linker pulls in the runtime by itself, so no link options here.
+        target_compile_options(greeter PUBLIC /fsanitize=address)
+    else()
+        # PUBLIC so the flags reach every target that links this one: only the
+        # code compiled with them is checked.
+        target_compile_options(greeter PUBLIC -fsanitize=address,undefined -g)
+        target_link_options(greeter PUBLIC -fsanitize=address,undefined)
+    endif()
 endif()
 ```
 
@@ -2789,6 +2795,21 @@ cmake --build build && ./build/greet
 ```
 
 > **Trap:** sanitizers must be passed to **both** the compiler and the linker. Drop the `target_link_options` line and the compile succeeds, then the link collapses into a wall of undefined symbols: `"___asan_init", referenced from: _asan.module_ctor in main.cpp.o`. Read it with Chapter 12's cause list in hand and it decodes immediately — unresolved external means *a definition is missing at link time*, and the missing definitions here are the sanitizer's runtime library. The flag is how you link that library; passing it only to the compiler instruments the code and never brings the runtime along. It is the same diagnosis as a forgotten SDK .lib, wearing different symbol names.
+
+Note how far that PUBLIC actually reaches: to the targets that link `greeter`, and no further. Add a second library that never links `greeter`, and it compiles uninstrumented — no error, no warning; the code you forgot is simply never checked. Mixing instrumented and uninstrumented objects is legal, which is exactly what makes it dangerous: the build stays green and the coverage quietly shrinks. Past two or three targets, give the flags a target of their own — the INTERFACE case from the previous section, a library that compiles nothing and carries requirements:
+
+```cmake
+add_library(sanitizers INTERFACE)   # no sources; the flags ARE the target
+
+if(GREETER_SANITIZE AND NOT MSVC)   # (the MSVC branch moves across unchanged)
+    target_compile_options(sanitizers INTERFACE -fsanitize=address,undefined -g)
+    target_link_options(sanitizers INTERFACE -fsanitize=address,undefined)
+endif()
+
+target_link_libraries(greeter PUBLIC sanitizers)   # and every other target too
+```
+
+One place to change when the flag list grows, and a checklist you can read: any target not linking `sanitizers` is a target nobody is checking.
 
 ### In the wild: vendor SDKs and IDE-native projects
 
@@ -2807,7 +2828,7 @@ And the honest note: a great many native SDK shops never use CMake at all. They 
 
 ### Pitfalls
 
-- **Globbing sources.** `file(GLOB SOURCES *.cpp)` looks like a labour-saver and is a trap: CMake evaluates it at *configure* time, so a newly added file is invisible until someone re-configures — and the failure lands on whoever pulls your commit, as an unresolved external. List your sources. The diff noise is the point: adding a file to the build should be a visible act.
+- **Globbing sources.** `file(GLOB SOURCES *.cpp)` looks like a labour-saver and is a trap: CMake evaluates it at *configure* time, so a newly added file is invisible until someone re-configures — and the failure lands on whoever pulls your commit, as an unresolved external. `CONFIGURE_DEPENDS` (CMake 3.12+) buys the correctness back by re-globbing on every build, at the price of a directory scan every build — and CMake's own documentation declines to promise it works on every generator, which is a strong hint about how much weight to put on it. List your sources. The diff noise is the point: adding a file to the build should be a visible act.
 - **A stale cache.** `build/CMakeCache.txt` remembers your configure-time choices, including the compiler. Changing toolchain or fighting an inexplicable configure result: delete the build directory, don't debug the cache.
 - **`CMAKE_BUILD_TYPE` on a multi-config generator.** Visual Studio and Xcode hold all configurations at once and ignore it entirely; there you pass `--config Debug` at *build* time instead. Setting it and seeing no effect is not a bug.
 - **Mixing configurations on Windows.** Debug and Release use different C runtimes (`/MDd` vs `/MD`). A plug-in built Debug against a Release host — or against Release SDK libraries — produces link errors, or loads and corrupts memory in ways that look like your bug. Match the host's configuration; this is one of the highest-value entries your notes file will ever hold.

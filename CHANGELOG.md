@@ -22,7 +22,9 @@ existing chapter or Finding number changed meaning.
   and PRIVATE/PUBLIC propagation, build types with the handbook's sanitizer
   flags behind an option, SDK config packages, and the pitfalls. Part VI is
   the home for future appended chapters. Three key principles added to
-  Appendix B; Chapter 13 gains a forward pointer.
+  Appendix B; Chapter 13 gains a forward pointer; the book's "how to use it"
+  note, README's contents list, and ROADMAP item 1 (now marked DONE) all
+  record the new part.
 - **Correction (Chapter 25, Finding 10):** the Finding described ASan's leak
   detection running at normal program exit without noting that
   **LeakSanitizer is not supported on macOS/arm64** — where a leaking program
