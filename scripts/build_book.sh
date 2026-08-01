@@ -18,10 +18,12 @@ MODE=build
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        -o|--output) OUT="$2"; shift 2 ;;
+        -o|--output) [ $# -ge 2 ] || { echo "build_book.sh: $1 needs a path" >&2; exit 2; }
+                     OUT="$2"; shift 2 ;;
         --write-nav) MODE=write-nav; shift ;;
         --check-nav) MODE=check-nav; shift ;;
-        -h|--help)   sed -n '2,12p' "$0"; exit 0 ;;
+        # The usage block above, down to the last line of it (keep in step).
+        -h|--help)   sed -n '2,11p' "$0"; exit 0 ;;
         *) echo "build_book.sh: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -64,7 +66,9 @@ strip_nav() {
 
 # Relative file links go back to plain in-page anchors: the single file has
 # every chapter in it, so ](26-build-systems-and-cmake.md#anchor) -> ](#anchor).
-inline_links() { sed -e 's/]([^)#]*\.md#/](#/g'; }
+# Pinned to the NN-/A-D- chapter filenames on purpose: a link to a file OUTSIDE
+# book/ (../CONTRIBUTING.md#..., an external .md URL) must keep its path.
+inline_links() { sed -E 's%\]\(([0-9]{2}|[A-D])-[^)#]*\.md#%](#%g'; }
 
 case "$MODE" in
 write-nav|check-nav)
@@ -76,7 +80,10 @@ write-nav|check-nav)
         if cmp -s "$tmp" "$f"; then
             rm -f "$tmp"
         elif [ "$MODE" = write-nav ]; then
-            mv "$tmp" "$f"
+            # Copy the contents rather than mv the temp file over the top:
+            # mktemp makes it 0600, and mv would carry that onto the chapter.
+            cat "$tmp" > "$f"
+            rm -f "$tmp"
             echo "nav updated: $f"
         else
             rm -f "$tmp"
