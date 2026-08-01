@@ -27,10 +27,12 @@ and nothing renumbered — only the file the text lives in changed.
   Appendix B mirrors the key principles by name, and the labels keep the
   callouts greppable and meaningful in renderers with no alert support.
   Callouts inside `<details>` folds were left alone, since GitHub does not
-  render alerts nested in other elements. **Four mermaid diagrams** were
+  render alerts nested in other elements. **Five mermaid diagrams** were
   added next to the prose they illustrate, never replacing it: the
-  compilation pipeline with its two error classes (Chapter 12 — the one the
-  book most wanted), the "who owns this object?" decision (Chapter 1),
+  compilation pipeline in its two halves — the per-.cpp trip through
+  preprocessor, translation unit and compiler, then the single link step —
+  each labelled with the class of error it produces (Chapter 12, the pair
+  the book most wanted), the "who owns this object?" decision (Chapter 1),
   CMake's configure-then-build against MSBuild's one step (Chapter 26), and
   the destructor-versus-driver-thread teardown as a sequence diagram
   (Chapter 29). GitHub renders these natively and `build_book.sh` carries
