@@ -12,7 +12,17 @@ numbers may still move.
 
 ## [Unreleased]
 
-Navigation and usability; no chapter or Finding numbers moved.
+Navigation and usability, plus one correction; no chapter or Finding numbers
+moved.
+
+- **Correction (Chapter 25, Finding 10):** the Finding described ASan's leak
+  detection running at normal program exit without noting that
+  **LeakSanitizer is not supported on macOS/arm64** — where a leaking program
+  reports nothing at all, so a clean run means nothing about leaks. Added the
+  caveat and where Mac users should get leak coverage instead (CI/Linux). The
+  Finding's own thesis is that a clean sanitizer run is not a correctness
+  proof, so this is the same lesson in a new form rather than an exception
+  to it.
 
 - **Book:** the Contents now links to every part, chapter, and appendix;
   headings form a real hierarchy (parts H1, chapters H2, sections H3) so
