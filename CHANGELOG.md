@@ -12,9 +12,17 @@ numbers may still move.
 
 ## [Unreleased]
 
-Navigation and usability, plus one correction; no chapter or Finding numbers
-moved.
+Navigation and usability, one correction, and the first appended chapter; no
+existing chapter or Finding number changed meaning.
 
+- **New: Part VI — The Real Codebase, and Chapter 26 — Build Systems and
+  CMake.** Why a build system exists (header-dependency tracking is the
+  answer to Chapter 23's breakage 7), CMake as a *generator* rather than a
+  build tool, a worked CMakeLists for the Chapter 23 Greeter trio, targets
+  and PRIVATE/PUBLIC propagation, build types with the handbook's sanitizer
+  flags behind an option, SDK config packages, and the pitfalls. Part VI is
+  the home for future appended chapters. Three key principles added to
+  Appendix B; Chapter 13 gains a forward pointer.
 - **Correction (Chapter 25, Finding 10):** the Finding described ASan's leak
   detection running at normal program exit without noting that
   **LeakSanitizer is not supported on macOS/arm64** — where a leaking program
