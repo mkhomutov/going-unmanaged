@@ -31,8 +31,8 @@ writing it down properly.
 
 ## The Finding template
 
-Findings live in Chapter 25 of `book/going-unmanaged.md` and follow one strict
-shape: **Found in / The theory / broken-vs-fixed code / Habit**. Community
+Findings live in Chapter 25 — `book/25-findings-from-practice.md` — and follow
+one strict shape: **Found in / The theory / broken-vs-fixed code / Habit**. Community
 findings submitted via PR keep this shape. Concretely:
 
 ```markdown
@@ -67,6 +67,36 @@ Read a couple of existing Findings before writing yours — match their voice:
 honest, practical, first person, with C# comparisons where they illuminate.
 Number your Finding as the next free number at the end of the log; do not
 renumber existing ones.
+
+## Where the book lives
+
+The book is one file per chapter under [book/](book/README.md):
+`01-ownership-and-raii.md` … `31-reading-what-the-tools-tell-you.md`, then
+`A-`…`D-<slug>.md` for the appendices, with `book/README.md` carrying the
+front matter and the Contents. Concretely, for a contributor:
+
+- **Editing a chapter** — edit that one file. Nothing else moves.
+- **A new chapter** — a new `NN-<slug>.md` file appended at the end of its
+  part, plus its entry in the Contents in `book/README.md`. (New appendix:
+  the same, with a letter prefix.)
+- **Linking between chapters** — keep the GitHub anchor and put the file in
+  front of it: `](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)`.
+  Links inside the same file stay plain `](#anchor)`. Plain prose references
+  ("see Chapter 26") need no link at all.
+- **The nav footer** at the bottom of each file, between `<!-- nav:begin -->`
+  and `<!-- nav:end -->`, is generated — never hand-edit it. If you add or
+  rename a file, run `scripts/build_book.sh --write-nav` and commit the
+  result; CI fails on a stale footer.
+
+The single-file book is a build artifact, not repository content:
+
+```bash
+./scripts/build_book.sh          # -> build/going-unmanaged.md
+```
+
+It concatenates the chapters in reading order and turns the cross-file links
+back into in-page anchors. CI builds it on every push, and every tagged
+release attaches it as a download.
 
 ## Ground rules (CI enforces the first one)
 
@@ -144,7 +174,9 @@ Contribute, and become a co-author — concretely:
 ## Submitting
 
 1. Fork, branch, make your change.
-2. Run `./scripts/build_all.sh` — it must print `ALL GREEN`.
+2. Run `./scripts/build_all.sh` — it must print `ALL GREEN`. If you touched
+   `book/`, run `./scripts/build_book.sh` too (and `--write-nav` if you added
+   or renamed a file).
 3. Open a PR. Keep it focused: one Finding, one correction topic, or one
    exercise per PR.
 4. In the PR description, say which exercise or chapter the change belongs to

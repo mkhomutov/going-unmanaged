@@ -5,7 +5,10 @@
 "Going Unmanaged — A Hands-On C++ Handbook for C# Developers." A curated,
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
-ONE file: `book/going-unmanaged.md` (6 parts, 31 chapters, appendices A–D).
+the per-chapter files under `book/` — one file per chapter and appendix
+(6 parts, 31 chapters, appendices A–D), indexed by `book/README.md`. The
+single-file `going-unmanaged.md` is no longer checked in: it is a build
+artifact produced by `scripts/build_book.sh`.
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
 concurrency, authoring an ABI boundary, reading tool output. Chapter 29
@@ -23,7 +26,11 @@ Chapter 25's Finding 10.
 
 ## Layout
 
-- `book/going-unmanaged.md` — the whole book, single file, canonical
+- `book/` — the book, canonical, one file per chapter and appendix:
+  `NN-<slug>.md` for chapters 01–31, `A-`…`D-<slug>.md` for the appendices
+  (digits sort before letters, so the listing is the reading order)
+- `book/README.md` — front matter and the Contents; GitHub renders it when
+  someone opens `book/`, so it is the reader's entry point
 - `exercises/` — one directory per exercise, each with a TASK.md task card;
   `exercises/README.md` is the index (exercise ↔ chapter ↔ solution)
 - `exercises/fakesdk/`, `exercises/fakedevice/` — also carry vendor-style code
@@ -34,7 +41,17 @@ Chapter 25's Finding 10.
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
   flags (optional 2nd arg links fakesdk/fakedevice vendor code)
-- `.github/workflows/ci.yml` — runs build_all.sh on every push/PR
+- `scripts/build_book.sh` — concatenates `book/` back into the single-file
+  book at `build/going-unmanaged.md` (gitignored); `--write-nav` regenerates
+  the nav footers, `--check-nav` fails if one is stale
+- `.github/workflows/ci.yml` — runs build_all.sh on every push/PR, plus a
+  `book` job: build_book.sh, --check-nav, and a lychee link check
+  (`--offline --include-fragments`: relative links and anchors are blocking,
+  external URLs are not checked). The check covers the built single file too,
+  on purpose — that is what catches a cross-file link the build does not
+  rewrite into an in-page anchor
+- `.github/workflows/release.yml` — on a `v*` tag, builds the single file and
+  attaches it to the GitHub release
 
 ## Hard invariants (never break these)
 
@@ -54,6 +71,9 @@ Chapter 25's Finding 10.
    generality). Open-source ecosystems named as study material are fine
    (libusb, PortAudio, SQLite, Qt, Unreal, STM32 HAL, COM as a technology).
 5. Solutions never use anything beyond the standard library.
+6. The single file stays reproducible from `book/`: after ANY change there
+   run `./scripts/build_book.sh`, and `--write-nav` too if you added,
+   removed, or renamed a chapter file. CI runs both.
 
 ## Content conventions
 
@@ -68,8 +88,18 @@ Chapter 25's Finding 10.
   the two in sync when adding one).
 - Code style in the book: 4 spaces, `name_` members, comments explain WHY.
 - Book heading scheme: H1 = parts (and the title/Appendices separators),
-  H2 = chapters and appendices, H3 = sections. The Contents section links by
-  GitHub anchor — adding a chapter means adding its TOC link too.
+  H2 = chapters and appendices, H3 = sections. Unchanged by the split: a
+  part's H1 (with its intro prose) lives at the top of that part's FIRST
+  chapter file, and the `# Appendices` H1 at the top of
+  `A-fundamentals-refresher.md`.
+- Adding a chapter = a new `NN-<slug>.md` file plus its entry in
+  `book/README.md`'s Contents. Links between files keep the GitHub anchor as
+  a suffix — `](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)`
+  — because `build_book.sh` rewrites `](<file>.md#<anchor>)` back to
+  `](#<anchor>)` for the single-file build. Same-file links stay `](#anchor)`.
+- Every chapter file ends with a generated nav footer between
+  `<!-- nav:begin -->` and `<!-- nav:end -->`. Never hand-edit one: run
+  `scripts/build_book.sh --write-nav`. The single-file build strips them.
 - Reference solutions in exercise chapters sit inside `<details>` spoiler
   folds ("Show the solution — do the exercise cold first"); keep that shape
   for new exercise chapters.
@@ -92,8 +122,8 @@ stay on the list marked DONE so item numbers never shift. Short version:
 - Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E)
 - Carried over: COM-style refcounting exercise (Bestiary Shape 3 has no lab);
   threaded-callback lab (FakeDevice stretch goal promoted to an exercise)
-- Optional: split book per-chapter under `book/` with a build script that
-  concatenates — only if contributor volume justifies it
+- Structural item: splitting the book per-chapter under `book/` with a build
+  script that concatenates — DONE, see the ROADMAP entry
 
 ## Versioning
 

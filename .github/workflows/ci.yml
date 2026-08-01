@@ -16,3 +16,28 @@ jobs:
       # The repo invariant: every solution compiles and runs clean under
       # -Wall -Wextra -fsanitize=address,undefined. Must print ALL GREEN.
       - run: ./scripts/build_all.sh
+
+  book:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # The per-chapter files under book/ are canonical; the single-file book
+      # must stay buildable from them.
+      - run: ./scripts/build_book.sh
+      # The nav footers are generated, so they must match the file order.
+      - run: ./scripts/build_book.sh --check-nav
+      # The link check below covers the built single file as well as book/, on
+      # purpose: a cross-file link the build does not rewrite into an in-page
+      # anchor is still a relative link inside build/, where the chapter files
+      # do not exist, so only that pass catches it. Fail loudly if the build
+      # step above stops producing the artifact.
+      - run: test -f build/going-unmanaged.md
+      - name: Check internal links and anchors
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # --offline checks relative links and nothing else, so a flaky
+          # external site can never fail CI; --include-fragments makes the
+          # #chapter-N--title anchors blocking too. The glob picks up every
+          # markdown file in the repo plus the build/ artifact.
+          args: --offline --include-fragments --no-progress './**/*.md'
+          fail: true
