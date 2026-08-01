@@ -103,6 +103,28 @@ Chapter 25's Finding 10.
 - Reference solutions in exercise chapters sit inside `<details>` spoiler
   folds ("Show the solution — do the exercise cold first"); keep that shape
   for new exercise chapters.
+- Callouts are a `> [!TYPE]` marker line followed by a one-line blockquote
+  body that opens with the bold label. GitHub draws them as alerts; the
+  marker line is stripped of meaning everywhere else, which is why the label
+  carries the weight. Type follows from the label, not from how strongly you
+  feel about the sentence:
+  - `[!TIP]` — **Key principle:**, **The stance to hold:**, **Habit:**. The
+    book's advice, and by far the common case (29 of the 40).
+  - `[!WARNING]` — **Trap:**, **Gotcha:**. Something that compiles, runs,
+    and is wrong.
+  - `[!IMPORTANT]` — the two non-negotiable rules only: Chapter 5's virtual
+    destructor, Chapter 30's one rule. **Keep it rare.** The first pass
+    typed 31 of 40 IMPORTANT and the colour stopped saying anything — three
+    identical purple boxes closed Chapter 26 and told the reader nothing.
+    A new callout is IMPORTANT only if breaking it is a bug, not a smell.
+  - `[!NOTE]` — the C#-developer surprise: **The big reveal:**,
+    **Surprise for C# devs:**.
+  - **The bold label stays.** Appendix B mirrors the key principles by name,
+    the labels keep the callouts greppable, and they are the whole callout
+    in any renderer without alert support.
+  - **Top-level only.** GitHub does not render an alert nested inside a list
+    or a `<details>` fold. A callout that must live there stays plain bold
+    with no marker — there are none today. Blank line before the marker.
 - Diagrams are mermaid in a ```` ```mermaid ```` fence, rendered natively by
   GitHub and carried into the single file untouched. The rules:
   - **A diagram is additive.** It illustrates prose that already stands on
