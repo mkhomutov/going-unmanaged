@@ -120,6 +120,7 @@ ErrCode ReadThing(size_t index, double* sum) {
 
 Without the guard, every early `return` needs its own dispose call — the exact bug pattern legacy plug-in code is full of. Writing the guard is a five-minute investment that eliminates a whole leak class; this pattern is the workhorse of professional SDK code.
 
+> [!IMPORTANT]
 > **Key principle:** "In C++ I think in terms of ownership. Every resource has exactly one clear owner, expressed with unique_ptr or stack allocation. I basically never write new or delete by hand — raw new/delete in code is a bug waiting to happen."
 
 ---

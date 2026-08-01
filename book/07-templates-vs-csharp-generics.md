@@ -52,6 +52,7 @@ Circle* c = dynamic_cast<Circle*>(p);   // like C# 'as' - nullptr if not Circle
 if (c) c->radius = 5;
 ```
 
+> [!IMPORTANT]
 > **Key principle:** dynamic_cast is legal but culturally frowned upon — needing it often signals the virtual interface is designed wrong. "I'd prefer adding a virtual method over dynamic_cast chains."
 
 ### Trade-off summary

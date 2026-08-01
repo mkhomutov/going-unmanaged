@@ -132,6 +132,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DGREETER_SANITIZE=ON
 cmake --build build && ./build/greet
 ```
 
+> [!WARNING]
 > **Trap:** sanitizers must be passed to **both** the compiler and the linker. Drop the `target_link_options` line and the compile succeeds, then the link collapses into a wall of undefined symbols: `"___asan_init", referenced from: _asan.module_ctor in main.cpp.o`. Read it with Chapter 12's cause list in hand and it decodes immediately — unresolved external means *a definition is missing at link time*, and the missing definitions here are the sanitizer's runtime library. The flag is how you link that library; passing it only to the compiler instruments the code and never brings the runtime along. It is the same diagnosis as a forgotten SDK .lib, wearing different symbol names.
 
 Note how far that PUBLIC actually reaches: to the targets that link `greeter`, and no further. Add a second library that never links `greeter`, and it compiles uninstrumented — no error, no warning; the code you forgot is simply never checked. Mixing instrumented and uninstrumented objects is legal, which is exactly what makes it dangerous: the build stays green and the coverage quietly shrinks. Past two or three targets, give the flags a target of their own — the INTERFACE case from the previous section, a library that compiles nothing and carries requirements:
@@ -172,10 +173,13 @@ And the honest note: a great many native SDK shops never use CMake at all. They 
 - **Mixing configurations on Windows.** Debug and Release use different C runtimes (`/MDd` vs `/MD`). A plug-in built Debug against a Release host — or against Release SDK libraries — produces link errors, or loads and corrupts memory in ways that look like your bug. Match the host's configuration; this is one of the highest-value entries your notes file will ever hold.
 - **Assuming the generated build is the source of truth.** Never edit files inside `build/`. They are output. The next configure overwrites them.
 
+> [!IMPORTANT]
 > **Key principle:** "CMake doesn't build my code — it generates the thing that builds my code. Configure, then build: two steps, always."
 
+> [!IMPORTANT]
 > **Key principle:** "Requirements belong to targets, not to the whole project — PRIVATE for what I need, PUBLIC for what my consumers need too."
 
+> [!IMPORTANT]
 > **Key principle:** "I list source files, never glob them — a file joining the build should be visible in the diff."
 
 ### Try it

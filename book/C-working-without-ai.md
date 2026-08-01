@@ -26,6 +26,7 @@ Practice this order deliberately; most "stuck" moments dissolve at steps 1–3 i
 
 **In your head (Appendix B material):** the Rule of Five shape, const auto& reflex, catch-by-const-reference, the erase-during-iteration fix, member initializer lists, checking every SDK error code, virtual destructors on polymorphic bases. **In the docs, guilt-free:** exact signatures, container method names, algorithm spellings, API struct fields, format specifiers. Knowing which is which removes both cramming anxiety and lookup shame.
 
+> [!IMPORTANT]
 > **Habit:** Every surprise goes into the notes file the moment it happens — not "later". The file is only as good as its worst day.
 
 ---

@@ -41,6 +41,7 @@ clang++ -fsanitize=address,undefined -g main.cpp
 # also: MSVC /fsanitize=address, valgrind, and static analysis (clang-tidy)
 ```
 
+> [!IMPORTANT]
 > **Key principle:** "I treat warnings as errors, run sanitizers regularly, and reach for AddressSanitizer the moment anything smells like memory corruption."
 
 The plug-in angle: when your code runs inside a host application — a CAD package, a DAW, an office suite — a memory bug in your plug-in doesn't crash your plug-in. It crashes the *host*, possibly minutes later in unrelated code, taking the user's unsaved work with it. That is why the discipline in this book (RAII, ownership, invalidation rules) is the job, not pedantry.
