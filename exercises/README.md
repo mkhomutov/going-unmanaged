@@ -21,10 +21,13 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [Lambda Lifetimes](lambdas/TASK.md) | 22 | captures vs the missing GC | ~45 min | [lambdas.cpp](../solutions/lambdas.cpp) |
 | [The Build-Model Lab](buildlab/TASK.md) | 23 | error-stage triage: preprocessor / compile / link | ~45 min | none — your notes are the artifact |
 | [The Test Lab](testlab/TASK.md) | 28 | a test framework from scratch, and testing ownership | ~60 min | the files themselves: [tiny_test.h](testlab/tiny_test.h), [buffer_test.cpp](testlab/buffer_test.cpp) |
+| [The Threaded Callback](threadlab/TASK.md) | 29 | callback lifetime across a thread boundary, under TSan | ~2 h | [device_threaded_solution.cpp](../solutions/device_threaded_solution.cpp) |
 
 Chapter 24 (the practice plan) sequences everything above the test lab — the
 nine Part V exercises plus the Bestiary reading — into a one-week schedule; the
-test lab belongs to Part VI and comes later.
+last two belong to Part VI and come later. The threaded callback is the one to
+save for last: it is the Device SDK lab again with a driver thread in front of
+it, and it assumes you have already done that one cold.
 
 Two directories hold their reference in the open, rather than behind a fold.
 `buildlab/` does double duty: it is Chapter 23's lab, and Chapter 26 builds that
@@ -47,7 +50,14 @@ scripts/check.sh path/to/your.cpp                 # plain exercises
 scripts/check.sh your.cpp fakesdk                 # links the FakeSDK vendor code
 scripts/check.sh your.cpp fakedevice              # links the FakeDevice vendor code
 STD=c++20 scripts/check.sh your.cpp file.txt      # C++20 + args passed to the run
+SAN=thread scripts/check.sh your.cpp fakedevice   # ThreadSanitizer instead
 ```
 
+That last one is for the threaded lab, and it is a *second* run rather than a
+replacement: ThreadSanitizer cannot be combined with AddressSanitizer, so
+threaded code needs both builds to be checked at all (Chapter 29).
+
 Vendor code (`fakesdk/Fake*`, `fakedevice/Fake*`) is read-only: read it, compile
-it, link it — never edit it.
+it, link it — never edit it. `threadlab/` has none of its own: it links
+`fakedevice/`'s from where it lives, which is what a second lab against the same
+SDK should do.
