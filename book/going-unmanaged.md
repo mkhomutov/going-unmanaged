@@ -3623,6 +3623,8 @@ Widget& Widget::operator=(Widget&&) noexcept = default;
 int Widget::Score() const { return impl_->score; }
 ```
 
+Look at what is still in that header, though: `std::string` in an exported signature — the thing the corollary above forbids. PIMPL does not fix that and was never meant to. What it fixes is *your class's* layout drift, and what it buys you is the freedom to add private members forever. Both sides must still have been built by the same compiler with the same standard library in the same configuration, which is exactly what the first row of the table below says. If you need more reach than that, you need Technique 3.
+
 Now the proof. Compile a caller **once**, then relink it against two implementations — the second with a `std::vector`, a `double`, and reordered members added to `Impl`, the header untouched:
 
 ```text
@@ -3655,6 +3657,8 @@ extern "C" IScorer* CreateScorer(int seed);   // one unmangled symbol to find
 The implementation lives entirely in your .cpp, in an anonymous namespace, and never appears in a header. `Destroy` exists because of the whoever-allocates-frees rule — and the destructor is deliberately `protected` and non-virtual so a caller *cannot* write `delete scorer` and get it wrong. Chapter 5 taught that deleting through a base pointer without a virtual destructor is undefined behavior; here you remove the temptation at the type level.
 
 This is Bestiary Shape 3, and now you can read its constraint from the inside: **a published vtable is append-only.** The caller's compiled code reaches methods by index, so inserting a method in the middle, reordering two, or changing a signature silently rebinds every existing caller to the wrong slot — no link error, just the wrong function. Adding at the end is safe. That is the entire reason interface-based ecosystems accumulate names like `IThing2` and `IThingEx`: the second version is a *new* interface because the first one could never change.
+
+One direction only, though, and it is worth knowing which one you are in. Appending is safe when **you** are the sole implementer and the caller only consumes — the arrangement above, where your factory hands out the objects. Turn it around, as a plug-in architecture does when the *host* publishes the interface and your binary implements it, and even appending breaks: an already-compiled plug-in's vtable is short by an entry, and the host reaching for the new slot reads past the end of it. So the rule has a sharper form on that side — a published interface someone else implements can never change at all, which is why COM freezes one the day it ships and adds `IThing2` alongside it for callers to ask for by name. As the plug-in author you do not get to extend the host's interface; you implement whichever versions of it you support.
 
 ### Technique 3 — an `extern "C"` façade
 
@@ -3712,7 +3716,7 @@ The boundary is a promise, so plan for the version-two conversation before you h
 ### In the wild: shipping a plug-in
 
 - **Nothing escapes your entry points.** Every exported function is a try/catch(...) boundary that translates to an error code. This is exactly the trampoline guard of Chapter 18's stretch goal — you were writing it as a consumer, and it is the same guard you owe your host as an author.
-- **Match the host's configuration.** Chapter 27's Debug/Release runtime pitfall is now yours to document for *your* users, because they will hit it and blame you.
+- **Match the host's configuration.** Chapter 26's Debug/Release runtime pitfall is now yours to document for *your* users, because they will hit it and blame you.
 - **Static initialization across modules is not ordered.** A global in your library and a global in the host have no defined construction order relative to each other. Prefer the function-local static of Chapter 28's registry, which constructs on first use.
 - **Answer Chapter 16's four questions in your own documentation.** Who allocates, who releases and with which function, what the failure contract is, and what thread may call what. You know how much it costs when a vendor leaves one unanswered.
 

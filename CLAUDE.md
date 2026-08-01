@@ -71,16 +71,16 @@ itself stays free of meta-commentary.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 28+, Appendix E+) — no item requires renumbering. Delivered items
+(Chapter 31+, Appendix E+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
-- Tier 1 (load-bearing): testing, concurrency — both are subjects the book
-  promises or implies and never delivers. Build systems/CMake was Tier 1
-  item 1 and is now Chapter 26; dependency management was item 2 and is now
-  Chapter 27
-- Tier 2: a real debugging chapter (an annotated ASan report), authoring an
-  ABI boundary (PIMPL/`extern "C"`), byte-level protocol work,
-  consolidated const-correctness
+- Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
+  Chapter 26; dependency management was item 2 and is now Chapter 27;
+  testing was item 3 and is now Chapter 28; concurrency was item 4 and is
+  now Chapter 29
+- Tier 2: a real debugging chapter (an annotated ASan report) leads the
+  list; then byte-level protocol work and consolidated const-correctness.
+  Authoring an ABI boundary was item 6 and is now Chapter 30
 - Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E)
 - Carried over: COM-style refcounting exercise (Bestiary Shape 3 has no lab);
   threaded-callback lab (FakeDevice stretch goal promoted to an exercise)
