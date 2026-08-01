@@ -125,7 +125,7 @@ Expect one practical snag — a single-header framework will not survive
 `-Wall -Wextra` silently, so include it with `-isystem` and keep the strict
 flags meaning what they mean for our code.
 
-### 4. Concurrency — DONE
+### 4. Concurrency — DONE (chapter only; lab and TSan CI still open)
 
 **Delivered:** Chapter 29 — *Concurrency*. This was the item the book owed most
 plainly: Chapter 16 tells you to ask *"what thread calls me back?"*, Chapter 18
@@ -136,10 +136,12 @@ The chapter maps the C# model onto the C++ one (no runtime, no pool, no
 `await`; `std::thread` as a real OS thread; `lock_guard`/`scoped_lock` as RAII
 the reader already owns; `Interlocked` versus `std::atomic`), covers
 `std::thread`'s join-or-terminate obligation and `jthread`, and works the
-callback-from-a-driver-thread problem through to a correct destructor ordering:
-shared control block, alive flag published under the lock, unregister, then
-release the SDK's reference — broken and fixed versions both run under
-ThreadSanitizer.
+callback-from-a-driver-thread problem through to a correct teardown: a control
+block with its own lifetime, a weak reference handed to the SDK, an alive flag
+published under the lock, unregister — and the context deliberately never
+freed, because nothing you write can be sequenced against the SDK's load of
+that pointer. Broken and fixed versions were both run under ThreadSanitizer
+*and* AddressSanitizer; the lifetime bug is the one only ASan names reliably.
 
 **One thing came out differently than this item sketched.** The plan was to
 show that a data race is undefined behaviour rather than a wrong answer, via

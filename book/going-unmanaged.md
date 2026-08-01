@@ -3342,9 +3342,12 @@ In C#, an unsynchronized `++counter` from several threads gives you a *wrong cou
 C++ makes an unsynchronized access from two threads, where one writes, **undefined behavior** — the same category as a use-after-free (Chapter 3). Not "a wrong number": no defined behavior at all. And here is what that looks like in practice. Four threads, one hundred thousand increments each, no synchronization:
 
 ```cpp
-int counter = 0;                       // shared, unsynchronized
+int counter = 0;                       // file scope: shared, unsynchronized
+
+std::vector<std::thread> ts;
 for (int i = 0; i < 4; ++i)
     ts.emplace_back([]{ for (int j = 0; j < 100000; ++j) ++counter; });
+for (auto& t : ts) t.join();
 ```
 
 Built at `-O2` and run three times:
@@ -3440,7 +3443,7 @@ SUMMARY: ThreadSanitizer: data race vector.h:250 in std::vector<int>::__destroy_
 
 The destructor of the sample vector is racing the callback still pushing into it. Exit 134.
 
-The fix has three parts, and the ordering is the whole lesson. Give the callback **shared ownership of the state it touches**, so the state cannot die under it; publish a **flag saying the session is gone**, so a late callback drops its work instead of doing it; and only then **unregister** and release the SDK's reference.
+The fix is four moves and one omission, and the omission is the part everyone gets wrong. Move the state into a block with its own lifetime, so it cannot die under the callback; hand the SDK a **weak** reference to it, so the callback asks whether the state is still there rather than assuming; publish a **flag saying the session is gone**, so a late callback drops its work instead of doing it; and unregister.
 
 ```cpp
 struct Sink {                       // outlives the Session if a callback is late
@@ -3451,12 +3454,15 @@ struct Sink {                       // outlives the Session if a callback is lat
 
 class Session {
 public:
-    Session() : sink_(std::make_shared<Sink>()) {
-        // The SDK stores a void*; hand it its OWN owning reference, so the
-        // Sink cannot die while the driver thread is inside the trampoline.
-        ctx_ = new std::shared_ptr<Sink>(sink_);
+    explicit Session(const char* name) : sink_(std::make_shared<Sink>()) {
+        Device_Open(name, &handle_);        // error handling as in Chapter 18
+        // The SDK stores a void*. Give it a weak reference on the heap: the
+        // callback can then ASK whether the Sink is still there.
+        ctx_ = new std::weak_ptr<Sink>(sink_);
         Device_SetCallback(handle_, &Session::Trampoline, ctx_);
     }
+    Session(const Session&)            = delete;   // owns a handle: no copies
+    Session& operator=(const Session&) = delete;
 
     ~Session() {
         // 1. Publish "I am gone" under the lock. A callback already running
@@ -3464,29 +3470,39 @@ public:
         { std::lock_guard<std::mutex> g(sink_->m); sink_->alive = false; }
         // 2. Unregister, so the SDK stops dispatching into us at all.
         Device_SetCallback(handle_, nullptr, nullptr);
-        // 3. Release the SDK's reference. The Sink dies with the LAST one -
-        //    which may be the driver thread's, not ours.
-        delete ctx_;
+        // 3. Close, exactly once, as Chapter 18 - the obligation has not gone
+        //    away just because there is a thread in the picture.
+        Device_Close(handle_);
+        // 4. Drop our reference (sink_ dies with this object). The Sink goes
+        //    with it - unless a callback is inside lock() right now, in which
+        //    case it goes when that one returns. ctx_ is NOT deleted; see below.
     }
 
 private:
     static void Trampoline(int sample, void* ctx) {
-        auto& sp = *static_cast<std::shared_ptr<Sink>*>(ctx);
+        auto sp = static_cast<std::weak_ptr<Sink>*>(ctx)->lock();
+        if (!sp) return;                    // Sink is gone: nothing to do
         std::lock_guard<std::mutex> g(sp->m);
         if (!sp->alive) return;             // late callback: session is gone
         sp->samples.push_back(sample);
     }
-    DeviceHandle           handle_ = nullptr;   // opened in the ctor, as Chapter 18
-    std::shared_ptr<Sink>  sink_;
-    std::shared_ptr<Sink>* ctx_ = nullptr;
+    DeviceHandle          handle_ = nullptr;
+    std::shared_ptr<Sink> sink_;
+    std::weak_ptr<Sink>*  ctx_ = nullptr;      // deliberately never deleted
 };
 ```
 
-Twenty create-destroy cycles against a running driver thread, under TSan: clean, exit 0.
+Twenty create-destroy cycles against a running driver thread, with callbacks actually flowing: clean under TSan, and clean under `-fsanitize=address,undefined`, twenty-five runs each.
 
-Note what `shared_ptr` is doing here, because it is the one place this book recommends it without hesitation. Chapter 1 says *unique_ptr unless you can explain why shared* — and this is the explanation. Two parties genuinely co-own the sink: you, and a driver thread whose exact moment of finishing you do not control. That is the C# object-lifetime model, opted into deliberately, for exactly the reason it exists.
+Two things in that listing carry over unchanged from Chapter 18, and both are easy to drop when threads are doing the distracting. The handle is still closed exactly once — a driver thread does not repeal an obligation — and the copy operations are deleted, because this object owns a handle and a heap allocation and the Rule of Five (Chapter 5) does not care what else is going on. Moves, if you want them, would be safe to add and would need no `Rebind()`: the SDK points at the standalone holder, not at `this`. That is one more thing the extra indirection buys you.
 
-**The caveat that decides everything: read the SDK's contract.** Some SDKs guarantee that unregistering blocks until any in-flight callback has returned; there, unregister-then-close is sufficient and the machinery above is unnecessary. Some guarantee nothing, and then you need this. Some are not thread-safe at all and require that you call them only from the thread that opened the device. The pattern you write is a function of the contract you were given — and if the documentation does not say, Chapter 18's rule stands: assume a thread that isn't yours.
+**Now the missing line, and why it stays missing.** The destructor does not `delete ctx_`, and every instinct you have says it should — you allocated it, registration is over, tidy up. Doing that is a use-after-free, and no ordering saves you. To free the context safely you would have to know that no callback is in flight; the SDK loads that pointer inside its own dispatch loop, one instruction before it calls you, and nothing you write can be sequenced against that. Deleting after unregistering *looks* correct and fails intermittently — on the harness in **Try it** below, thirteen runs in twenty aborted under ASan, and the other seven exited 0 with no complaint at all.
+
+So the context outlives the session, deliberately, and what that costs is bounded: the Sink's destructor still runs on time, so the samples buffer goes back to the allocator when the last reference drops, and what stays behind per registration is a `weak_ptr` and the control block it keeps alive. (One wrinkle worth knowing, since it applies everywhere you pair the two: `make_shared` puts the object's storage *inside* that control block, so a surviving `weak_ptr` retains the Sink's own bytes as well as its bookkeeping — though not the vector's buffer. `std::shared_ptr<Sink>(new Sink)` separates them again, at the cost of a second allocation.) If you would rather not leak at all, own the holders in a container at file scope and clear it at shutdown, *after* the SDK is torn down and its thread is joined. That is the only moment when you genuinely know.
+
+Note what the two smart pointers are doing here, because this is the one place this book recommends `shared_ptr` without hesitation. Chapter 1 says *unique_ptr unless you can explain why shared* — and this is the explanation. The Sink is genuinely co-owned for a moment: by you, and by whichever callback happens to be holding it up. The `weak_ptr` is the other half of the same sentence — it says "I may observe this, and I do not keep it alive", which is exactly the SDK's relationship to your state. That is the C# object-lifetime model, opted into deliberately, for exactly the reason it exists.
+
+**The caveat that decides everything: read the SDK's contract.** Some SDKs guarantee that unregistering blocks until any in-flight callback has returned. There, unregister-then-close is sufficient, none of the machinery above is needed, and — the one thing that changes — you *can* free the context afterwards, because the SDK has told you when it stopped looking at it. Some guarantee nothing, and then you need this. Some are not thread-safe at all and require that you call them only from the thread that opened the device. The pattern you write is a function of the contract you were given — and if the documentation does not say, Chapter 18's rule stands: assume a thread that isn't yours.
 
 ### In the wild
 
@@ -3500,9 +3516,10 @@ Note what `shared_ptr` is doing here, because it is the one place this book reco
 - **A mutex per operation instead of per invariant.** Two correctly-locked calls in sequence are not one atomic operation. `if (!map.contains(k)) map.insert(...)` with a lock inside each call is still a race.
 - **`volatile`.** In C# `volatile` has real memory-model meaning. In C++ it means "this memory may change outside the program" — it is for memory-mapped hardware registers, and it provides **no** atomicity and no ordering between threads. It is not a threading tool. Use `std::atomic`.
 - **Detaching to avoid the join obligation.** `detach()` silences the terminate, and now a thread you cannot wait for is touching objects whose lifetime you were managing. It is almost always the wrong fix.
-- **Running only ASan in CI and calling it covered.** ASan and TSan cannot be combined; a build that never runs TSan has never looked for races.
+- **Freeing the callback context after unregistering.** It reads as the tidy counterpart to registering it, and unless the SDK documents that unregister waits for in-flight callbacks, it is a use-after-free you cannot order your way out of. The SDK loaded that pointer before it called you.
+- **Running only one sanitizer and calling it covered.** ASan and TSan cannot be combined, and they answer different questions: a threaded lifetime bug is a use-after-free that ASan names outright and TSan may or may not surface, depending on how the timing falls. Threaded code needs both builds.
 
-> **Key principle:** "A callback that arrives on the SDK's thread co-owns the state it touches — I give it a shared control block with an alive flag, publish the flag, unregister, and only then let go."
+> **Key principle:** "A callback that arrives on the SDK's thread can outlive the object it points at — I give it a weak reference and an alive flag, publish the flag, unregister, and never free the context the SDK still holds."
 
 ### Try it
 
@@ -3510,9 +3527,9 @@ This is Chapter 18's stretch goal, finally answerable, and it needs the FakeDevi
 
 1. **Make it threaded.** Call `Device_Poll` from a `std::thread` while your main thread also reads the collected samples. Build it under `-fsanitize=thread` and read the report. Note that you may have to run several times, or add load, before the race is *observable* — and that TSan reports it regardless.
 2. **Fix problem one.** Put a mutex around the sample collection, on both sides. Confirm TSan goes quiet, and confirm the program still produces the right samples.
-3. **Fix problem two.** Restructure so the callback holds shared ownership of the state, with the alive flag and the destructor ordering above. Then prove it: create and destroy sessions in a loop while a thread polls, and get a clean TSan run.
-4. **Break it deliberately.** Remove the alive flag but keep the shared ownership. Predict what happens before running — a late callback now pushes into a sink nobody will read, which is a leak of work rather than a crash. Then remove the shared ownership too and watch TSan report the use-after-free race. The gap between those two failures is the whole design.
-5. **Explain it out loud** (the Chapter 24 narration drill): why the flag is published *before* the unregister, why the unregister comes *before* the release, and what would break if you swapped any pair. If you can do that from memory, this chapter is yours.
+3. **Fix problem two — starting with what the device's own contract forces.** `FakeDevice.h` documents which thread the callback runs on and says *nothing* about calling the API from two threads at once, so by Chapter 16's rule it is not thread-safe: confine every `Device_*` call to the polling thread. Post registration and unregistration to it as small jobs on a mutex-guarded queue, and let the polling loop drain the queue and then poll. Notice what that buys you, because it is the point of the step: unregistering is now **deferred**, so a callback really can arrive after the `Session` is gone — you have built the non-quiescing SDK the fix above is for, out of a device that only ever calls back on one thread. Now restructure the callback to take a weak reference plus the alive flag, create and destroy sessions in a loop on the main thread while the poller runs, and get a clean run under **both** `-fsanitize=thread` and `-fsanitize=address,undefined` — separate builds, since they do not combine. Assert `FakeDevice_OpenHandles() == 0` at the end, as in Chapter 18.
+4. **Break it deliberately, one change at a time.** First put `delete ctx_` back at the end of the destructor, exactly where instinct wants it, and run the ASan build ten or twenty times rather than once. Some runs pass. That is the entire argument of this chapter arriving in your own terminal: the failing runs print `heap-use-after-free`, the passing ones print nothing, and only one of those two things is the truth about the code. Then restore the fix, remove only the alive flag, and predict before running — a late callback now pushes into a sink nobody will read, which is a leak of work rather than a crash. The gap between those two failures is the whole design.
+5. **Explain it out loud** (the Chapter 24 narration drill): why the flag is published *before* the unregister, why the callback holds a weak reference rather than a strong one, and why no ordering you can write makes deleting the context safe. If you can do that from memory, this chapter is yours.
 
 ---
 
@@ -3691,7 +3708,7 @@ One line each. If you can say these fluently and back them with code, the concep
 
 - "Every std::thread must be joined or detached before it dies, or the program terminates — I use jthread where C++20 is available, and treat a bare std::thread as a resource needing an owner."
 - "A data race in C++ is undefined behavior, not a wrong number — and it can print the right answer every time. I run threaded code under ThreadSanitizer, because there is nothing to assert."
-- "A callback that arrives on the SDK's thread co-owns the state it touches — I give it a shared control block with an alive flag, publish the flag, unregister, and only then let go."
+- "A callback that arrives on the SDK's thread can outlive the object it points at — I give it a weak reference and an alive flag, publish the flag, unregister, and never free the context the SDK still holds."
 
 **Modern C++**
 
