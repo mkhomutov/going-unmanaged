@@ -37,3 +37,7 @@ Seventeen years of C# is not baggage here — it is architecture sense, debuggin
 
 ---
 
+
+<!-- nav:begin -->
+[← Appendix C — Working Without AI Assistants](C-working-without-ai.md) · [Contents](README.md)
+<!-- nav:end -->

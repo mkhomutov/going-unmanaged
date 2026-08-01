@@ -254,3 +254,7 @@ The exercise that surfaced Findings 1–5 is worth keeping as a reusable instrum
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 24 — Practice Plan](24-practice-plan.md) · [Contents](README.md) · [Chapter 26 — Build Systems and CMake →](26-build-systems-and-cmake.md)
+<!-- nav:end -->

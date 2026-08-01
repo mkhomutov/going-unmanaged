@@ -78,3 +78,7 @@ Rewrite the pipeline with C++20 ranges (`views::filter` + `views::take`); time t
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 18 — Exercise: The Device SDK](18-exercise-the-device-sdk.md) · [Contents](README.md) · [Chapter 20 — Exercise: Slicing and Polymorphism →](20-exercise-slicing-and-polymorphism.md)
+<!-- nav:end -->

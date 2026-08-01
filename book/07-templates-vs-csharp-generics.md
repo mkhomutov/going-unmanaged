@@ -73,3 +73,7 @@ Established C++ SDKs frequently ship their own template container libraries para
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 6 — The Rule of Five and Move Semantics](06-the-rule-of-five-and-move-semantics.md) · [Contents](README.md) · [Chapter 8 — Error Handling: Exceptions and Error Codes →](08-error-handling.md)
+<!-- nav:end -->

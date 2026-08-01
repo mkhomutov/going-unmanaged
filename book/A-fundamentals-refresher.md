@@ -116,3 +116,7 @@ The confusing part: on Windows, DLLs ship with a companion .lib — an **import 
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 31 — Reading What the Tools Tell You](31-reading-what-the-tools-tell-you.md) · [Contents](README.md) · [Appendix B — Core Principles (Cheat Sheet) →](B-core-principles.md)
+<!-- nav:end -->

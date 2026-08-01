@@ -192,3 +192,7 @@ Everything here uses code you already have.
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 30 — Authoring an ABI Boundary](30-authoring-an-abi-boundary.md) · [Contents](README.md) · [Appendix A — Fundamentals Refresher →](A-fundamentals-refresher.md)
+<!-- nav:end -->

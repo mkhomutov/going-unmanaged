@@ -22,3 +22,7 @@ Half of all confusing C++ errors are build-model errors (Chapter 12). At work, a
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 22 — Exercise: Lambda Lifetimes](22-exercise-lambda-lifetimes.md) · [Contents](README.md) · [Chapter 24 — Practice Plan →](24-practice-plan.md)
+<!-- nav:end -->

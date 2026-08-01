@@ -56,3 +56,7 @@ VendorString back = VendorString::FromUtf8(utf8);
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 8 — Error Handling: Exceptions and Error Codes](08-error-handling.md) · [Contents](README.md) · [Chapter 10 — Modern C++ Fluency →](10-modern-cpp-fluency.md)
+<!-- nav:end -->

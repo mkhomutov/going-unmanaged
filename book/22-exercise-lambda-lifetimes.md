@@ -67,3 +67,7 @@ int main() {
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 21 — Exercise: Iterator Invalidation](21-exercise-iterator-invalidation.md) · [Contents](README.md) · [Chapter 23 — Exercise: The Build-Model Lab →](23-exercise-the-build-model-lab.md)
+<!-- nav:end -->

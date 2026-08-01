@@ -120,3 +120,7 @@ One line each. If you can say these fluently and back them with code, the concep
 
 ---
 
+
+<!-- nav:begin -->
+[← Appendix A — Fundamentals Refresher](A-fundamentals-refresher.md) · [Contents](README.md) · [Appendix C — Working Without AI Assistants →](C-working-without-ai.md)
+<!-- nav:end -->

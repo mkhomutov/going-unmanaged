@@ -201,3 +201,7 @@ Add the `try/catch(...)` guard to the trampoline with a `LastError()` accessor. 
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 17 — Exercise: The FakeSDK](17-exercise-the-fakesdk.md) · [Contents](README.md) · [Chapter 19 — Exercise: The Word Counter →](19-exercise-the-word-counter.md)
+<!-- nav:end -->

@@ -81,3 +81,7 @@ int main() {
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 19 — Exercise: The Word Counter](19-exercise-the-word-counter.md) · [Contents](README.md) · [Chapter 21 — Exercise: Iterator Invalidation →](21-exercise-iterator-invalidation.md)
+<!-- nav:end -->

@@ -108,3 +108,7 @@ Most actively maintained SDKs now require C++17, so all of this is usable in you
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 9 — Casts, Conversions, and Strings](09-casts-conversions-and-strings.md) · [Contents](README.md) · [Chapter 11 — STL Containers, Algorithms, and Iterator Invalidation →](11-stl-containers-and-algorithms.md)
+<!-- nav:end -->

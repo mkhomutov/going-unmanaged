@@ -185,3 +185,7 @@ int main() {
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 16 — The SDK Bestiary](16-the-sdk-bestiary.md) · [Contents](README.md) · [Chapter 18 — Exercise: The Device SDK →](18-exercise-the-device-sdk.md)
+<!-- nav:end -->

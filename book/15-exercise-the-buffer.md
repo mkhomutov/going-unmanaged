@@ -147,3 +147,7 @@ Take a working copy, break one thing at a time, build with `-fsanitize=address -
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 14 — Exercise: The Lifetime Tracer](14-exercise-the-lifetime-tracer.md) · [Contents](README.md) · [Chapter 16 — The SDK Bestiary →](16-the-sdk-bestiary.md)
+<!-- nav:end -->

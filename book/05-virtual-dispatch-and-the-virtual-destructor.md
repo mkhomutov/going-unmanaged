@@ -86,3 +86,7 @@ SDK surfaces are mostly C-style callbacks, but their C++ layers — and everythi
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 4 — Classes, Inheritance, Interfaces](04-classes-inheritance-interfaces.md) · [Contents](README.md) · [Chapter 6 — The Rule of Five and Move Semantics →](06-the-rule-of-five-and-move-semantics.md)
+<!-- nav:end -->

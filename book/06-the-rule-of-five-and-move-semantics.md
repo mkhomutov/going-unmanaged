@@ -152,3 +152,7 @@ Large C++ SDKs often ship their own unique_ptr analog (an "Owner" or "ScopedRef"
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 5 — Virtual Dispatch and the Virtual Destructor](05-virtual-dispatch-and-the-virtual-destructor.md) · [Contents](README.md) · [Chapter 7 — Templates vs C# Generics →](07-templates-vs-csharp-generics.md)
+<!-- nav:end -->

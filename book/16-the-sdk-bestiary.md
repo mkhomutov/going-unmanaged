@@ -30,3 +30,7 @@ For every SDK function you meet, answer four questions before calling it: **Who 
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 15 — Exercise: The Buffer](15-exercise-the-buffer.md) · [Contents](README.md) · [Chapter 17 — Exercise: The FakeSDK →](17-exercise-the-fakesdk.md)
+<!-- nav:end -->

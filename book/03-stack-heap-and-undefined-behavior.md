@@ -49,3 +49,7 @@ The plug-in angle: when your code runs inside a host application — a CAD packa
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 2 — Value Semantics](02-value-semantics.md) · [Contents](README.md) · [Chapter 4 — Classes, Inheritance, Interfaces →](04-classes-inheritance-interfaces.md)
+<!-- nav:end -->

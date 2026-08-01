@@ -141,3 +141,7 @@ Extend the Chapter 26 project. You need no network and no third-party code: writ
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 26 — Build Systems and CMake](26-build-systems-and-cmake.md) · [Contents](README.md) · [Chapter 28 — Testing →](28-testing.md)
+<!-- nav:end -->

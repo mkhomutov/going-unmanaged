@@ -210,3 +210,7 @@ Take something you have already written — the Chapter 15 Buffer is ideal, sinc
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 29 — Concurrency](29-concurrency.md) · [Contents](README.md) · [Chapter 31 — Reading What the Tools Tell You →](31-reading-what-the-tools-tell-you.md)
+<!-- nav:end -->

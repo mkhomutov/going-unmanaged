@@ -62,3 +62,7 @@ int main() {
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 20 — Exercise: Slicing and Polymorphism](20-exercise-slicing-and-polymorphism.md) · [Contents](README.md) · [Chapter 22 — Exercise: Lambda Lifetimes →](22-exercise-lambda-lifetimes.md)
+<!-- nav:end -->

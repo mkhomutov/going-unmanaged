@@ -288,3 +288,7 @@ The Buffer of Chapter 15 is the subject, and everything here uses the standard l
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 27 — Dependency Management](27-dependency-management.md) · [Contents](README.md) · [Chapter 29 — Concurrency →](29-concurrency.md)
+<!-- nav:end -->

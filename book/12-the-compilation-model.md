@@ -104,3 +104,7 @@ A plug-in is a DLL/bundle loaded by a host application; a device application lin
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 11 — STL Containers, Algorithms, and Iterator Invalidation](11-stl-containers-and-algorithms.md) · [Contents](README.md) · [Chapter 13 — Toolchain Quick Reference →](13-toolchain-quick-reference.md)
+<!-- nav:end -->

@@ -104,3 +104,7 @@ Vendor container libraries (Qt, Unreal, and countless in-house ones) mirror the 
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 10 — Modern C++ Fluency](10-modern-cpp-fluency.md) · [Contents](README.md) · [Chapter 12 — The Compilation Model →](12-the-compilation-model.md)
+<!-- nav:end -->

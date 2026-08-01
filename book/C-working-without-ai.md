@@ -32,3 +32,7 @@ Practice this order deliberately; most "stuck" moments dissolve at steps 1–3 i
 
 ---
 
+
+<!-- nav:begin -->
+[← Appendix B — Core Principles (Cheat Sheet)](B-core-principles.md) · [Contents](README.md) · [Appendix D — Resources, Further Reading, and First-Week Tips →](D-resources.md)
+<!-- nav:end -->

@@ -38,3 +38,7 @@ Exception-safety guarantees (worth knowing cold): **basic** — no leaks, object
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 7 — Templates vs C# Generics](07-templates-vs-csharp-generics.md) · [Contents](README.md) · [Chapter 9 — Casts, Conversions, and Strings →](09-casts-conversions-and-strings.md)
+<!-- nav:end -->

@@ -126,3 +126,7 @@ Without the guard, every early `return` needs its own dispose call — the exact
 
 ---
 
+
+<!-- nav:begin -->
+[Contents](README.md) · [Chapter 2 — Value Semantics →](02-value-semantics.md)
+<!-- nav:end -->

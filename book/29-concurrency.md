@@ -242,3 +242,7 @@ This is Chapter 18's stretch goal, finally answerable, and it needs the FakeDevi
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 28 — Testing](28-testing.md) · [Contents](README.md) · [Chapter 30 — Authoring an ABI Boundary →](30-authoring-an-abi-boundary.md)
+<!-- nav:end -->

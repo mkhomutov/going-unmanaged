@@ -191,3 +191,7 @@ Write the CMakeLists for the Greeter trio from scratch — file listed, then lib
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 25 — Findings from Practice: a Living Log](25-findings-from-practice.md) · [Contents](README.md) · [Chapter 27 — Dependency Management →](27-dependency-management.md)
+<!-- nav:end -->

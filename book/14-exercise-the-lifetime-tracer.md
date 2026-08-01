@@ -210,3 +210,7 @@ Eleven constructions, eleven destructions — balanced books, no leaks. Destruct
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 13 — Toolchain Quick Reference](13-toolchain-quick-reference.md) · [Contents](README.md) · [Chapter 15 — Exercise: The Buffer →](15-exercise-the-buffer.md)
+<!-- nav:end -->

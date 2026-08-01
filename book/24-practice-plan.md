@@ -24,3 +24,7 @@ A one-week hands-on plan (compress or stretch as needed). Each day's exercise no
 
 ---
 
+
+<!-- nav:begin -->
+[← Chapter 23 — Exercise: The Build-Model Lab](23-exercise-the-build-model-lab.md) · [Contents](README.md) · [Chapter 25 — Findings from Practice: a Living Log →](25-findings-from-practice.md)
+<!-- nav:end -->
