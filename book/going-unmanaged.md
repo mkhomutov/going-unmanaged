@@ -2864,7 +2864,7 @@ C++ has none of it. No official registry, no standard package format, no standar
 
 A NuGet package ships IL. IL is portable across compilers (there is effectively one), across standard library versions, and across Debug and Release, because the runtime is the thing that varies and it stays compatible on purpose. One artifact, everyone's machine.
 
-A compiled C++ library is not portable in any of those directions. To link against a binary it must match your **compiler and its version** (an MSVC toolset bump can change name mangling and class layout), your **standard library implementation** (libstdc++ and libc++ have different `std::string` layouts — Chapter 12's ABI note, made expensive), your **configuration** (Debug and Release use different C runtimes on Windows, and mixing them corrupts memory), your **architecture**, and your **platform**. Publishing prebuilt binaries means publishing the cross product of all of those, and it is never complete.
+A compiled C++ library is not portable in any of those directions. To link against a binary it must match your **compiler and its version** (an MSVC toolset bump can change name mangling and class layout), your **standard library implementation** (libstdc++ and libc++ have different `std::string` layouts — Chapter 12's DLL-boundary note, made expensive), your **configuration** (Debug and Release use different C runtimes on Windows, and mixing them corrupts memory), your **architecture**, and your **platform**. Publishing prebuilt binaries means publishing the cross product of all of those, and it is never complete.
 
 So the C++ world mostly gave up on shipping binaries and ships **source** instead, which you build with your toolchain, so everything matches by construction. That single fact explains why the answer to "how do I add a library" is usually "get its source into your build" rather than "install a package".
 
@@ -2905,9 +2905,12 @@ A git submodule achieves the same thing by a different route. Both give reproduc
 {
   "name": "my-app",
   "version": "0.1.0",
-  "dependencies": [ "fmt", "zlib" ]
+  "dependencies": [ "fmt", "zlib" ],
+  "builtin-baseline": "<40-character commit hash of the vcpkg registry>"
 }
 ```
+
+That last field is the one newcomers leave out and later regret. The dependency list says *which* libraries; the baseline says *which registry state* their versions are read from, and it is the actual pin — the lock file C++ otherwise does not have. Omit it and the versions you get are whatever your clone of vcpkg happens to be sitting at, which is the floating-version problem in a different costume. `vcpkg x-update-baseline --add-initial-baseline` writes it for you.
 
 Consumed by pointing CMake at the package manager's toolchain file, after which `find_package(fmt CONFIG REQUIRED)` works and you link `fmt::fmt` like any other target. Note what it is still doing underneath: building those libraries *from source* with your compiler, then caching the result. The manifest is the convenience; the compile is still happening.
 
@@ -2933,9 +2936,15 @@ Two of your dependencies each want a different version of a third. In C# this is
 In C++ there is no resolver, no unification, and no redirect. If two versions of the same library reach one binary, you have violated the One Definition Rule — the same class name with two different definitions in one program — and the standard's response is that your program is ill-formed, no diagnostic required. Here is what that actually looks like. A `Config` struct gains a field in v2, *before* the existing one:
 
 ```cpp
-// v1.h                                  // v2.h
-struct Config { int timeout; };          struct Config { int retries; int timeout; };
-inline int GetTimeout(const Config& c) { return c.timeout; }   // identical in both
+// v1.h
+struct Config { int timeout; };
+inline int GetTimeout(const Config& c) { return c.timeout; }
+```
+
+```cpp
+// v2.h
+struct Config { int retries; int timeout; };   // the new field went FIRST
+inline int GetTimeout(const Config& c) { return c.timeout; }   // byte-identical to v1's
 ```
 
 One part of the program is compiled against v1, the rest against v2, and they are linked together. The linker says nothing at all — it exits 0 with no diagnostic, because `GetTimeout` is inline, so it appears in both object files as a mergeable symbol and the linker does exactly what it is designed to do: keeps one, discards the other. Which one survives depends on link order. Running it:
