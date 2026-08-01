@@ -54,12 +54,28 @@ nav_block() {
 # Everything in a chapter file except its nav footer (and the blank line that
 # separates the footer from the text). This is what the single file gets.
 strip_nav() {
-    awk '
+    awk -v f="$1" '
         { line[NR] = $0 }
         END {
-            n = NR
+            navs = 0
             for (i = 1; i <= NR; i++)
-                if (line[i] == "<!-- nav:begin -->") { n = (line[i-1] == "") ? i - 2 : i - 1; break }
+                if (line[i] == "<!-- nav:begin -->") navs++
+            last = NR
+            while (last > 0 && line[last] == "") last--
+            n = NR
+            if (navs > 0) {
+                # A marker that is not the trailing footer is ambiguous: cutting
+                # there would lose text, and appending would leave two footers.
+                # Say so instead of quietly doing either.
+                if (line[last] != "<!-- nav:end -->") {
+                    printf "build_book.sh: %s: <!-- nav:begin --> found, but the file does not end with the footer\n", f > "/dev/stderr"
+                    exit 3
+                }
+                # Scan back from the end, so a chapter that quotes the markers
+                # in its own prose keeps that text.
+                for (i = last; i >= 1; i--)
+                    if (line[i] == "<!-- nav:begin -->") { n = (line[i-1] == "") ? i - 2 : i - 1; break }
+            }
             for (i = 1; i <= n; i++) print line[i]
         }' "$1"
 }

@@ -47,7 +47,9 @@ Chapter 25's Finding 10.
 - `.github/workflows/ci.yml` — runs build_all.sh on every push/PR, plus a
   `book` job: build_book.sh, --check-nav, and a lychee link check
   (`--offline --include-fragments`: relative links and anchors are blocking,
-  external URLs are not checked)
+  external URLs are not checked). The check covers the built single file too,
+  on purpose — that is what catches a cross-file link the build does not
+  rewrite into an in-page anchor
 - `.github/workflows/release.yml` — on a `v*` tag, builds the single file and
   attaches it to the GitHub release
 
