@@ -79,36 +79,51 @@ third-party dependency, the vendoring conventions this chapter describes
 (record the version and any local patch next to the code) should become a
 CONTRIBUTING rule rather than only chapter advice.
 
-### 3. Testing
+### 3. Testing — DONE (chapter only; repo wiring still open)
 
-**Missing:** unit testing, entirely. No gtest, Catch2, or doctest.
+**Delivered:** Chapter 28 — *Testing*. The gap was that the feedback loop on
+offer was "compile, run, read stdout", for a reader arriving from a world where
+xUnit or NUnit is table stakes.
 
-**Evidence:** zero hits. For an exercise-driven handbook written for someone
-arriving from a world where xUnit or NUnit is table stakes, the feedback loop
-on offer is currently "compile, run, read stdout". The book's own practice
-plan leans on prediction and observation, which is good pedagogy — but it
-should be a deliberate choice the reader makes, not an absence they discover.
+**It took a different route than this item sketched, deliberately.** Rather than
+vendoring doctest or Catch2, the chapter has the reader *build* a test framework
+in forty lines of standard library, and only then introduces the real ones. The
+reason is that the macro machinery is the lesson: C++ has no reflection and no
+`[CallerLineNumber]`, so a framework must capture the expression text and the
+call site at compile time, and that is *why* every C++ test framework looks the
+way it does. Writing one makes the shape obvious; installing one hides it. The
+side effect is that the ground-rule question below never had to be answered —
+no third-party code entered the repo, and **solutions use the standard library
+only** still holds unqualified.
 
-**A contribution looks like:** a chapter using one single-header framework
-(doctest or Catch2 — pick for zero-install, since the reader may be on a
-locked-down work machine), retrofitting tests onto an exercise the reader has
-already written — the Buffer of Chapter 15 is the obvious candidate, because
-its Rule of Five behaviour is exactly what assertions capture well. Wire the
-test binary into `scripts/build_all.sh` in the same PR so the invariant keeps
-holding.
+The chapter also lands two things the sketch did not anticipate: testability is
+*structural* (the Chapter 15 Buffer cannot be tested where it lives, because a
+.cpp with `main()` cannot link into a test binary that has its own — so the
+Chapter 26 library split is the precondition for testing anything), and
+assertions alone are not enough in C++ — a break that leaves every assertion
+passing while ASan reports a double-free, because ownership bugs produce no
+wrong values.
 
-This is the one item on the list that touches a ground rule, so be deliberate
-about it: **solutions use the standard library only** (CONTRIBUTING.md), and a
-vendored framework header is the only third-party code the repo would carry.
-The resolution already exists in `build_all.sh` — `exercises/buildlab/` is
-built and run there while being scaffolding rather than a solution. A test
-framework is the same kind of thing: the header belongs under `exercises/`,
-`solutions/` stays stdlib-only and independently buildable without it, and the
-test binary is a third category the script builds to keep it green. Expect one
-practical snag — a single-header framework will not survive `-Wall -Wextra`
-silently, so include it with `-isystem` and keep the strict flags meaning what
-they mean for our code. Open an issue before starting; this one changes a rule
-rather than only adding a chapter.
+**Still open from this item:** the test binary is not in `scripts/build_all.sh`,
+so the chapter's harness and suite are — like Chapter 26's CMake snippets —
+book code that CI does not verify. Wiring it up needs one decision first: the
+suite tests a Buffer, and the Buffer currently lives in `solutions/buffer.cpp`
+next to a `main()`, which is precisely the structural problem the chapter is
+about. Extracting it to a header shared by the demo and the tests is the honest
+fix; duplicating it is not. That is a contained, well-defined contribution, and
+it would make the chapter's central claim true of this repository too.
+
+The ground-rule analysis below still applies if anyone later vendors a real
+framework, so it is kept rather than deleted: **solutions use the standard
+library only** (CONTRIBUTING.md), and a vendored framework header would be the
+only third-party code the repo carries. The precedent is in `build_all.sh` —
+`exercises/buildlab/` is built and run there while being scaffolding rather than
+a solution. A test framework is the same kind of thing: the header belongs under
+`exercises/`, `solutions/` stays stdlib-only and independently buildable without
+it, and the test binary is a third category the script builds to keep it green.
+Expect one practical snag — a single-header framework will not survive
+`-Wall -Wextra` silently, so include it with `-isystem` and keep the strict
+flags meaning what they mean for our code.
 
 ### 4. Concurrency
 
