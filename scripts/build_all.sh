@@ -52,9 +52,14 @@ $OUT/invalid > /dev/null
 $OUT/lambdas > /dev/null
 $OUT/buildlab > /dev/null
 # Not silenced: the tally is the only line in this script that says how MUCH was
-# checked, and a non-zero exit (set -e, and pipefail for the tail) is the whole
-# contract between a test binary and CI.
-$OUT/buffer_test | tail -1
+# checked, and a non-zero exit is the whole contract between a test binary and
+# CI. But green and red want different amounts of output, so the run is captured
+# rather than piped: on green, the tally alone; on red, every line - the FAILED
+# expression and its file:line, which is the entire reason Chapter 28's CHECK is
+# a macro. Piping to `tail -1` would throw exactly that away and leave a CI log
+# saying a test failed without saying which.
+$OUT/buffer_test > "$OUT/buffer_test.log" || { cat "$OUT/buffer_test.log"; exit 1; }
+tail -1 "$OUT/buffer_test.log"
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from
