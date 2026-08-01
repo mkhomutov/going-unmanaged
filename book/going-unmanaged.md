@@ -2630,6 +2630,8 @@ assert(c.Size() == 5 && c.At(2) == 42);   // catches what ASan cannot
 
 A related mechanical lesson from the same session: **ASan halts at the first error by default**, and leak detection runs at normal program exit — so a double-free report can mask a leak that would have been reported later. To see subsequent errors, either remove the first crime from the run, or use `ASAN_OPTIONS=halt_on_error=0` to report-and-continue. And note the report-shape asymmetry: a double-free carries three stacks (access, prior free, allocation); a leak carries exactly one — the allocation — because an orphaned block's birth is the only trace it ever leaves.
 
+One platform caveat belongs here more than anywhere else in the book, because it is this same Finding wearing different clothes: **LeakSanitizer is not available on macOS/arm64.** Ask for it and it tells you so — `detect_leaks is not supported on this platform` — which means that on Apple silicon a leaking program under ASan reports nothing whatsoever, and the run comes back clean for a reason that has nothing to do with your code. Everything above about leaks assumes a platform that detects them; Linux does, and that is what this repository's CI runs. On a Mac, read "no leak report" as *no information*, and get leak coverage from CI or a Linux container before believing a program does not leak.
+
 **Habit:** every experiment and every test states its expected *values*, not just "doesn't crash." The question "what should this print?" outranks "did ASan complain?" — and a run that surprises you by being clean deserves as much scrutiny as one that fails.
 
 ### Finding 11 — The Tracer as a permanent diagnostic tool
