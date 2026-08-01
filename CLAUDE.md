@@ -5,7 +5,7 @@
 "Going Unmanaged — A Hands-On C++ Handbook for C# Developers." A curated,
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
-ONE file: `book/going-unmanaged.md` (6 parts, 30 chapters, appendices A–D).
+ONE file: `book/going-unmanaged.md` (6 parts, 31 chapters, appendices A–D).
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
 concurrency, authoring an ABI boundary, reading tool output. Chapter 29
@@ -13,13 +13,13 @@ discharges the threading promises made in Ch 16/18; Chapter 30 is the
 authoring side of Ch 16's Bestiary (which only teaches consuming those
 shapes); Chapter 31 supplies the sanitizer reports Ch 24's Day 2 tells the
 reader to study but never shows.
-
-NOTE (platform): LeakSanitizer is NOT supported on macOS/arm64 — a leaking
-program under ASan reports nothing there. Leak coverage comes from CI/Linux.
-Chapter 31 says so; Chapter 25's Finding 10 predates that and could use the
-caveat (maintainer's call — Findings record lived experience).
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
+
+NOTE (platform): LeakSanitizer is NOT supported on macOS/arm64 — a leaking
+program under ASan reports nothing there, so a clean run says nothing about
+leaks. Leak coverage comes from CI/Linux. Stated in Chapter 31 and in
+Chapter 25's Finding 10.
 
 ## Layout
 
@@ -78,16 +78,17 @@ itself stays free of meta-commentary.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 31+, Appendix E+) — no item requires renumbering. Delivered items
+(Chapter 32+, Appendix E+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
   Chapter 26; dependency management was item 2 and is now Chapter 27;
   testing was item 3 and is now Chapter 28; concurrency was item 4 and is
   now Chapter 29
-- Tier 2: a real debugging chapter (an annotated ASan report) leads the
-  list; then byte-level protocol work and consolidated const-correctness.
-  Authoring an ABI boundary was item 6 and is now Chapter 30
+- Tier 2: byte-level protocol work (item 7) leads the list, then
+  consolidated const-correctness (item 8). Authoring an ABI boundary was
+  item 6 and is now Chapter 30; the debugging chapter was item 5 and is now
+  Chapter 31
 - Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E)
 - Carried over: COM-style refcounting exercise (Bestiary Shape 3 has no lab);
   threaded-callback lab (FakeDevice stretch goal promoted to an exercise)

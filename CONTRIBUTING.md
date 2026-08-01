@@ -22,9 +22,10 @@ writing it down properly.
    [ROADMAP.md](ROADMAP.md) is the standing list, ranked by what they cost a
    reader who hits them unprepared. Tier 1 is now closed — build systems,
    dependency management, testing and concurrency landed as Chapters 26-29,
-   and authoring an ABI boundary as Chapter 30 — so a debugging chapter leads
-   the list. Open an issue before starting a large one, so nobody writes the
-   same chapter twice.
+   authoring an ABI boundary as Chapter 30 and the debugging chapter as
+   Chapter 31 — so byte-level protocol work and const-correctness now lead.
+   Open an issue before starting a large one, so nobody writes the same
+   chapter twice.
 5. **Translations and tooling** — build scripts, per-platform notes, anything
    that lowers friction.
 

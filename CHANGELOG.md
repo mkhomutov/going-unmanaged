@@ -22,7 +22,11 @@ chapters; no existing chapter or Finding number changed meaning.
   line by line, UBSan's report-and-exit-0 default and the two ways to make
   it fatal, how `-O2` deletes the frames you need, and watchpoints. Notes
   that LeakSanitizer is unsupported on macOS/arm64, so leak coverage there
-  comes from CI. Three key principles added to Appendix B.
+  comes from CI — the finding that prompted the Finding 10 caveat below.
+  Three key principles added to Appendix B; README's and CONTRIBUTING's lists
+  record it, and ROADMAP item 5 is marked DONE. `scripts/check.sh` was
+  verified against the UBSan behaviour the chapter documents and is correct
+  as written.
 - **New: Chapter 30 — Authoring an ABI Boundary.** The other side of the
   Chapter 16 Bestiary, which teaches consuming vendor shapes but never
   shipping one. API vs ABI; the one rule (nothing whose layout your compiler
