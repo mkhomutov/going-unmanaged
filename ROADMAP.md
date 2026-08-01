@@ -53,23 +53,31 @@ in the book that `scripts/build_all.sh` does not verify. A reference
 cmake is present would put them under the same protection as everything else.
 Small, self-contained, and a good first contribution.
 
-### 2. Dependency management
+### 2. Dependency management — DONE
 
-**Missing:** how a third-party library gets into your build. No mention of
-vcpkg, Conan, git submodules, or vendoring source into the repo.
+**Delivered:** Chapter 27 — *Dependency Management*. The gap was that "there is
+no NuGet" is one of the genuine shocks of the transition, and "how do I add a
+library" was a week-one question the handbook could not answer.
 
-**Evidence:** zero hits across the book. "There is no NuGet" is one of the
-genuine shocks of the transition, and "how do I add a library" is a week-one
-question the handbook currently cannot answer.
+The chapter leads with *why* rather than the mechanics, because the reason
+explains every strategy that follows: a NuGet package ships IL and runs
+anywhere the runtime does, while a compiled C++ library is valid for exactly
+one compiler, one standard library, one configuration and one architecture — so
+the ecosystem ships source you build yourself, and everything matches by
+construction. Then the four strategies (vendored, fetched-and-pinned, package
+manager, SDK-provided), why header-only libraries are disproportionately
+common, the SDK as the dependency you do not control, and the diamond problem
+— where two versions of one library in a binary is a *silent* ODR violation
+whose answer changes with link order.
 
-**A contribution looks like:** a section (natural companion to item 1, and
-could share its chapter) covering the four real strategies — package manager,
-submodule, vendored source, system-installed — with the honest note that
-which one you use is usually decided by the team before you arrive, and that
-vendored source is far more common in SDK work than newcomers expect.
+The book's own rule survived intact: the chapter teaches the landscape and adds
+no dependency to the repo, and its exercise has the reader write the dependency
+themselves so it works offline and stdlib-only.
 
-Keep the book's own rule intact: **solutions use the standard library only**.
-This chapter teaches the landscape; it does not add a dependency to the repo.
+**Still open from this item:** nothing blocking. If the repo ever does take a
+third-party dependency, the vendoring conventions this chapter describes
+(record the version and any local patch next to the code) should become a
+CONTRIBUTING rule rather than only chapter advice.
 
 ### 3. Testing
 

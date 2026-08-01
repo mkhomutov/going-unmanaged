@@ -25,6 +25,15 @@ existing chapter or Finding number changed meaning.
   Appendix B; Chapter 13 gains a forward pointer; the book's "how to use it"
   note, README's contents list, and ROADMAP item 1 (now marked DONE) all
   record the new part.
+- **New: Chapter 27 — Dependency Management.** Why C++ has no NuGet (a
+  compiled binary is valid for exactly one compiler, standard library,
+  configuration and architecture, so libraries ship as source); the four
+  strategies — vendored, fetched-and-pinned, package manager, SDK-provided;
+  why header-only libraries are disproportionately common; and the diamond
+  problem, where two versions of one library in a binary is a *silent* ODR
+  violation whose answer changes with link order. Three key principles added
+  to Appendix B; README's contents list and ROADMAP item 2 (now marked DONE)
+  record it.
 - **Correction (Chapter 25, Finding 10):** the Finding described ASan's leak
   detection running at normal program exit without noting that
   **LeakSanitizer is not supported on macOS/arm64** — where a leaking program
