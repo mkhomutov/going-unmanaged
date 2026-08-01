@@ -43,11 +43,17 @@ jobs:
           cmake -S exercises/buildlab -B build/msvc
           cmake --build build/msvc --config Debug
           ./build/msvc/Debug/greet.exe
+      # The instrumented binary needs clang_rt.asan_dynamic-x86_64.dll at
+      # startup, and MSVC ships it next to cl.exe rather than in System32: run
+      # the exe from a plain shell and it dies before main() with no message
+      # worth reading (exit 127 here). A Developer Command Prompt has that
+      # directory on PATH already; this job has to put it there itself.
       - name: GREETER_SANITIZE=ON
         run: |
           cmake -S exercises/buildlab -B build/msvc-asan -DGREETER_SANITIZE=ON
           cmake --build build/msvc-asan --config Debug
-          ./build/msvc-asan/Debug/greet.exe
+          asan_dll=$(ls "/c/Program Files/Microsoft Visual Studio"/*/*/VC/Tools/MSVC/*/bin/Hostx64/x64/clang_rt.asan_dynamic-x86_64.dll | tail -1)
+          PATH="$(dirname "$asan_dll"):$PATH" ./build/msvc-asan/Debug/greet.exe
 
   book:
     runs-on: ubuntu-latest

@@ -52,6 +52,11 @@ if(GREETER_SANITIZE)
     if(MSVC)
         # MSVC ships ASan only - there is no /fsanitize=undefined - and its
         # linker pulls in the runtime by itself, so no link options here.
+        # Running it is the catch, and CI had to learn this the hard way:
+        # clang_rt.asan_dynamic-x86_64.dll lives next to cl.exe, not in
+        # System32, so the exe starts from a Developer Command Prompt and
+        # dies before main() anywhere else. Same lesson as the link-time
+        # trap above - the runtime has to actually come from somewhere.
         target_compile_options(sanitizers INTERFACE /fsanitize=address)
     else()
         # Both the compiler AND the linker: instrumenting the code without
