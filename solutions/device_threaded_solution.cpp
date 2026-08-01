@@ -23,10 +23,10 @@
 // Build both ways - the sanitizers do not combine, and they answer different
 // questions (a threaded lifetime bug is a use-after-free ASan names outright
 // and TSan may or may not surface, depending on how the timing falls):
-//   g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g \
-//       FakeDevice.cpp device_threaded_solution.cpp -o threaded
-//   g++ -std=c++17 -Wall -Wextra -fsanitize=thread -g \
-//       FakeDevice.cpp device_threaded_solution.cpp -o threaded
+// (one line each - a trailing backslash inside a // comment is a line splice,
+// which -Wall calls out, and rightly: it hides the next line from you)
+//   g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g FakeDevice.cpp device_threaded_solution.cpp -o threaded
+//   g++ -std=c++17 -Wall -Wextra -fsanitize=thread -g FakeDevice.cpp device_threaded_solution.cpp -o threaded-tsan
 #include "FakeDevice.h"
 #include <algorithm>
 #include <atomic>
