@@ -15,7 +15,45 @@ jobs:
       - uses: actions/checkout@v5
       # The repo invariant: every solution compiles and runs clean under
       # -Wall -Wextra -fsanitize=address,undefined. Must print ALL GREEN.
-      - run: ./scripts/build_all.sh
+      # --require-cmake: the script's cmake step - Chapter 26's CMakeLists,
+      # configured, built and run both ways - SKIPS on a machine without
+      # cmake, which is right on a laptop and very wrong here. Both hosted
+      # images ship cmake, so the flag only ever fires if that changes.
+      - run: ./scripts/build_all.sh --require-cmake
+
+  # The job above runs the Greeter CMakeLists on two Unix compilers and never
+  # touches its `if(MSVC)` branches, which is how untested code gets into a
+  # book. This job configures and builds the same file with MSVC, both ways,
+  # and nothing else - build_all.sh is a bash script that wants g++, so it is
+  # not the thing to run here.
+  buildlab-msvc:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash          # -e, so a failing line fails the step
+    steps:
+      - uses: actions/checkout@v5
+      # No -G: the point is the generator a Windows reader actually gets, which
+      # is the Visual Studio one. It is multi-config, so CMAKE_BUILD_TYPE is
+      # ignored and the configuration is chosen at build time - the commands
+      # below are the chapter's with that one difference, which is the whole
+      # reason to run them here.
+      - name: Default configuration
+        run: |
+          cmake -S exercises/buildlab -B build/msvc
+          cmake --build build/msvc --config Debug
+          ./build/msvc/Debug/greet.exe
+      # The instrumented binary needs clang_rt.asan_dynamic-x86_64.dll at
+      # startup, and MSVC ships it next to cl.exe rather than in System32: run
+      # the exe from a plain shell and it dies before main() with no message
+      # worth reading (exit 127 here). A Developer Command Prompt has that
+      # directory on PATH already; this job has to put it there itself.
+      - name: GREETER_SANITIZE=ON
+        run: |
+          cmake -S exercises/buildlab -B build/msvc-asan -DGREETER_SANITIZE=ON
+          cmake --build build/msvc-asan --config Debug
+          asan_dll=$(ls "/c/Program Files/Microsoft Visual Studio"/*/*/VC/Tools/MSVC/*/bin/Hostx64/x64/clang_rt.asan_dynamic-x86_64.dll | tail -1)
+          PATH="$(dirname "$asan_dll"):$PATH" ./build/msvc-asan/Debug/greet.exe
 
   book:
     runs-on: ubuntu-latest

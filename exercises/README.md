@@ -23,6 +23,12 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 
 Chapter 24 (the practice plan) sequences these into a one-week schedule.
 
+One directory does double duty: `buildlab/` is Chapter 23's lab, and Chapter 26
+builds that same trio with CMake. Its reference
+[`CMakeLists.txt`](buildlab/CMakeLists.txt) lives there, kept green by
+`scripts/build_all.sh` — so it is the one reference solution in this index you
+can reach without opening a fold. Write your own first.
+
 ## Building your attempt
 
 `scripts/check.sh` builds (and runs) your code with the handbook's canonical

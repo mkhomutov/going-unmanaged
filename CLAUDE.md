@@ -36,9 +36,15 @@ Chapter 25's Finding 10.
 - `exercises/fakesdk/`, `exercises/fakedevice/` — also carry vendor-style code
   users must NOT edit (contracts quoted verbatim in chapters 17/18)
 - `exercises/buildlab/` — Greeter.h/.cpp + main.cpp, the Chapter 23 starting
-  point; built by build_all.sh so the scaffold stays green
+  point; built by build_all.sh so the scaffold stays green. Also
+  `CMakeLists.txt`, Chapter 26's reference build description assembled from
+  that chapter's snippets — build_all.sh configures/builds/runs it twice
+  (default, then Debug + `-DGREETER_SANITIZE=ON`)
 - `solutions/` — reference solutions for all exercises
-- `scripts/build_all.sh` — builds AND runs every solution; the repo invariant
+- `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
+  Its last section configures, builds and runs `exercises/buildlab/`'s
+  CMakeLists; without cmake on PATH it prints SKIPPED and stays green, and
+  `--require-cmake` (which CI passes) refuses to skip
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
   flags (optional 2nd arg links fakesdk/fakedevice vendor code)
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
@@ -61,6 +67,19 @@ Chapter 25's Finding 10.
   rewrite into an in-page anchor
 - `.github/workflows/release.yml` — on a `v*` tag, builds the single file and
   attaches it to the GitHub release
+
+## Where chapter code lives (decided once; full text in CONTRIBUTING.md)
+
+Part VI chapters carry code that is not an exercise solution. It goes under
+`exercises/<lab-name>/`, next to that lab's task card, as buildlab does;
+`solutions/` stays flat, stdlib-only `.cpp` files. Everything verifiable is
+wired into `build_all.sh` (still the one invariant, still ALL GREEN). A step
+needing a tool that may be missing locally (cmake now, TSan later) copies
+check_mermaid.sh: SKIPPED locally, plus a `--require-<tool>` flag CI passes so
+it can never skip there (`--require-cmake`; check_mermaid.sh's own predates the
+pattern and is just `--required`). Deliberately broken demonstration programs — Ch 31's
+sabotage runs, Ch 30's break-it-first steps — stay book-only and unverified on
+purpose (ROADMAP item 5). Ch 26 is done; Ch 28-30 reuse this.
 
 ## Hard invariants (never break these)
 
