@@ -15,7 +15,7 @@ cl /std:c++17 /W4 /EHsc /Zi /fsanitize=address main.cpp
 - Sanitizer builds are for development runs; they slow execution ~2x and are not for shipping.
 - Debug vs Release matters more than in C#: UB often hides in Debug and detonates in Release. Test both.
 
-These are the commands you type while learning. On a real project you type them once, into a build description, and a tool reproduces them for every file and every configuration — see [Chapter 26](#chapter-26--build-systems-and-cmake).
+These are the commands you type while learning. On a real project you type them once, into a build description, and a tool reproduces them for every file and every configuration — see [Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake).
 
 ### Debugging a plug-in inside a host application
 

@@ -11,7 +11,7 @@
 
 - **A Tour of C++** (Stroustrup) — thin, modern, exactly right for an experienced developer returning; readable in days.
 - **Effective Modern C++** (Scott Meyers) — 42 concrete items on C++11/14 (auto, moves, smart pointers, lambdas); the deep version of the ownership, modern-C++, and move chapters (1, 10, 6).
-- **C++ Concurrency in Action** (Williams) — the full treatment, when threading enters your work. [Chapter 29](#chapter-29--concurrency) covers the vocabulary and the callback-thread problem; this is where you go next.
+- **C++ Concurrency in Action** (Williams) — the full treatment, when threading enters your work. [Chapter 29](29-concurrency.md#chapter-29--concurrency) covers the vocabulary and the callback-thread problem; this is where you go next.
 
 ### Working against a vendor SDK
 

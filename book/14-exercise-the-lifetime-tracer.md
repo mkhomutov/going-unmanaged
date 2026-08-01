@@ -1,6 +1,6 @@
 # Part V — Learning by Doing
 
-Before starting, skim [Chapter 24](#chapter-24--practice-plan) — the practice plan — which sequences these chapters into a one-week schedule. Then work each exercise **cold**: compiler, debugger, sanitizer, and offline docs as your only feedback loops, opening a chapter's reference solution only after your own attempt. The repository's `exercises/` directory carries a task card for every exercise (plus the vendor code for Chapters 17 and 18), so you can attempt each one without the solution on the next screen.
+Before starting, skim [Chapter 24](24-practice-plan.md#chapter-24--practice-plan) — the practice plan — which sequences these chapters into a one-week schedule. Then work each exercise **cold**: compiler, debugger, sanitizer, and offline docs as your only feedback loops, opening a chapter's reference solution only after your own attempt. The repository's `exercises/` directory carries a task card for every exercise (plus the vendor code for Chapters 17 and 18), so you can attempt each one without the solution on the next screen.
 
 ---
 
