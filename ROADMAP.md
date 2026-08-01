@@ -88,6 +88,19 @@ its Rule of Five behaviour is exactly what assertions capture well. Wire the
 test binary into `scripts/build_all.sh` in the same PR so the invariant keeps
 holding.
 
+This is the one item on the list that touches a ground rule, so be deliberate
+about it: **solutions use the standard library only** (CONTRIBUTING.md), and a
+vendored framework header is the only third-party code the repo would carry.
+The resolution already exists in `build_all.sh` — `exercises/buildlab/` is
+built and run there while being scaffolding rather than a solution. A test
+framework is the same kind of thing: the header belongs under `exercises/`,
+`solutions/` stays stdlib-only and independently buildable without it, and the
+test binary is a third category the script builds to keep it green. Expect one
+practical snag — a single-header framework will not survive `-Wall -Wextra`
+silently, so include it with `-isystem` and keep the strict flags meaning what
+they mean for our code. Open an issue before starting; this one changes a rule
+rather than only adding a chapter.
+
 ### 4. Concurrency
 
 **Missing:** threading, as a subject. `std::thread`, `std::mutex`,
