@@ -20,9 +20,10 @@ writing it down properly.
    lab (currently only a FakeDevice stretch goal).
 4. **Missing chapters** — subjects the book does not cover yet.
    [ROADMAP.md](ROADMAP.md) is the standing list, ranked by what they cost a
-   reader who hits them unprepared: build systems, dependency management,
-   testing, and concurrency are the big four. Open an issue before starting a
-   large one, so nobody writes the same chapter twice.
+   reader who hits them unprepared: testing and concurrency are the biggest
+   still open (build systems landed as Chapter 26, dependency management as
+   Chapter 27). Open an issue before starting a large one, so nobody writes
+   the same chapter twice.
 5. **Translations and tooling** — build scripts, per-platform notes, anything
    that lowers friction.
 
