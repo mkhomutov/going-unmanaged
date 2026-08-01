@@ -3753,18 +3753,20 @@ Chapter 24's practice plan tells you, on Day 2, to break the Buffer three ways a
 
 The difference in posture is worth naming first. In C#, a failure comes to *you*: an exception with a type, a message, and a stack trace, thrown at the moment of the mistake. In C++, a failure is usually silent — the program keeps running with corrupted memory and dies somewhere unrelated, or doesn't die at all. The tools that turn silence into a report have to be invited in, at build time, before the run. That is why the sanitizer flags are in every command in this book.
 
-### Three report shapes
+### Four report shapes
 
 The most useful thing to learn first is not how to read a report in detail — it is that each kind of report has a **characteristic shape**, and the shape names the bug class before you read a word.
 
 | Shape | What it is |
 |---|---|
 | **Three stacks** (access, free, allocation) | use-after-free or double-free |
-| **Two stacks** (access, allocation) | buffer overflow — the block is alive, you went outside it |
+| **Two stacks** (access, allocation) | heap buffer overflow — the block is alive, you went outside it |
 | **One stack** (allocation only) | a leak: the block's birth is the only trace it ever left |
 | **No stack, one line with a column number** | UndefinedBehaviorSanitizer |
 
 That table is worth more than any single walkthrough. Glance at a report, count the stacks, and you already know what you are dealing with.
+
+One qualification, because it is the case where counting misleads: only *heap* overflows carry an allocation stack, since only heap blocks have a birth site worth recording. A `stack-buffer-overflow` or `global-buffer-overflow` shows the access stack alone and then names the offending variable outright — `[32, 48) 'local_buf' (line 3) <== Memory access at offset 52 overflows this variable` for a local, or the declaration site for a global. That is more information than the heap case gives you, not less. Do not count that single stack and conclude "leak": the error name on the first line is always the tiebreaker, and the shape is the index, not the verdict.
 
 ### An ASan report, line by line
 
