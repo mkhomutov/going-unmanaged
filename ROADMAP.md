@@ -125,27 +125,42 @@ Expect one practical snag — a single-header framework will not survive
 `-Wall -Wextra` silently, so include it with `-isystem` and keep the strict
 flags meaning what they mean for our code.
 
-### 4. Concurrency
+### 4. Concurrency — DONE
 
-**Missing:** threading, as a subject. `std::thread`, `std::mutex`,
-`std::atomic`, `std::future`, `condition_variable`.
+**Delivered:** Chapter 29 — *Concurrency*. This was the item the book owed most
+plainly: Chapter 16 tells you to ask *"what thread calls me back?"*, Chapter 18
+answers that silence means "a thread that isn't yours" and names the two
+requirements its exercise excludes, and nothing ever supplied the vocabulary.
 
-**Evidence:** the book promises this repeatedly and never delivers.
-Chapter 16 tells you to ask *"what thread calls me back?"*; Chapter 18 answers
-that a missing answer means "a thread that isn't yours", describes the
-unregister-then-join problem in its pitfalls, and asks the reader in a stretch
-goal to make a callback race-free with a mutex. Appendix D defers to Williams' book.
-Meanwhile `condition_variable` appears zero times in the text and `atomic`
-once. The reader is told the hazard matters, shown where it bites, and then
-handed no vocabulary.
+The chapter maps the C# model onto the C++ one (no runtime, no pool, no
+`await`; `std::thread` as a real OS thread; `lock_guard`/`scoped_lock` as RAII
+the reader already owns; `Interlocked` versus `std::atomic`), covers
+`std::thread`'s join-or-terminate obligation and `jthread`, and works the
+callback-from-a-driver-thread problem through to a correct destructor ordering:
+shared control block, alive flag published under the lock, unregister, then
+release the SDK's reference — broken and fixed versions both run under
+ThreadSanitizer.
 
-**A contribution looks like:** a chapter mapping the C# concurrency model onto
-the C++ one — `Task`/`async`/`await` versus `std::thread`, `std::jthread`, and
-`std::future`; `lock` versus `std::lock_guard` and `std::unique_lock` (RAII
-again, which the reader already owns from Chapter 1); `Interlocked` versus
-`std::atomic`; and the thing C# mostly hides — that a data race is undefined
-behaviour, not a wrong answer. Pair it with the threaded-callback lab already
-listed under [Known gaps carried over](#known-gaps-carried-over).
+**One thing came out differently than this item sketched.** The plan was to
+show that a data race is undefined behaviour rather than a wrong answer, via
+the usual demonstration — a racy counter losing updates, or a non-atomic flag
+the optimizer hoists into an infinite loop. Neither reproduced on
+clang/arm64: no hoist at `-O0`, `-O1` or `-O2`, and the four-thread racy
+counter printed exactly the right total on every run, because the optimizer
+collapsed each loop into a single addition. That is a sharper lesson than the
+one intended — *you cannot find this bug by running the program* — and it is
+what the chapter is built around, with TSan finding in one run what the program
+would never show. TSan is introduced as the third sanitizer, including that it
+cannot be combined with ASan and so needs its own build.
+
+**Still open from this item:** the threaded-callback lab under
+[Known gaps carried over](#known-gaps-carried-over) is *not* closed. Chapter 29's
+"Try it" is that lab in chapter form, but there is no task card under
+`exercises/` and no threaded code in `solutions/`, so CI runs no TSan job and
+none of the chapter's threaded code is verified by `build_all.sh`. Promoting the
+exercise properly — task card, reference solution, and a TSan step in CI — is
+the obvious follow-up, and it is what would let the repo's own invariant cover
+the material this chapter teaches.
 
 ---
 
