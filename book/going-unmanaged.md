@@ -2961,7 +2961,9 @@ v1 lib  sees: 1809115664         <- garbage; varies run to run
 
 Both builds are silent. Both produce a working-looking program. The answer depends on the order the object files were listed, and at `-O2` the compiler may inline both copies and hide the problem entirely — so it can pass every test on the build machine and fail in the shipped configuration. This is the same mechanism as Chapter 23's seventh breakage, arriving through your dependency graph instead of a stale object file.
 
-There is no tool that will reliably tell you this happened. The defences are structural: **one version of each library in a binary, decided deliberately**, and — where a library must genuinely be private to a component — hide it behind an interface that exposes none of its types (Chapter 12's DLL boundary material; nothing whose layout the compiler chose should cross it).
+There is no tool that will reliably tell you this happened, and the word doing the work there is *reliably*. Build the two link orders above under `-fsanitize=address,undefined` — this handbook's own flags — and the sanitizer catches exactly one of them. In the second order the surviving `GetTimeout` reads offset 4 of a struct that is only four bytes long, which is a stack overread, and ASan aborts with a clear report naming the function. In the first order nothing is out of bounds at all: the caller asks for `timeout`, receives `retries`, and every byte read was inside the object. Clean sanitizer log, exit 0, wrong number. The loud direction gets caught; the quiet one ships.
+
+The defences are therefore structural: **one version of each library in a binary, decided deliberately**, and — where a library must genuinely be private to a component — hide it behind an interface that exposes none of its types (Chapter 12's DLL boundary material; nothing whose layout the compiler chose should cross it).
 
 > **Key principle:** "Two versions of one library in a binary is an ODR violation, and it is silent — no resolver, no binding redirect, no diagnostic. One version per binary, decided on purpose."
 
