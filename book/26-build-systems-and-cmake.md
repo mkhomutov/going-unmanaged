@@ -202,7 +202,7 @@ And the honest note: a great many native SDK shops never use CMake at all. They 
 
 ### Try it
 
-Write the CMakeLists for the Greeter trio from scratch — file listed, then library-plus-executable — and get `./build/greet` running. Then earn the chapter:
+Write the CMakeLists for the Greeter trio from scratch — file listed, then library-plus-executable — and get `./build/greet` running. A finished one now sits in `exercises/buildlab/`, built and run by the repository's own CI so these snippets stay honest; write yours in a directory of its own and read that one afterwards. Then earn the chapter:
 
 1. **Prove the dependency graph.** `touch Greeter.h`, rebuild, and confirm `main.cpp` recompiles. Then break the graph deliberately: edit the header's class definition, rebuild *only* the library target (`cmake --build build --target greeter`), link by hand, and reproduce Chapter 23's breakage 7. Now you have seen both sides of the promise.
 2. **Prove the sanitizer switch.** Configure with `-DGREETER_SANITIZE=ON`, add a deliberate heap overflow to main.cpp, and confirm ASan reports it — the report should name `main.cpp` and the line. Then comment out `target_link_options`, rebuild, and read the resulting link failure until the `___asan_init` symbols make sense. Predict the *stage* before you run it: this is Chapter 23's error-stage triage on a real, non-obvious case.

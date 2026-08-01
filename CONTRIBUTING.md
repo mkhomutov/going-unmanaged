@@ -98,6 +98,34 @@ It concatenates the chapters in reading order and turns the cross-file links
 back into in-page anchors. CI builds it on every push, and every tagged
 release attaches it as a download.
 
+## Where chapter code lives
+
+Part VI chapters carry code that is not an exercise solution — build
+descriptions, test harnesses, teardown skeletons, boundary headers. It has one
+home, decided once so no PR has to argue it again:
+
+- **Code a chapter builds and runs lives under `exercises/<lab-name>/`**, next
+  to the task card of the lab it belongs to, exactly as `exercises/buildlab/`
+  already holds the Chapter 23 Greeter trio and now Chapter 26's reference
+  `CMakeLists.txt`. Reference *solutions* stay where they are: flat,
+  standard-library-only `.cpp` files in `solutions/`.
+- **Everything verifiable is wired into `scripts/build_all.sh`.** That script
+  remains the single repo invariant — it must print `ALL GREEN` — and adding
+  chapter code without adding it to the script is half a contribution.
+- **A step that needs a tool which may be absent locally** (cmake today,
+  ThreadSanitizer later) follows the `check_mermaid.sh` precedent: print a
+  `SKIPPED` line and stay green on a machine that lacks it, and take a
+  `--require-*` flag that refuses to skip. CI always passes that flag, so a
+  step can never silently skip there. A local run should never look like a
+  pass it did not earn.
+- **Deliberately broken programs stay in the book.** Chapter 31's sabotage
+  runs and Chapter 30's break-it-first steps exist to fail, and are unverified
+  on purpose — the reader's job is to reproduce them. ROADMAP item 5 records
+  the reasoning. Do not try to make them green.
+
+Chapter 26 is done under this convention; Chapters 28, 29 and 30 carry the
+same debt and will be closed the same way.
+
 ## Ground rules (CI enforces the first one)
 
 - **Everything compiles clean and runs clean.** All contributed code must build

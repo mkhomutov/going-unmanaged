@@ -19,6 +19,30 @@ what makes this MINOR rather than MAJOR: the version contract is about what
 a *number* refers to, and nothing renumbered — only the file the text lives
 in changed.
 
+- **New: Chapter 26's CMake material is under CI** (PATCH-level — tooling and
+  verification, no text rewritten and no number moved). The chapter's snippets
+  were the only code in the book `scripts/build_all.sh` did not verify; they
+  now exist assembled, as `exercises/buildlab/CMakeLists.txt` — the shape the
+  chapter ends on, library plus executable, warnings PRIVATE, sanitizers
+  behind `GREETER_SANITIZE` and carried by the INTERFACE target — and the
+  script configures, builds and runs it twice: default, then Debug with
+  `-DGREETER_SANITIZE=ON`. Without cmake on PATH that step prints SKIPPED and
+  the run stays green, the bargain `check_mermaid.sh` already makes with
+  `mmdc`; CI passes the new `--require-cmake`, which refuses to skip, so the
+  step can never quietly vanish there. The Greeter sources are untouched, and
+  the chapter gains one sentence in *Try it* pointing at the reference — write
+  yours first.
+  - **Decided once: where chapter code lives.** Four Part VI chapters carry
+    code CI does not build, and closing them one at a time would have
+    re-litigated the same question four times. CONTRIBUTING.md now has a
+    *Where chapter code lives* section (mirrored compressed in CLAUDE.md):
+    code a chapter builds and runs goes under `exercises/<lab-name>/` as
+    buildlab does, `solutions/` stays flat and stdlib-only, everything
+    verifiable is wired into `build_all.sh`, a step needing a tool that may be
+    missing locally SKIPS locally but never in CI, and deliberately broken
+    demonstration programs stay book-only and unverified on purpose. ROADMAP
+    item 1's "still open" paragraph is resolved and item 6's closing note
+    records that Chapters 28-30 now apply a convention rather than choose one.
 - **Changed: the book renders GitHub-native** (PATCH-level — formatting and
   six illustrations, no text rewritten and no number moved). The forty
   top-level callout blockquotes gained a `> [!TYPE]` line so GitHub draws

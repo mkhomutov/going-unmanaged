@@ -47,11 +47,14 @@ handbook's sanitizer flags behind a `-DGREETER_SANITIZE=ON` option,
 `find_package` for SDK config packages, and IDE-native project files as the
 alternative reality many SDK shops actually live in.
 
-**Still open from this item:** the chapter's CMake snippets are the only code
-in the book that `scripts/build_all.sh` does not verify. A reference
-`CMakeLists.txt` for `exercises/buildlab/` plus a CI step that runs it when
-cmake is present would put them under the same protection as everything else.
-Small, self-contained, and a good first contribution.
+**Still open from this item:** nothing. The chapter's snippets were the only
+code in the book `scripts/build_all.sh` did not verify; they now live,
+assembled, in `exercises/buildlab/CMakeLists.txt`, and the script configures,
+builds and runs it twice — default, then Debug with `-DGREETER_SANITIZE=ON`.
+Without cmake on PATH the step prints SKIPPED and the run stays green; CI
+passes `--require-cmake`, which refuses to skip. That PR also settled where
+chapter code lives, for the three chapters below that still owe the same
+debt — see *Where chapter code lives* in CONTRIBUTING.md.
 
 ### 2. Dependency management — DONE
 
@@ -231,12 +234,15 @@ why it looked that way since Chapter 18.
 
 **Still open from this item:** the chapter's three worked boundaries build and
 run clean under `-fsanitize=address,undefined`, but none of that code lives in
-`build_all.sh`, so CI does not verify it. That is now the fourth Part VI chapter
+`build_all.sh`, so CI does not verify it. This was one of four Part VI chapters
 carrying the same debt — Chapter 26's CMakeLists, Chapter 28's harness and
-suite, Chapter 29's threaded teardown, and these three boundaries. Closing them
-one at a time means four small PRs that each re-litigate where chapter code
-should live; closing them together means deciding that once. Worth its own item
-if anyone picks it up.
+suite, Chapter 29's threaded teardown, and these three boundaries. **The
+question those four raised is now settled:** the Chapter 26 PR wrote the
+convention down (*Where chapter code lives*, CONTRIBUTING.md — code under
+`exercises/<lab-name>/`, wired into `build_all.sh`, SKIPPED locally but never
+in CI when a step needs a tool that may be absent) and closed item 1 under it.
+Chapters 28, 29 and 30 remain, and each is now a mechanical application of
+that convention rather than a decision.
 
 ### 7. Byte-level protocol work
 
