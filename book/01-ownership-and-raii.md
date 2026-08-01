@@ -49,6 +49,7 @@ flowchart LR
     Q3 -->|No| SPOK["shared_ptr on its own is enough"]
     STK --> VIEW["Handing it to code that must not own it: raw pointer or reference — a non-owning view, never deleted"]
     UP --> VIEW
+    SP --> VIEW
 ```
 
 ### Transferring ownership with unique_ptr
