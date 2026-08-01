@@ -50,6 +50,25 @@ TEST(MoveLeavesSourceEmptyButValid) {
     CHECK(a.Size() == 0);            // the husk: valid, unspecified, destructible
 }
 
+TEST(MoveAssignFreesTheOldBlock) {
+    Buffer a(2);
+    Buffer b(5);
+    b.At(4) = 7;
+    a = std::move(b);                // a's own block must be freed, not leaked
+    CHECK(a.Size() == 5);
+    CHECK(a.At(4) == 7);
+    CHECK(b.Size() == 0);            // the source is a husk here too
+}
+
+TEST(SelfMoveIsHarmless) {
+    Buffer a(2);
+    a.At(0) = 5;
+    Buffer& alias = a;               // launder it past the compiler's warning
+    a = std::move(alias);            // without the guard: delete, then read it
+    CHECK(a.Size() == 2);
+    CHECK(a.At(0) == 5);
+}
+
 TEST(VectorReallocationPreservesContents) {
     std::vector<Buffer> v;
     for (int i = 0; i < 8; ++i) {    // force at least one reallocation

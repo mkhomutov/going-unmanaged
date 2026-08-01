@@ -46,6 +46,20 @@ in changed.
     It stays flat and stdlib-only, but a header is now permitted there exactly
     when a chapter requires the demo/test split — Chapter 28 being the case
     that forced it. CONTRIBUTING.md and CLAUDE.md both say so.
+  - **Correction: the suite now covers move assignment.** Chapter 28's *Try it*
+    asked for a self-move test and the printed suite had none — six tests that
+    between them never called `operator=(Buffer&&)`, the one member that frees a
+    block by hand before stealing. Two were added, to the chapter's listing and
+    the lab file in the same commit: `MoveAssignFreesTheOldBlock` and
+    `SelfMoveIsHarmless`. Eight tests now, and the chapter's printed output says
+    so. The second one earns its place the chapter's own way — delete the
+    self-move guard from `Buffer.h` and ASan reports a heap-use-after-free
+    naming the test, where the assertions alone would have read stale values and
+    passed.
+  - **Chapter 15 says where its solution lives.** Its fold now opens by noting
+    that the listing is one file, as the reader's attempt will be, while this
+    repository's copy is the two Chapter 28 splits it into. The code is
+    unchanged; only the file it sits in is.
 - **New: Chapter 26's CMake material is under CI** (PATCH-level — tooling and
   verification, no text rewritten and no number moved). The chapter's snippets
   were the only code in the book `scripts/build_all.sh` did not verify; they
