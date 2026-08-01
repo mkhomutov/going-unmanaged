@@ -93,7 +93,7 @@ third-party dependency, the vendoring conventions this chapter describes
 (record the version and any local patch next to the code) should become a
 CONTRIBUTING rule rather than only chapter advice.
 
-### 3. Testing — DONE (chapter only; repo wiring still open)
+### 3. Testing — DONE
 
 **Delivered:** Chapter 28 — *Testing*. The gap was that the feedback loop on
 offer was "compile, run, read stdout", for a reader arriving from a world where
@@ -118,14 +118,23 @@ assertions alone are not enough in C++ — a break that leaves every assertion
 passing while ASan reports a double-free, because ownership bugs produce no
 wrong values.
 
-**Still open from this item:** the test binary is not in `scripts/build_all.sh`,
-so the chapter's harness and suite are — like Chapter 26's CMake snippets —
-book code that CI does not verify. Wiring it up needs one decision first: the
-suite tests a Buffer, and the Buffer currently lives in `solutions/buffer.cpp`
-next to a `main()`, which is precisely the structural problem the chapter is
-about. Extracting it to a header shared by the demo and the tests is the honest
-fix; duplicating it is not. That is a contained, well-defined contribution, and
-it would make the chapter's central claim true of this repository too.
+**The repo wiring that was open here is now done.** The harness and suite live
+at `exercises/testlab/` — `tiny_test.h` and `buffer_test.cpp`, verbatim from the
+chapter's listings — and `scripts/build_all.sh` builds the suite under the
+canonical flags and runs it, with a non-zero exit as red. The decision it needed
+went the honest way: the Buffer was extracted to `solutions/Buffer.h`, so
+`solutions/buffer.cpp` keeps the demo's `main()` and the test binary brings its
+own, rather than the class being duplicated into the lab. The Chapter 15
+solution is two files now, which is the chapter's own lesson applied to this
+repository — and the reason `solutions/` may hold a header at all, an amendment
+recorded in *Where chapter code lives* in CONTRIBUTING.md.
+
+What that does **not** cover is the chapter's closing demonstration — the
+deliberately broken move constructor whose every assertion passes while ASan
+reports a double free. Like Chapter 31's sabotage runs it exists to fail, so it
+stays book-only by the same rule: a green run would mean it stopped working.
+
+**Still open from this item:** nothing.
 
 The ground-rule analysis below still applies if anyone later vendors a real
 framework, so it is kept rather than deleted: **solutions use the standard
@@ -253,9 +262,11 @@ suite, Chapter 29's threaded teardown, and these three boundaries. **The
 question those four raised is now settled:** the Chapter 26 PR wrote the
 convention down (*Where chapter code lives*, CONTRIBUTING.md — code under
 `exercises/<lab-name>/`, wired into `build_all.sh`, SKIPPED locally but never
-in CI when a step needs a tool that may be absent) and closed item 1 under it.
-Chapters 28, 29 and 30 remain, and each is now a mechanical application of
-that convention rather than a decision.
+in CI when a step needs a tool that may be absent) and closed item 1 under it;
+item 3 then closed under the same convention, adding `exercises/testlab/` and
+the one amendment it required (a header in `solutions/` when a chapter forces
+the demo/test split). Chapters 29 and 30 remain, and each is now a mechanical
+application of that convention rather than a decision.
 
 ### 7. Byte-level protocol work
 

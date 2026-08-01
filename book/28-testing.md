@@ -283,7 +283,7 @@ That layer split *is* your testability boundary. Geometry, parsing, unit convers
 The Buffer of Chapter 15 is the subject, and everything here uses the standard library only, so it works on any machine.
 
 1. **Write `tiny_test.h` from the description, not the listing.** Three jobs: a registry that survives static initialization, a `CHECK` macro that captures expression text and location, a runner that returns a meaningful exit code. Compare with the version above afterwards.
-2. **Extract the Buffer** into `Buffer.h` so both a demo program and a test binary can include it — the structural point of this chapter, felt rather than read.
+2. **Extract the Buffer** into `Buffer.h` so both a demo program and a test binary can include it — the structural point of this chapter, felt rather than read. This repository has since had the same extraction applied to its own Chapter 15 solution, which is now `solutions/Buffer.h` plus a `buffer.cpp` holding only the demo; do yours first, then compare.
 3. **Write the suite.** Deep copy, copy assignment across different sizes, self-assignment, move leaving an empty husk, self-move, and vector reallocation. Predict each result before running, per the Chapter 24 drill.
 4. **Prove the suite can fail.** Change one expected value, confirm red and exit code 1, change it back.
 5. **Run the demonstration.** Break only the move constructor's null-out. Confirm every assertion still passes, then rebuild with `-fsanitize=address,undefined` and read the double-free report. This is the single most important run in the chapter: it is what "the sanitizer is the oracle" means, in your own terminal.
