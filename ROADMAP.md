@@ -168,22 +168,40 @@ the material this chapter teaches.
 
 ## Tier 2 — high value, smaller
 
-### 5. A real debugging chapter
+### 5. A real debugging chapter — DONE
 
-**Missing:** an actual debugging session on the page.
+**Delivered:** Chapter 31 — *Reading What the Tools Tell You*. The gap was that
+Day 2 of the practice plan tells the reader to "read its reports until they
+make sense" while the book never printed one, asking for fluency in a format
+they had never seen.
 
-**Evidence:** Chapter 13 covers attach-to-process, which is the right
-SDK-specific advice. But Day 2 of the practice plan instructs the reader to
-"read its reports until they make sense" — and the book never shows an
-AddressSanitizer report. The reader is asked to build fluency in a format they
-have never seen printed.
+Rather than one annotated report, the chapter leads with report **shapes** as a
+diagnostic index — three stacks is a use-after-free, two is a buffer overflow,
+one is a leak, none-with-a-column-number is UBSan — so a glance classifies the
+bug before a word is read. Then the heap-use-after-free walked line by line:
+the question each stack answers, the offset line that names the member without
+knowing its name, `inside of` versus `after` as the tell between a lifetime bug
+and an indexing bug, and why to start reading at frame `#1`. Watchpoints get a
+real lldb transcript, with the reflex stated plainly: stop adding print
+statements to find who wrote a value, and note that prints are actively harmful
+for Chapter 29's bugs because they change timing.
 
-**A contribution looks like:** one annotated ASan heap-use-after-free report,
-walked line by line (the allocation stack, the free stack, the access stack,
-and how to read which is which), plus the debugger basics that differ from
-Visual Studio's C# experience: reading a native call stack, watchpoints, and
-inspecting memory. Cheap to write, and it fulfils an instruction the book
-already gives.
+**Three findings from writing it, all worth keeping:**
+
+- **UBSan reports and exits 0.** Its default is report-and-continue, so a
+  script checking only the exit code calls a run with undefined behaviour a
+  pass. Both fixes are documented (`halt_on_error=1`, `-fno-sanitize-recover`),
+  and `scripts/check.sh` was verified against this — it already sets
+  `halt_on_error=1` and is correct.
+- **`-O2` deletes the frames you need.** Inlining removes the very functions
+  that named who freed and who allocated the block, so diagnose at `-O0 -g`.
+- **LeakSanitizer is unsupported on macOS/arm64**, which is what prompted the
+  Finding 10 caveat now in Chapter 25.
+
+**Still open from this item:** nothing specific to debugging. The chapter's
+demonstration programs are small and deliberately broken, so they do not belong
+in `build_all.sh` as-is — unlike the other Part VI code noted under items 1, 3,
+4 and 6, this one is arguably better left unverified.
 
 ### 6. Authoring an ABI boundary — DONE
 
