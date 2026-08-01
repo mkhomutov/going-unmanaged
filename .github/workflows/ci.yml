@@ -16,3 +16,21 @@ jobs:
       # The repo invariant: every solution compiles and runs clean under
       # -Wall -Wextra -fsanitize=address,undefined. Must print ALL GREEN.
       - run: ./scripts/build_all.sh
+
+  book:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # The per-chapter files under book/ are canonical; the single-file book
+      # must stay buildable from them.
+      - run: ./scripts/build_book.sh
+      # The nav footers are generated, so they must match the file order.
+      - run: ./scripts/build_book.sh --check-nav
+      - name: Check internal links and anchors
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # --offline checks relative links and nothing else, so a flaky
+          # external site can never fail CI; --include-fragments makes the
+          # #chapter-N--title anchors blocking too.
+          args: --offline --include-fragments --no-progress './**/*.md'
+          fail: true
