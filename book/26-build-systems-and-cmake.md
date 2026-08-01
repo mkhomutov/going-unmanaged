@@ -44,6 +44,8 @@ The same contrast as a picture — one arrow on the C# side, an extra box on our
 
 ```mermaid
 flowchart LR
+%% Subgraphs render in reverse of declaration order, so CPP is declared first
+%% to put C# on top - the order the comparison table above introduces them in.
     subgraph CPP["C++ with CMake — two steps"]
         direction LR
         CML["CMakeLists.txt — the build description"] -->|"configure: cmake -S . -B build"| GEN["generated build system — Makefile, Ninja, .vcxproj or Xcode project"]

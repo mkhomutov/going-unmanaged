@@ -44,12 +44,18 @@ flowchart LR
     Q1 -->|Yes| Q2{"Is there one clear owner?"}
     Q2 -->|Yes| UP["std::unique_ptr — ownership moves, never copies"]
     Q2 -->|"No, genuinely co-owned"| SP["std::shared_ptr — refcount, and you can explain why"]
-    SP --> Q3{"Can the references form a cycle?"}
-    Q3 -->|Yes| WP["std::weak_ptr on the back-edge — there is no GC to detect the cycle"]
-    Q3 -->|No| SPOK["shared_ptr on its own is enough"]
     STK --> VIEW["Handing it to code that must not own it: raw pointer or reference — a non-owning view, never deleted"]
     UP --> VIEW
     SP --> VIEW
+```
+
+And the one follow-up question that only the shared branch raises:
+
+```mermaid
+flowchart LR
+    SP["std::shared_ptr"] --> Q3{"Can the references form a cycle?"}
+    Q3 -->|Yes| WP["std::weak_ptr on the back-edge — there is no GC to detect the cycle"]
+    Q3 -->|No| SPOK["shared_ptr on its own is enough"]
 ```
 
 ### Transferring ownership with unique_ptr

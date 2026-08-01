@@ -20,7 +20,7 @@ a *number* refers to, and nothing renumbered — only the file the text lives
 in changed.
 
 - **Changed: the book renders GitHub-native** (PATCH-level — formatting and
-  five illustrations, no text rewritten and no number moved). The forty
+  six illustrations, no text rewritten and no number moved). The forty
   top-level callout blockquotes gained a `> [!TYPE]` line so GitHub draws
   them as alerts: 7 WARNING (Trap, Gotcha), 31 IMPORTANT (Key principle,
   Rule to recite, the stance to hold, Habit, and Chapter 30's one rule),
@@ -30,13 +30,14 @@ in changed.
   Every callout in the book is top-level, so all forty converted; one
   nested inside a `<details>` fold would have been left as plain bold,
   since GitHub does not render alerts inside other elements.
-  **Five mermaid diagrams** were added next to the prose they illustrate,
+  **Six mermaid diagrams** were added next to the prose they illustrate,
   never replacing it: the compilation pipeline in its two halves — the
   per-.cpp trip through preprocessor, translation unit and compiler, then
   the single link step — each labelled with the class of error it produces
   (Chapter 12, the pair the book most wanted), the "who owns this object?"
-  decision (Chapter 1), CMake's configure-then-build against MSBuild's one
-  step (Chapter 26), and the destructor-versus-driver-thread teardown as a
+  decision and the cycle question that only the shared branch raises
+  (Chapter 1), CMake's configure-then-build against MSBuild's one step
+  (Chapter 26), and the destructor-versus-driver-thread teardown as a
   sequence diagram (Chapter 29). GitHub renders these natively and
   `build_book.sh` carries them into the single file unchanged.
 - **Changed: the book is now one file per chapter.** `book/going-unmanaged.md`
