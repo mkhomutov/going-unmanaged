@@ -23,23 +23,23 @@ OUT=$(mktemp -d)
 
 run() { echo "== $1"; shift; "$@"; }
 
-run "tracer"   $CXX $FLAGS   solutions/tracer.cpp                    -o $OUT/tracer
-run "buffer"   $CXX $FLAGS   solutions/buffer.cpp                    -o $OUT/buffer
-run "fakesdk"  $CXX $FLAGS   exercises/fakesdk/FakeSDK.cpp solutions/fakesdk_solution.cpp -I exercises/fakesdk -o $OUT/fakesdk
-run "device"   $CXX $FLAGS   exercises/fakedevice/FakeDevice.cpp solutions/device_solution.cpp -I exercises/fakedevice -o $OUT/device
-run "words"    $CXX $FLAGS20 solutions/words.cpp                     -o $OUT/words
-run "shapes"   $CXX $FLAGS   solutions/shapes.cpp                    -o $OUT/shapes
-run "invalid"  $CXX $FLAGS20 solutions/invalid.cpp                   -o $OUT/invalid
-run "lambdas"  $CXX $FLAGS   solutions/lambdas.cpp                   -o $OUT/lambdas
+run "tracer"      $CXX $FLAGS   solutions/tracer.cpp                    -o $OUT/tracer
+run "buffer"      $CXX $FLAGS   solutions/buffer.cpp                    -o $OUT/buffer
+run "fakesdk"     $CXX $FLAGS   exercises/fakesdk/FakeSDK.cpp solutions/fakesdk_solution.cpp -I exercises/fakesdk -o $OUT/fakesdk
+run "device"      $CXX $FLAGS   exercises/fakedevice/FakeDevice.cpp solutions/device_solution.cpp -I exercises/fakedevice -o $OUT/device
+run "words"       $CXX $FLAGS20 solutions/words.cpp                     -o $OUT/words
+run "shapes"      $CXX $FLAGS   solutions/shapes.cpp                    -o $OUT/shapes
+run "invalid"     $CXX $FLAGS20 solutions/invalid.cpp                   -o $OUT/invalid
+run "lambdas"     $CXX $FLAGS   solutions/lambdas.cpp                   -o $OUT/lambdas
 # buildlab is exercise scaffolding, not a solution — but its starting point must stay green
-run "buildlab" $CXX $FLAGS   exercises/buildlab/Greeter.cpp exercises/buildlab/main.cpp -o $OUT/buildlab
+run "buildlab"    $CXX $FLAGS   exercises/buildlab/Greeter.cpp exercises/buildlab/main.cpp -o $OUT/buildlab
 # Chapter 28's harness and suite, verbatim from the chapter. -I solutions because
 # the class under test is the Chapter 15 solution, extracted into solutions/Buffer.h
 # so a demo with main() and a test binary with its own can both include it — the
 # extraction IS what the chapter teaches. Building it under the canonical flags is
 # the chapter's own key principle: the assertions supply the workload, the
 # sanitizers supply the verdict.
-run "buffer_test" $CXX $FLAGS exercises/testlab/buffer_test.cpp -I solutions -o $OUT/buffer_test
+run "buffer_test" $CXX $FLAGS   exercises/testlab/buffer_test.cpp -I solutions -o $OUT/buffer_test
 
 echo "== running =="
 $OUT/tracer > /dev/null

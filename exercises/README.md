@@ -22,8 +22,9 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [The Build-Model Lab](buildlab/TASK.md) | 23 | error-stage triage: preprocessor / compile / link | ~45 min | none — your notes are the artifact |
 | [The Test Lab](testlab/TASK.md) | 28 | a test framework from scratch, and testing ownership | ~60 min | the files themselves: [tiny_test.h](testlab/tiny_test.h), [buffer_test.cpp](testlab/buffer_test.cpp) |
 
-Chapter 24 (the practice plan) sequences the first nine into a one-week
-schedule; the test lab belongs to Part VI and comes later.
+Chapter 24 (the practice plan) sequences everything above the test lab — the
+nine Part V exercises plus the Bestiary reading — into a one-week schedule; the
+test lab belongs to Part VI and comes later.
 
 Two directories hold their reference in the open, rather than behind a fold.
 `buildlab/` does double duty: it is Chapter 23's lab, and Chapter 26 builds that

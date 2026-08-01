@@ -82,14 +82,14 @@ do; `solutions/` stays flat, stdlib-only `.cpp` files — with one amendment: a
 header is permitted there exactly when a chapter requires the demo/test split
 (Ch 28 forced the first, `solutions/Buffer.h`, because a class sharing a TU
 with `main()` cannot be tested; duplicating it into the lab was rejected).
-Everything verifiable is
-wired into `build_all.sh` (still the one invariant, still ALL GREEN). A step
-needing a tool that may be missing locally (cmake now, TSan later) copies
-check_mermaid.sh: SKIPPED locally, plus a `--require-<tool>` flag CI passes so
-it can never skip there (`--require-cmake`; check_mermaid.sh's own predates the
-pattern and is just `--required`). Deliberately broken demonstration programs — Ch 31's
-sabotage runs, Ch 30's break-it-first steps — stay book-only and unverified on
-purpose (ROADMAP item 5). Ch 26 and 28 are done; Ch 29-30 reuse this.
+Everything verifiable is wired into `build_all.sh` (still the one invariant,
+still ALL GREEN). A step needing a tool that may be missing locally (cmake now,
+TSan later) copies check_mermaid.sh: SKIPPED locally, plus a `--require-<tool>`
+flag CI passes so it can never skip there (`--require-cmake`; check_mermaid.sh's
+own predates the pattern and is just `--required`). Deliberately broken
+demonstration programs — Ch 31's sabotage runs, Ch 30's break-it-first steps —
+stay book-only and unverified on purpose (ROADMAP item 5). Ch 26 and 28 are
+done; Ch 29-30 reuse this.
 
 ## Hard invariants (never break these)
 
