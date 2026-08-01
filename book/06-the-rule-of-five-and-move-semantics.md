@@ -130,7 +130,7 @@ private:
 - **Self-assignment check** (`if (this != &other)`) in move assignment — `a = std::move(a)` shouldn't destroy the data.
 - **Copy-and-swap** for copy assignment: copy into a temp, then swap. If allocation throws, your object is untouched (the strong exception guarantee), and self-assignment is handled for free.
 
-> [!IMPORTANT]
+> [!TIP]
 > **The stance to hold:** "In real code I'd never write this class — I'd hold `std::vector<int>` or `unique_ptr<int[]>` and get all five for free. Rule of Zero beats Rule of Five." Hand-rolling the five is a last resort; knowing how is what makes the shortcut safe.
 
 ### Where moves matter in daily code

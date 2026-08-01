@@ -35,7 +35,7 @@ auto MakeGetter() {
 }
 ```
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "Capture by reference only when the lambda won't outlive the scope; by copy (or move) when it escapes — stored, returned, or run async."
 
 ### Algorithms + lambdas (C++'s LINQ, roughly)
@@ -63,7 +63,7 @@ if (auto w = FindByName("wall"); w.has_value()) {
 auto w2 = FindByName("x").value_or(Widget{});  // ?? equivalent
 ```
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "A function that can fail to produce a value returns optional\<T\>, not a null pointer or a magic value like -1."
 
 ### std::string_view — non-owning view of a string

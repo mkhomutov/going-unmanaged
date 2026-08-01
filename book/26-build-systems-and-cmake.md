@@ -191,13 +191,13 @@ And the honest note: a great many native SDK shops never use CMake at all. They 
 - **Mixing configurations on Windows.** Debug and Release use different C runtimes (`/MDd` vs `/MD`). A plug-in built Debug against a Release host — or against Release SDK libraries — produces link errors, or loads and corrupts memory in ways that look like your bug. Match the host's configuration; this is one of the highest-value entries your notes file will ever hold.
 - **Assuming the generated build is the source of truth.** Never edit files inside `build/`. They are output. The next configure overwrites them.
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "CMake doesn't build my code — it generates the thing that builds my code. Configure, then build: two steps, always."
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "Requirements belong to targets, not to the whole project — PRIVATE for what I need, PUBLIC for what my consumers need too."
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "I list source files, never glob them — a file joining the build should be visible in the diff."
 
 ### Try it

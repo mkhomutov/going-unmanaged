@@ -194,13 +194,13 @@ The boundary is a promise, so plan for the version-two conversation before you h
 - **Assuming the same compiler forever.** "We control both sides" is true until a team upgrades a toolset, and the resulting bug reports do not mention that they did.
 - **Versioning by changing a struct in place.** Without a size field there is no way for either side to detect the mismatch, and no diagnostic will appear.
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "Nothing whose layout my compiler chose may cross a binary boundary — no std::string, no std::vector, no exceptions, in any exported signature."
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "Whoever allocates, frees — so my boundary hands out a Destroy function rather than letting the caller delete."
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "A published vtable is append-only — I add methods at the end or publish a new interface, because inserting one silently rebinds every existing caller to the wrong slot."
 
 ### Try it

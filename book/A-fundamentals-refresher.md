@@ -59,7 +59,7 @@ Send(5);           // ERROR: no implicit conversion (good!)
 Send(Buffer(5));   // OK: you clearly meant it
 ```
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** Mark every single-argument constructor explicit unless you deliberately want implicit conversion. It costs nothing and prevents a whole category of silent bugs.
 
 ### A.4 = delete (and = default)

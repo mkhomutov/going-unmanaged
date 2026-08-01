@@ -83,7 +83,7 @@ Value semantics means objects live on the stack or inline inside containers — 
 
 SDK structs are typically plain value types — created on the stack, zeroed with `= {}`, address passed to API functions to fill in. No heap, no ownership questions. But some structs *contain pointers to SDK-allocated data* (like Chapter 17's `ThingData.values`) — those need the RAII treatment from Chapter 1. Reading a vendor header and classifying each struct — pure value, or value-with-owned-payload? — is a daily skill in SDK work.
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "C++ is value-semantic by default; I opt into reference semantics explicitly." | "I iterate with const auto& to avoid accidental copies." | "Polymorphic objects go behind unique_ptr — storing them by value slices them."
 
 ---

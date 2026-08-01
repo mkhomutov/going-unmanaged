@@ -40,7 +40,7 @@ C++20 fixed it with `std::jthread`, which joins in its destructor and carries a 
 { std::jthread t([]{ }); }       // joins automatically; prints "after", exits 0
 ```
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "Every std::thread must be joined or detached before it dies, or the program terminates — I use jthread where C++20 is available, and treat a bare std::thread as a resource needing an owner."
 
 ### The data race, and why you cannot test for one
@@ -99,7 +99,7 @@ Making the counter `std::atomic<int>` makes the report go away and the program c
 std::atomic<int> counter{0};        // ++counter is now a single atomic op
 ```
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "A data race in C++ is undefined behavior, not a wrong number — and it can print the right answer every time. I run threaded code under ThreadSanitizer, because there is nothing to assert."
 
 ### Locks are RAII, exactly like everything else
@@ -254,7 +254,7 @@ Note what the two smart pointers are doing here, because this is the one place t
 - **Freeing the callback context after unregistering.** It reads as the tidy counterpart to registering it, and unless the SDK documents that unregister waits for in-flight callbacks, it is a use-after-free you cannot order your way out of. The SDK loaded that pointer before it called you.
 - **Running only one sanitizer and calling it covered.** ASan and TSan cannot be combined, and they answer different questions: a threaded lifetime bug is a use-after-free that ASan names outright and TSan may or may not surface, depending on how the timing falls. Threaded code needs both builds.
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "A callback that arrives on the SDK's thread can outlive the object it points at — I give it a weak reference and an alive flag, publish the flag, unregister, and never free the context the SDK still holds."
 
 ### Try it

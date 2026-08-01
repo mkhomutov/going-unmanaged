@@ -22,9 +22,13 @@ in changed.
 - **Changed: the book renders GitHub-native** (PATCH-level — formatting and
   six illustrations, no text rewritten and no number moved). The forty
   top-level callout blockquotes gained a `> [!TYPE]` line so GitHub draws
-  them as alerts: 7 WARNING (Trap, Gotcha), 31 IMPORTANT (Key principle,
-  Rule to recite, the stance to hold, Habit, and Chapter 30's one rule),
-  2 NOTE (the big reveal, the surprise for C# devs). The bold labels stay —
+  them as alerts: 29 TIP (key principle, the stance to hold, Habit — the
+  book's advice, which is what TIP means), 7 WARNING (Trap, Gotcha),
+  2 IMPORTANT held back for the two non-negotiable rules (Chapter 5's rule
+  to recite, Chapter 30's one rule), 2 NOTE (the big reveal, the surprise
+  for C# devs). Type carries meaning only if it varies: a book whose every
+  callout is IMPORTANT has spent the colour and bought nothing, so the
+  common case is the one that reads as advice. The bold labels stay —
   Appendix B mirrors the key principles by name, and the labels keep the
   callouts greppable and meaningful in renderers with no alert support.
   Every callout in the book is top-level, so all forty converted; one

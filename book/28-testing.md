@@ -213,7 +213,7 @@ The failure has two halves, and it is worth separating them. **The suite found n
 
 This is the difference in one page. In C# a passing suite is decent evidence the code is right. In C++ a passing suite that has never run under sanitizers is weak evidence, because the entire class of ownership bugs this book is about produces *no wrong values* — it produces undefined behavior. The tests supply the workload; the sanitizer supplies the verdict.
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "My test binary runs under Address and UB sanitizers, because the bugs that matter in C++ produce no wrong values — assertions supply the workload, the sanitizer supplies the verdict."
 
 ### The real frameworks
@@ -272,10 +272,10 @@ That layer split *is* your testability boundary. Geometry, parsing, unit convers
 - **Testing through the SDK.** A test that needs a device plugged in, or a host running, is an integration test: valuable, slow, and unfit for the fast loop. Keep it, label it, and do not let it be the only thing you have.
 - **Forgetting that the exit code is the contract.** A test runner that prints "FAILED" and returns 0 is a green CI build with red tests. Return non-zero.
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "Code reachable only from a .cpp with main() cannot be tested — testability is a structural property, so the logic lives in a library and the entry point stays thin."
 
-> [!IMPORTANT]
+> [!TIP]
 > **Key principle:** "There is no reflection, so there are no runtime mocks — I design the seam first, as an interface or a template parameter, and write the fake myself."
 
 ### Try it
