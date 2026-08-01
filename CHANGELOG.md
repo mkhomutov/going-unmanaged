@@ -10,10 +10,36 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
-## [Unreleased]
+## [0.2.0] — Unreleased
 
-Navigation and usability, one correction, and the first six appended
-chapters; no existing chapter or Finding number changed meaning.
+Navigation and usability, one correction, the first six appended chapters,
+and the split of the book into per-chapter files; no existing chapter or
+Finding number changed meaning. That last point is what makes this MINOR
+rather than MAJOR: the version contract is about what a *number* refers to,
+and nothing renumbered — only the file the text lives in changed.
+
+- **Changed: the book is now one file per chapter.** `book/going-unmanaged.md`
+  (4,256 lines) became `book/01-ownership-and-raii.md` …
+  `book/31-reading-what-the-tools-tell-you.md` plus `A-`…`D-<slug>.md` for the
+  appendices, with `book/README.md` carrying the front matter and the
+  Contents — GitHub renders it when you open `book/`. Each file ends with a
+  generated prev/next/Contents footer. **Not one word of the book text
+  changed**: the split was made at line boundaries and verified by
+  concatenation. The Contents and the three in-text anchor links that now
+  cross a file boundary became relative links that keep their original
+  anchor, so citations by chapter number and by anchor both still work.
+  - **New: `scripts/build_book.sh`** rebuilds the complete single file at
+    `build/going-unmanaged.md`, rewriting those links back to in-page anchors
+    and stripping the nav footers; `--write-nav` regenerates the footers from
+    the file order and `--check-nav` fails if one is stale. Its output was
+    verified byte-identical to the checked-in single file before that file
+    was removed — from here the single file is a build artifact and a release
+    download, not repository content.
+  - **CI** gains a `book` job: build the single file, check the nav footers,
+    and run lychee over every markdown file in the repo with `--offline
+    --include-fragments`, so relative links and `#anchors` are blocking while
+    external URLs are never fetched and cannot fail CI. A new Release
+    workflow attaches the built single file to each `v*` tag.
 
 - **New: Chapter 31 — Reading What the Tools Tell You.** Chapter 24's Day 2
   tells the reader to read sanitizer reports "until they make sense"; the

@@ -323,10 +323,16 @@ the same suggestion does not arrive twice.
 
 ---
 
-## Structural item (not content)
+## Structural item (not content) — DONE
 
 Splitting the book into per-chapter files under `book/` with a script that
 concatenates them. Worth doing **only if contributor volume justifies it** —
 one file is a real feature while the book has few editors, since it makes
 grep, cross-reference checking, and the numbering invariant trivial to verify.
 Revisit when merge conflicts in `going-unmanaged.md` become a regular event.
+
+**DONE** — "Split the book into per-chapter files": `book/` now holds one file
+per chapter and appendix with `book/README.md` as the Contents;
+`scripts/build_book.sh` rebuilds the single file (a release artifact, no
+longer checked in) and owns the generated nav footers. No chapter number
+moved. grep still works across the book with `book/*.md`.

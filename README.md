@@ -16,6 +16,11 @@ Where this text disagrees with [cppreference](https://cppreference.com) or the [
 
 ## What's inside
 
+The book lives in [book/](book/README.md) — one file per chapter, with the
+Contents as the entry point. (Prefer it in one piece? `scripts/build_book.sh`
+concatenates the chapters into `build/going-unmanaged.md`, and every tagged
+release carries that single file as a download.)
+
 - **Parts I–IV (Chapters 1–13):** the syllabus — ownership and RAII, value semantics, the Rule of Five, virtual dispatch, templates vs generics, error handling, the STL, the compilation model, and the toolchain — every topic anchored in the C# knowledge you already have.
 - **Part V (Chapters 14–23):** learning by doing — ten exercises with reference solutions and pitfall analyses, including two miniature vendor SDKs written in the real-world idioms: **FakeSDK** (error codes + owned payloads, the desktop-plugin style) and **FakeDevice** (opaque handles + C callbacks, the peripheral-device style).
 - **Chapter 25:** the Findings log — real mistakes made during real practice, each with the theory behind it, broken and fixed code, and the habit to build.
