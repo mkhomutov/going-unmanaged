@@ -5,10 +5,12 @@
 "Going Unmanaged — A Hands-On C++ Handbook for C# Developers." A curated,
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
-ONE file: `book/going-unmanaged.md` (6 parts, 29 chapters, appendices A–D).
+ONE file: `book/going-unmanaged.md` (6 parts, 30 chapters, appendices A–D).
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
-concurrency. Chapter 29 discharges the threading promises made in Ch 16/18.
+concurrency, authoring an ABI boundary. Chapter 29 discharges the threading
+promises made in Ch 16/18; Chapter 30 is the authoring side of Ch 16's
+Bestiary (which only teaches consuming those shapes).
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 

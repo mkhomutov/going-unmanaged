@@ -12,9 +12,21 @@ numbers may still move.
 
 ## [Unreleased]
 
-Navigation and usability, one correction, and the first four appended
+Navigation and usability, one correction, and the first five appended
 chapters; no existing chapter or Finding number changed meaning.
 
+- **New: Chapter 30 — Authoring an ABI Boundary.** The other side of the
+  Chapter 16 Bestiary, which teaches consuming vendor shapes but never
+  shipping one. API vs ABI; the one rule (nothing whose layout your compiler
+  chose may cross), with the corollaries about `std::string` in signatures,
+  exceptions, and whoever-allocates-frees; the three techniques — PIMPL,
+  pure-virtual interface, `extern "C"` façade — with a table for choosing;
+  and versioning a published boundary. The C façade section closes the loop:
+  the header the reader derives *is* FakeDevice's. Three key principles
+  added to Appendix B; README's and CONTRIBUTING's lists record it, and
+  ROADMAP item 6 is marked DONE — noting that this is the fourth Part VI
+  chapter whose code CI does not build, which is now worth closing as one
+  piece of work rather than four.
 - **New: Chapter 29 — Concurrency.** Discharges the promises made in
   Chapters 16 and 18: the C#-to-C++ concurrency mapping (no runtime, no
   pool, no `await`), `std::thread`'s join-or-terminate obligation and
