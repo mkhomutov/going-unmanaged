@@ -12,9 +12,23 @@ numbers may still move.
 
 ## [Unreleased]
 
-Navigation and usability, one correction, and the first two appended
+Navigation and usability, one correction, and the first three appended
 chapters; no existing chapter or Finding number changed meaning.
 
+- **New: Chapter 28 — Testing.** Why C++ test frameworks are made of macros
+  (no reflection, no `[CallerLineNumber]` — only the preprocessor sees source
+  text); a working framework in forty lines of standard library; testability
+  as a *structural* property, since code reachable only from a .cpp with
+  `main()` cannot be linked into a test binary; a Rule-of-Five suite for the
+  Chapter 15 Buffer; the real frameworks and CTest; and why there are no
+  runtime mocks — with FakeSDK and FakeDevice named as the pattern the book
+  has been demonstrating all along. Centrepiece: a break that leaves every
+  assertion passing while ASan reports a double-free. Three key principles
+  added to Appendix B; README's and CONTRIBUTING's lists record it, and
+  ROADMAP item 3 is marked DONE for the chapter while staying explicit that
+  the suite is not yet in `build_all.sh` — and that wiring it up first needs
+  the Chapter 15 Buffer extracted to a header, which is the chapter's own
+  structural point applied to this repository.
 - **New: Chapter 27 — Dependency Management.** Why C++ has no NuGet (a
   compiled binary is valid for exactly one compiler, standard library,
   configuration and architecture, so libraries ship as source); the four
