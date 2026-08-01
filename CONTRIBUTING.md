@@ -106,9 +106,18 @@ home, decided once so no PR has to argue it again:
 
 - **Code a chapter builds and runs lives under `exercises/<lab-name>/`**, next
   to the task card of the lab it belongs to, exactly as `exercises/buildlab/`
-  already holds the Chapter 23 Greeter trio and now Chapter 26's reference
-  `CMakeLists.txt`. Reference *solutions* stay where they are: flat,
+  already holds the Chapter 23 Greeter trio and Chapter 26's reference
+  `CMakeLists.txt`, and `exercises/testlab/` holds Chapter 28's `tiny_test.h`
+  and `buffer_test.cpp`. Reference *solutions* stay where they are: flat,
   standard-library-only `.cpp` files in `solutions/`.
+- **A header in `solutions/` is permitted exactly when a chapter requires the
+  demo/test split.** Chapter 28 forced the first one: its suite tests the
+  Chapter 15 Buffer, which cannot be tested while it shares a translation unit
+  with `main()`, so the class moved to `solutions/Buffer.h` and
+  `solutions/buffer.cpp` kept the demo. Duplicating it into the lab was the
+  alternative and is not acceptable — two copies of a class the book teaches
+  will drift. `solutions/` still stays flat and standard-library-only; this is
+  the one thing it now also contains, and only for a reason a chapter states.
 - **Everything verifiable is wired into `scripts/build_all.sh`.** That script
   remains the single repo invariant — it must print `ALL GREEN` — and adding
   chapter code without adding it to the script is half a contribution.
@@ -125,7 +134,7 @@ home, decided once so no PR has to argue it again:
   on purpose — the reader's job is to reproduce them. ROADMAP item 5 records
   the reasoning. Do not try to make them green.
 
-Chapter 26 is done under this convention; Chapters 28, 29 and 30 carry the
+Chapters 26 and 28 are done under this convention; Chapters 29 and 30 carry the
 same debt and will be closed the same way.
 
 ## Ground rules (CI enforces the first one)

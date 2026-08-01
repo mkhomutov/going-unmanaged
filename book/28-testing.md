@@ -139,6 +139,25 @@ TEST(MoveLeavesSourceEmptyButValid) {
     CHECK(a.Size() == 0);            // the husk: valid, unspecified, destructible
 }
 
+TEST(MoveAssignFreesTheOldBlock) {
+    Buffer a(2);
+    Buffer b(5);
+    b.At(4) = 7;
+    a = std::move(b);                // a's own block must be freed, not leaked
+    CHECK(a.Size() == 5);
+    CHECK(a.At(4) == 7);
+    CHECK(b.Size() == 0);            // the source is a husk here too
+}
+
+TEST(SelfMoveIsHarmless) {
+    Buffer a(2);
+    a.At(0) = 5;
+    Buffer& alias = a;               // launder it past the compiler's warning
+    a = std::move(alias);            // without the guard: delete, then read it
+    CHECK(a.Size() == 2);
+    CHECK(a.At(0) == 5);
+}
+
 TEST(VectorReallocationPreservesContents) {
     std::vector<Buffer> v;
     for (int i = 0; i < 8; ++i) {    // force at least one reallocation
@@ -160,8 +179,10 @@ Green, that reads:
   [ ok ] CopyAssignAcrossSizes
   [ ok ] SelfAssignmentIsHarmless
   [ ok ] MoveLeavesSourceEmptyButValid
+  [ ok ] MoveAssignFreesTheOldBlock
+  [ ok ] SelfMoveIsHarmless
   [ ok ] VectorReallocationPreservesContents
-6 tests, 0 failed
+8 tests, 0 failed
 ```
 
 and red, with the expression and location the macro captured:
@@ -170,7 +191,7 @@ and red, with the expression and location the macro captured:
     FAILED: a.At(1) == 41
     at buffer_test.cpp:16
   [FAIL] CopyIsDeepNotShallow
-6 tests, 1 failed
+8 tests, 1 failed
 ```
 
 Exit code 1. That exit code is the entire interface between your tests and CI.
@@ -283,8 +304,8 @@ That layer split *is* your testability boundary. Geometry, parsing, unit convers
 The Buffer of Chapter 15 is the subject, and everything here uses the standard library only, so it works on any machine.
 
 1. **Write `tiny_test.h` from the description, not the listing.** Three jobs: a registry that survives static initialization, a `CHECK` macro that captures expression text and location, a runner that returns a meaningful exit code. Compare with the version above afterwards.
-2. **Extract the Buffer** into `Buffer.h` so both a demo program and a test binary can include it — the structural point of this chapter, felt rather than read.
-3. **Write the suite.** Deep copy, copy assignment across different sizes, self-assignment, move leaving an empty husk, self-move, and vector reallocation. Predict each result before running, per the Chapter 24 drill.
+2. **Extract the Buffer** into `Buffer.h` so both a demo program and a test binary can include it — the structural point of this chapter, felt rather than read. This repository has since had the same extraction applied to its own Chapter 15 solution, which is now `solutions/Buffer.h` plus a `buffer.cpp` holding only the demo; do yours first, then compare.
+3. **Write the suite.** Deep copy, copy assignment across different sizes, self-assignment, move leaving an empty husk, move assignment over an existing buffer, self-move, and vector reallocation. Predict each result before running, per the Chapter 24 drill. Move assignment earns two of those on its own: it is the one member that frees a block by hand before stealing, so it is the one that can free the wrong thing — or, on a self-move, free the block it is about to read.
 4. **Prove the suite can fail.** Change one expected value, confirm red and exit code 1, change it back.
 5. **Run the demonstration.** Break only the move constructor's null-out. Confirm every assertion still passes, then rebuild with `-fsanitize=address,undefined` and read the double-free report. This is the single most important run in the chapter: it is what "the sanitizer is the oracle" means, in your own terminal.
 6. **Stretch:** put a Chapter 14 Tracer in a `std::vector`, and assert on the number of copies and moves a `push_back` causes. You are now testing a property that has no return value at all — and you will need `noexcept` on the move constructor for the test to pass (Finding 3).

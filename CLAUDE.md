@@ -40,7 +40,13 @@ Chapter 25's Finding 10.
   `CMakeLists.txt`, Chapter 26's reference build description assembled from
   that chapter's snippets — build_all.sh configures/builds/runs it twice
   (default, then Debug + `-DGREETER_SANITIZE=ON`)
-- `solutions/` — reference solutions for all exercises
+- `exercises/testlab/` — Chapter 28's `tiny_test.h` and `buffer_test.cpp`,
+  verbatim from the chapter's listings (same discipline as the Fake* vendor
+  code: editing one means editing the chapter in the same commit), plus a
+  TASK.md. build_all.sh builds the suite with `-I solutions` and runs it
+- `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
+  Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
+  include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
   Its last section configures, builds and runs `exercises/buildlab/`'s
   CMakeLists; without cmake on PATH it prints SKIPPED and stays green, and
@@ -71,15 +77,19 @@ Chapter 25's Finding 10.
 ## Where chapter code lives (decided once; full text in CONTRIBUTING.md)
 
 Part VI chapters carry code that is not an exercise solution. It goes under
-`exercises/<lab-name>/`, next to that lab's task card, as buildlab does;
-`solutions/` stays flat, stdlib-only `.cpp` files. Everything verifiable is
-wired into `build_all.sh` (still the one invariant, still ALL GREEN). A step
-needing a tool that may be missing locally (cmake now, TSan later) copies
-check_mermaid.sh: SKIPPED locally, plus a `--require-<tool>` flag CI passes so
-it can never skip there (`--require-cmake`; check_mermaid.sh's own predates the
-pattern and is just `--required`). Deliberately broken demonstration programs — Ch 31's
-sabotage runs, Ch 30's break-it-first steps — stay book-only and unverified on
-purpose (ROADMAP item 5). Ch 26 is done; Ch 28-30 reuse this.
+`exercises/<lab-name>/`, next to that lab's task card, as buildlab and testlab
+do; `solutions/` stays flat, stdlib-only `.cpp` files — with one amendment: a
+header is permitted there exactly when a chapter requires the demo/test split
+(Ch 28 forced the first, `solutions/Buffer.h`, because a class sharing a TU
+with `main()` cannot be tested; duplicating it into the lab was rejected).
+Everything verifiable is wired into `build_all.sh` (still the one invariant,
+still ALL GREEN). A step needing a tool that may be missing locally (cmake now,
+TSan later) copies check_mermaid.sh: SKIPPED locally, plus a `--require-<tool>`
+flag CI passes so it can never skip there (`--require-cmake`; check_mermaid.sh's
+own predates the pattern and is just `--required`). Deliberately broken
+demonstration programs — Ch 31's sabotage runs, Ch 30's break-it-first steps —
+stay book-only and unverified on purpose (ROADMAP item 5). Ch 26 and 28 are
+done; Ch 29-30 reuse this.
 
 ## Hard invariants (never break these)
 

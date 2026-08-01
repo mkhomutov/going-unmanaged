@@ -23,16 +23,23 @@ OUT=$(mktemp -d)
 
 run() { echo "== $1"; shift; "$@"; }
 
-run "tracer"   $CXX $FLAGS   solutions/tracer.cpp                    -o $OUT/tracer
-run "buffer"   $CXX $FLAGS   solutions/buffer.cpp                    -o $OUT/buffer
-run "fakesdk"  $CXX $FLAGS   exercises/fakesdk/FakeSDK.cpp solutions/fakesdk_solution.cpp -I exercises/fakesdk -o $OUT/fakesdk
-run "device"   $CXX $FLAGS   exercises/fakedevice/FakeDevice.cpp solutions/device_solution.cpp -I exercises/fakedevice -o $OUT/device
-run "words"    $CXX $FLAGS20 solutions/words.cpp                     -o $OUT/words
-run "shapes"   $CXX $FLAGS   solutions/shapes.cpp                    -o $OUT/shapes
-run "invalid"  $CXX $FLAGS20 solutions/invalid.cpp                   -o $OUT/invalid
-run "lambdas"  $CXX $FLAGS   solutions/lambdas.cpp                   -o $OUT/lambdas
+run "tracer"      $CXX $FLAGS   solutions/tracer.cpp                    -o $OUT/tracer
+run "buffer"      $CXX $FLAGS   solutions/buffer.cpp                    -o $OUT/buffer
+run "fakesdk"     $CXX $FLAGS   exercises/fakesdk/FakeSDK.cpp solutions/fakesdk_solution.cpp -I exercises/fakesdk -o $OUT/fakesdk
+run "device"      $CXX $FLAGS   exercises/fakedevice/FakeDevice.cpp solutions/device_solution.cpp -I exercises/fakedevice -o $OUT/device
+run "words"       $CXX $FLAGS20 solutions/words.cpp                     -o $OUT/words
+run "shapes"      $CXX $FLAGS   solutions/shapes.cpp                    -o $OUT/shapes
+run "invalid"     $CXX $FLAGS20 solutions/invalid.cpp                   -o $OUT/invalid
+run "lambdas"     $CXX $FLAGS   solutions/lambdas.cpp                   -o $OUT/lambdas
 # buildlab is exercise scaffolding, not a solution — but its starting point must stay green
-run "buildlab" $CXX $FLAGS   exercises/buildlab/Greeter.cpp exercises/buildlab/main.cpp -o $OUT/buildlab
+run "buildlab"    $CXX $FLAGS   exercises/buildlab/Greeter.cpp exercises/buildlab/main.cpp -o $OUT/buildlab
+# Chapter 28's harness and suite, verbatim from the chapter. -I solutions because
+# the class under test is the Chapter 15 solution, extracted into solutions/Buffer.h
+# so a demo with main() and a test binary with its own can both include it — the
+# extraction IS what the chapter teaches. Building it under the canonical flags is
+# the chapter's own key principle: the assertions supply the workload, the
+# sanitizers supply the verdict.
+run "buffer_test" $CXX $FLAGS   exercises/testlab/buffer_test.cpp -I solutions -o $OUT/buffer_test
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -44,6 +51,15 @@ $OUT/shapes > /dev/null
 $OUT/invalid > /dev/null
 $OUT/lambdas > /dev/null
 $OUT/buildlab > /dev/null
+# Not silenced: the tally is the only line in this script that says how MUCH was
+# checked, and a non-zero exit is the whole contract between a test binary and
+# CI. But green and red want different amounts of output, so the run is captured
+# rather than piped: on green, the tally alone; on red, every line - the FAILED
+# expression and its file:line, which is the entire reason Chapter 28's CHECK is
+# a macro. Piping to `tail -1` would throw exactly that away and leave a CI log
+# saying a test failed without saying which.
+$OUT/buffer_test > "$OUT/buffer_test.log" || { cat "$OUT/buffer_test.log"; exit 1; }
+tail -1 "$OUT/buffer_test.log"
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from
