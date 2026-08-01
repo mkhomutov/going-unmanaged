@@ -185,25 +185,40 @@ Visual Studio's C# experience: reading a native call stack, watchpoints, and
 inspecting memory. Cheap to write, and it fulfils an instruction the book
 already gives.
 
-### 6. Authoring an ABI boundary
+### 6. Authoring an ABI boundary — DONE
 
-**Missing:** how to *ship* a stable interface, as opposed to consuming one.
+**Delivered:** Chapter 30 — *Authoring an ABI Boundary*. The gap was that the
+term `ABI` appeared exactly once in the whole book, unexplained, while
+Chapter 16's Bestiary taught the five vendor shapes entirely from the consumer
+side — leaving the reader, whose actual job is to ship a plug-in someone else
+loads, with no account of the side of the table they are on.
 
-**Evidence:** `ABI` appears exactly once — a Chapter 13 warning that a
-mismatched Visual Studio toolset "produces baffling link and load errors" —
-and the term is never unpacked. Chapter 12 describes the thing without naming
-it ("binary compatibility across DLL boundaries is a real C++ concern C#
-assemblies never have"), and PIMPL appears nowhere. Chapter 16's Bestiary
-teaches the five shapes vendor APIs take and how to wrap them — all from the
-consumer side. But the reader's actual job is to build a plug-in or a library
-that someone else loads, which makes them the author of one of those
-boundaries.
+The chapter separates API from ABI, states the one rule that generates every
+other (nothing whose layout your compiler chose may cross the boundary), and
+derives the corollaries from it: no standard-library types in exported
+signatures, no exceptions across the line, whoever allocates frees, and no
+inline function that touches private state. Then the three techniques — PIMPL,
+pure-virtual interface plus factory, `extern "C"` façade — with a table for
+choosing by what callers must match, and how to version a published boundary
+including what that leading size field in real SDK headers is for.
 
-**A contribution looks like:** a chapter on the three ways to draw a stable
-line — PIMPL, pure-virtual interface, `extern "C"` façade — and the rule that
-explains all three: nothing whose layout your compiler chose may cross the
-boundary, which is why `std::string` and `std::vector` must never appear in an
-exported signature. Connects directly to Chapter 12's DLL material.
+Two things it does that the sketch did not ask for. The failure is
+*demonstrated* rather than described: adding a **private** member moves
+`sizeof` from 32 to 40, and a caller that was not rebuilt under-allocates while
+the constructor writes past it — with the wrinkle that the sanitizer only sees
+it if the *caller's* translation unit is instrumented, which across a real DLL
+boundary nobody does. And the `extern "C"` section closes the book's own loop:
+the header the reader derives from first principles is `FakeDevice.h`, which is
+why it looked that way since Chapter 18.
+
+**Still open from this item:** the chapter's three worked boundaries build and
+run clean under `-fsanitize=address,undefined`, but none of that code lives in
+`build_all.sh`, so CI does not verify it. That is now the fourth Part VI chapter
+carrying the same debt — Chapter 26's CMakeLists, Chapter 28's harness and
+suite, Chapter 29's threaded teardown, and these three boundaries. Closing them
+one at a time means four small PRs that each re-litigate where chapter code
+should live; closing them together means deciding that once. Worth its own item
+if anyone picks it up.
 
 ### 7. Byte-level protocol work
 
