@@ -205,6 +205,29 @@ private:
 
 Twenty create-destroy cycles against a running driver thread, with callbacks actually flowing: clean under TSan, and clean under `-fsanitize=address,undefined`, twenty-five runs each.
 
+The two threads racing, in one picture — and why the context at the bottom can never be freed:
+
+```mermaid
+sequenceDiagram
+    participant M as Main thread — Session destructor
+    participant K as Sink — one mutex guards alive and samples
+    participant D as Driver thread — the SDK's dispatch loop
+    Note over D: A callback may arrive at any point below
+    D->>D: loads ctx, one instruction before it calls you
+    M->>K: lock, alive = false, unlock
+    M->>M: unregister — Device_SetCallback with nullptr
+    M->>M: Device_Close — closed exactly once, as Chapter 18
+    M->>K: drop sink_ — the Sink dies here, or when the callback lets go
+    D->>K: weak_ptr lock — is the Sink still there?
+    alt still there
+        D->>K: take the mutex, read alive
+        D->>D: alive is false — drop the sample and return
+    else already gone
+        D->>D: lock returned empty — return, touch nothing
+    end
+    Note over M,D: ctx is never freed — the SDK read that pointer before anything you write could be ordered against it
+```
+
 Two things in that listing carry over unchanged from Chapter 18, and both are easy to drop when threads are doing the distracting. The handle is still closed exactly once — a driver thread does not repeal an obligation — and the copy operations are deleted, because this object owns a handle and a heap allocation and the Rule of Five (Chapter 5) does not care what else is going on. Moves, if you want them, would be safe to add and would need no `Rebind()`: the SDK points at the standalone holder, not at `this`. That is one more thing the extra indirection buys you.
 
 **Now the missing line, and why it stays missing.** The destructor does not `delete ctx_`, and every instinct you have says it should — you allocated it, registration is over, tidy up. Doing that is a use-after-free, and no ordering saves you. To free the context safely you would have to know that no callback is in flight; the SDK loads that pointer inside its own dispatch loop, one instruction before it calls you, and nothing you write can be sequenced against that. Deleting after unregistering *looks* correct and fails intermittently — on the harness in **Try it** below, thirteen runs in twenty aborted under ASan, and the other seven exited 0 with no complaint at all.

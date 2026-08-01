@@ -13,11 +13,28 @@ numbers may still move.
 ## [0.2.0] — Unreleased
 
 Navigation and usability, one correction, the first six appended chapters,
-and the split of the book into per-chapter files; no existing chapter or
-Finding number changed meaning. That last point is what makes this MINOR
+the split of the book into per-chapter files, and GitHub-native rendering;
+no existing chapter or Finding number changed meaning. That last point is what makes this MINOR
 rather than MAJOR: the version contract is about what a *number* refers to,
 and nothing renumbered — only the file the text lives in changed.
 
+- **Changed: the book renders GitHub-native** (PATCH-level — formatting and
+  four illustrations, no text rewritten and no number moved). The forty
+  top-level callout blockquotes gained a `> [!TYPE]` line so GitHub draws
+  them as alerts: 7 WARNING (Trap, Gotcha), 31 IMPORTANT (Key principle,
+  Rule to recite, the stance to hold, Habit, and Chapter 30's one rule),
+  2 NOTE (the big reveal, the surprise for C# devs). The bold labels stay —
+  Appendix B mirrors the key principles by name, and the labels keep the
+  callouts greppable and meaningful in renderers with no alert support.
+  Callouts inside `<details>` folds were left alone, since GitHub does not
+  render alerts nested in other elements. **Four mermaid diagrams** were
+  added next to the prose they illustrate, never replacing it: the
+  compilation pipeline with its two error classes (Chapter 12 — the one the
+  book most wanted), the "who owns this object?" decision (Chapter 1),
+  CMake's configure-then-build against MSBuild's one step (Chapter 26), and
+  the destructor-versus-driver-thread teardown as a sequence diagram
+  (Chapter 29). GitHub renders these natively and `build_book.sh` carries
+  them into the single file unchanged.
 - **Changed: the book is now one file per chapter.** `book/going-unmanaged.md`
   (4,256 lines) became `book/01-ownership-and-raii.md` …
   `book/31-reading-what-the-tools-tell-you.md` plus `A-`…`D-<slug>.md` for the

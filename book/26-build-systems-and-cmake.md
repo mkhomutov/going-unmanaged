@@ -40,6 +40,22 @@ CMake is not that. **CMake does not build your code. It reads `CMakeLists.txt` a
 | — | CMake — reads the description and *writes* the above |
 | `dotnet build` | `cmake -S . -B build` then `cmake --build build` |
 
+The same contrast as a picture — one arrow on the C# side, an extra box on ours:
+
+```mermaid
+flowchart LR
+    subgraph CSHARP["C# — one step"]
+        direction LR
+        CSPROJ[".csproj — the build description"] -->|"dotnet build"| MSB["MSBuild — reads it and builds"]
+        MSB --> CSBIN["binaries"]
+    end
+    subgraph CPP["C++ with CMake — two steps"]
+        direction LR
+        CML["CMakeLists.txt — the build description"] -->|"configure: cmake -S . -B build"| GEN["generated build system — Makefile, Ninja, .vcxproj or Xcode project"]
+        GEN -->|"build: cmake --build build"| CPPBIN["binaries"]
+    end
+```
+
 Why tolerate the indirection? Because it is what lets one build description serve every platform: the same CMakeLists gives a Linux developer a Ninja build, a Mac developer an Xcode project, and a Windows developer a .sln they open in Visual Studio and debug normally. A cross-platform SDK ships one build description, and its Windows users never know.
 
 ### Your first CMakeLists.txt

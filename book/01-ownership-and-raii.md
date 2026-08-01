@@ -36,6 +36,21 @@ auto w = std::make_unique<Widget>();
 
 **`std::weak_ptr<T>`** — observes a shared_ptr without owning it. Solves the cycle problem: two objects holding shared_ptrs to each other never hit zero and leak — there is no GC to detect cycles like in C#. Pattern: parent holds shared_ptr to child, child holds weak_ptr back.
 
+The whole decision, for any object you are about to create:
+
+```mermaid
+flowchart TD
+    Q1{"Does it need to outlive the scope that created it?"} -->|No| STK["Stack object — the destructor at the closing brace is the whole story"]
+    Q1 -->|Yes| Q2{"Is there one clear owner?"}
+    Q2 -->|Yes| UP["std::unique_ptr — ownership moves, never copies"]
+    Q2 -->|"No, genuinely co-owned"| SP["std::shared_ptr — refcount, and you can explain why"]
+    SP --> Q3{"Can the references form a cycle?"}
+    Q3 -->|Yes| WP["std::weak_ptr on the back-edge — there is no GC to detect the cycle"]
+    Q3 -->|No| SPOK["shared_ptr on its own is enough"]
+    STK --> VIEW["Handing it to code that must not own it: raw pointer or reference — a non-owning view, never deleted"]
+    UP --> VIEW
+```
+
 ### Transferring ownership with unique_ptr
 
 ```cpp
