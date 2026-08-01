@@ -13,11 +13,56 @@ numbers may still move.
 ## [0.2.0] — Unreleased
 
 Navigation and usability, one correction, the first six appended chapters,
-and the split of the book into per-chapter files; no existing chapter or
-Finding number changed meaning. That last point is what makes this MINOR
-rather than MAJOR: the version contract is about what a *number* refers to,
-and nothing renumbered — only the file the text lives in changed.
+the split of the book into per-chapter files, and GitHub-native rendering;
+no existing chapter or Finding number changed meaning. That last point is
+what makes this MINOR rather than MAJOR: the version contract is about what
+a *number* refers to, and nothing renumbered — only the file the text lives
+in changed.
 
+- **Changed: the book renders GitHub-native** (PATCH-level — formatting and
+  six illustrations, no text rewritten and no number moved). The forty
+  top-level callout blockquotes gained a `> [!TYPE]` line so GitHub draws
+  them as alerts: 29 TIP (key principle, the stance to hold, Habit — the
+  book's advice, which is what TIP means), 7 WARNING (Trap, Gotcha),
+  2 IMPORTANT held back for the two non-negotiable rules (Chapter 5's rule
+  to recite, Chapter 30's one rule), 2 NOTE (the big reveal, the surprise
+  for C# devs). Type carries meaning only if it varies: a book whose every
+  callout is IMPORTANT has spent the colour and bought nothing, so the
+  common case is the one that reads as advice. The bold labels stay —
+  Appendix B mirrors the key principles by name, and the labels keep the
+  callouts greppable and meaningful in renderers with no alert support.
+  Every callout in the book is top-level, so all forty converted; one
+  nested inside a `<details>` fold would have been left as plain bold,
+  since GitHub does not render alerts inside other elements.
+  **Six mermaid diagrams** were added next to the prose they illustrate,
+  never replacing it: the compilation pipeline in its two halves — the
+  per-.cpp trip through preprocessor, translation unit and compiler, then
+  the single link step — each labelled with the class of error it produces
+  (Chapter 12, the pair the book most wanted), the "who owns this object?"
+  decision and the cycle question that only the shared branch raises
+  (Chapter 1), CMake's configure-then-build against MSBuild's one step
+  (Chapter 26), and the destructor-versus-driver-thread teardown as a
+  sequence diagram (Chapter 29). GitHub renders these natively and
+  `build_book.sh` carries them into the single file unchanged.
+  - **New: `scripts/check_markup.sh`**, run by the `book` job after the
+    build, so it covers the single file as well as `book/`. It enforces the
+    shape both features need on GitHub: an alert marker is one of the five
+    known types, sits at column 1 outside any `<details>` fold, has a blank
+    line before it and a blockquote body after it; a mermaid fence is
+    unindented, preceded by a blank line, and likewise outside a fold. Every
+    one of those mistakes renders wrong on GitHub while producing no build
+    error, no broken link and a diff that looks fine, so nothing else in CI
+    was ever going to catch them.
+  - **New: `scripts/check_mermaid.sh`**, the other half — it hands every
+    chapter containing a diagram to mermaid-cli and fails if one does not
+    draw, so a diagram with a syntax error can no longer merge green and
+    render as an error box for the reader. Rendering rather than parsing:
+    a block can parse and still throw on the way to a picture. Pinned to
+    the mermaid major version GitHub itself renders with. Locally the script
+    reports SKIPPED without `mmdc` installed rather than passing; CI runs it
+    with `--required`, which refuses to skip. What no check can tell you is
+    whether the picture is any *good* — every layout bug fixed on this
+    branch rendered perfectly well — so new diagrams still get looked at.
 - **Changed: the book is now one file per chapter.** `book/going-unmanaged.md`
   (4,256 lines) became `book/01-ownership-and-raii.md` …
   `book/31-reading-what-the-tools-tell-you.md` plus `A-`…`D-<slug>.md` for the

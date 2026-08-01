@@ -34,6 +34,7 @@ Two rules to hold: **(1)** exceptions must never cross a DLL/plug-in boundary in
 
 Exception-safety guarantees (worth knowing cold): **basic** — no leaks, object in some valid state; **strong** — operation succeeds or has no effect (copy-and-swap from Chapter 6 delivers this); **noexcept** — cannot throw. If a constructor throws, the object never existed — its destructor does NOT run, but already-constructed members ARE destroyed. That is why acquiring resources through RAII members is safe and raw acquisition in ctor bodies is not.
 
+> [!TIP]
 > **Key principle:** "I check every error code, use RAII so early returns can't leak, and never let an exception escape the plug-in boundary — I catch at entry points and translate to the SDK's error codes."
 
 ---

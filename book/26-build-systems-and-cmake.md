@@ -40,6 +40,24 @@ CMake is not that. **CMake does not build your code. It reads `CMakeLists.txt` a
 | — | CMake — reads the description and *writes* the above |
 | `dotnet build` | `cmake -S . -B build` then `cmake --build build` |
 
+The same contrast as a picture — one arrow on the C# side, an extra box on ours:
+
+```mermaid
+flowchart LR
+%% Subgraphs render in reverse of declaration order, so CPP is declared first
+%% to put C# on top - the order the comparison table above introduces them in.
+    subgraph CPP["C++ with CMake — two steps"]
+        direction LR
+        CML["CMakeLists.txt — the build description"] -->|"configure: cmake -S . -B build"| GEN["generated build system — Makefile, Ninja, .vcxproj or Xcode project"]
+        GEN -->|"build: cmake --build build"| CPPBIN["binaries"]
+    end
+    subgraph CSHARP["C# — one step"]
+        direction LR
+        CSPROJ[".csproj — the build description"] -->|"dotnet build"| MSB["MSBuild — reads it and builds"]
+        MSB --> CSBIN["binaries"]
+    end
+```
+
 Why tolerate the indirection? Because it is what lets one build description serve every platform: the same CMakeLists gives a Linux developer a Ninja build, a Mac developer an Xcode project, and a Windows developer a .sln they open in Visual Studio and debug normally. A cross-platform SDK ships one build description, and its Windows users never know.
 
 ### Your first CMakeLists.txt
@@ -132,6 +150,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DGREETER_SANITIZE=ON
 cmake --build build && ./build/greet
 ```
 
+> [!WARNING]
 > **Trap:** sanitizers must be passed to **both** the compiler and the linker. Drop the `target_link_options` line and the compile succeeds, then the link collapses into a wall of undefined symbols: `"___asan_init", referenced from: _asan.module_ctor in main.cpp.o`. Read it with Chapter 12's cause list in hand and it decodes immediately — unresolved external means *a definition is missing at link time*, and the missing definitions here are the sanitizer's runtime library. The flag is how you link that library; passing it only to the compiler instruments the code and never brings the runtime along. It is the same diagnosis as a forgotten SDK .lib, wearing different symbol names.
 
 Note how far that PUBLIC actually reaches: to the targets that link `greeter`, and no further. Add a second library that never links `greeter`, and it compiles uninstrumented — no error, no warning; the code you forgot is simply never checked. Mixing instrumented and uninstrumented objects is legal, which is exactly what makes it dangerous: the build stays green and the coverage quietly shrinks. Past two or three targets, give the flags a target of their own — the INTERFACE case from the previous section, a library that compiles nothing and carries requirements:
@@ -172,10 +191,13 @@ And the honest note: a great many native SDK shops never use CMake at all. They 
 - **Mixing configurations on Windows.** Debug and Release use different C runtimes (`/MDd` vs `/MD`). A plug-in built Debug against a Release host — or against Release SDK libraries — produces link errors, or loads and corrupts memory in ways that look like your bug. Match the host's configuration; this is one of the highest-value entries your notes file will ever hold.
 - **Assuming the generated build is the source of truth.** Never edit files inside `build/`. They are output. The next configure overwrites them.
 
+> [!TIP]
 > **Key principle:** "CMake doesn't build my code — it generates the thing that builds my code. Configure, then build: two steps, always."
 
+> [!TIP]
 > **Key principle:** "Requirements belong to targets, not to the whole project — PRIVATE for what I need, PUBLIC for what my consumers need too."
 
+> [!TIP]
 > **Key principle:** "I list source files, never glob them — a file joining the build should be visible in the diff."
 
 ### Try it

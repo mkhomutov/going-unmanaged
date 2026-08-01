@@ -12,6 +12,28 @@ In C# the compiler sees the whole project at once and assemblies carry metadata.
 2. **Compiler** — compiles each .cpp file completely independently into an object file (.obj/.o). Each .cpp + everything it included = one **translation unit**. The compiler has no idea other .cpp files exist.
 3. **Linker** — stitches all object files together, matching "I call function X" with "here's the body of X".
 
+The pipeline in two pictures, because its two halves fail differently — and knowing which half you are looking at is the whole skill. Stages 1 and 2 run once per .cpp, in isolation. This is `Main.cpp`'s trip; `Widget.cpp` makes exactly the same one, and neither knows the other exists:
+
+```mermaid
+flowchart LR
+    M["Main.cpp"] --> PP["Preprocessor — pastes the header in, textually"]
+    H["Widget.h"] --> PP
+    PP --> TU["Translation unit — the .cpp plus everything it included"]
+    TU --> C["Compiler — this TU alone"]
+    C --> O["Main.o"]
+    C -.-> CE["Compile errors — undeclared identifier, no member named, type mismatch"]
+```
+
+Stage 3 runs once for the whole program, and is the only place the translation units ever meet:
+
+```mermaid
+flowchart LR
+    O1["Main.o"] --> LK["Linker — matches every call to exactly one definition"]
+    O2["Widget.o"] --> LK
+    LK --> EXE["Executable"]
+    LK -.-> LE["Link errors — unresolved external, duplicate symbol"]
+```
+
 ### Declarations, definitions, and why headers exist
 
 ```cpp

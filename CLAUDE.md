@@ -41,11 +41,20 @@ Chapter 25's Finding 10.
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
   flags (optional 2nd arg links fakesdk/fakedevice vendor code)
+- `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
+  below over `book/` and the built single file; run by CI, and worth running
+  locally after touching either. Structure only, never mermaid grammar
+- `scripts/check_mermaid.sh` — the other half: hands every chapter with a
+  diagram to mermaid-cli and fails if one does not draw. Needs `mmdc`
+  (`npm install -g @mermaid-js/mermaid-cli`); without it a local run says
+  SKIPPED rather than passing, and CI's `--required` refuses to skip
 - `scripts/build_book.sh` — concatenates `book/` back into the single-file
   book at `build/going-unmanaged.md` (gitignored); `--write-nav` regenerates
   the nav footers, `--check-nav` fails if one is stale
 - `.github/workflows/ci.yml` — runs build_all.sh on every push/PR, plus a
-  `book` job: build_book.sh, --check-nav, and a lychee link check
+  `book` job: build_book.sh, --check-nav, check_markup.sh,
+  check_mermaid.sh (which installs mermaid-cli, the job's one slow step),
+  and a lychee link check
   (`--offline --include-fragments`: relative links and anchors are blocking,
   external URLs are not checked). The check covers the built single file too,
   on purpose — that is what catches a cross-file link the build does not
@@ -103,6 +112,55 @@ Chapter 25's Finding 10.
 - Reference solutions in exercise chapters sit inside `<details>` spoiler
   folds ("Show the solution — do the exercise cold first"); keep that shape
   for new exercise chapters.
+- Callouts are a `> [!TYPE]` marker line followed by a one-line blockquote
+  body that opens with the bold label. GitHub draws them as alerts; the
+  marker line is stripped of meaning everywhere else, which is why the label
+  carries the weight. Type follows from the label, not from how strongly you
+  feel about the sentence:
+  - `[!TIP]` — **Key principle:**, **The stance to hold:**, **Habit:**. The
+    book's advice, and by far the common case (29 of the 40).
+  - `[!WARNING]` — **Trap:**, **Gotcha:**. Something that compiles, runs,
+    and is wrong.
+  - `[!IMPORTANT]` — the two non-negotiable rules only: Chapter 5's virtual
+    destructor, Chapter 30's one rule. **Keep it rare.** The first pass
+    typed 31 of 40 IMPORTANT and the colour stopped saying anything — three
+    identical purple boxes closed Chapter 26 and told the reader nothing.
+    A new callout is IMPORTANT only if breaking it is a bug, not a smell.
+  - `[!NOTE]` — the C#-developer surprise: **The big reveal:**,
+    **Surprise for C# devs:**.
+  - **The bold label stays.** Appendix B mirrors the key principles by name,
+    the labels keep the callouts greppable, and they are the whole callout
+    in any renderer without alert support.
+  - **Top-level only.** GitHub does not render an alert nested inside a list
+    or a `<details>` fold. A callout that must live there stays plain bold
+    with no marker — there are none today. Blank line before the marker.
+- Diagrams are mermaid in a ```` ```mermaid ```` fence, rendered natively by
+  GitHub and carried into the single file untouched. The rules:
+  - **A diagram is additive.** It illustrates prose that already stands on
+    its own — nothing is deleted or rewritten to make room, because mermaid
+    does not render outside GitHub (the release single file included). At
+    most one lead-in sentence.
+  - **Basic `flowchart` and `sequenceDiagram` only**, no `style`/`classDef`
+    and no hardcoded colours — GitHub themes mermaid for light and dark
+    itself, and a hardcoded colour is unreadable in one of them.
+  - **Fence unindented, blank line before it**, and never inside a
+    `<details>` fold or a list.
+  - **Look at it before committing; a green CI is not enough.** CI now draws
+    every diagram (`check_mermaid.sh`), so a broken one cannot merge — but
+    that only proves it renders, and every layout bug below rendered fine.
+    Nothing automatable can tell you the picture is any good. Extract the
+    block from the committed file, render it
+    in a browser (`mermaid.render`, then `getBBox()`), and look at it:
+    layout bugs are only visible drawn. The ones already paid for — a
+    decision tree stacked into a 1000px column by `flowchart TD` when it
+    wanted `LR`; crossed edges from declaring nodes in the wrong order
+    (dagre places by declaration, so declare the node the reader starts
+    from first); `subgraph`s rendering in reverse of declaration order; an
+    `alt` with one branch reading as the whole story.
+  - **Watch the width, not just the height.** GitHub scales a diagram to the
+    container width, so a wider picture is smaller *text* for every reader.
+    Prefer splitting a diagram at a seam the chapter already teaches over
+    letting it grow.
 
 ## Known gaps / roadmap (good first tasks)
 

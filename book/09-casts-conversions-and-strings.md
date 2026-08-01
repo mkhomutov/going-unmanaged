@@ -23,6 +23,7 @@ Derived* d2 = static_cast<Derived*>(s);   // UNchecked downcast: fast, but if
                                           // s isn't really a Derived -> UB
 ```
 
+> [!TIP]
 > **Key principle:** "I use static_cast for conversions I can prove, dynamic_cast when I must query at runtime — and I treat const_cast or reinterpret_cast in a code review as a question mark."
 
 ### Strings and encodings
@@ -52,6 +53,7 @@ std::string utf8 = title.ToUtf8();
 VendorString back = VendorString::FromUtf8(utf8);
 ```
 
+> [!WARNING]
 > **Trap:** Encoding bugs are THE classic plug-in pitfall: user file and project names with non-ASCII characters (German umlauts, Cyrillic, CJK...) silently corrupt if you treat UTF-16 vendor strings as byte strings. Always convert explicitly with the encoding named.
 
 ---

@@ -59,6 +59,7 @@ public:
 };
 ```
 
+> [!IMPORTANT]
 > **Rule to recite:** "If a class has any virtual function, or is ever deleted through a base pointer, its destructor must be virtual." Corollary: if a class is not a polymorphic base, don't give it virtual anything.
 
 Destructors chain automatically — derived first, then base. You never call the base destructor manually.
@@ -76,6 +77,7 @@ public:
 };  // class with only pure virtuals and no data = C++'s "interface"
 ```
 
+> [!NOTE]
 > **Surprise for C# devs:** Virtual calls inside constructors/destructors do NOT dispatch to the derived class — during base construction the object still IS just the base. C# dispatches to the derived override (its own famous pitfall, in the opposite direction).
 
 ### In the wild: C-style SDKs

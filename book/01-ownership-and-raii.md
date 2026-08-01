@@ -36,6 +36,28 @@ auto w = std::make_unique<Widget>();
 
 **`std::weak_ptr<T>`** — observes a shared_ptr without owning it. Solves the cycle problem: two objects holding shared_ptrs to each other never hit zero and leak — there is no GC to detect cycles like in C#. Pattern: parent holds shared_ptr to child, child holds weak_ptr back.
 
+The whole decision, for any object you are about to create:
+
+```mermaid
+flowchart LR
+    Q1{"Does it need to outlive the scope that created it?"} -->|No| STK["Stack object — the destructor at the closing brace is the whole story"]
+    Q1 -->|Yes| Q2{"Is there one clear owner?"}
+    Q2 -->|Yes| UP["std::unique_ptr — ownership moves, never copies"]
+    Q2 -->|"No, genuinely co-owned"| SP["std::shared_ptr — refcount, and you can explain why"]
+    STK --> VIEW["Handing it to code that must not own it: raw pointer or reference — a non-owning view, never deleted"]
+    UP --> VIEW
+    SP --> VIEW
+```
+
+And the one follow-up question that only the shared branch raises:
+
+```mermaid
+flowchart LR
+    SP["std::shared_ptr"] --> Q3{"Can the references form a cycle?"}
+    Q3 -->|Yes| WP["std::weak_ptr on the back-edge — there is no GC to detect the cycle"]
+    Q3 -->|No| SPOK["shared_ptr on its own is enough"]
+```
+
 ### Transferring ownership with unique_ptr
 
 ```cpp
@@ -120,6 +142,7 @@ ErrCode ReadThing(size_t index, double* sum) {
 
 Without the guard, every early `return` needs its own dispose call — the exact bug pattern legacy plug-in code is full of. Writing the guard is a five-minute investment that eliminates a whole leak class; this pattern is the workhorse of professional SDK code.
 
+> [!TIP]
 > **Key principle:** "In C++ I think in terms of ownership. Every resource has exactly one clear owner, expressed with unique_ptr or stack allocation. I basically never write new or delete by hand — raw new/delete in code is a bug waiting to happen."
 
 ---

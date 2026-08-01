@@ -40,6 +40,7 @@ C++20 fixed it with `std::jthread`, which joins in its destructor and carries a 
 { std::jthread t([]{ }); }       // joins automatically; prints "after", exits 0
 ```
 
+> [!TIP]
 > **Key principle:** "Every std::thread must be joined or detached before it dies, or the program terminates — I use jthread where C++20 is available, and treat a bare std::thread as a resource needing an owner."
 
 ### The data race, and why you cannot test for one
@@ -98,6 +99,7 @@ Making the counter `std::atomic<int>` makes the report go away and the program c
 std::atomic<int> counter{0};        // ++counter is now a single atomic op
 ```
 
+> [!TIP]
 > **Key principle:** "A data race in C++ is undefined behavior, not a wrong number — and it can print the right answer every time. I run threaded code under ThreadSanitizer, because there is nothing to assert."
 
 ### Locks are RAII, exactly like everything else
@@ -205,6 +207,30 @@ Twenty create-destroy cycles against a running driver thread, with callbacks act
 
 Two things in that listing carry over unchanged from Chapter 18, and both are easy to drop when threads are doing the distracting. The handle is still closed exactly once — a driver thread does not repeal an obligation — and the copy operations are deleted, because this object owns a handle and a heap allocation and the Rule of Five (Chapter 5) does not care what else is going on. Moves, if you want them, would be safe to add and would need no `Rebind()`: the SDK points at the standalone holder, not at `this`. That is one more thing the extra indirection buys you.
 
+The two threads racing, in one picture — and why the context at the bottom of that listing can never be freed:
+
+```mermaid
+sequenceDiagram
+    participant M as Main thread — Session destructor
+    participant K as Sink — one mutex guards alive and samples
+    participant D as Driver thread — the SDK's dispatch loop
+    Note over D: A callback may arrive at any point below
+    D->>D: loads ctx, one instruction before it calls you
+    M->>K: lock, alive = false, unlock
+    M->>M: unregister — Device_SetCallback with nullptr
+    M->>M: Device_Close — closed exactly once, as Chapter 18
+    M->>K: drop sink_ — the Sink dies here, or when the callback lets go
+    D->>K: weak_ptr lock — is the Sink still there? then the mutex, to read alive
+    alt Sink already gone
+        D->>D: lock returned empty — return, touch nothing
+    else Sink there, alive is false
+        D->>D: late callback — drop the sample and return
+    else Sink there, alive is true
+        D->>K: push the sample
+    end
+    Note over M,D: ctx is never freed — the SDK read that pointer before anything you write could be ordered against it
+```
+
 **Now the missing line, and why it stays missing.** The destructor does not `delete ctx_`, and every instinct you have says it should — you allocated it, registration is over, tidy up. Doing that is a use-after-free, and no ordering saves you. To free the context safely you would have to know that no callback is in flight; the SDK loads that pointer inside its own dispatch loop, one instruction before it calls you, and nothing you write can be sequenced against that. Deleting after unregistering *looks* correct and fails intermittently — on the harness in **Try it** below, thirteen runs in twenty aborted under ASan, and the other seven exited 0 with no complaint at all.
 
 So the context outlives the session, deliberately, and what that costs is bounded: the Sink's destructor still runs on time, so the samples buffer goes back to the allocator when the last reference drops, and what stays behind per registration is a `weak_ptr` and the control block it keeps alive. (One wrinkle worth knowing, since it applies everywhere you pair the two: `make_shared` puts the object's storage *inside* that control block, so a surviving `weak_ptr` retains the Sink's own bytes as well as its bookkeeping — though not the vector's buffer. `std::shared_ptr<Sink>(new Sink)` separates them again, at the cost of a second allocation.) If you would rather not leak at all, own the holders in a container at file scope and clear it at shutdown, *after* the SDK is torn down and its thread is joined. That is the only moment when you genuinely know.
@@ -228,6 +254,7 @@ Note what the two smart pointers are doing here, because this is the one place t
 - **Freeing the callback context after unregistering.** It reads as the tidy counterpart to registering it, and unless the SDK documents that unregister waits for in-flight callbacks, it is a use-after-free you cannot order your way out of. The SDK loaded that pointer before it called you.
 - **Running only one sanitizer and calling it covered.** ASan and TSan cannot be combined, and they answer different questions: a threaded lifetime bug is a use-after-free that ASan names outright and TSan may or may not surface, depending on how the timing falls. Threaded code needs both builds.
 
+> [!TIP]
 > **Key principle:** "A callback that arrives on the SDK's thread can outlive the object it points at — I give it a weak reference and an alive flag, publish the flag, unregister, and never free the context the SDK still holds."
 
 ### Try it

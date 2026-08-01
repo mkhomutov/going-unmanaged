@@ -98,6 +98,7 @@ ub.cpp:2:29: runtime error: signed integer overflow: ...
     #1 0x00010469c6c0 in main ub.cpp:5
 ```
 
+> [!TIP]
 > **Key principle:** "The shape of a sanitizer report names the bug class before I read it — three stacks is a use-after-free, one is a leak, and no stack at all with a column number is UBSan."
 
 ### Optimization erodes your evidence
@@ -116,6 +117,7 @@ previously allocated by thread T0 here:
 
 This is Chapter 13's Debug-versus-Release advice arriving from the other direction. Test both configurations, because UB hides in one and detonates in the other — but when you sit down to *diagnose*, reproduce at `-O0 -g` first, so the tools can still tell you who did what.
 
+> [!TIP]
 > **Key principle:** "A stack from an optimized build is missing frames — I reproduce at -O0 -g before I believe what a trace does or doesn't say."
 
 ### The debugger, where it differs from C#
@@ -150,6 +152,7 @@ Watchpoints are a scarce hardware resource — a handful at a time, each coverin
 
 **Container inspection needs the visualizers.** Chapter 13 said this; it bears repeating because the raw view of a `std::vector` is three pointers and looks like nothing. Visual Studio does it out of the box; in `lldb`, `frame variable` applies the standard library's formatters and prints elements.
 
+> [!TIP]
 > **Key principle:** "When I need to know who changed a value, I set a watchpoint — old value, new value, and the frame that did it — instead of adding print statements."
 
 ### Method: the tools are for testing hypotheses, not for browsing

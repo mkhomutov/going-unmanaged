@@ -46,6 +46,7 @@ std::vector<int> c = std::move(a);  // MOVE: c takes a's pointer.
                                     // ~3 pointer assignments. a now empty.
 ```
 
+> [!NOTE]
 > **The big reveal:** std::move moves nothing. It is just a cast — it marks a value as "you may steal from this", making the compiler select the move overload instead of the copy one. The stealing happens inside the move constructor. After moving from a variable, don't use it except to assign or destroy it.
 
 ### Rvalue references — the && syntax
@@ -129,6 +130,7 @@ private:
 - **Self-assignment check** (`if (this != &other)`) in move assignment — `a = std::move(a)` shouldn't destroy the data.
 - **Copy-and-swap** for copy assignment: copy into a temp, then swap. If allocation throws, your object is untouched (the strong exception guarantee), and self-assignment is handled for free.
 
+> [!TIP]
 > **The stance to hold:** "In real code I'd never write this class — I'd hold `std::vector<int>` or `unique_ptr<int[]>` and get all five for free. Rule of Zero beats Rule of Five." Hand-rolling the five is a last resort; knowing how is what makes the shortcut safe.
 
 ### Where moves matter in daily code

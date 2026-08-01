@@ -15,6 +15,7 @@ auto& w = widgets[0];            // auto alone COPIES - add & to alias
 const auto& name = GetName();    // the read-only idiom
 ```
 
+> [!WARNING]
 > **Trap:** auto strips references: `auto w = widgets[0]` is a copy. Muscle memory: `const auto&` for reading, `auto&` for modifying, plain `auto` only when you want a copy.
 
 ### Lambdas — capture is explicit (no GC to keep captures alive)
@@ -34,6 +35,7 @@ auto MakeGetter() {
 }
 ```
 
+> [!TIP]
 > **Key principle:** "Capture by reference only when the lambda won't outlive the scope; by copy (or move) when it escapes — stored, returned, or run async."
 
 ### Algorithms + lambdas (C++'s LINQ, roughly)
@@ -61,6 +63,7 @@ if (auto w = FindByName("wall"); w.has_value()) {
 auto w2 = FindByName("x").value_or(Widget{});  // ?? equivalent
 ```
 
+> [!TIP]
 > **Key principle:** "A function that can fail to produce a value returns optional\<T\>, not a null pointer or a magic value like -1."
 
 ### std::string_view — non-owning view of a string

@@ -12,6 +12,7 @@ A compiled C++ library is not portable in any of those directions. To link again
 
 So the C++ world mostly gave up on shipping binaries and ships **source** instead, which you build with your toolchain, so everything matches by construction. That single fact explains why the answer to "how do I add a library" is usually "get its source into your build" rather than "install a package".
 
+> [!TIP]
 > **Key principle:** "C++ libraries ship as source because a compiled binary is only valid for one compiler, one standard library, one configuration, and one architecture — I build my dependencies with my toolchain so they match by construction."
 
 ### What a dependency physically is
@@ -109,6 +110,7 @@ There is no tool that will reliably tell you this happened, and the word doing t
 
 The defences are therefore structural: **one version of each library in a binary, decided deliberately**, and — where a library must genuinely be private to a component — hide it behind an interface that exposes none of its types (Chapter 12's DLL boundary material; nothing whose layout the compiler chose should cross it).
 
+> [!TIP]
 > **Key principle:** "Two versions of one library in a binary is an ODR violation, and it is silent — no resolver, no binding redirect, no diagnostic. One version per binary, decided on purpose."
 
 ### In the wild: the dependency you do not control
@@ -127,6 +129,7 @@ Your product's SDK is not a dependency you manage. Its version is dictated by th
 - **Assuming the build machine's environment.** "It works on my machine because the SDK is installed in the default location" is how a build breaks for the next person. Locate dependencies explicitly; fail loudly at configure time with `REQUIRED` rather than mysteriously at link time.
 - **Vendoring without recording the version.** A `third_party/` directory with no note of what version it holds, or what was patched, is a small permanent tax on everyone who comes after you.
 
+> [!TIP]
 > **Key principle:** "I pin dependencies to a tag or a commit, never a branch — and I write down the version and any local patch next to the vendored code."
 
 ### Try it

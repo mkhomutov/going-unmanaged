@@ -14,6 +14,7 @@ C# has no equivalent exposure. An assembly ships metadata; the runtime lays out 
 
 ### The one rule
 
+> [!IMPORTANT]
 > **Nothing whose layout your compiler chose may cross the boundary.**
 
 Every technique in this chapter is a way of obeying it, and every corollary follows:
@@ -98,6 +99,7 @@ impl v2 -> sizeof(Widget) as the CALLER sees it = 8, Score()=7
 
 Eight bytes, both times: one pointer. The implementation can grow without limit and the caller never notices, because there is nothing in the header left to change.
 
+> [!WARNING]
 > **Trap:** omit that `~Widget();` declaration and the code fails to compile at the *call site*, with `error: invalid application of 'sizeof' to an incomplete type 'Widget::Impl'` pointing into `unique_ptr`'s internals — the compiler-generated destructor is emitted where the caller is, and there `Impl` is still incomplete. The same applies to the move operations. Declare all of them in the header, define them in the .cpp with `= default`. This trap catches everyone exactly once.
 
 PIMPL costs a heap allocation per object, an indirection per access, and the loss of inlining — real costs, worth paying at a boundary and not worth paying inside your own code. It also cuts compile-time coupling, which is Chapter 12's forward-declaration argument arriving as a bonus.
@@ -192,10 +194,13 @@ The boundary is a promise, so plan for the version-two conversation before you h
 - **Assuming the same compiler forever.** "We control both sides" is true until a team upgrades a toolset, and the resulting bug reports do not mention that they did.
 - **Versioning by changing a struct in place.** Without a size field there is no way for either side to detect the mismatch, and no diagnostic will appear.
 
+> [!TIP]
 > **Key principle:** "Nothing whose layout my compiler chose may cross a binary boundary — no std::string, no std::vector, no exceptions, in any exported signature."
 
+> [!TIP]
 > **Key principle:** "Whoever allocates, frees — so my boundary hands out a Destroy function rather than letting the caller delete."
 
+> [!TIP]
 > **Key principle:** "A published vtable is append-only — I add methods at the end or publish a new interface, because inserting one silently rebinds every existing caller to the wrong slot."
 
 ### Try it

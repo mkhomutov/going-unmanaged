@@ -83,6 +83,7 @@ class Circle : private Shape   { };  // "implemented-in-terms-of" - outsiders
                                      // can't even treat Circle as a Shape
 ```
 
+> [!WARNING]
 > **Trap:** For 'class' the DEFAULT is private inheritance — writing `class Circle : Shape` silently breaks polymorphism (`Shape* p = &circle;` won't compile). Always write `public` explicitly.
 
 ### Interfaces — no keyword, just a convention
