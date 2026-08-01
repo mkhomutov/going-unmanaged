@@ -19,6 +19,7 @@ Where this text disagrees with [cppreference](https://cppreference.com) or the [
 - **Parts I–IV (Chapters 1–13):** the syllabus — ownership and RAII, value semantics, the Rule of Five, virtual dispatch, templates vs generics, error handling, the STL, the compilation model, and the toolchain — every topic anchored in the C# knowledge you already have.
 - **Part V (Chapters 14–23):** learning by doing — ten exercises with reference solutions and pitfall analyses, including two miniature vendor SDKs written in the real-world idioms: **FakeSDK** (error codes + owned payloads, the desktop-plugin style) and **FakeDevice** (opaque handles + C callbacks, the peripheral-device style).
 - **Chapter 25:** the Findings log — real mistakes made during real practice, each with the theory behind it, broken and fixed code, and the habit to build.
+- **Part VI (Chapter 26 onward):** the real codebase — what a project has that an exercise does not, starting with build systems and CMake. This is where the roadmap's appended chapters land.
 - **Appendices:** a fundamentals refresher, a one-page cheat sheet, a playbook for working without AI assistants, and curated resources.
 
 ## How to use it
@@ -61,7 +62,7 @@ Most-wanted contributions, in order:
 1. **Findings** — you did an exercise, hit something instructive, and can write it up in the Chapter 25 shape (*found in / theory / broken vs fixed / habit*). This is the heart of the project.
 2. **Corrections** — anywhere the text is wrong, outdated, or misleading.
 3. **New exercises** — especially new SDK shapes (a COM-style refcounting lab and a threaded-callback lab are known gaps).
-4. **Missing chapters** — subjects the book does not cover yet. [ROADMAP.md](ROADMAP.md) is the standing list, ranked by what they cost a reader who hits them unprepared: build systems, dependency management, testing, and concurrency are the big four. Open an issue before starting a large one.
+4. **Missing chapters** — subjects the book does not cover yet. [ROADMAP.md](ROADMAP.md) is the standing list, ranked by what they cost a reader who hits them unprepared: dependency management, testing, and concurrency are the biggest still open (build systems landed as Chapter 26). Open an issue before starting a large one.
 5. **Translations and tooling** — build scripts, per-platform notes, anything that lowers friction.
 
 All contributed code must compile clean under the flags above; CI enforces it. The how — including the Finding template, the ground rules, and the versioning policy (chapter numbers are the public contract; append, don't insert) — is in [CONTRIBUTING.md](CONTRIBUTING.md).
