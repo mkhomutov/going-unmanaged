@@ -38,7 +38,7 @@ moved.
   gaps — build systems, dependency management, testing, and concurrency
   first — with the evidence for each and a sketch of the contribution that
   would close it. Every item appends, so none of them moves a number.
-  CONTRIBUTING.md points at it as a contribution category.
+  README.md and CONTRIBUTING.md point at it as a contribution category.
 
 ## [0.1.0] — 2026-07-31
 

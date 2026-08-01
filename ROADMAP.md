@@ -29,8 +29,10 @@ met. They cost the reader in week one.
 
 ### 1. Build systems
 
-**Missing:** any treatment of how real C++ projects are built. The book never
-mentions CMake, `.vcxproj`, or Xcode project files.
+**Missing:** any treatment of how real C++ projects are built. The book
+carries no project-file material of any kind — CMake and `.vcxproj` are never
+mentioned, and Xcode appears once, in a Chapter 13 note about pointing a
+debugger scheme at a host application.
 
 **Evidence:** Part IV is called *The Build and the Toolchain*. Chapter 12
 explains the compilation model, Chapter 13 gives raw `clang++` and `cl`
@@ -92,10 +94,10 @@ holding.
 `std::atomic`, `std::future`, `condition_variable`.
 
 **Evidence:** the book promises this repeatedly and never delivers.
-Chapter 16 tells you to ask *"what thread calls me back?"* and to treat a
-missing answer as "a thread that isn't yours". Chapter 18's pitfalls describe
-the unregister-then-join problem, and its stretch goal asks the reader to make
-a callback race-free with a mutex. Appendix D defers to Williams' book.
+Chapter 16 tells you to ask *"what thread calls me back?"*; Chapter 18 answers
+that a missing answer means "a thread that isn't yours", describes the
+unregister-then-join problem in its pitfalls, and asks the reader in a stretch
+goal to make a callback race-free with a mutex. Appendix D defers to Williams' book.
 Meanwhile `condition_variable` appears zero times in the text and `atomic`
 once. The reader is told the hazard matters, shown where it bites, and then
 handed no vocabulary.
@@ -133,11 +135,15 @@ already gives.
 
 **Missing:** how to *ship* a stable interface, as opposed to consuming one.
 
-**Evidence:** `ABI` appears throughout the book; PIMPL appears nowhere.
-Chapter 16's Bestiary teaches the five shapes vendor APIs take and how to wrap
-them — all from the consumer side. But the reader's actual job is to build a
-plug-in or a library that someone else loads, which makes them the author of
-one of those boundaries.
+**Evidence:** `ABI` appears exactly once — a Chapter 13 warning that a
+mismatched Visual Studio toolset "produces baffling link and load errors" —
+and the term is never unpacked. Chapter 12 describes the thing without naming
+it ("binary compatibility across DLL boundaries is a real C++ concern C#
+assemblies never have"), and PIMPL appears nowhere. Chapter 16's Bestiary
+teaches the five shapes vendor APIs take and how to wrap them — all from the
+consumer side. But the reader's actual job is to build a plug-in or a library
+that someone else loads, which makes them the author of one of those
+boundaries.
 
 **A contribution looks like:** a chapter on the three ways to draw a stable
 line — PIMPL, pure-virtual interface, `extern "C"` façade — and the rule that

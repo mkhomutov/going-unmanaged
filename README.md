@@ -61,7 +61,8 @@ Most-wanted contributions, in order:
 1. **Findings** — you did an exercise, hit something instructive, and can write it up in the Chapter 25 shape (*found in / theory / broken vs fixed / habit*). This is the heart of the project.
 2. **Corrections** — anywhere the text is wrong, outdated, or misleading.
 3. **New exercises** — especially new SDK shapes (a COM-style refcounting lab and a threaded-callback lab are known gaps).
-4. **Translations and tooling** — build scripts, per-platform notes, anything that lowers friction.
+4. **Missing chapters** — subjects the book does not cover yet. [ROADMAP.md](ROADMAP.md) is the standing list, ranked by what they cost a reader who hits them unprepared: build systems, dependency management, testing, and concurrency are the big four. Open an issue before starting a large one.
+5. **Translations and tooling** — build scripts, per-platform notes, anything that lowers friction.
 
 All contributed code must compile clean under the flags above; CI enforces it. The how — including the Finding template, the ground rules, and the versioning policy (chapter numbers are the public contract; append, don't insert) — is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
