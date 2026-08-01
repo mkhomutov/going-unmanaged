@@ -6,11 +6,15 @@
 #   scripts/check.sh attempt.cpp                                # plain exercise
 #   scripts/check.sh attempt.cpp fakesdk                        # + vendor code
 #   STD=c++20 scripts/check.sh attempt.cpp words_sample.txt     # C++20 + run args
+#   SAN=thread scripts/check.sh attempt.cpp fakedevice          # ThreadSanitizer
 #
 # Works from any directory: your file and run args resolve relative to where
 # you run it (from an exercise directory: ../../scripts/check.sh your.cpp);
 # the vendor code is found relative to this script.
-# Env overrides: CXX (default g++), STD (default c++17).
+# Env overrides: CXX (default g++), STD (default c++17),
+# SAN (default address,undefined - the sanitizers, spelled as -fsanitize= takes
+# them). Threaded work (Chapter 29) needs SAN=thread as a SECOND run: TSan and
+# ASan cannot be combined, and they answer different questions.
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
@@ -21,7 +25,8 @@ fi
 root="$(cd "$(dirname "$0")/.." && pwd)"
 CXX=${CXX:-g++}
 STD=${STD:-c++17}
-FLAGS="-std=$STD -Wall -Wextra -fsanitize=address,undefined -g"
+SAN=${SAN:-address,undefined}
+FLAGS="-std=$STD -Wall -Wextra -fsanitize=$SAN -g"
 
 src=$1
 shift
@@ -40,6 +45,8 @@ else
 fi
 echo "== built clean: $FLAGS"
 
-# halt_on_error makes UBSan findings fail the run (its default is report-and-continue)
-UBSAN_OPTIONS=halt_on_error=1 "$out" "$@"
+# halt_on_error makes UBSan findings fail the run (its default is report-and-continue).
+# TSAN_OPTIONS likewise, for SAN=thread; each is ignored when that sanitizer is
+# not in the binary, so both can be set unconditionally.
+UBSAN_OPTIONS=halt_on_error=1 TSAN_OPTIONS=halt_on_error=1 "$out" "$@"
 echo "== ran clean (exit 0, sanitizers quiet)"
