@@ -57,14 +57,42 @@ echo "== buildlab cmake =="
 if command -v cmake > /dev/null 2>&1; then
     CM=build/buildlab-cmake            # under build/, which is gitignored
     rm -rf "$CM" "$CM-asan"
-    cmake -S exercises/buildlab -B "$CM" > /dev/null
+    # CMAKE_EXPORT_COMPILE_COMMANDS so the flags can be read back below; the
+    # Makefile and Ninja generators write the database, which is what runs here.
+    cmake -S exercises/buildlab -B "$CM" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON > /dev/null
     cmake --build "$CM" > /dev/null
     "$CM/greet" > /dev/null
     # The GREETER_SANITIZE switch is only worth having if it still works.
     cmake -S exercises/buildlab -B "$CM-asan" \
-        -DCMAKE_BUILD_TYPE=Debug -DGREETER_SANITIZE=ON > /dev/null
+        -DCMAKE_BUILD_TYPE=Debug -DGREETER_SANITIZE=ON \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON > /dev/null
     cmake --build "$CM-asan" > /dev/null
     "$CM-asan/greet" > /dev/null
+
+    # "It configured, built and ran" does NOT prove the switch did anything.
+    # Rename the option and cmake merely warns that a -D went unused, exits 0,
+    # and this whole section stays green while checking nothing - the exact
+    # rot it exists to catch. So read the flags back out of the compile
+    # database: instrumented when asked, and NOT instrumented when not.
+    for db in "$CM/compile_commands.json" "$CM-asan/compile_commands.json"; do
+        if [ ! -f "$db" ]; then
+            echo "build_all.sh: no $db - a generator that writes no compile" >&2
+            echo "  database (Xcode, Visual Studio) cannot verify the flags." >&2
+            exit 1
+        fi
+    done
+    # main.cpp, not just any file: it belongs to `greet`, so a hit proves the
+    # flags reached the executable through the INTERFACE target as well.
+    if ! grep -q -- '-fsanitize=address.*main\.cpp' "$CM-asan/compile_commands.json"; then
+        echo "build_all.sh: GREETER_SANITIZE=ON did not put -fsanitize=address" >&2
+        echo "  on main.cpp - the option or the sanitizers target is broken." >&2
+        exit 1
+    fi
+    if grep -q -- '-fsanitize=address' "$CM/compile_commands.json"; then
+        echo "build_all.sh: the default configuration is instrumented, so" >&2
+        echo "  GREETER_SANITIZE is not a switch." >&2
+        exit 1
+    fi
     echo "  ok   exercises/buildlab/CMakeLists.txt (default, and GREETER_SANITIZE=ON)"
 elif [ "$REQUIRE_CMAKE" = 1 ]; then
     echo "build_all.sh: cmake not found, and --require-cmake was given" >&2
