@@ -37,6 +37,17 @@ jobs:
       # link, and a diff that looks fine. Runs after the build so it covers the
       # single file too. Cannot check mermaid grammar - see the script's header.
       - run: ./scripts/check_markup.sh
+      # check_markup.sh checks the fence; this checks what is inside it, by
+      # drawing every diagram with a real mermaid. Pinned to the major version
+      # GitHub itself renders with, so a green run here means what it looks
+      # like it means. This install is the slow step in an otherwise ~10s job.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install -g @mermaid-js/mermaid-cli@11
+      # --required: without it the script SKIPS when mmdc is missing, which is
+      # right on a laptop with no Node and very wrong in CI.
+      - run: ./scripts/check_mermaid.sh --required
       - name: Check internal links and anchors
         uses: lycheeverse/lychee-action@v2
         with:

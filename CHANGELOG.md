@@ -52,8 +52,17 @@ in changed.
     unindented, preceded by a blank line, and likewise outside a fold. Every
     one of those mistakes renders wrong on GitHub while producing no build
     error, no broken link and a diff that looks fine, so nothing else in CI
-    was ever going to catch them. Mermaid *grammar* is still unchecked — a
-    diagram with a syntax error merges green and renders as an error box.
+    was ever going to catch them.
+  - **New: `scripts/check_mermaid.sh`**, the other half — it hands every
+    chapter containing a diagram to mermaid-cli and fails if one does not
+    draw, so a diagram with a syntax error can no longer merge green and
+    render as an error box for the reader. Rendering rather than parsing:
+    a block can parse and still throw on the way to a picture. Pinned to
+    the mermaid major version GitHub itself renders with. Locally the script
+    reports SKIPPED without `mmdc` installed rather than passing; CI runs it
+    with `--required`, which refuses to skip. What no check can tell you is
+    whether the picture is any *good* — every layout bug fixed on this
+    branch rendered perfectly well — so new diagrams still get looked at.
 - **Changed: the book is now one file per chapter.** `book/going-unmanaged.md`
   (4,256 lines) became `book/01-ownership-and-raii.md` …
   `book/31-reading-what-the-tools-tell-you.md` plus `A-`…`D-<slug>.md` for the
