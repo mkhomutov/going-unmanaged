@@ -2400,7 +2400,7 @@ A one-week hands-on plan (compress or stretch as needed). Each day's exercise no
 
 ## Chapter 25 — Findings from Practice: a Living Log
 
-*A living log: weak spots discovered during hands-on exercises, each with the theory behind it, the broken and fixed code side by side, and the habit to build. New findings get appended as practice continues — this appendix is meant to grow.*
+*A living log: weak spots discovered during hands-on exercises, each with the theory behind it, the broken and fixed code side by side, and the habit to build. New findings get appended as practice continues — this chapter is meant to grow.*
 
 ### Finding 1 — Copy-shaped moves: a move that doesn't steal is a copy with a misleading name
 

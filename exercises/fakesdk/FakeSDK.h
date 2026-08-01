@@ -1,8 +1,8 @@
 // ============================================================================
-// FakeSDK.h - a miniature C-style API in the idiom of the ArchiCAD DevKit.
+// FakeSDK.h - a miniature C-style API in the classic desktop-SDK idiom.
 // DO NOT MODIFY THIS FILE. Treat it as vendor code: read it, wrap it, obey it.
 //
-// Conventions (same spirit as GSErrCode / API_ElementMemo):
+// Conventions (the classic C-flavored desktop-SDK idiom):
 //   - every function returns ErrCode; 0 (NoErr) means success
 //   - "Get" functions fill caller-provided structs passed by address
 //   - ThingData owns heap allocations made by the SDK; the caller MUST
