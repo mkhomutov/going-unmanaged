@@ -212,10 +212,12 @@ for Chapter 29's bugs because they change timing.
 - **LeakSanitizer is unsupported on macOS/arm64**, which is what prompted the
   Finding 10 caveat now in Chapter 25.
 
-**Still open from this item:** nothing specific to debugging. The chapter's
-demonstration programs are small and deliberately broken, so they do not belong
-in `build_all.sh` as-is — unlike the other Part VI code noted under items 1, 3,
-4 and 6, this one is arguably better left unverified.
+**Still open from this item:** nothing specific to debugging, and nothing to do
+about the code either — that is now a rule rather than a hedge. The chapter's
+demonstration programs exist to fail, so unlike the other Part VI code noted
+under items 1, 3, 4 and 6 they stay out of `build_all.sh` on purpose: a green
+run would mean the sabotage stopped working. *Where chapter code lives* in
+CONTRIBUTING.md states it as settled — do not try to make them green.
 
 ### 6. Authoring an ABI boundary — DONE
 

@@ -58,18 +58,36 @@ $OUT/buildlab > /dev/null
 echo "== buildlab cmake =="
 if command -v cmake > /dev/null 2>&1; then
     CM=build/buildlab-cmake            # under build/, which is gitignored
+
+    # Where the binary lands depends on the generator: a multi-config one
+    # (Xcode, Visual Studio) adds a per-config subdirectory, a single-config
+    # one does not. The script does not pin a generator - the reader's default
+    # is what the chapter is about - so it looks rather than assumes.
+    greet_binary() {
+        local dir=$1 candidate
+        for candidate in "$dir/greet" "$dir/greet.exe" \
+                         "$dir/Debug/greet" "$dir/Debug/greet.exe"; do
+            if [ -x "$candidate" ]; then echo "$candidate"; return 0; fi
+        done
+        echo "build_all.sh: built $dir but found no greet executable in it" >&2
+        return 1
+    }
+
+    # Fresh directories every run: a stale cache is its own class of build bug,
+    # and this configures three files, so hermetic costs about a second.
     rm -rf "$CM" "$CM-asan"
-    # CMAKE_EXPORT_COMPILE_COMMANDS so the flags can be read back below; the
-    # Makefile and Ninja generators write the database, which is what runs here.
+    # CMAKE_EXPORT_COMPILE_COMMANDS so the flags can be read back below.
     cmake -S exercises/buildlab -B "$CM" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON > /dev/null
-    cmake --build "$CM" > /dev/null
-    "$CM/greet" > /dev/null
+    cmake --build "$CM" --config Debug > /dev/null
+    GREET=$(greet_binary "$CM")        # set -e stops here if it found nothing
+    "$GREET" > /dev/null
     # The GREETER_SANITIZE switch is only worth having if it still works.
     cmake -S exercises/buildlab -B "$CM-asan" \
         -DCMAKE_BUILD_TYPE=Debug -DGREETER_SANITIZE=ON \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON > /dev/null
-    cmake --build "$CM-asan" > /dev/null
-    "$CM-asan/greet" > /dev/null
+    cmake --build "$CM-asan" --config Debug > /dev/null
+    GREET_ASAN=$(greet_binary "$CM-asan")
+    "$GREET_ASAN" > /dev/null
 
     # "It configured, built and ran" does NOT prove the switch did anything.
     # Rename the option and cmake merely warns that a -D went unused, exits 0,
@@ -78,8 +96,10 @@ if command -v cmake > /dev/null 2>&1; then
     # database: instrumented when asked, and NOT instrumented when not.
     for db in "$CM/compile_commands.json" "$CM-asan/compile_commands.json"; do
         if [ ! -f "$db" ]; then
-            echo "build_all.sh: no $db - a generator that writes no compile" >&2
-            echo "  database (Xcode, Visual Studio) cannot verify the flags." >&2
+            echo "build_all.sh: no $db. Only the Makefile and Ninja generators" >&2
+            echo "  write a compile database, and without one the flags cannot" >&2
+            echo "  be verified - re-run with CMAKE_GENERATOR unset, or set to" >&2
+            echo "  Ninja. (CI uses the default, which writes one.)" >&2
             exit 1
         fi
     done

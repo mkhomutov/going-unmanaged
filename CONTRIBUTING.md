@@ -117,7 +117,9 @@ home, decided once so no PR has to argue it again:
   `SKIPPED` line and stay green on a machine that lacks it, and take a
   `--require-*` flag that refuses to skip. CI always passes that flag, so a
   step can never silently skip there. A local run should never look like a
-  pass it did not earn.
+  pass it did not earn. Name the flag for the tool — `--require-cmake` in
+  `build_all.sh`, which may grow a second one; `check_mermaid.sh` predates the
+  pattern and spells its own `--required`, and checks one thing, so it stays.
 - **Deliberately broken programs stay in the book.** Chapter 31's sabotage
   runs and Chapter 30's break-it-first steps exist to fail, and are unverified
   on purpose — the reader's job is to reproduce them. ROADMAP item 5 records

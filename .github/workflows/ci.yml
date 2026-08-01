@@ -21,6 +21,34 @@ jobs:
       # images ship cmake, so the flag only ever fires if that changes.
       - run: ./scripts/build_all.sh --require-cmake
 
+  # The job above runs the Greeter CMakeLists on two Unix compilers and never
+  # touches its `if(MSVC)` branches, which is how untested code gets into a
+  # book. This job configures and builds the same file with MSVC, both ways,
+  # and nothing else - build_all.sh is a bash script that wants g++, so it is
+  # not the thing to run here.
+  buildlab-msvc:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash          # -e, so a failing line fails the step
+    steps:
+      - uses: actions/checkout@v5
+      # No -G: the point is the generator a Windows reader actually gets, which
+      # is the Visual Studio one. It is multi-config, so CMAKE_BUILD_TYPE is
+      # ignored and the configuration is chosen at build time - the commands
+      # below are the chapter's with that one difference, which is the whole
+      # reason to run them here.
+      - name: Default configuration
+        run: |
+          cmake -S exercises/buildlab -B build/msvc
+          cmake --build build/msvc --config Debug
+          ./build/msvc/Debug/greet.exe
+      - name: GREETER_SANITIZE=ON
+        run: |
+          cmake -S exercises/buildlab -B build/msvc-asan -DGREETER_SANITIZE=ON
+          cmake --build build/msvc-asan --config Debug
+          ./build/msvc-asan/Debug/greet.exe
+
   book:
     runs-on: ubuntu-latest
     steps:

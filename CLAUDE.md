@@ -75,8 +75,9 @@ Part VI chapters carry code that is not an exercise solution. It goes under
 `solutions/` stays flat, stdlib-only `.cpp` files. Everything verifiable is
 wired into `build_all.sh` (still the one invariant, still ALL GREEN). A step
 needing a tool that may be missing locally (cmake now, TSan later) copies
-check_mermaid.sh: SKIPPED locally, plus a `--require-*` flag CI passes so it
-can never skip there. Deliberately broken demonstration programs — Ch 31's
+check_mermaid.sh: SKIPPED locally, plus a `--require-<tool>` flag CI passes so
+it can never skip there (`--require-cmake`; check_mermaid.sh's own predates the
+pattern and is just `--required`). Deliberately broken demonstration programs — Ch 31's
 sabotage runs, Ch 30's break-it-first steps — stay book-only and unverified on
 purpose (ROADMAP item 5). Ch 26 is done; Ch 28-30 reuse this.
 
