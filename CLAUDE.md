@@ -103,6 +103,31 @@ Chapter 25's Finding 10.
 - Reference solutions in exercise chapters sit inside `<details>` spoiler
   folds ("Show the solution — do the exercise cold first"); keep that shape
   for new exercise chapters.
+- Diagrams are mermaid in a ```` ```mermaid ```` fence, rendered natively by
+  GitHub and carried into the single file untouched. The rules:
+  - **A diagram is additive.** It illustrates prose that already stands on
+    its own — nothing is deleted or rewritten to make room, because mermaid
+    does not render outside GitHub (the release single file included). At
+    most one lead-in sentence.
+  - **Basic `flowchart` and `sequenceDiagram` only**, no `style`/`classDef`
+    and no hardcoded colours — GitHub themes mermaid for light and dark
+    itself, and a hardcoded colour is unreadable in one of them.
+  - **Fence unindented, blank line before it**, and never inside a
+    `<details>` fold or a list.
+  - **Render it before committing; parsing is not enough.** `mermaid.parse()`
+    proves the grammar is legal and tells you nothing about the picture. CI
+    cannot check this. Extract the block from the committed file, render it
+    in a browser (`mermaid.render`, then `getBBox()`), and look at it:
+    layout bugs are only visible drawn. The ones already paid for — a
+    decision tree stacked into a 1000px column by `flowchart TD` when it
+    wanted `LR`; crossed edges from declaring nodes in the wrong order
+    (dagre places by declaration, so declare the node the reader starts
+    from first); `subgraph`s rendering in reverse of declaration order; an
+    `alt` with one branch reading as the whole story.
+  - **Watch the width, not just the height.** GitHub scales a diagram to the
+    container width, so a wider picture is smaller *text* for every reader.
+    Prefer splitting a diagram at a seam the chapter already teaches over
+    letting it grow.
 
 ## Known gaps / roadmap (good first tasks)
 
