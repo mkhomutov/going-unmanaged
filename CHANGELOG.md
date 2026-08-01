@@ -12,9 +12,23 @@ numbers may still move.
 
 ## [Unreleased]
 
-Navigation and usability, one correction, and the first three appended
+Navigation and usability, one correction, and the first four appended
 chapters; no existing chapter or Finding number changed meaning.
 
+- **New: Chapter 29 — Concurrency.** Discharges the promises made in
+  Chapters 16 and 18: the C#-to-C++ concurrency mapping (no runtime, no
+  pool, no `await`), `std::thread`'s join-or-terminate obligation and
+  `jthread`, ThreadSanitizer as the third sanitizer, locks as RAII, and the
+  callback-from-a-driver-thread problem worked through to a correct
+  teardown — weak reference, alive flag, unregister, and a callback context
+  that is deliberately never freed. Centrepiece: a textbook data race that
+  prints the right answer on every run at `-O2`, found by TSan in one. Three key
+  principles added to Appendix B; Appendix D's Williams entry now points
+  here first. **This closes Tier 1 of the roadmap** — README's and
+  CONTRIBUTING's lists say so, and ROADMAP item 4 is marked DONE while
+  recording that the threaded-callback lab it was meant to pair with is
+  still open: the chapter's exercise has no task card under `exercises/`,
+  and no threaded code reaches `build_all.sh`, so CI runs no TSan job.
 - **New: Chapter 28 — Testing.** Why C++ test frameworks are made of macros
   (no reflection, no `[CallerLineNumber]` — only the preprocessor sees source
   text); a working framework in forty lines of standard library; testability
