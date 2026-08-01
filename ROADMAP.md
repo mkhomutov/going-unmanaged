@@ -47,14 +47,25 @@ handbook's sanitizer flags behind a `-DGREETER_SANITIZE=ON` option,
 `find_package` for SDK config packages, and IDE-native project files as the
 alternative reality many SDK shops actually live in.
 
-**Still open from this item:** nothing. The chapter's snippets were the only
-code in the book `scripts/build_all.sh` did not verify; they now live,
-assembled, in `exercises/buildlab/CMakeLists.txt`, and the script configures,
-builds and runs it twice — default, then Debug with `-DGREETER_SANITIZE=ON`.
-Without cmake on PATH the step prints SKIPPED and the run stays green; CI
-passes `--require-cmake`, which refuses to skip. That PR also settled where
-chapter code lives, for the three chapters below that still owe the same
-debt — see *Where chapter code lives* in CONTRIBUTING.md.
+**Still open from this item:** no work, but the coverage has an edge worth
+naming. What CI builds is the shape the chapter *ends* on, assembled in
+`exercises/buildlab/CMakeLists.txt`: the script configures, builds and runs it
+twice — default, then Debug with `-DGREETER_SANITIZE=ON` — and reads the flags
+back out of the compile database, because a configure that built and ran proves
+the build works and not that the switch did anything. Without cmake on PATH the
+step prints SKIPPED and the run stays green; CI passes `--require-cmake`, which
+refuses to skip.
+
+The forms the chapter passes *through* on the way there are in no file and are
+not checked: the first single-executable `add_executable(greet main.cpp
+Greeter.cpp)`, and the sanitizer flags in their pre-refactor shape, on `greeter`
+with `PUBLIC` rather than on their own INTERFACE target. Verifying each would
+mean a directory of half-finished builds, which teaches worse than it protects —
+so the honest claim is that the destination is under CI and the steps toward it
+are proofread. Anyone editing those snippets should assume nothing catches them.
+
+That PR also settled where chapter code lives, for the three chapters below that
+still owe the same debt — see *Where chapter code lives* in CONTRIBUTING.md.
 
 ### 2. Dependency management — DONE
 

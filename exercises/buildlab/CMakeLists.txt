@@ -5,7 +5,8 @@
 # chapter's own snippets, in the shape the chapter ends with - library plus
 # executable, warnings PRIVATE, sanitizers behind an option and carried by an
 # INTERFACE target. scripts/build_all.sh configures, builds and runs it both
-# ways, which is what keeps the chapter's snippets honest.
+# ways, which is what keeps THIS shape honest; the earlier forms the chapter
+# walks through are in no file and nothing checks them.
 
 cmake_minimum_required(VERSION 3.16)
 

@@ -26,7 +26,13 @@ in changed.
   chapter ends on, library plus executable, warnings PRIVATE, sanitizers
   behind `GREETER_SANITIZE` and carried by the INTERFACE target — and the
   script configures, builds and runs it twice: default, then Debug with
-  `-DGREETER_SANITIZE=ON`. Without cmake on PATH that step prints SKIPPED and
+  `-DGREETER_SANITIZE=ON`, and reads the flags back out of the compile database
+  afterwards, because a configuration that built and ran proves the build works
+  and not that the switch did anything. What is covered is that destination
+  shape; the forms the chapter passes through on the way to it — the first
+  single-executable build, the sanitizer flags before they move onto their own
+  target — live in no file and stay unverified, which is the honest limit of
+  "the snippets are under CI". Without cmake on PATH that step prints SKIPPED and
   the run stays green, the bargain `check_mermaid.sh` already makes with
   `mmdc`; CI passes the new `--require-cmake`, which refuses to skip, so the
   step can never quietly vanish there. The Greeter sources are untouched, and

@@ -45,10 +45,12 @@ $OUT/invalid > /dev/null
 $OUT/lambdas > /dev/null
 $OUT/buildlab > /dev/null
 
-# Chapter 26's CMakeLists, configured, built and run both ways. The chapter's
-# snippets are code, and this is what holds them to the same standard as
-# everything above: the reference file in exercises/buildlab/ is assembled
-# from them, so a snippet that stopped working fails here.
+# Chapter 26's CMakeLists, configured, built and run both ways. The reference
+# file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from
+# its snippets, so this holds the chapter's destination to the same standard as
+# everything above. What it does not hold: the forms the chapter passes through
+# on the way - the first single-executable build, the sanitizer flags before
+# they move onto a target of their own - which live in no file at all.
 #
 # cmake is not part of the toolchain the rest of this script needs, so a
 # laptop without it stays green and says so rather than pretending. CI passes
