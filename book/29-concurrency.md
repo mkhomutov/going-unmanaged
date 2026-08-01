@@ -259,7 +259,7 @@ Note what the two smart pointers are doing here, because this is the one place t
 
 ### Try it
 
-This is Chapter 18's stretch goal, finally answerable, and it needs the FakeDevice from that lab.
+This is Chapter 18's stretch goal, finally answerable, and it needs the FakeDevice from that lab. The task card is `exercises/threadlab/`, and `solutions/device_threaded_solution.cpp` is the worked step 3 — do the whole thing cold first, as always.
 
 1. **Make it threaded.** Call `Device_Poll` from a `std::thread` while your main thread also reads the collected samples. Build it under `-fsanitize=thread` and read the report. Note that you may have to run several times, or add load, before the race is *observable* — and that TSan reports it regardless.
 2. **Fix problem one.** Put a mutex around the sample collection, on both sides. Confirm TSan goes quiet, and confirm the program still produces the right samples.

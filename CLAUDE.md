@@ -44,15 +44,24 @@ Chapter 25's Finding 10.
   verbatim from the chapter's listings (same discipline as the Fake* vendor
   code: editing one means editing the chapter in the same commit), plus a
   TASK.md. build_all.sh builds the suite with `-I solutions` and runs it
+- `exercises/threadlab/` — Chapter 29's lab: a TASK.md and nothing else. It is
+  the Chapter 18 device with a driver thread the reader builds, so it links
+  `../fakedevice/`'s vendor code rather than copying it; the reference solution
+  is `solutions/device_threaded_solution.cpp`
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
-  Its last section configures, builds and runs `exercises/buildlab/`'s
-  CMakeLists; without cmake on PATH it prints SKIPPED and stays green, and
-  `--require-cmake` (which CI passes) refuses to skip
+  Its last two sections may skip: one configures, builds and runs
+  `exercises/buildlab/`'s CMakeLists, the other rebuilds
+  `solutions/device_threaded_solution.cpp` under `-fsanitize=thread` (a second
+  build, because TSan and ASan do not combine). Without cmake on PATH, or
+  without a ThreadSanitizer that can compile *and start* a trivial program,
+  each prints SKIPPED and stays green; `--require-cmake` and `--require-tsan`
+  (CI passes both) refuse to skip
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
-  flags (optional 2nd arg links fakesdk/fakedevice vendor code)
+  flags (optional 2nd arg links fakesdk/fakedevice vendor code); `SAN=thread`
+  switches the sanitizer for the threadlab's second build
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
   below over `book/` and the built single file; run by CI, and worth running
   locally after touching either. Structure only, never mermaid grammar
@@ -85,11 +94,14 @@ with `main()` cannot be tested; duplicating it into the lab was rejected).
 Everything verifiable is wired into `build_all.sh` (still the one invariant,
 still ALL GREEN). A step needing a tool that may be missing locally (cmake now,
 TSan later) copies check_mermaid.sh: SKIPPED locally, plus a `--require-<tool>`
-flag CI passes so it can never skip there (`--require-cmake`; check_mermaid.sh's
-own predates the pattern and is just `--required`). Deliberately broken
-demonstration programs — Ch 31's sabotage runs, Ch 30's break-it-first steps —
-stay book-only and unverified on purpose (ROADMAP item 5). Ch 26 and 28 are
-done; Ch 29-30 reuse this.
+flag CI passes so it can never skip there (`--require-cmake`, `--require-tsan`;
+check_mermaid.sh's own predates the pattern and is just `--required`) — and the
+probe does the thing rather than looking for the tool, since TSan can be
+installed and still fail to start. A lab that revisits an SDK the repo already
+has links that vendor code in place (threadlab). Deliberately broken
+demonstration programs — Ch 31's sabotage runs, Ch 30's break-it-first steps,
+Ch 29's Try it step 4 — stay book-only and unverified on purpose (ROADMAP item
+5). Ch 26, 28 and 29 are done; Ch 30 reuses this.
 
 ## Hard invariants (never break these)
 
@@ -207,8 +219,9 @@ stay on the list marked DONE so item numbers never shift. Short version:
   item 6 and is now Chapter 30; the debugging chapter was item 5 and is now
   Chapter 31
 - Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E)
-- Carried over: COM-style refcounting exercise (Bestiary Shape 3 has no lab);
-  threaded-callback lab (FakeDevice stretch goal promoted to an exercise)
+- Carried over: COM-style refcounting exercise (Bestiary Shape 3 has no lab).
+  The threaded-callback lab was the other one and is DONE — `exercises/threadlab/`
+  plus `solutions/device_threaded_solution.cpp` under a TSan CI gate
 - Structural item: splitting the book per-chapter under `book/` with a build
   script that concatenates — DONE, see the ROADMAP entry
 
