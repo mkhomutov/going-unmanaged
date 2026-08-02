@@ -207,16 +207,28 @@ Beyond style, the busywork signals a mental model worth correcting: nulling memb
 
 **Found in:** the Buffer sabotage experiments — removing the self-move guard produced "no issues," which was itself the bug.
 
-**The theory.** Walk the guardless move assignment through `c = std::move(c)`:
+**The theory.** Walk the guardless move assignment through `c = std::move(c)`. First the shape this book's Buffer actually uses:
 
 ```cpp
 delete[] data_;                              // frees c's block
-size_ = std::exchange(other.size_, 0);       // other IS c: size_ becomes 0
-data_ = std::exchange(other.data_, nullptr); // reads the dangling ptr,
-                                             // immediately overwrites with null
+size_ = std::exchange(other.size_, 0);       // other IS c: exchange writes 0
+                                             // and RETURNS 5 — which the outer
+                                             // assignment then writes back
+data_ = std::exchange(other.data_, nullptr); // same trick: data_ ends up
+                                             // holding the pointer just freed
 ```
 
-Net result: `c` ends up as an empty, *valid-looking* buffer. The destructor later does `delete[] nullptr` — a safe no-op. No invalid access ever occurred, so AddressSanitizer has nothing to say — and the data is silently gone. This is the quieter of the two possible outcomes (the loud one, heap-use-after-free, needs something to actually dereference the dangling pointer, e.g. a guardless self-*copy* doing `std::copy` from the freed block).
+`x = std::exchange(x, v)` is an elaborate way of leaving `x` alone: `exchange` stores `v` and hands back the old value, and the outer assignment puts that old value straight back. So `c` keeps `size_ == 5` and the block it has already freed. This one is *loud* — the destructor deletes that block a second time and AddressSanitizer reports `attempting double-free`, and touching `c.At(2)` before then gets you a `heap-use-after-free`. Loud is the good case.
+
+The dangerous version is the one next door — the two-statement steal, which is what most people write before they meet `std::exchange`:
+
+```cpp
+delete[] data_;                              // frees c's block
+data_ = other.data_;  other.data_ = nullptr; // other IS c: null out the very
+size_ = other.size_;  other.size_ = 0;       // member we just assigned from
+```
+
+Now `c` really does end up an empty, *valid-looking* buffer — `size_` 0, `data_` null. The destructor later does `delete[] nullptr`, a safe no-op. No invalid access ever occurred, so AddressSanitizer has nothing to say — and the data is silently gone. Same bug, same missing guard; one shape aborts with a three-stack report and the other exits 0.
 
 **The principle:** sanitizers catch *memory crimes* — invalid reads and writes, double-frees, leaks. They cannot catch *memory-clean but logically wrong* behavior. The two verification tools are complementary and neither substitutes for the other:
 
@@ -225,7 +237,8 @@ Net result: `c` ends up as an empty, *valid-looking* buffer. The destructor late
 
 ```cpp
 c = std::move(c);
-assert(c.Size() == 5 && c.At(2) == 42);   // catches what ASan cannot
+assert(c.Size() == 5 && c.At(2) == 42);   // fires on the SILENT variant,
+                                          // which ASan runs straight past
 ```
 
 A related mechanical lesson from the same session: **ASan halts at the first error by default**, and leak detection runs at normal program exit — so a double-free report can mask a leak that would have been reported later. To see subsequent errors, either remove the first crime from the run, or use `ASAN_OPTIONS=halt_on_error=0` to report-and-continue. And note the report-shape asymmetry: a double-free carries three stacks (access, prior free, allocation); a leak carries exactly one — the allocation — because an orphaned block's birth is the only trace it ever leaves.
