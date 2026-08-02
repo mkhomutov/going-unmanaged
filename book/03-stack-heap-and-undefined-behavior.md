@@ -10,7 +10,7 @@ A question worth being able to answer instantly: "where does this variable live?
 void F() {
     int x = 5;                        // STACK: freed automatically at }
     Widget w;                         // STACK: whole object, dtor at }
-    Widget* p = new Widget();         // w on HEAP, p itself on stack
+    Widget* p = new Widget();         // the new Widget on HEAP, p on stack
     auto u = std::make_unique<Widget>();  // heap object, stack owner
     std::vector<int> v(1000);         // v's bookkeeping on stack,
 }                                     // the 1000 ints on HEAP
