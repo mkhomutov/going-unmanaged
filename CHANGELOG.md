@@ -19,6 +19,51 @@ point is what makes this MINOR rather than MAJOR: the version contract is about
 what a *number* refers to, and nothing renumbered — only the file the text lives
 in changed.
 
+- **New: Chapter 8 expanded into the error-handling worldview** (MINOR —
+  substantial appended content; nothing deleted, no chapter or Finding number
+  moved). The chapter showed both mechanisms correctly and explained neither
+  the split nor how to choose, which left the actual mind-shift — a C#
+  developer's instinct is exceptions-first, one mechanism, always available —
+  untouched. Five new sections around the existing text, which stays as it
+  was:
+  - **"Why half the ecosystem says no"** — `-fno-exceptions` as a second
+    dialect of the same syntax (most game engines, most embedded targets,
+    LLVM, Google's style guide), its four reasons, and the practical
+    consequence: which world you live in is a property of the build, so
+    finding out is a day-one task. There is no `-fno-exceptions` for the CLR.
+  - **"What a throw actually costs"** — table-based exceptions honestly: a
+    happy path that costs nothing (*cheaper* than an error code, which pays a
+    branch per call), a throw path that is cold, unbounded and
+    non-deterministic, and unwind tables in the image whether or not you ever
+    throw. This is what makes "exceptions are for exceptional" an engineering
+    statement rather than style advice, and a throw in a hot loop a design bug
+    that profiles as a latency spike rather than a wrong answer.
+  - **"Between the two poles: the standard vocabulary"** — `std::error_code`
+    and `std::system_error` with `std::filesystem`'s dual overloads as the
+    visible example (the standard library shipping both forms of every
+    function being the clearest admission that neither mechanism won),
+    `std::optional` as "absence is not an error", and `std::expected<T, E>`
+    labelled C++23 in the text, with the house `Result`/`StatusOr`/`Outcome`
+    types the reader is far more likely to meet first.
+  - **"Choosing: is the failure a bug, a value, or an event?"** — the section
+    the expansion exists for: assert for a caller's bug, a returned value for
+    an expected failure, a throw for the rare non-local one and for
+    constructors, which have no return channel (Chapter 18's static factory,
+    explained rather than merely used). The table's right-hand column is the
+    point — in C# all three rows are one keyword, and
+    `ArgumentNullException` *is* the assert case.
+  - **"In the wild: C-style SDKs"** — the section every other Part II chapter
+    had: status-enum encodings that are not always zero-for-success, the
+    Bestiary's failure-contract question ("touched or untouched on failure?")
+    and Chapter 17's documentation trap, and translation at the boundary in
+    both directions, with the entry-point `catch (...)` and why it is not
+    paranoia.
+  - **Two new key principles, mirrored in Appendix B** in the same commit as
+    CONTRIBUTING requires: the bug/value/event decision, and finding out which
+    dialect a codebase speaks before writing in it. Every snippet was compiled
+    under the canonical flags (the `expected` one under `-std=c++2b`); none of
+    it enters `build_all.sh`, which is untouched.
+
 - **New: Chapter 30's three worked boundaries are under CI** (PATCH-level —
   verification wiring for code the chapter already printed; the demo mains are
   new, thin, and exist to be run, and no text was rewritten and no number
