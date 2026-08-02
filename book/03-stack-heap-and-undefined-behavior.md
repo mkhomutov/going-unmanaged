@@ -16,7 +16,7 @@ void F() {
 }                                     // the 1000 ints on HEAP
 ```
 
-**Stack**: allocation is one pointer bump — near-free; freed in reverse order automatically; small, and how small depends on the platform — roughly 1 MB per thread on Windows, 8 MB for the main thread on Linux and macOS (512 KB for secondary threads there) — so huge arrays as locals overflow it; the natural home of value semantics and RAII. **Heap**: for objects that outlive the current scope, sizes unknown at compile time, or big data; slower (allocator work, cache misses); in modern C++ you touch it almost exclusively through containers and smart pointers, never bare new.
+**Stack**: allocation is one pointer bump — near-free; freed in reverse order automatically; small, and how small depends on the platform — roughly 1 MB per thread on Windows, and 8 MB for the main thread on both Linux and macOS, which then part company for the threads you spawn yourself: 512 KB on macOS, glibc's full 8 MB again on Linux — so huge arrays as locals overflow it; the natural home of value semantics and RAII. **Heap**: for objects that outlive the current scope, sizes unknown at compile time, or big data; slower (allocator work, cache misses); in modern C++ you touch it almost exclusively through containers and smart pointers, never bare new.
 
 Contrast to internalize: in C# the language puts every class instance on the GC heap. (Recent runtimes stack-allocate objects that provably never escape a method, but that is an optimization you neither request nor observe — the semantics are unchanged.) In C++ heap use is a deliberate choice — and good C++ minimizes it. "Why is this on the heap?" is a legitimate code review question.
 
