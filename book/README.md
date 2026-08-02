@@ -12,28 +12,28 @@ You have spent years in managed code — the runtime tracked your objects, the G
 
 **[Part I — The Mental Shift](01-ownership-and-raii.md#part-i--the-mental-shift)**
 
-1. [Ownership and RAII](01-ownership-and-raii.md#chapter-1--ownership-and-raii)
-2. [Value Semantics](02-value-semantics.md#chapter-2--value-semantics)
-3. [Stack, Heap, and Undefined Behavior](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior)
+1. [Ownership and RAII](01-ownership-and-raii.md#chapter-1--ownership-and-raii) — who frees this, and the destructor that guarantees it
+2. [Value Semantics](02-value-semantics.md#chapter-2--value-semantics) — assignment copies, and what that costs you
+3. [Stack, Heap, and Undefined Behavior](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior) — where a variable lives, and the bugs that don't announce themselves
 
 **[Part II — The Language, Side by Side](04-classes-inheritance-interfaces.md#part-ii--the-language-side-by-side)**
 
-4. [Classes, Inheritance, Interfaces](04-classes-inheritance-interfaces.md#chapter-4--classes-inheritance-interfaces)
-5. [Virtual Dispatch and the Virtual Destructor](05-virtual-dispatch-and-the-virtual-destructor.md#chapter-5--virtual-dispatch-and-the-virtual-destructor)
-6. [The Rule of Five and Move Semantics](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics)
-7. [Templates vs C# Generics](07-templates-vs-csharp-generics.md#chapter-7--templates-vs-c-generics)
-8. [Error Handling: Exceptions and Error Codes](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)
-9. [Casts, Conversions, and Strings](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)
+4. [Classes, Inheritance, Interfaces](04-classes-inheritance-interfaces.md#chapter-4--classes-inheritance-interfaces) — the same words as C#, under different rules
+5. [Virtual Dispatch and the Virtual Destructor](05-virtual-dispatch-and-the-virtual-destructor.md#chapter-5--virtual-dispatch-and-the-virtual-destructor) — one missing keyword, and every derived destructor skipped
+6. [The Rule of Five and Move Semantics](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics) — owning a raw resource without double-freeing it
+7. [Templates vs C# Generics](07-templates-vs-csharp-generics.md#chapter-7--templates-vs-c-generics) — compile-time code generation, not one runtime type
+8. [Error Handling: Exceptions and Error Codes](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes) — two dialects of one language, and how to choose
+9. [Casts, Conversions, and Strings](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings) — four casts by name, and a string that knows no encoding
 
 **[Part III — The Standard Library](10-modern-cpp-fluency.md#part-iii--the-standard-library)**
 
-10. [Modern C++ Fluency](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)
-11. [STL Containers, Algorithms, and Iterator Invalidation](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)
+10. [Modern C++ Fluency](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency) — auto, lambdas and optional: the C++ that reads like C#
+11. [STL Containers, Algorithms, and Iterator Invalidation](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) — the Dictionary equivalents, and the loop that eats itself
 
 **[Part IV — The Build and the Toolchain](12-the-compilation-model.md#part-iv--the-build-and-the-toolchain)**
 
-12. [The Compilation Model](12-the-compilation-model.md#chapter-12--the-compilation-model)
-13. [Toolchain Quick Reference](13-toolchain-quick-reference.md#chapter-13--toolchain-quick-reference)
+12. [The Compilation Model](12-the-compilation-model.md#chapter-12--the-compilation-model) — why the error came from the linker
+13. [Toolchain Quick Reference](13-toolchain-quick-reference.md#chapter-13--toolchain-quick-reference) — the flags, and what MSVC calls the thing you know
 
 **[Part V — Learning by Doing](14-exercise-the-lifetime-tracer.md#part-v--learning-by-doing)**
 

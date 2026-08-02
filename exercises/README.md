@@ -10,9 +10,9 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 
 | Exercise | Chapter | Trains | Time | Reference solution |
 |---|---|---|---|---|
-| [The Lifetime Tracer](tracer/TASK.md) | 14 | all six special members, observed live | — | [tracer.cpp](../solutions/tracer.cpp) |
-| [The Buffer](buffer/TASK.md) | 15 | the Rule of Five on a raw pointer | — | [Buffer.h](../solutions/Buffer.h) + [buffer.cpp](../solutions/buffer.cpp) |
-| *(reading)* The SDK Bestiary | 16 | the five shapes vendor APIs take — read before the SDK labs | — | — |
+| [The Lifetime Tracer](tracer/TASK.md) | 14 | all six special members, observed live | ~60 min | [tracer.cpp](../solutions/tracer.cpp) |
+| [The Buffer](buffer/TASK.md) | 15 | the Rule of Five on a raw pointer | ~90 min | [Buffer.h](../solutions/Buffer.h) + [buffer.cpp](../solutions/buffer.cpp) |
+| *(reading)* The SDK Bestiary | 16 | the five shapes vendor APIs take — read before the SDK labs | ~20 min (reading) | — |
 | [The FakeSDK](fakesdk/TASK.md) | 17 | RAII + error codes (desktop-plugin style) | ~90 min | [fakesdk_solution.cpp](../solutions/fakesdk_solution.cpp) |
 | [The Device SDK](fakedevice/TASK.md) | 18 | opaque handles + C callbacks (peripheral style) | ~2 h | [device_solution.cpp](../solutions/device_solution.cpp) |
 | [The Word Counter](words/TASK.md) | 19 | STL fluency end to end | ~60 min | [words.cpp](../solutions/words.cpp) |

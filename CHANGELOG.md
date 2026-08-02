@@ -19,6 +19,59 @@ point is what makes this MINOR rather than MAJOR: the version contract is about
 what a *number* refers to, and nothing renumbered — only the file the text lives
 in changed.
 
+- **New: two mind-shift gaps closed, and the indexes finished** (MINOR — a
+  new appendix section is appended content; the rest is index polish, and no
+  chapter, Finding or appendix number moved). Four small additions that share
+  one subject: the things a C# developer trips on because the managed runtime
+  never let them happen.
+  - **Chapter 3 — uninitialized values as a first-class UB citizen.** The UB
+    greatest-hits list omitted one of the actual greatest hits, and the one the
+    reader is least equipped for: in C# fields are zeroed by the runtime and
+    definite assignment makes reading an unassigned local a *compile error*, so
+    this bug has never once happened to them and no reflex exists for it. Now a
+    list entry and a section of its own — indeterminate values, why Debug shows
+    0 and Release shows garbage (the chapter's own works-on-my-machine
+    signature), the three places the rule reaches past a plain local (a member
+    missed by the initializer list, `new T[n]` without braces, an API struct),
+    and the habit, including treating a *may be used uninitialized* warning as
+    a certainty. Chapter 4, Finding 7 and the `= {}` idiom are cross-referenced
+    rather than re-taught, and the plug-in angle stays where it was, closing
+    the UB section.
+  - **New: Appendix A.7 — signed, unsigned, and `size_t`.** Appended after A.6;
+    A.1–A.6 are untouched. `size_t` is unsigned where C#'s `Count` and `Length`
+    are `int`, and `uint` is a type C# developers are steered away from — so
+    the reader meets unsigned arithmetic in the first loop they write, with no
+    instinct for it. The two daily collisions: `int i < v.size()` and its
+    `-Wsign-compare` warning, with both fixes (match the counter, or drop the
+    index entirely and use a range-for — Chapter 2's `const auto&` reflex); and
+    `size() - 1` on an empty container, which wraps to 18446744073709551615 and
+    turns a guard that should reject every index into one that accepts every
+    index. The asymmetry is the reason the section exists: unsigned wrap is
+    *defined* and signed overflow is UB, and being legal is exactly what makes
+    the wrap the more dangerous of the two — UBSan reports the signed overflow
+    and has nothing to say about the wrap. The broken guard compiles clean
+    under `-Wall -Wextra`, runs clean under Address and UB sanitizers, and the
+    only symptom is the answer. `std::ssize` and the `std::cmp_less` family are
+    named in one sentence as the C++20 relief. Every snippet was compiled under
+    the canonical flags: the broken loop draws the quoted warning verbatim, the
+    fixes are silent, and both guards were run to confirm the wrong answer and
+    the right one. One new key principle, mirrored in Appendix B under
+    errors/casts/strings/UB in the same commit; README's Appendix A descriptor
+    line records the new topic.
+  - **The Contents gains taglines for Chapters 1–13.** Parts V and VI have
+    carried them since the split and Parts I–IV never did, so the reading order
+    told you a title and nothing about the payoff. Each of the thirteen now
+    names the trap or the stakes in the same style — Chapter 5's is the missing
+    keyword and every skipped derived destructor, Chapter 12's is why the error
+    came from the linker. Chapters 24 and 25 keep their bare titles, since a
+    practice plan and a living log are what they say they are.
+  - **`exercises/README.md` has no dashes left in the Time column.** The Tracer
+    and Buffer rows carried "—"; they are now ~60 min and ~90 min, sized from
+    Chapter 24's plan, where each is a day's centrepiece and the Buffer's
+    ordering mistakes are heap corruption rather than style nits. The Bestiary
+    reading row says ~20 min. Every other row was checked against the time its
+    chapter or task card states, and all of them already matched.
+
 - **New: Chapter 8 expanded into the error-handling worldview** (MINOR —
   substantial appended content; nothing deleted, no chapter or Finding number
   moved). The chapter showed both mechanisms correctly and explained neither
