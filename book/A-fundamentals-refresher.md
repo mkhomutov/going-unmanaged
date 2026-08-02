@@ -158,12 +158,12 @@ bool InRange(const std::vector<int>& v, size_t i) {
 }
 ```
 
-**The asymmetry worth stating plainly.** Unsigned overflow **wraps**, and that is *defined* behavior — the standard says so. Signed overflow is **undefined** (Chapter 3's greatest-hits list). The counter-intuitive part is that being legal is exactly what makes the unsigned case dangerous: UBSan reports a signed overflow the moment it happens, and it cannot report the wrap above, because nothing went wrong as far as the language is concerned. The broken `InRange` compiles clean under `-Wall -Wextra` and runs clean under `-fsanitize=address,undefined`. The only symptom is the answer.
+**The asymmetry worth stating plainly.** Unsigned overflow **wraps**, and that is *defined* behavior — the standard says so. Signed overflow is **undefined** (Chapter 3's greatest-hits list). The counter-intuitive part is that being legal is exactly what makes the unsigned case dangerous: UBSan reports a signed overflow the moment it happens, and it stays silent on the wrap above, because nothing went wrong as far as the language is concerned. The broken `InRange` compiles clean under `-Wall -Wextra` and runs clean under `-fsanitize=address,undefined`. Clang does ship a check for it — `-fsanitize=unsigned-integer-overflow`, also in the `-fsanitize=integer` group — but it is deliberately left out of `-fsanitize=undefined`, because legal wrapping is ordinary in real code and the noise would bury the genuine findings. Off by default is the part that bites: under the flags you actually build with, the only symptom is the answer.
 
 Know-they-exist, for when you meet them: C++20 adds `std::ssize(c)` — the same count, as a signed type — and the `std::cmp_less` family, which compare across signedness and give the mathematically true answer (`std::cmp_less(-1, v.size())` is `true`, where `-1 < v.size()` is `false`). Both exist for exactly this friction.
 
 > [!TIP]
-> **Key principle:** "`size()` is unsigned, so `size() - 1` on an empty container is a huge number, not -1 — I compare with `<` instead of subtracting, and no sanitizer will ever warn me, because the wrap is legal."
+> **Key principle:** "`size()` is unsigned, so `size() - 1` on an empty container is a huge number, not -1 — I compare with `<` instead of subtracting, because the wrap is legal and my `-fsanitize=address,undefined` build stays silent about it."
 
 ---
 
