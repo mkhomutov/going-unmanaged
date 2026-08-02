@@ -101,6 +101,8 @@ One line each. If you can say these fluently and back them with code, the concep
 
 **Errors, casts, strings, UB**
 
+- "I ask whether a failure is a bug, a value, or an event — a bug gets an assert, a value gets a return the caller must look at, and only a rare non-local failure, or a constructor with no return channel, gets a throw."
+- "Whether exceptions exist at all is a property of the build, not a per-function choice — I find out which dialect a codebase speaks before I write my first function in it."
 - "Throw by value, catch by const reference — catching by value slices. No finally: RAII is the finally."
 - "No exception crosses the add-on boundary — I catch at entry points and translate to error codes. Destructors never throw."
 - "static_cast for conversions I can prove, dynamic_cast to query at runtime; const_cast and reinterpret_cast are code-review question marks."
