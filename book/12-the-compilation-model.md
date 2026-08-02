@@ -55,7 +55,7 @@ void Widget::Draw() { /* body */ }
 int main() { Widget w; w.Draw(); }  // linker connects call to Widget.cpp's body
 ```
 
-A thing can be *declared* many times but *defined* exactly once across the program — the **One Definition Rule (ODR)**.
+A thing can be *declared* many times but *defined* only once per translation unit — the **One Definition Rule (ODR)**. For non-inline functions and variables it is once across the whole *program*; classes, templates and inline functions may be defined in many translation units, provided every definition is identical. That exception is what makes headers work at all: `Widget`'s class definition is compiled into every .cpp that includes it.
 
 ### Compile errors vs linker errors — read which stage failed
 

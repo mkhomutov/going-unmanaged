@@ -8,7 +8,7 @@ Time to pay up. The vocabulary first, then the thing the book kept pointing at.
 
 C# hands you a complete concurrency runtime. A thread pool sized for you, `Task` as the unit of work, `async`/`await` as a compiler transformation that turns your method into a state machine so a waiting operation costs no thread at all, a synchronization context that puts continuations back on the UI thread, and `CancellationToken` threaded through it all. You express *what* should happen; the runtime decides *where*.
 
-C++ has no runtime. `std::thread` is an operating-system thread — a real one, created eagerly, with its own stack of roughly a megabyte (Chapter 3), which is why "just spawn one per work item" is a design error here and merely wasteful there. There is no pool unless you write one or take one from a library. There is no `await`; C++20 coroutines exist but need a library on top to be usable, and you are unlikely to meet them in SDK work. The standard library gives you primitives, and the composition is yours.
+C++ has no runtime. `std::thread` is an operating-system thread — a real one, created eagerly, with its own stack — a megabyte on Windows, 512 KB for a secondary thread on macOS, 8 MB reserved with glibc on Linux (Chapter 3), which is why "just spawn one per work item" is a design error here and merely wasteful there. There is no pool unless you write one or take one from a library. There is no `await`; C++20 coroutines exist but need a library on top to be usable, and you are unlikely to meet them in SDK work. The standard library gives you primitives, and the composition is yours.
 
 | C# | C++ |
 |---|---|
@@ -89,7 +89,7 @@ WARNING: ThreadSanitizer: data race (pid=70825)
   Location is global 'counter' at 0x000104f48000
 ```
 
-One run. It names the variable, the line, and both threads, and exits 134. The program that printed the right answer three times in a row is definitively broken, and now you have proof.
+One run. It names the variable, the line, and both threads. On macOS the run then aborts, exit 134; on Linux TSan's defaults are `halt_on_error=0` and `exitcode=66`, so the program carries on and exits 66 — a different number for the same verdict. The program that printed the right answer three times in a row is definitively broken, and now you have proof.
 
 Two practical notes. TSan is **mutually exclusive with AddressSanitizer** — separate build, separate CI job, not a bigger flag list. And it only sees code that actually executes, so it needs a workload: the tests you wrote in Chapter 28 are exactly that workload.
 
@@ -152,7 +152,7 @@ WARNING: ThreadSanitizer: data race
 SUMMARY: ThreadSanitizer: data race vector.h:250 in std::vector<int>::__destroy_vector::operator()()
 ```
 
-The destructor of the sample vector is racing the callback still pushing into it. Exit 134.
+The destructor of the sample vector is racing the callback still pushing into it. Nonzero exit again — 134 here, 66 on Linux.
 
 The fix is four moves and one omission, and the omission is the part everyone gets wrong. Move the state into a block with its own lifetime, so it cannot die under the callback; hand the SDK a **weak** reference to it, so the callback asks whether the state is still there rather than assuming; publish a **flag saying the session is gone**, so a late callback drops its work instead of doing it; and unregister.
 
@@ -248,7 +248,7 @@ Note what the two smart pointers are doing here, because this is the one place t
 ### Pitfalls
 
 - **Locking to protect a container, then handing out a reference to what is inside it.** The lock ends at the closing brace; the reference outlives it. Copy the value out, or do the work under the lock.
-- **A mutex per operation instead of per invariant.** Two correctly-locked calls in sequence are not one atomic operation. `if (!map.contains(k)) map.insert(...)` with a lock inside each call is still a race.
+- **A mutex per operation instead of per invariant.** Two correctly-locked calls in sequence are not one atomic operation. `if (map.find(k) == map.end()) map.insert(...)` with a lock inside each call is still a race.
 - **`volatile`.** In C# `volatile` has real memory-model meaning. In C++ it means "this memory may change outside the program" — it is for memory-mapped hardware registers, and it provides **no** atomicity and no ordering between threads. It is not a threading tool. Use `std::atomic`.
 - **Detaching to avoid the join obligation.** `detach()` silences the terminate, and now a thread you cannot wait for is touching objects whose lifetime you were managing. It is almost always the wrong fix.
 - **Freeing the callback context after unregistering.** It reads as the tidy counterpart to registering it, and unless the SDK documents that unregister waits for in-flight callbacks, it is a use-after-free you cannot order your way out of. The SDK loaded that pointer before it called you.

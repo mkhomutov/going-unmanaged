@@ -54,7 +54,7 @@ if (it != v.end()) {   // "not found" == end, the idiom
 | FirstOrDefault(pred) | `std::find_if(begin, end, pred)` — returns iterator |
 | Count(pred) | `std::count_if(begin, end, pred)` |
 | Any / All | `std::any_of / all_of / none_of` |
-| OrderBy | `std::sort(begin, end, cmp)` — but IN PLACE |
+| OrderBy | `std::sort(begin, end, cmp)` — but IN PLACE, and *unstable*: `std::stable_sort` is the real match |
 | Select | `std::transform(begin, end, std::back_inserter(out), func)` |
 | Aggregate / Sum | `std::accumulate(begin, end, 0)` |
 | Max | `std::max_element` — returns ITERATOR to max |

@@ -262,7 +262,7 @@ This is the difference in one page. In C# a passing suite is decent evidence the
 
 ### The real frameworks
 
-Write the harness once to understand it, then use something maintained. What you actually get from a real framework: readable assertion output that prints both operands, exception and crash isolation per test, filtering and tagging, fixtures, parameterized tests, and machine-readable output for CI.
+Write the harness once to understand it, then use something maintained. What you actually get from a real framework: readable assertion output that prints both operands, exception isolation per test — and crash *attribution*, which is the honest word: on POSIX a fatal signal ends the run, and what Catch2 and doctest give you is the name of the test that was running when it died, filtering and tagging, fixtures, parameterized tests, and machine-readable output for CI.
 
 - **doctest** is a genuine single header: drop it in, `#include` it, done. **Catch2** was too, up to v2; the maintained v3 line is built as a static library, but it still ships an amalgamated header plus one `.cpp` you can drop straight into your build. Neither needs a package manager, which matters more than it sounds on a locked-down work machine where installing one is a ticket and downloading a file or two is not.
 - **GoogleTest** is heavier and must be built, which makes it a Chapter 27 dependency decision rather than a file copy. It is extremely common in large codebases, and its `EXPECT_*` / `ASSERT_*` vocabulary is worth recognizing.

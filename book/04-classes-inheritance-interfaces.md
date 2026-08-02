@@ -52,7 +52,7 @@ public:
 };
 ```
 
-In C# assigning fields in the constructor body is normal. In C++ the **member initializer list** is the proper way: members are constructed once, directly, in **declaration order** (not list order — a compiler warning and a common surprise). const and reference members can ONLY be initialized here.
+In C# assigning fields in the constructor body is normal. In C++ the **member initializer list** is the proper way: members are constructed once, directly, in **declaration order** (not list order — a compiler warning and a common surprise). const and reference members can only be *initialized* — here, or by a default member initializer in the class body — never assigned in the constructor body.
 
 ### Calling the base class
 

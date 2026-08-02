@@ -12,6 +12,53 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **Corrections: the audit's 36 low-severity candidates, all verified and
+  applied** (PATCH — no number moved). The audit swept these but did not
+  adversarially verify them, so each was checked here first; all held. Two key
+  principles changed wording, each mirrored in Appendix B in the same commit.
+  - **Chapter 1** — the destructor guarantee does not survive an uncaught
+    exception or `std::exit`; "zero runtime cost" for `unique_ptr` is the
+    phrasing experts attack, and is now the Core Guidelines' accurate version.
+  - **Chapter 2** — `class` and `struct` also differ in default *base* access.
+  - **Chapter 3** — per-platform stack sizes; MemorySanitizer runs on Linux,
+    NetBSD and FreeBSD; C# heap placement is language semantics, and recent
+    runtimes stack-allocate non-escaping objects.
+  - **Chapter 4 + Appendix B** — a default member initializer can also
+    initialize `const` and reference members; what they can never be is
+    *assigned*.
+  - **Chapter 5** — virtual calls devirtualize and inline when the dynamic type
+    is provable.
+  - **Chapter 6** — since C++17, elision for a prvalue return is mandatory, not
+    an optimization (matching the Chapter 14 correction already made).
+  - **Chapter 7** — C#'s `where` clauses predate concepts by 15 years, not 20.
+  - **Chapter 8** — `throw()` never named which exceptions a function throws;
+    that was the dynamic exception specification. Unwinding is two-phase.
+  - **Chapter 9** — `std::wstring` is standard C++, and UTF-16 only where
+    `wchar_t` is 16 bits.
+  - **Chapter 10** — ranges and `std::format` are C++20, so not "all of this".
+  - **Chapter 11** — LINQ's `OrderBy` is stable; `std::stable_sort` is the match.
+  - **Chapter 12** — ODR is once per *translation unit*, with the class/inline
+    /template exception that makes headers work at all.
+  - **Chapters 14 and 25** — the Tracer prints from five special members plus an
+    ordinary constructor, not six; `<cstdio>` added for `std::snprintf` to both
+    the listing and `solutions/tracer.cpp`.
+  - **Chapter 15** — a `unique_ptr<int[]>` member deletes your copy operations.
+  - **Chapter 18** — removing `Rebind()` is a use-after-free ASan reports, not a
+    silent miss; a footnote on `extern "C"` linkage for the trampoline.
+  - **Chapter 19** — `EOF` is the one defined exception to the `<cctype>` rule.
+  - **Chapter 24** — Day 3's `std::erase_if` needs C++20, which Day 0 now says.
+  - **Chapter 25** — unwinding before `std::terminate` is implementation-defined;
+    MSVC's debug heap fills `0xcd`; `const` on a member function is shallow, so
+    the single accessor compiles; `At(2) = 7` is always ill-formed.
+  - **Chapter 26** — CMake usage requirements are transitive past one hop.
+  - **Chapter 27** — binding redirects are .NET Framework only.
+  - **Chapter 28** — frameworks give crash *attribution*, not isolation, on POSIX.
+  - **Chapter 29** — per-platform thread stacks; `map::contains` is C++20, so
+    the C++17 spelling is used; TSan exits 66 on Linux, not 134.
+  - **Chapter 30** — cross-module `new`/`delete` is UB when the allocators
+    differ, not unconditionally.
+  - **Appendix B + Chapter 27** — binary compatibility is per-ecosystem and
+    fragile rather than absent.
 - **Corrections: the four disputed audit items, all upheld on re-verification**
   (PATCH — no number moved, no key principle changed). These were the ones the
   audit's two verifiers split on, so each was re-checked from scratch:

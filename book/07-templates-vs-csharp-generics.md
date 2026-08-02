@@ -20,7 +20,7 @@ Nothing is decided at runtime — no boxing, no type checks, zero overhead. That
 C# demands constraints up front (`where T : IComparable<T>`). Templates declare nothing — the compiler just tries to compile your code with T. If T has `operator>`, it works; if not, you get an error at the point of use, often a notoriously long one ("template error novels").
 
 ```cpp
-// C++20 concepts = C#'s where clauses, 20 years late
+// C++20 concepts = C#'s where clauses, 15 years late
 template <typename T>
 requires std::totally_ordered<T>
 T Max(T a, T b) { return a > b ? a : b; }

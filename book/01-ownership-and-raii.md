@@ -6,7 +6,7 @@
 
 In C#, you create objects and forget about them — the garbage collector cleans up eventually. In C++, **someone** must be responsible for deleting every object. That someone is the **owner**. RAII is the technique that makes ownership automatic instead of manual.
 
-**RAII = Resource Acquisition Is Initialization.** Terrible name, simple idea: tie a resource's lifetime to an object's lifetime. Acquire the resource (memory, file, mutex lock) in the constructor, release it in the destructor. C++ **guarantees** the destructor runs when an object goes out of scope — even if an exception is thrown — so cleanup becomes automatic. Think of it as C#'s `using` block, except it is the default behavior of the whole language.
+**RAII = Resource Acquisition Is Initialization.** Terrible name, simple idea: tie a resource's lifetime to an object's lifetime. Acquire the resource (memory, file, mutex lock) in the constructor, release it in the destructor. C++ **guarantees** the destructor runs when an object goes out of scope — including while an exception unwinds the stack past it — so cleanup becomes automatic. Think of it as C#'s `using` block, except it is the default behavior of the whole language. (Two escape hatches worth knowing early, though neither shows up in ordinary code: `std::exit` and `abort` run no destructors at all, and if an exception is never caught anywhere, whether the stack unwinds before `std::terminate` is left to the implementation.)
 
 ```cpp
 void ProcessFile() {
@@ -25,7 +25,7 @@ delete w;        // ...this never runs. Memory leak.
 
 ### Smart pointers — RAII for heap memory
 
-**`std::unique_ptr<T>`** — your default. Exactly one owner. Cannot be copied, only *moved* (ownership transfers). Zero runtime cost — compiles down to a raw pointer with an automatic delete.
+**`std::unique_ptr<T>`** — your default. Exactly one owner. Cannot be copied, only *moved* (ownership transfers). The same size as a raw pointer, and the same generated code as correct manual `new`/`delete` — which is the honest version of "zero cost". Not *literally* free: the destructor carries a null check, and because the type is non-trivial the Itanium ABI passes a by-value `unique_ptr` parameter through memory rather than a register. Neither has ever been why a program was slow.
 
 ```cpp
 auto w = std::make_unique<Widget>();

@@ -44,7 +44,7 @@ std::string_view v = s;     // non-owning view (Chapter 10)
 
 Comparison is by value out of the box (`s1 == s2` compares contents), formatting is `std::format` (C++20, like string interpolation) or the classic streams.
 
-The SDK reality — multiple string types in one function. Most large SDKs ship their own string class (Qt's `QString`, Windows' `BSTR`/`std::wstring`, many vendor "UniString" types), typically UTF-16 like C# strings internally. Conversions at the boundary are daily work:
+The SDK reality — multiple string types in one function. Most large SDKs ship their own string class (Qt's `QString`, Windows' `BSTR`, many vendor "UniString" types), typically UTF-16 like C# strings internally. `std::wstring` keeps the same company on Windows without being a vendor type at all: it is standard C++, and it is UTF-16 only because `wchar_t` is 16 bits there — on Linux and macOS `wchar_t` is 32 bits and a `wstring` is conventionally UTF-32. Conversions at the boundary are daily work:
 
 ```cpp
 VendorString title("Wall label");          // vendor string: UTF-16 inside

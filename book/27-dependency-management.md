@@ -1,6 +1,6 @@
 ## Chapter 27 — Dependency Management
 
-In C# you type `dotnet add package Foo`, and everything after that is somebody else's problem. One registry that everyone uses, one package format, transitive dependencies resolved for you, versions reconciled at build time, and a binding redirect waiting in case two libraries disagree. You have almost certainly never thought about *how* that works, which is the highest compliment a toolchain can be paid.
+In C# you type `dotnet add package Foo`, and everything after that is somebody else's problem. One registry that everyone uses, one package format, transitive dependencies resolved for you, and versions reconciled at build time, so two libraries wanting different versions of a third is a resolver's problem rather than yours. You have almost certainly never thought about *how* that works, which is the highest compliment a toolchain can be paid.
 
 C++ has none of it. No official registry, no standard package format, no standard way to declare a dependency, and — the root of everything else in this chapter — no standard ABI. Getting a library into your build is a decision you make, not a command you run, and it is worth understanding why before learning the mechanics.
 
@@ -13,7 +13,7 @@ A compiled C++ library is not portable in any of those directions. To link again
 So the C++ world mostly gave up on shipping binaries and ships **source** instead, which you build with your toolchain, so everything matches by construction. That single fact explains why the answer to "how do I add a library" is usually "get its source into your build" rather than "install a package".
 
 > [!TIP]
-> **Key principle:** "C++ libraries ship as source because a compiled binary is only valid for one compiler, one standard library, one configuration, and one architecture — I build my dependencies with my toolchain so they match by construction."
+> **Key principle:** "C++ libraries ship as source because binary compatibility is per-ecosystem and fragile — it depends on the compiler, the standard library, the configuration and the architecture all agreeing — so I build my dependencies with my toolchain and they match by construction."
 
 ### What a dependency physically is
 
@@ -76,7 +76,7 @@ The cost is compile time, paid by every translation unit that includes it, forev
 
 ### The diamond, and why C++ makes it dangerous
 
-Two of your dependencies each want a different version of a third. In C# this is routine: the resolver unifies to one version, and a binding redirect papers over the rest. Loud when it fails, and it usually does not fail.
+Two of your dependencies each want a different version of a third. In C# this is routine: NuGet unifies each package to one version at restore, and the runtime binds exactly what `deps.json` records. (On .NET Framework an app.config binding redirect papered over the rest; modern .NET has no such mechanism and does not need one.) Loud when it fails, and it usually does not fail.
 
 In C++ there is no resolver, no unification, and no redirect. If two versions of the same library reach one binary, you have violated the One Definition Rule — the same class name with two different definitions in one program — and the standard's response is that your program is ill-formed, no diagnostic required. Here is what that actually looks like. A `Config` struct gains a field in v2, *before* the existing one:
 

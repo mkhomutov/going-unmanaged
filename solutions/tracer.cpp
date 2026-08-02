@@ -2,6 +2,7 @@
 // Build:  clang++ -std=c++17 -Wall -Wextra tracer.cpp -o tracer
 //    or:  cl /std:c++17 /W4 /EHsc tracer.cpp
 
+#include <cstdio>      // std::snprintf
 #include <iostream>
 #include <string>
 #include <utility>
