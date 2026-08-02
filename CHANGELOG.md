@@ -12,6 +12,37 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **Corrections: the remaining fifteen accuracy fixes from the same audit**
+  (PATCH — again no chapter, Finding or appendix number moved). One key
+  principle changed wording, mirrored in Appendix B in the same commit:
+  - **Chapter 3** — the heap example labelled `w`, the *stack* Widget from the
+    line above, as living on the heap; and use-after-move was listed as
+    unconditional UB, when a moved-from standard library object is valid but
+    unspecified and only precondition-violating operations are undefined.
+  - **Chapter 9** — a C-style cast can never be a `dynamic_cast`; the one
+    checked cast is exactly the one it cannot do.
+  - **Chapter 11** — `std::array` is not "stack-allocated": its elements are
+    stored inline wherever the object lives. A runtime-sized C# `T[]` maps to
+    `std::vector`.
+  - **Chapter 12** — .NET does have binary-compatibility concerns. What it
+    lacks is compiler-ABI mismatch, which is what the sentence now says.
+  - **Chapter 16** — HIDAPI registers no callbacks at all and ASIO's carry no
+    context, so neither has Shape 2's defining feature; both are now named as
+    partial members rather than examples.
+  - **Chapter 21** — `push_back` always invalidates the past-the-end iterator,
+    so `reserve` alone does not fix the broken range-`for`.
+  - **Chapter 27** — MSVC has guaranteed binary compatibility across v140–v145
+    since 2015; the ABI-churn example is now pre-2015 MSVC and the `/GL`
+    carve-out.
+  - **Chapter 28** — four: `std::source_location` has supplied the call site
+    since C++20; the four `[ ok ]` lines are visible at a terminal and vanish
+    only when redirected; ASan's exit 134 is macOS-only; Catch2 v3 is not a
+    single-header drop-in.
+  - **Chapter 31** — ASan's exit code and its missing column numbers are both
+    macOS artefacts, not sanitizer behavior.
+  - **Appendices A and B** — clang's opt-in `unsigned-integer-overflow` check
+    does report the legal wrap; "no sanitizer will ever warn me" became "my
+    `-fsanitize=address,undefined` build stays silent about it".
 - **Corrections: six accuracy fixes from a pre-announcement audit** (PATCH — no
   chapter, Finding or appendix number moved, and no key principle changed).
   Each was verified against the standard, vendor documentation, or a compiler
