@@ -241,6 +241,19 @@ renumbering = MAJOR, appended content = MINOR, corrections = PATCH.
 Releases are annotated git tags + a CHANGELOG.md entry. Numbering freezes
 at v1.0. Full policy in CONTRIBUTING.md.
 
+## Licensing
+
+Dual, and the boundary runs *through* the chapter files: prose under `book/`
+(and the single file built from it) is CC-BY 4.0; all code is MIT — `exercises/`,
+`solutions/`, `scripts/`, `.github/`, and every code sample inside a chapter, so
+a reader can paste a snippet without an attribution obligation. `LICENSE` stays
+the MIT text (GitHub's detection keys off that filename) behind a preamble
+naming the split; `LICENSE-CC-BY-4.0` is the verbatim CC-BY legal text — never
+reword either. `book/README.md`'s front matter carries a license line because
+the release single file travels without the repo. Contributed material lands
+under the same split (CONTRIBUTING.md), so relicensing later would need every
+contributor's consent.
+
 ## Working with the maintainer
 
 The maintainer also uses the exercises for personal training. When asked for

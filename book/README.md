@@ -66,5 +66,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 - C. [Working Without AI Assistants](C-working-without-ai.md#appendix-c--working-without-ai-assistants)
 - D. [Resources, Further Reading, and First-Week Tips](D-resources.md#appendix-d--resources-further-reading-and-first-week-tips)
 
+*License:* this text is © 2026 Maksim Khomutov and licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) — share and adapt it with attribution to "Going Unmanaged — A Hands-On C++ Handbook for C# Developers" and a link to [the repository](https://github.com/mkhomutov/going-unmanaged). The code is MIT, including every code sample below: paste it into your own work freely.
+
 ---
 

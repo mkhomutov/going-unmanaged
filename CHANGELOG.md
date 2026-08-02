@@ -12,6 +12,13 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **Project:** dual licensing, made explicit before the first outside
+  contribution lands — the book text under CC-BY 4.0 (new
+  `LICENSE-CC-BY-4.0`), all code under MIT, including every code sample inside
+  a chapter, so a pasted snippet carries no attribution obligation. `LICENSE`
+  keeps the MIT text with a preamble scoping it; README, CONTRIBUTING and the
+  book's front matter say the same thing (PATCH-level repo change; no book
+  content changed).
 - **Project:** the contributor funnel — issue forms for the four contribution
   kinds (Finding, correction, new exercise, new chapter), a PR checklist
   naming every check CI runs, and the labels to match (PATCH-level repo
