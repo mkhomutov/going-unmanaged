@@ -185,7 +185,7 @@ int main() {
 
 ### The pitfalls, and what they generalize to
 
-**The trampoline pattern is the whole chapter.** A C API can store only a function pointer — no captures, no state. The trick: register a *static* function whose only job is to cast the `void*` back to your object and forward the call. The context pointer is the closure's state, threaded through the C API by hand. Every callback-based C SDK — every one — is wrapped this way; write it once here and you will recognize it forever.
+**The trampoline pattern is the whole chapter.** A C API can store only a function pointer — no captures, no state. The trick: register a *static* function whose only job is to cast the `void*` back to your object and forward the call. The context pointer is the closure's state, threaded through the C API by hand. Every callback-based C SDK — every one — is wrapped this way; write it once here and you will recognize it forever. (One nicety for a *real* C SDK, whose callback type has C language linkage: a static member function cannot be given C linkage, so the strictly conforming landing pad is a free `extern "C"` function that forwards into the class. Every mainstream ABI accepts the static member anyway, which is why you will see it everywhere.)
 
 **The move twist: the context pointer aliases `this`.** The SDK stores the address of your session object as the callback context. Move the session, and the SDK still holds the *old* address — the moved-from husk. The next poll delivers a sample into a gutted object: at best a silent miss, at worst use-after-free when the husk is destroyed first. The reference's `Rebind()` in both move operations re-registers with the new `this`. The general lesson is bigger than this exercise: **any type that hands out pointers to itself (to an SDK, a callback registry, an observer list) must re-register on move — or delete its moves.** `std::function` members, timers, and observer patterns all carry this trap.
 
@@ -197,7 +197,7 @@ int main() {
 
 ### Stretch goals
 
-Add the `try/catch(...)` guard to the trampoline with a `LastError()` accessor. Add an idempotent public `Close()`. Store several sessions in a `std::vector<DeviceSession>` and verify callbacks survive the vector's reallocation (they will — because your move operations rebind; remove `Rebind()` and watch them silently die, then explain the mechanism). Hardest: simulate the threaded case — call `Device_Poll` from a `std::thread` and make the sample collection race-free with a mutex, then explain why the destructor now needs more than it has.
+Add the `try/catch(...)` guard to the trampoline with a `LastError()` accessor. Add an idempotent public `Close()`. Store several sessions in a `std::vector<DeviceSession>` and verify callbacks survive the vector's reallocation (they will — because your move operations rebind; remove `Rebind()` and watch ASan report the `heap-use-after-free` — the SDK's stored context still points into the vector's freed old block — or, in an unsanitized build, watch the callbacks silently die instead; then explain the mechanism). Hardest: simulate the threaded case — call `Device_Poll` from a `std::thread` and make the sample collection race-free with a mutex, then explain why the destructor now needs more than it has.
 
 ---
 

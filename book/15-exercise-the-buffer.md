@@ -145,7 +145,7 @@ Take a working copy, break one thing at a time, build with `-fsanitize=address -
 
 ### Why you would never ship this class
 
-`std::vector<int>` (or `std::unique_ptr<int[]>`) already is this class, written by experts, tested for decades — holding one of those as the member gives all five operations for free. Rule of Zero beats Rule of Five (Chapter 6). Hand-rolling the five is for the rare type that *is* the resource wrapper — and knowing how is precisely what makes the shortcut safe to take everywhere else.
+`std::vector<int>` already is this class, written by experts, tested for decades — holding one as the member gives all five operations for free. (`std::unique_ptr<int[]>` is the other candidate, but it is move-only: as a member it hands you the destructor and the two moves and *deletes* your copies, so the deep-copy semantics this chapter just built would still be yours to write.) Rule of Zero beats Rule of Five (Chapter 6). Hand-rolling the five is for the rare type that *is* the resource wrapper — and knowing how is precisely what makes the shortcut safe to take everywhere else.
 
 ---
 
