@@ -36,7 +36,7 @@ public:
 
 ### Under the hood — the vtable
 
-Each class with virtual functions gets a **vtable** — a hidden array of function pointers. Each object carries one hidden pointer to its class's vtable. A virtual call is a lookup through that pointer. Cost: one pointer per object, one indirection per call, no inlining. That is why C++ makes it opt-in — you do not pay unless you ask.
+Each class with virtual functions gets a **vtable** — a hidden array of function pointers. Each object carries one hidden pointer to its class's vtable. A virtual call is a lookup through that pointer. Cost: one pointer per object, one indirection per call, and no inlining *unless the compiler can prove the dynamic type* — which it often can, for a local, a `final` class or method, or under LTO, and then the call devirtualizes and inlines like any other. That is why C++ makes it opt-in — you do not pay unless you ask.
 
 ### The question that always comes up: why must a base destructor be virtual?
 

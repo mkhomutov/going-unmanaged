@@ -92,7 +92,7 @@ One line each. If you can say these fluently and back them with code, the concep
 
 **OOP mechanics**
 
-- "Members are constructed in the initializer list, in declaration order — const and reference members can only be initialized there."
+- "Members are constructed in the initializer list, in declaration order — const and reference members can only be initialized, never assigned in the body."
 - "An interface is an abstract class: all pure virtual, virtual destructor, no data."
 - "I keep multiple inheritance to interface-style bases — that sidesteps the diamond problem entirely."
 - "Default inheritance for 'class' is private — I always write ': public Base' explicitly."
