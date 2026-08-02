@@ -113,6 +113,58 @@ A **static library** is just an archive of .obj files with a symbol index (Linux
 
 The confusing part: on Windows, DLLs ship with a companion .lib — an **import library** of stubs ("function X lives in Foo.dll"). Same extension, two different animals. Consuming a C++ library needs the trio: **.h** (compiler knows signatures), **.lib** (linker resolves calls), **.dll** if dynamic (present at runtime). Miss the header = compile error; miss the .lib = LNK2019; miss the DLL = "DLL not found" at startup.
 
+### A.7 signed, unsigned, and size_t
+
+`size_t` is the standard library's **unsigned** integer type for sizes and indices — 64-bit on a desktop build, and 32-bit on a 32-bit target such as the peripheral firmware behind Chapter 18's device (where every wrapped value below is 4294967295 rather than 18446744073709551615; the arithmetic is identical, the number is not). Every container's `.size()` returns it, `sizeof` yields it, and every index-taking member function takes it.
+
+In C#, `Count` and `Length` are `int` — signed, always. `uint` and `ulong` exist, and the framework guidelines steer you away from them in public APIs, so in practice nobody uses them. The consequence is worth naming plainly: a C# developer arrives with **no instinct for unsigned arithmetic at all**, and meets it on day one, in the first loop they write.
+
+**Collision 1: the mixed-sign comparison.** The loop everyone writes from muscle memory:
+
+```cpp
+for (int i = 0; i < v.size(); ++i)      // int vs size_t
+    std::printf("%d\n", v[i]);
+```
+
+```
+warning: comparison of integers of different signs: 'int' and 'size_type'
+      (aka 'unsigned long') [-Wsign-compare]
+```
+
+Two fixes, and the second is the better habit. Match the type — `for (size_t i = 0; ...)` — or stop indexing at all and use a range-for, which is the same `const auto&` reflex Chapter 2 asks for everywhere else:
+
+```cpp
+for (size_t i = 0; i < v.size(); ++i)   // matched types, warning gone
+    std::printf("%d\n", v[i]);
+
+for (const auto& x : v)                 // no index, no signedness, no bounds
+    std::printf("%d\n", x);
+```
+
+**Collision 2: `size() - 1` on an empty container.** This one is not a warning; it is a wrong answer.
+
+```cpp
+bool InRange(const std::vector<int>& v, size_t i) {
+    return i <= v.size() - 1;   // empty vector: 0 - 1 does NOT give -1
+}                               // it gives 18446744073709551615, so this is
+                                // always true, for every i
+```
+
+`v.size()` is unsigned, so `v.size() - 1` on an empty vector wraps to the largest `size_t` there is. The guard that was supposed to reject every index accepts every index. The fix is to stop subtracting:
+
+```cpp
+bool InRange(const std::vector<int>& v, size_t i) {
+    return i < v.size();        // no subtraction, nothing to wrap
+}
+```
+
+**The asymmetry worth stating plainly.** Unsigned overflow **wraps**, and that is *defined* behavior — the standard says so. Signed overflow is **undefined** (Chapter 3's greatest-hits list). The counter-intuitive part is that being legal is exactly what makes the unsigned case dangerous: UBSan reports a signed overflow the moment it happens, and it cannot report the wrap above, because nothing went wrong as far as the language is concerned. The broken `InRange` compiles clean under `-Wall -Wextra` and runs clean under `-fsanitize=address,undefined`. The only symptom is the answer.
+
+Know-they-exist, for when you meet them: C++20 adds `std::ssize(c)` — the same count, as a signed type — and the `std::cmp_less` family, which compare across signedness and give the mathematically true answer (`std::cmp_less(-1, v.size())` is `true`, where `-1 < v.size()` is `false`). Both exist for exactly this friction.
+
+> [!TIP]
+> **Key principle:** "`size()` is unsigned, so `size() - 1` on an empty container is a huge number, not -1 — I compare with `<` instead of subtracting, and no sanitizer will ever warn me, because the wrap is legal."
+
 ---
 
 ---
