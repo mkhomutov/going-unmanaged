@@ -16,6 +16,8 @@ name = std::move(t.name);
 
 Three pointer-sized assignments. No allocation, no character copying. That O(1) theft — versus O(n) duplication — is the *entire reason move semantics exist*.
 
+One simplification to hold lightly: every mainstream implementation also keeps *short* strings inside the string object itself — the **small-string optimization**, capacity 15 on libstdc++ and MSVC, 22 on libc++ — and moving one of those copies its bytes rather than stealing a pointer. Still O(1), still no allocation. Pointer theft is the long-string picture, and long strings are the ones that cost you anything.
+
 **The broken version, dissected:**
 
 ```cpp
@@ -24,11 +26,11 @@ Tracer(Tracer&& t) noexcept {
 }
 ```
 
-Step by step, `"moved from " + t.name`: (1) **allocates a brand-new heap block**, (2) copies the literal into it, (3) **copies every character of t.name** into it, (4) assigns the temporary to `name`. Meanwhile `t.name` is untouched — still owning its original block, fully intact.
+Step by step, `"moved from " + t.name`: (1) **builds a brand-new buffer** — on the heap as soon as the result outgrows the small-string buffer, which the Tracer's own short names do not, (2) copies the literal into it, (3) **copies every character of t.name** into it, (4) assigns the temporary to `name`. Meanwhile `t.name` is untouched — still owning its original characters, fully intact.
 
 Compare with the definition of copying: allocate, duplicate characters, leave the source whole. **Identical.** This is a copy constructor that prints the word "move".
 
-**Why it matters beyond pedantry.** Scale the member up: imagine the class held a vector of a million points. This pattern duplicates a million points on every vector reallocation and every `std::move` into a container — while *claiming* to be the cheap option. And the lie compounds through `noexcept` (see Finding 3): the allocation in step (1) **can throw**, so the noexcept promise is false.
+**Why it matters beyond pedantry.** Scale the member up: imagine the class held a vector of a million points. This pattern duplicates a million points on every vector reallocation and every `std::move` into a container — while *claiming* to be the cheap option. And the lie compounds through `noexcept` (see Finding 3): step (1) allocates the moment the result outgrows that small-string buffer, and allocation **can throw** — so the noexcept promise is false for any string big enough to matter.
 
 **The fix — steal in the initializer list, print after:**
 
@@ -46,7 +48,7 @@ Tracer& operator=(Tracer&& t) noexcept {
 }
 ```
 
-Two details visible only in tracing code: in the move *constructor*, by the time the body runs, `t.name` is already emptied — so print your own `name`, which now holds the stolen value. And `t.name = "(husk)"` is tracing sugar only — it re-fills the source so destructor output shows which objects were gutted; real code leaves moved-from strings empty (strictly, that assignment allocates, slightly compromising noexcept purity — fine in a learning tracer, not in production).
+Two details visible only in tracing code: in the move *constructor*, by the time the body runs, `t.name` is already emptied — so print your own `name`, which now holds the stolen value. And `t.name = "(husk)"` is tracing sugar only — it re-fills the source so destructor output shows which objects were gutted; real code leaves moved-from strings empty (and strictly, that assignment is not `noexcept` — a longer literal would allocate — so it slightly compromises noexcept purity: fine in a learning tracer, not in production).
 
 **Habit:** a move operation's body should contain `std::move(member)` for every resource-holding member — and nothing that allocates. If you can't write it that way, question whether the operation is really a move.
 
