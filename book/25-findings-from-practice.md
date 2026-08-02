@@ -82,7 +82,7 @@ Tracer(const Tracer& t) : name("copy of " + t.name) {   // one step
 
 **The theory.** `noexcept` tells callers — and especially `std::vector` — "this operation cannot throw." Vector uses it to choose its reallocation strategy: if your element's move constructor is noexcept, it *moves* elements to the new block; if not, it *copies* them, so that a mid-transfer exception can't leave the container half-destroyed. That is the behavior difference observed live in the Tracer output: `moved from v1 copy constructor` on reallocation before the keyword, a move after it.
 
-**The trap discovered here is the reverse direction:** claiming noexcept on an operation that can throw. String concatenation allocates; allocation can throw `std::bad_alloc`. If an exception ever escapes a noexcept function, the program does not unwind — it calls **`std::terminate` on the spot**. So a false noexcept converts a recoverable out-of-memory into an instant process death, in the rare moment you least want it.
+**The trap discovered here is the reverse direction:** claiming noexcept on an operation that can throw. String concatenation allocates; allocation can throw `std::bad_alloc`. If an exception ever escapes a noexcept function, the program calls **`std::terminate`** — and whether the stack is unwound first, partly or at all, is left to the implementation, so you cannot count on your destructors running. So a false noexcept converts a recoverable out-of-memory into an instant process death, in the rare moment you least want it.
 
 **The rule that makes both directions safe:** noexcept belongs on operations that genuinely just shuffle pointers — which real moves do (Finding 1). Write the move correctly and the promise is automatically true. The two findings are one finding: *steal, don't build — then noexcept is honest and vector moves your elements.*
 
@@ -163,7 +163,7 @@ Swap(tmp);           // noexcept pointer exchanges
 
 **Found in:** the Buffer constructor — `data_(new int[size])`.
 
-**The theory.** `new int[size]` default-initializes the elements, and for built-in types default-initialization does *nothing*: the memory holds whatever bytes were there. Reading an element before writing it is undefined behavior of the quiet kind — often prints 0 in Debug (fresh pages from the OS are zeroed), garbage in Release or after heap reuse. The Chapter 3 signature: works on my machine.
+**The theory.** `new int[size]` default-initializes the elements, and for built-in types default-initialization does *nothing*: the memory holds whatever bytes were there. Reading an element before writing it is undefined behavior of the quiet kind — on Linux and macOS it often prints 0 from pages the OS handed over zeroed, and garbage once that memory has been reused; MSVC's debug heap fills fresh allocations with `0xcd` instead, so you read `-842150451` there (Chapter 3's fill-pattern story, one allocator along). The Chapter 3 signature: works on my machine.
 
 ```cpp
 data_(new int[size])     // indeterminate contents
@@ -178,7 +178,9 @@ C# contrast worth noting: `new int[5]` in C# is always zeroed — the runtime gu
 
 **Found in:** the Buffer — `int At(size_t) const` returning a copy, making the buffer write-only through its own API.
 
-**The theory.** Returning by value hands out a copy; `buf.At(2) = 7` modifies a temporary and is either a compile error or a silent no-op. Containers hand out **references** to their elements — and because a reference-returning method cannot be `const` alone (it would allow mutation through a const object), the idiom is the pair:
+**The theory.** Returning by value hands out a copy; `buf.At(2) = 7` does not compile at all — assignment needs a modifiable lvalue, and a returned `int` is a prvalue. Containers hand out **references** to their elements — and because a single `const` reference-returning accessor would hand out a mutable reference from a const object, the idiom is the pair.
+
+Do not expect the compiler to stop you writing that single accessor, either. `const` on a member function is **shallow**: through a raw `int* data_` it makes the pointer `int* const`, not `const int*`, so `int& At(size_t i) const { return data_[i]; }` compiles happily and lets a caller mutate a const `Buffer`. (Swap in a `std::vector` member and it *does* become a compile error — which is one more argument for the container.) The pair below is a design rule you enforce, not one the language enforces for you.
 
 ```cpp
 int&       At(size_t i)       { assert(i < size_); return data_[i]; }
