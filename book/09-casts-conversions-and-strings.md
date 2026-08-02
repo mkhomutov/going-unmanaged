@@ -2,7 +2,7 @@
 
 ### The four C++ casts
 
-C-style casts like `(int)x` work but are a red flag in reviews — they can silently do any of four different things. Modern C++ names the intent:
+C-style casts like `(int)x` work but are a red flag in reviews — one syntax that silently becomes whichever conversion compiles: a `const_cast`, a `static_cast`, a `reinterpret_cast`, or one of the latter two combined with a `const_cast`. Note which one is missing from that list: the *checked* one. A C-style cast is never a `dynamic_cast`, so a parenthesised downcast in C++ is never verified at runtime — unlike C#'s `(Derived)obj`, which throws if you are wrong. Modern C++ names the intent:
 
 | Cast | Purpose | C# analogy |
 |---|---|---|
