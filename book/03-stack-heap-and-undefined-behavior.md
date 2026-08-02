@@ -29,7 +29,7 @@ The greatest hits, all met in this book:
 - dereferencing null or dangling pointers/references (lambda capturing dead locals, string_view to a temporary, c_str() outliving its string)
 - reading an uninitialized local or member — an *indeterminate* value, and the one entry on this list a C# developer has never met (its own section below)
 - out-of-bounds access: v[i] past the end, iterator invalidation (Chapter 11)
-- use-after-move beyond assign/destroy (Chapter 6)
+- use-after-move where the operation has a *precondition* — dereferencing a moved-from `unique_ptr`, `front()` on a moved-from vector. The husk itself is valid but unspecified rather than invalid, so `size()` or reassigning it is fine; the discipline is still assign-or-destroy (Chapter 6)
 - deleting through a base pointer without a virtual destructor (Chapter 5)
 - double-free (the shallow-copy bug behind = delete)
 - signed integer overflow (unsigned wraps; signed is UB!), data races on unsynchronized shared data
