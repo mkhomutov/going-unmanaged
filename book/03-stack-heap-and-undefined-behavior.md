@@ -16,9 +16,9 @@ void F() {
 }                                     // the 1000 ints on HEAP
 ```
 
-**Stack**: allocation is one pointer bump — near-free; freed in reverse order automatically; small (~1 MB per thread typically) — huge arrays as locals overflow it; the natural home of value semantics and RAII. **Heap**: for objects that outlive the current scope, sizes unknown at compile time, or big data; slower (allocator work, cache misses); in modern C++ you touch it almost exclusively through containers and smart pointers, never bare new.
+**Stack**: allocation is one pointer bump — near-free; freed in reverse order automatically; small, and how small depends on the platform — roughly 1 MB per thread on Windows, 8 MB for the main thread on Linux and macOS (512 KB for secondary threads there) — so huge arrays as locals overflow it; the natural home of value semantics and RAII. **Heap**: for objects that outlive the current scope, sizes unknown at compile time, or big data; slower (allocator work, cache misses); in modern C++ you touch it almost exclusively through containers and smart pointers, never bare new.
 
-Contrast to internalize: in C# every class instance is heap + GC, full stop. In C++ heap use is a deliberate choice — and good C++ minimizes it. "Why is this on the heap?" is a legitimate code review question.
+Contrast to internalize: in C# the language puts every class instance on the GC heap. (Recent runtimes stack-allocate objects that provably never escape a method, but that is an optimization you neither request nor observe — the semantics are unchanged.) In C++ heap use is a deliberate choice — and good C++ minimizes it. "Why is this on the heap?" is a legitimate code review question.
 
 ### Undefined behavior (UB) as a concept
 
@@ -65,7 +65,7 @@ void F() {
 > [!WARNING]
 > **Trap:** a variable that reads the same value every time in Debug — 0, or `0xcccccccc` under MSVC — is not initialized; it is one stack frame away from garbage.
 
-And the sanitizer reflex from the previous section does not cover this one: Address and UB sanitizers do not report an uninitialized read. The tool that does is **MemorySanitizer** (`-fsanitize=memory`), which is Linux-and-clang-only and cannot be combined with ASan — so a clean `-fsanitize=address,undefined` run on a Mac says nothing whatsoever about this bug. Here the compiler's warnings are your first line of defense — earlier, and far more portable, than any runtime check.
+And the sanitizer reflex from the previous section does not cover this one: Address and UB sanitizers do not report an uninitialized read. The tool that does is **MemorySanitizer** (`-fsanitize=memory`), which is clang-only, runs on Linux, NetBSD and FreeBSD — so not on macOS or Windows — and cannot be combined with ASan — so a clean `-fsanitize=address,undefined` run on a Mac says nothing whatsoever about this bug. Here the compiler's warnings are your first line of defense — earlier, and far more portable, than any runtime check.
 
 The same rule reaches three places beyond the plain local. A **member left out of the initializer list** (Chapter 4) is default-initialized on exactly these terms — the constructor compiled, the member holds junk. **`new T[n]` without braces** does not zero either — `new int[n]{}` does, and one pair of braces is the whole fix (Finding 7 in Chapter 25 has the rest). And a **C API struct** you hand to a vendor function is the same hazard with a longer fuse, which is why Chapters 2 and 17 write `= {}` on every one of them.
 
