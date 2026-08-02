@@ -28,7 +28,7 @@ Derived* d2 = static_cast<Derived*>(s);   // UNchecked downcast: fast, but if
 
 ### Strings and encodings
 
-C# strings are immutable, interned, UTF-16 objects. **std::string is a mutable byte buffer with no encoding awareness** — it stores bytes; whether they're ASCII, UTF-8, or garbage is your problem. The modern convention: keep std::string as UTF-8 everywhere.
+C# strings are immutable UTF-16 objects. **std::string is a mutable byte buffer with no encoding awareness** — it stores bytes; whether they're ASCII, UTF-8, or garbage is your problem. The modern convention: keep std::string as UTF-8 everywhere.
 
 ```cpp
 std::string s = "hello";
