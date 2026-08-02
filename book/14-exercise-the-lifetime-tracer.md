@@ -175,7 +175,9 @@ a#5 ...  destroyed
 temp#6 @0x7fff...e20  constructed
 ```
 
-That is the **entire** output of `Tracer d = MakeTracer()`. One construction; no copy, no move. The compiler built "temp" directly in d's memory — the local, the return value, and d are one object (compare this address with d's destructor line at teardown: identical). This is RVO/copy elision, and it is why returning objects by value in modern C++ is free.
+That is the **entire** output of `Tracer d = MakeTracer()` on clang and GCC. One construction; no copy, no move. The compiler built "temp" directly in d's memory — the local, the return value, and d are one object (compare this address with d's destructor line at teardown: identical).
+
+This is copy elision, and it is worth knowing which flavour, because not every build above produces it. `MakeTracer` returns a *named* local, which makes this **NRVO** — the optional kind. What C++17 made mandatory is narrower: elision is guaranteed only when the returned operand is a temporary outright, `return Tracer("temp");`. clang and GCC perform NRVO anyway, even at `-O0`. MSVC does not unless asked: `/Zc:nrvo` is off by default and switched on by `/O2`, `/permissive-`, or `/std:c++20` — none of which the `cl /std:c++17 /W4 /EHsc` line above passes. Build it that way and an extra move-construction appears here, and every `#id` after it shifts by one. (To see that output on any compiler, add `-fno-elide-constructors`.) Either way the cost is one move at worst, which is why returning objects by value is the right default in modern C++ — but "free" is a property of your compiler and flags, not a promise of the language.
 
 ```text
 --- vector ---
