@@ -251,7 +251,7 @@ One platform caveat belongs here more than anywhere else in the book, because it
 
 ### Finding 11 — The Tracer as a permanent diagnostic tool
 
-The exercise that surfaced Findings 1–5 is worth keeping as a reusable instrument: a class that prints from all six special member functions makes the invisible visible. Drop a Tracer into any container, function signature, or algorithm and the output tells you exactly what the compiler chose to do. Findings it demonstrated on first run:
+The exercise that surfaced Findings 1–5 is worth keeping as a reusable instrument: a class that prints from all five of its special member functions, plus the constructor that names it, makes the invisible visible. Drop a Tracer into any container, function signature, or algorithm and the output tells you exactly what the compiler chose to do. Findings it demonstrated on first run:
 
 | Observation in output | Concept confirmed |
 |---|---|

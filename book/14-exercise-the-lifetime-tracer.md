@@ -6,7 +6,7 @@ Before starting, skim [Chapter 24](24-practice-plan.md#chapter-24--practice-plan
 
 ## Chapter 14 — Exercise: The Lifetime Tracer
 
-One small class makes every lifetime rule in this book visible: a **Tracer** that prints from all six special member functions, stamped with an instance ID and its own address. Build it once, keep it forever — it is a diagnostic instrument, not a toy. When container or call behavior is mysterious, drop a Tracer in and the output replaces guesswork. It needs no tools a locked-down work machine lacks.
+One small class makes every lifetime rule in this book visible: a **Tracer** that prints from every special member function it has — destructor, copy and move constructors, copy and move assignment — plus the ordinary constructor that names it, each stamped with an instance ID and its own address. Build it once, keep it forever — it is a diagnostic instrument, not a toy. When container or call behavior is mysterious, drop a Tracer in and the output replaces guesswork. It needs no tools a locked-down work machine lacks.
 
 ### The complete instrument
 
@@ -15,6 +15,7 @@ One small class makes every lifetime rule in this book visible: a **Tracer** tha
 // Build:  clang++ -std=c++17 -Wall -Wextra tracer.cpp -o tracer
 //    or:  cl /std:c++17 /W4 /EHsc tracer.cpp
 
+#include <cstdio>      // std::snprintf
 #include <iostream>
 #include <string>
 #include <utility>
