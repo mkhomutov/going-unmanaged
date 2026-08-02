@@ -28,7 +28,6 @@
 //   g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g FakeDevice.cpp device_threaded_solution.cpp -o threaded
 //   g++ -std=c++17 -Wall -Wextra -fsanitize=thread -g FakeDevice.cpp device_threaded_solution.cpp -o threaded-tsan
 #include "FakeDevice.h"
-#include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <chrono>

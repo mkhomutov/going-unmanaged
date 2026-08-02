@@ -172,9 +172,11 @@ if $CXX $TFLAGS "$OUT/tsan_probe.cpp" -o "$OUT/tsan_probe" > /dev/null 2>&1 \
     $CXX $TFLAGS exercises/fakedevice/FakeDevice.cpp \
         solutions/device_threaded_solution.cpp -I exercises/fakedevice \
         -o "$OUT/threaded_tsan"
-    # halt_on_error so the first report ends the run. Without it TSan reports and
-    # keeps going, and a race found on the way to a successful exit is easy to
-    # miss in a CI log.
+    # halt_on_error buys a shorter log here, not a failing run - unlike the
+    # UBSan line further up, whose default really is report-and-exit-0. TSan
+    # fails the run on its own (exitcode=66 on Linux, abort on Darwin), so what
+    # this adds is stopping AT the first race rather than letting it scroll past
+    # under whatever the program goes on to report.
     TSAN_OPTIONS=halt_on_error=1 "$OUT/threaded_tsan" > /dev/null
     echo "  ok   solutions/device_threaded_solution.cpp under -fsanitize=thread"
 elif [ "$REQUIRE_TSAN" = 1 ]; then

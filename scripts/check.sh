@@ -46,7 +46,8 @@ fi
 echo "== built clean: $FLAGS"
 
 # halt_on_error makes UBSan findings fail the run (its default is report-and-continue).
-# TSAN_OPTIONS likewise, for SAN=thread; each is ignored when that sanitizer is
-# not in the binary, so both can be set unconditionally.
+# For SAN=thread it does something smaller: TSan fails the run by itself, so the
+# flag only stops it at the first race instead of the last. Each variable is
+# ignored when that sanitizer is not in the binary, so both can be set always.
 UBSAN_OPTIONS=halt_on_error=1 TSAN_OPTIONS=halt_on_error=1 "$out" "$@"
 echo "== ran clean (exit 0, sanitizers quiet)"
