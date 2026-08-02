@@ -239,10 +239,19 @@ Now compare that with what you get *without* the sanitizer. Build the identical 
 
 ```text
 $ ./buffer_test ; echo "exit=$?"
+  [ ok ] ConstructorZeroInitializes
+  [ ok ] CopyIsDeepNotShallow
+  [ ok ] CopyAssignAcrossSizes
+  [ ok ] SelfAssignmentIsHarmless
 exit=133
+
+$ ./buffer_test > run.log ; echo "exit=$?"    # what CI actually does
+exit=133
+$ wc -c run.log
+       0 run.log
 ```
 
-No output at all. Not one `[ ok ]` line, no summary, no message — the four tests that had already passed had printed into `std::cout`'s buffer, and that buffer was never flushed, because the allocator detected the double free and killed the process on the spot. All you are left with is a number that names no file, no line, and no test. (The exact number is your allocator's business: 133 here, where macOS traps; on glibc you typically get 134 and a terse `free(): double free detected` on stderr. Neither tells you which test.)
+Four `[ ok ]` lines, then nothing — no fifth line, no summary, no message. The allocator detected the double free in the middle of test five and killed the process on the spot, and a signal death runs no destructors, no `atexit` handlers and no final flush. Now redirect that same run into a file and even those four lines vanish, because `std::cout` writes through C's `stdout`, which is line-buffered at a terminal but *fully* buffered into a file or a CI log — there the buffer simply dies with the process. The second run is the one your build server does, and it is the worse of the two: all you are left with is a number that names no file, no line, and no test. (The exact number is your allocator's business: 133 here, where macOS traps; on glibc you typically get 134 and a terse `free(): double free detected` on stderr. Neither tells you which test.)
 
 The failure has two halves, and it is worth separating them. **The suite found nothing** — every `CHECK` in the file passed. Your assertions are not merely quiet about this bug; they are structurally incapable of seeing it. **And the runtime told you almost nothing** — an unexplained death during teardown, long after the line that caused it. The sanitizer cannot fix the first half; nothing can, short of writing a different kind of check. What it fixes is the second: same workload, same bug, but now a report that names the two destructor frames and the test that ran them.
 
