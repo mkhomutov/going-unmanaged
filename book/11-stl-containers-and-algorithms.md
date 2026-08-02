@@ -10,7 +10,7 @@
 | `HashSet<T>` | `std::unordered_set<T>` | |
 | `Queue<T>` / `Stack<T>` | `std::queue` / `std::stack` | |
 | `LinkedList<T>` | `std::list<T>` | almost never the right choice |
-| `T[]` | `std::array<T, N>` | fixed size, stack-allocated |
+| `T[]` | `std::vector<T>`, or `std::array<T, N>` when N is fixed | a C# `T[]` sizes itself at runtime, so vector is the general match; `array` needs N at compile time and stores its elements inline — no heap block of its own |
 
 > [!WARNING]
 > **Gotcha:** plain `std::map` is the TREE (sorted, O(log n)); the Dictionary equivalent is `unordered_map`. "I'd use unordered_map for lookups unless I need sorted order."

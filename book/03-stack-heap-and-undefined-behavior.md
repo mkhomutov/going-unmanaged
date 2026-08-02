@@ -10,7 +10,7 @@ A question worth being able to answer instantly: "where does this variable live?
 void F() {
     int x = 5;                        // STACK: freed automatically at }
     Widget w;                         // STACK: whole object, dtor at }
-    Widget* p = new Widget();         // w on HEAP, p itself on stack
+    Widget* p = new Widget();         // the new Widget on HEAP, p on stack
     auto u = std::make_unique<Widget>();  // heap object, stack owner
     std::vector<int> v(1000);         // v's bookkeeping on stack,
 }                                     // the 1000 ints on HEAP
@@ -29,7 +29,7 @@ The greatest hits, all met in this book:
 - dereferencing null or dangling pointers/references (lambda capturing dead locals, string_view to a temporary, c_str() outliving its string)
 - reading an uninitialized local or member — an *indeterminate* value, and the one entry on this list a C# developer has never met (its own section below)
 - out-of-bounds access: v[i] past the end, iterator invalidation (Chapter 11)
-- use-after-move beyond assign/destroy (Chapter 6)
+- use-after-move where the operation has a *precondition* — dereferencing a moved-from `unique_ptr`, `front()` on a moved-from vector. The husk itself is valid but unspecified rather than invalid, so `size()` or reassigning it is fine; the discipline is still assign-or-destroy (Chapter 6)
 - deleting through a base pointer without a virtual destructor (Chapter 5)
 - double-free (the shallow-copy bug behind = delete)
 - signed integer overflow (unsigned wraps; signed is UB!), data races on unsynchronized shared data

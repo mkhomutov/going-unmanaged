@@ -75,7 +75,7 @@ ub.cpp:2:29: runtime error: signed integer overflow: 2000000000 * 2 cannot be re
 SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior ub.cpp:2:29
 ```
 
-No stack. A column number, which ASan never gives you and which points precisely at the operator. And — the part that catches people — **the program then carried on and exited 0**. UBSan's default is report-and-continue, so a script that only checks the exit code will call this run a success.
+No stack. A column number, pointing precisely at the operator — and one the ASan transcripts above never showed you, though that is a fact about this machine rather than about ASan: macOS symbolizes with `atos`, which stops at the line, while Linux uses `llvm-symbolizer`, which supplies columns to every sanitizer alike. So on Linux the missing *stack* is the tell, not the column. And — the part that catches people — **the program then carried on and exited 0**. UBSan's default is report-and-continue, so a script that only checks the exit code will call this run a success.
 
 Two options fix it, and it is worth knowing both:
 
@@ -84,7 +84,7 @@ UBSAN_OPTIONS=halt_on_error=1 ./app          # runtime: stop at the first findin
 c++ ... -fno-sanitize-recover=undefined      # build time: same effect, baked in
 ```
 
-Both give exit code 134. This repository's `scripts/check.sh` uses the first, which is why a learner's attempt containing undefined behavior fails the check rather than passing it quietly.
+Both make the run exit nonzero — 134 on macOS, where the sanitizer runtime calls `abort()` after printing, and 1 on Linux, where it exits with the runtime's default `exitcode`. What matters is that it is no longer 0. This repository's `scripts/check.sh` uses the first, which is why a learner's attempt containing undefined behavior fails the check rather than passing it quietly.
 
 And when the one-line report is not enough to locate the cause, UBSan will produce a stack on request:
 

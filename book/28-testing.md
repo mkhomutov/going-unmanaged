@@ -12,7 +12,7 @@ Worth understanding before you use one, because it explains their strange shape.
 
 In C# a test framework finds your tests by reflection: it loads the assembly, looks for `[Fact]`, and calls what it finds. If an assertion needs the file and line it came from, `[CallerLineNumber]` supplies it, and the failure message can quote your expression because the compiler kept it.
 
-C++ has none of that. There is no reflection, no attribute the runtime can query, and a function cannot know its own call site. Everything a framework needs must be captured at compile time, and the only tool that sees source text is the preprocessor. Hence `#expr` to stringify an expression, `__FILE__` and `__LINE__` to stamp a location, and a macro to register a test function before `main` runs. The macros are not laziness; they are the only mechanism available.
+C++ has none of that. There is no reflection and no attribute the runtime can query — and until C++20 a function could not learn its own call site either. `std::source_location`, taken as a defaulted parameter, is that missing `[CallerLineNumber]`, and it arrived long after these frameworks were built. What no version of C++ has is a way to quote *source text* outside the preprocessor. Hence `#expr` to stringify an expression, `__FILE__` and `__LINE__` to stamp a location, and a macro to register a test function before `main` runs. The macros are not laziness; for the expression text the preprocessor is still the only mechanism available.
 
 Which means you can build one, and you should, once — the same way Chapter 18 says to write the trampoline once and recognize it forever.
 
@@ -233,16 +233,25 @@ previously allocated by thread T0 here:
 
 Read that carefully, because the obvious reading is wrong. A double-free report has **three** stacks — the free it stopped, the free that came first, and the allocation — and each one is a single call chain, so no stack here contains two deletes. The pair of `Buffer::~Buffer()` frames is not two destructions; it is *one*. The ABI gives every destructor two entry points — a complete-object one and a base-object one, emitted even for a class like this with no base at all — and unoptimized, the first simply calls the second. The tell is in the third stack, where the same doubling happens to `Buffer::Buffer` — and a constructor plainly ran only once. Rebuild at `-O1` and both pairs collapse to a single frame while the double free stays exactly where it was.
 
-So: two deletes, both reported at `buffer_test.cpp:51`, the closing brace where the two objects go out of scope in reverse order of declaration — `moved` frees the block, then `a` frees it again — and the allocation stack names line 45, `Buffer a(3)`, the block they both think they own. Exit code 134: the process aborted rather than finishing.
+So: two deletes, both reported at `buffer_test.cpp:51`, the closing brace where the two objects go out of scope in reverse order of declaration — `moved` frees the block, then `a` frees it again — and the allocation stack names line 45, `Buffer a(3)`, the block they both think they own. Exit code 134 here, because on macOS the sanitizer runtime calls `abort()` after printing; on Linux it defaults to `_exit(1)` instead, so the same run reports the same thing and exits a plain 1. Different number, same verdict: the process died rather than finishing.
 
 Now compare that with what you get *without* the sanitizer. Build the identical broken code with plain `-Wall -Wextra` and run it:
 
 ```text
 $ ./buffer_test ; echo "exit=$?"
+  [ ok ] ConstructorZeroInitializes
+  [ ok ] CopyIsDeepNotShallow
+  [ ok ] CopyAssignAcrossSizes
+  [ ok ] SelfAssignmentIsHarmless
 exit=133
+
+$ ./buffer_test > run.log ; echo "exit=$?"    # what CI actually does
+exit=133
+$ wc -c run.log
+       0 run.log
 ```
 
-No output at all. Not one `[ ok ]` line, no summary, no message — the four tests that had already passed had printed into `std::cout`'s buffer, and that buffer was never flushed, because the allocator detected the double free and killed the process on the spot. All you are left with is a number that names no file, no line, and no test. (The exact number is your allocator's business: 133 here, where macOS traps; on glibc you typically get 134 and a terse `free(): double free detected` on stderr. Neither tells you which test.)
+Four `[ ok ]` lines, then nothing — no fifth line, no summary, no message. The allocator detected the double free in the middle of test five and killed the process on the spot, and a signal death runs no destructors, no `atexit` handlers and no final flush. Now redirect that same run into a file and even those four lines vanish, because `std::cout` writes through C's `stdout`, which is line-buffered at a terminal but *fully* buffered into a file or a CI log — there the buffer simply dies with the process. The second run is the one your build server does, and it is the worse of the two: all you are left with is a number that names no file, no line, and no test. (The exact number is your allocator's business: 133 here, where macOS traps; on glibc you typically get 134 and a terse `free(): double free detected` on stderr. Neither tells you which test.)
 
 The failure has two halves, and it is worth separating them. **The suite found nothing** — every `CHECK` in the file passed. Your assertions are not merely quiet about this bug; they are structurally incapable of seeing it. **And the runtime told you almost nothing** — an unexplained death during teardown, long after the line that caused it. The sanitizer cannot fix the first half; nothing can, short of writing a different kind of check. What it fixes is the second: same workload, same bug, but now a report that names the two destructor frames and the test that ran them.
 
@@ -255,7 +264,7 @@ This is the difference in one page. In C# a passing suite is decent evidence the
 
 Write the harness once to understand it, then use something maintained. What you actually get from a real framework: readable assertion output that prints both operands, exception and crash isolation per test, filtering and tagging, fixtures, parameterized tests, and machine-readable output for CI.
 
-- **doctest** and **Catch2** are single-header (or single-header-ish) and need no build integration: drop the header in, `#include` it, done. That matters more than it sounds on a locked-down work machine where installing a package manager is a ticket and downloading one file is not.
+- **doctest** is a genuine single header: drop it in, `#include` it, done. **Catch2** was too, up to v2; the maintained v3 line is built as a static library, but it still ships an amalgamated header plus one `.cpp` you can drop straight into your build. Neither needs a package manager, which matters more than it sounds on a locked-down work machine where installing one is a ticket and downloading a file or two is not.
 - **GoogleTest** is heavier and must be built, which makes it a Chapter 27 dependency decision rather than a file copy. It is extremely common in large codebases, and its `EXPECT_*` / `ASSERT_*` vocabulary is worth recognizing.
 
 The shape barely changes — which is the point of having written your own:

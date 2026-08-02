@@ -120,7 +120,7 @@ A **static library**: an archive of .obj files. The linker copies needed code in
 
 ### In the wild: C-style SDKs
 
-A plug-in is a DLL/bundle loaded by a host application; a device application links a vendor's driver library. Either way the trio applies: you compile against the SDK's headers, link against its .lib/.a files, and the host or driver exports the functions you call at runtime. Miss the header = compile error; miss the .lib = LNK2019; wrong SDK/runtime version = plug-in won't load or device won't open. Binary compatibility across DLL boundaries is a real C++ concern C# assemblies never have.
+A plug-in is a DLL/bundle loaded by a host application; a device application links a vendor's driver library. Either way the trio applies: you compile against the SDK's headers, link against its .lib/.a files, and the host or driver exports the functions you call at runtime. Miss the header = compile error; miss the .lib = LNK2019; wrong SDK/runtime version = plug-in won't load or device won't open. Binary compatibility across DLL boundaries is a real C++ concern, and a harsher one than its C# equivalent. You have met the C# version — an assembly compiled against one version of a library meeting another at runtime, and answering with `MissingMethodException`. What you have never met is a *compiler* ABI mismatch: two components built with different compilers, settings or runtimes that cannot safely exchange C++ types at all, whatever their versions say. IL has one runtime-defined ABI; C++ has none.
 
 ---
 
