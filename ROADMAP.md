@@ -270,22 +270,38 @@ boundary nobody does. And the `extern "C"` section closes the book's own loop:
 the header the reader derives from first principles is `FakeDevice.h`, which is
 why it looked that way since Chapter 18.
 
-**Still open from this item:** the chapter's three worked boundaries build and
-run clean under `-fsanitize=address,undefined`, but none of that code lives in
-`build_all.sh`, so CI does not verify it. This was one of four Part VI chapters
-carrying the same debt — Chapter 26's CMakeLists, Chapter 28's harness and
-suite, Chapter 29's threaded teardown, and these three boundaries. **The
-question those four raised is now settled:** the Chapter 26 PR wrote the
-convention down (*Where chapter code lives*, CONTRIBUTING.md — code under
-`exercises/<lab-name>/`, wired into `build_all.sh`, SKIPPED locally but never
-in CI when a step needs a tool that may be absent) and closed item 1 under it;
-item 3 then closed under the same convention, adding `exercises/testlab/` and
-the one amendment it required (a header in `solutions/` when a chapter forces
-the demo/test split); item 4 closed next, adding `exercises/threadlab/`, a
-reference solution, and the convention's first `--require-<tool>` flag for a
-sanitizer rather than a build tool. **Chapter 30 is the only one of the four
-left**, and it is now a mechanical application of that convention rather than a
-decision.
+**Still open from this item:** nothing. The chapter's three worked boundaries
+are now `exercises/abilab/` — `Widget.h`/`.cpp` and `IScorer.h` and `engine.h`
+verbatim from the listings, `scorer.cpp` and the rest of `engine.cpp`
+completing what the chapter excerpts, and a caller for each — built and run by
+`scripts/build_all.sh` under the canonical flags. Each is a separate binary of
+*two* translation units, which is the subject matter rather than a build
+detail: the caller compiles against the boundary header alone, so what the
+header hides is genuinely unavailable to it. The callers assert what the
+chapter claims: `sizeof(Widget) == sizeof(void*)`, that `IScorer`'s protected
+destructor makes `delete scorer` a compile error
+(`!std::is_destructible_v<IScorer>`, checked at compile time), and every
+`Engine_*` code the header documents including the null-parameter path.
+
+What stays book-only is the chapter's break-it-first half — the `Naive` layout
+break, the pure-virtual method inserted at the top of an interface, the relink
+against a changed `Impl`. Each needs a caller binary that was deliberately
+*not* rebuilt, and the first two exist to fail, by the same rule as Chapter
+31's sabotage runs.
+
+**This was the last of four Part VI chapters carrying the same debt, and the
+debt is now closed.** The Chapter 26 PR wrote the convention down (*Where
+chapter code lives*, CONTRIBUTING.md — code under `exercises/<lab-name>/`,
+wired into `build_all.sh`, SKIPPED locally but never in CI when a step needs a
+tool that may be absent) and closed item 1 under it; item 3 closed next, adding
+`exercises/testlab/` and the one amendment it required (a header in
+`solutions/` when a chapter forces the demo/test split); item 4 followed with
+`exercises/threadlab/`, a reference solution, and the convention's first
+`--require-<tool>` flag for a sanitizer rather than a build tool; this item
+closes it with `exercises/abilab/`, and added one line of its own — where the
+separation between translation units *is* the lesson, keep it. Chapters 26, 28,
+29 and 30 are all verified on every push, and the convention now stands for
+whatever Part VI gains next rather than for a backlog.
 
 ### 7. Byte-level protocol work
 

@@ -19,6 +19,60 @@ point is what makes this MINOR rather than MAJOR: the version contract is about
 what a *number* refers to, and nothing renumbered — only the file the text lives
 in changed.
 
+- **New: Chapter 30's three worked boundaries are under CI** (PATCH-level —
+  verification wiring for code the chapter already printed; the demo mains are
+  new, thin, and exist to be run, and no text was rewritten and no number
+  moved). The chapter derived PIMPL, a pure-virtual interface with a factory,
+  and an `extern "C"` façade from one rule, printed each of them, and left all
+  three where nothing could check them. They are now `exercises/abilab/`:
+  `Widget.h`/`.cpp`, `IScorer.h` and `engine.h` verbatim from the listings,
+  `scorer.cpp` and the rest of `engine.cpp` completing what the chapter
+  excerpts, and a caller for each. Everything compiled clean under `-Wall
+  -Wextra` first time; two defects no warning could see needed fixing (below),
+  in the chapter and the files together, so the repository's copies and the
+  chapter's listings are identical. `scripts/build_all.sh` builds and runs all
+  three under the canonical flags with `halt_on_error`, since they assert values
+  rather than survival. ROADMAP item 6's "still open" paragraph is resolved,
+  and with it the four-chapter Part VI debt — 26, 28, 29 and 30 — that the
+  *Where chapter code lives* convention was written to settle. The convention
+  now stands for whatever Part VI gains next rather than for a backlog.
+  - **Two translation units per binary, and that is the subject matter.** Each
+    demo links a boundary's implementation against a caller compiled against
+    the header alone, so what the header hides is genuinely unavailable to the
+    caller. Merged into one TU the three would still build, still run, still
+    pass — and prove nothing. CONTRIBUTING.md now says so, as the one line
+    this chapter added to the convention.
+  - **The claims are asserted, not narrated.** `sizeof(Widget) ==
+    sizeof(void*)` as a `static_assert` — the premise the chapter's relink
+    experiment rests on, checkable in a single build where the experiment
+    itself is not. `!std::is_destructible_v<IScorer>`, so "the protected
+    destructor makes `delete scorer` a compile error" is a compile-time check
+    rather than a sentence. And every `Engine_*` code the header documents,
+    including the null-parameter path and a `Destroy` that runs exactly once.
+  - **`final` on the implementation class, in code the chapter only
+    describes.** `Scorer::Destroy` is `delete this`, and without `final` that
+    is `-Wdelete-non-virtual-dtor`: a class with virtual functions and a
+    non-virtual destructor is a hazard for anything deriving from it. Nothing
+    can derive from this one. The warning is right, and the fix is the design.
+  - **Two fixes to the published headers that no warning could have found.**
+    `IScorer.h` and `engine.h` were the only headers in the repository without
+    an include guard, and a header written to be *published* is precisely the
+    one that gets included twice: twice, `IScorer.h` was a redefinition error
+    and `engine.h` a `-Wtypedef-redefinition` warning under C99, which
+    undercuts the "consumable by C" line it opens with. Both now carry
+    `#pragma once` — matching `Widget.h`, and the `FakeDevice.h` the chapter
+    tells the reader to lay `engine.h` beside. Separately, `engine.h`'s error
+    table said code 2 meant "the call did nothing": true of `Engine_Create` and
+    `Engine_Score`, which write no output parameter, and false of
+    `Engine_Destroy`, which has already begun freeing. A reader who took that
+    sentence at its word and retried a failed destroy would double free, which
+    is a poor thing to teach in the chapter about failure contracts.
+  - **The break-it-first half stays book-only**, like Chapter 31's sabotage
+    runs: the `Naive` layout break, the pure-virtual method inserted at the top
+    of an interface, the relink against a changed `Impl`. Each needs a caller
+    binary that was deliberately *not* rebuilt, and the first two exist to
+    fail.
+
 - **New exercise: the threaded callback** (MINOR — a new exercise with its
   reference solution, which is appended content rather than wiring, unlike the
   two entries below it). Chapter 29's *Try it* was the lab in chapter form and

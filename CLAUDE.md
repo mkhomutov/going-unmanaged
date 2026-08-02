@@ -44,6 +44,14 @@ Chapter 25's Finding 10.
   verbatim from the chapter's listings (same discipline as the Fake* vendor
   code: editing one means editing the chapter in the same commit), plus a
   TASK.md. build_all.sh builds the suite with `-I solutions` and runs it
+- `exercises/abilab/` — Chapter 30's three worked boundaries, plus a TASK.md:
+  `Widget.h`/`.cpp` (PIMPL), `IScorer.h` + `scorer.cpp` (interface + factory),
+  `engine.h`/`.cpp` (`extern "C"` façade), each with a `*_demo.cpp` caller.
+  Same sync discipline as testlab — the headers and the two full listings are
+  the chapter's, so editing one means editing Chapter 30 in the same commit.
+  build_all.sh builds each as a separate binary of TWO translation units
+  (implementation + caller): the caller seeing only the boundary header is the
+  subject matter, so never merge a demo into one TU with its implementation
 - `exercises/threadlab/` — Chapter 29's lab: a TASK.md and nothing else. It is
   the Chapter 18 device with a driver thread the reader builds, so it links
   `../fakedevice/`'s vendor code rather than copying it; the reference solution
@@ -101,7 +109,8 @@ installed and still fail to start. A lab that revisits an SDK the repo already
 has links that vendor code in place (threadlab). Deliberately broken
 demonstration programs — Ch 31's sabotage runs, Ch 30's break-it-first steps,
 Ch 29's Try it step 4 — stay book-only and unverified on purpose (ROADMAP item
-5). Ch 26, 28 and 29 are done; Ch 30 reuses this.
+5). Ch 26, 28, 29 and 30 are all done under this convention: the four-chapter
+Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 ## Hard invariants (never break these)
 

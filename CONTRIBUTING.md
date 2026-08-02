@@ -106,8 +106,10 @@ home, decided once so no PR has to argue it again:
 - **Code a chapter builds and runs lives under `exercises/<lab-name>/`**, next
   to the task card of the lab it belongs to, exactly as `exercises/buildlab/`
   already holds the Chapter 23 Greeter trio and Chapter 26's reference
-  `CMakeLists.txt`, and `exercises/testlab/` holds Chapter 28's `tiny_test.h`
-  and `buffer_test.cpp`. Reference *solutions* stay where they are: flat,
+  `CMakeLists.txt`, `exercises/testlab/` holds Chapter 28's `tiny_test.h`
+  and `buffer_test.cpp`, and `exercises/abilab/` holds Chapter 30's three
+  worked boundaries with a caller for each. Reference *solutions* stay
+  where they are: flat,
   standard-library-only `.cpp` files in `solutions/`. A lab that is a second
   pass over an SDK the repository already carries links that vendor code where
   it lives and copies nothing — `exercises/threadlab/` is Chapter 29's, and has
@@ -140,8 +142,16 @@ home, decided once so no PR has to argue it again:
   on purpose — the reader's job is to reproduce them. ROADMAP item 5 records
   the reasoning. Do not try to make them green.
 
-Chapters 26, 28 and 29 are done under this convention; Chapter 30 carries the
-same debt and will be closed the same way.
+Chapters 26, 28, 29 and 30 are all done under this convention, which closes the
+four-chapter Part VI debt it was written for. It stands for whatever Part VI
+gains next.
+
+One thing Chapter 30 added to it, small but easy to get wrong: **where the
+separation between translation units is the lesson, keep it.** Its three demos
+are three binaries of two TUs each — the boundary's implementation, and a
+caller compiled against the header alone. Merged into one TU they would still
+build, still run, still pass, and prove nothing, because the caller could see
+everything the header exists to hide.
 
 ## Ground rules (CI enforces the first one)
 

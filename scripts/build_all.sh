@@ -49,6 +49,17 @@ run "buildlab"    $CXX $FLAGS   exercises/buildlab/Greeter.cpp exercises/buildla
 # the chapter's own key principle: the assertions supply the workload, the
 # sanitizers supply the verdict.
 run "buffer_test" $CXX $FLAGS   exercises/testlab/buffer_test.cpp -I solutions -o $OUT/buffer_test
+# Chapter 30's three worked boundaries, each a separate binary of TWO translation
+# units - the boundary's implementation, and a caller compiled against the header
+# alone. The separation is the subject matter, not a build detail: merged into
+# one TU the demos would still pass while proving nothing, because the caller
+# could see everything the header hides. What stays book-only is the chapter's
+# break-it-first half (the Naive layout break, the inserted vtable entry, the
+# relink against a changed Impl): each needs a caller binary that was NOT rebuilt,
+# and exists to fail.
+run "widget"      $CXX $FLAGS   exercises/abilab/Widget.cpp exercises/abilab/widget_demo.cpp -o $OUT/widget
+run "scorer"      $CXX $FLAGS   exercises/abilab/scorer.cpp exercises/abilab/scorer_demo.cpp -o $OUT/scorer
+run "engine"      $CXX $FLAGS   exercises/abilab/engine.cpp exercises/abilab/engine_demo.cpp -o $OUT/engine
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -74,6 +85,12 @@ $OUT/buildlab > /dev/null
 # saying a test failed without saying which.
 $OUT/buffer_test > "$OUT/buffer_test.log" || { cat "$OUT/buffer_test.log"; exit 1; }
 tail -1 "$OUT/buffer_test.log"
+# halt_on_error for the same reason as the threaded binary above: these three
+# assert values rather than survival, and a UBSan finding that printed and
+# exited 0 would leave the section green.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/widget > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/scorer > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/engine > /dev/null
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from
