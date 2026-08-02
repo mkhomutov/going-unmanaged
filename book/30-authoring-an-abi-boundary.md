@@ -110,6 +110,7 @@ Ship an abstract class with no data at all, plus one function to make instances.
 
 ```cpp
 // IScorer.h
+#pragma once
 class IScorer {
 public:
     virtual int  Score() const = 0;
@@ -132,6 +133,7 @@ The most robust option, because C's ABI is the one thing every toolchain on a pl
 
 ```cpp
 // engine.h - consumable by C, C++, and anything with an FFI
+#pragma once
 #ifdef __cplusplus
 extern "C" {
 #endif

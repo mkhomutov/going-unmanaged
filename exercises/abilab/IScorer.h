@@ -7,6 +7,7 @@
 // - only a vtable shape and one unmangled symbol to find. Read the chapter for
 // what that costs: a published vtable is append-only, and only when YOU are the
 // sole implementer.
+#pragma once
 class IScorer {
 public:
     virtual int  Score() const = 0;

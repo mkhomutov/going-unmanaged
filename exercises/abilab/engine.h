@@ -11,7 +11,11 @@
 // Error codes, which engine.cpp implements and engine_demo.cpp checks:
 //   0 = ok
 //   1 = a null parameter (a caller bug, and never a crash)
-//   2 = something threw inside; the call did nothing
+//   2 = something threw inside; no output parameter was written. Create
+//       allocated nothing and Score scored nothing, so a caller may retry
+//       either - but Destroy has already begun freeing, so the handle is
+//       dead whatever this returns and retrying it is a double free.
+#pragma once
 #ifdef __cplusplus
 extern "C" {
 #endif
