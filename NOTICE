@@ -1,0 +1,26 @@
+Going Unmanaged — A Hands-On C++ Handbook for C# Developers
+Copyright (c) 2026 Maksim Khomutov
+
+This project is dual-licensed, and the boundary runs through the chapter
+files rather than around them:
+
+  Code — MIT License, see LICENSE.
+  Everything under exercises/, solutions/, scripts/ and .github/, AND every
+  code sample inside the book text. Paste a snippet from a chapter into your
+  own work freely; no attribution obligation follows it.
+
+  Book text — Creative Commons Attribution 4.0 International (CC-BY 4.0),
+  see LICENSE-CC-BY-4.0 or https://creativecommons.org/licenses/by/4.0/.
+  Everything under book/ — prose, tables, diagrams — and the single-file
+  book built from it. Share and adapt it with attribution.
+
+Attributing the text takes one line:
+
+  "Going Unmanaged — A Hands-On C++ Handbook for C# Developers" by Maksim
+  Khomutov (https://github.com/mkhomutov/going-unmanaged), licensed under
+  CC-BY 4.0.
+
+LICENSE is kept as the unmodified MIT text on purpose: GitHub's license
+detection scores that whole file against canonical MIT, and any preamble in
+it costs the repository its detected license. That is why this split lives
+here instead.
