@@ -2,13 +2,15 @@
 
 **A Hands-On C++ Handbook for C# Developers**
 
+*Managed developer goes native: from RAII to ABI boundaries, with exercises you do cold and every solution green under the sanitizers in CI.*
+
 [![CI](https://github.com/mkhomutov/going-unmanaged/actions/workflows/ci.yml/badge.svg)](https://github.com/mkhomutov/going-unmanaged/actions/workflows/ci.yml)
 
 You have spent years in managed code — the runtime tracked your objects, the GC cleaned up after you, and "unmanaged" was the scary word in the P/Invoke docs. This handbook is the journey to the other side.
 
 ## What this is, honestly
 
-This is not a book anyone sat down and wrote — it is a working handbook I *built*, with an AI assistant (Anthropic's Claude), during my own transition back to C++ after ~17 years in C#. The AI drafted the material; I drove the process, worked through the exercises, made the real mistakes that became the Findings log (Chapter 25), and every solution in this repository is verified under a compiler with `-Wall -Wextra` and AddressSanitizer.
+This is not a book anyone sat down and wrote — it is a working handbook I *built*, with an AI assistant (Anthropic's Claude), during my own transition back to C++ after ~17 years in C#. The AI drafted the material; I drove the process, worked through the exercises, made the real mistakes that became the Findings log (Chapter 25), and every solution in this repository is verified under a compiler with `-Wall -Wextra` and the sanitizers — Address and UndefinedBehavior for everything, ThreadSanitizer for the threaded lab.
 
 Think of it less as an authored book and more as a curated, battle-tested collection of hands-on material — the kind of thing scattered across the internet, gathered into one coherent path for one specific journey: **managed developer goes native**.
 
