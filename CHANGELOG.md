@@ -10,9 +10,9 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
-## [0.2.0] — Unreleased
+## [0.2.0] — 2026-08-02
 
-Navigation and usability, one correction, the first six appended chapters, a
+Navigation and usability, two corrections, the first six appended chapters, a
 new exercise, the split of the book into per-chapter files, and GitHub-native
 rendering; no existing chapter or Finding number changed meaning. That last
 point is what makes this MINOR rather than MAJOR: the version contract is about
@@ -434,6 +434,11 @@ in changed.
   Appendix B; Chapter 13 gains a forward pointer; the book's "how to use it"
   note, README's contents list, and ROADMAP item 1 (now marked DONE) all
   record the new part.
+- **Correction (FakeSDK.h banner):** the header's banner comments still named
+  a real vendor SDK, against the book's own no-real-vendor-names rule; Chapter
+  17 already quoted the sanitized wording, so the disk file now matches the
+  book's verbatim quote. In the same commit, Chapter 25's intro stopped calling
+  itself "this appendix" — it is a chapter.
 - **Correction (Chapter 25, Finding 10):** the Finding described ASan's leak
   detection running at normal program exit without noting that
   **LeakSanitizer is not supported on macOS/arm64** — where a leaking program
