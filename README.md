@@ -80,4 +80,16 @@ Accepted contributors are added here — see [CONTRIBUTING.md](CONTRIBUTING.md#a
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Use it, fork it, teach from it.
+Dual-licensed, and the split is deliberate. The book text — everything under
+[book/](book/README.md) and the single file built from it — is
+[CC-BY 4.0](LICENSE-CC-BY-4.0): share it, translate it, adapt it, teach from
+it, as long as you say where it came from. All the code is
+[MIT](LICENSE): `exercises/`, `solutions/`, `scripts/`, `.github/`, **and every
+code sample inside the chapters** — so a snippet you paste into your own work
+carries no attribution obligation with it. Use it, fork it, teach from it.
+
+Attributing the text takes one line:
+
+> "Going Unmanaged — A Hands-On C++ Handbook for C# Developers" by Maksim
+> Khomutov (https://github.com/mkhomutov/going-unmanaged), licensed under
+> [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).

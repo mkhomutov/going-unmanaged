@@ -249,4 +249,8 @@ Contributors of accepted material are credited as co-authors of the handbook.
 ## License
 
 By contributing you agree that your contribution is licensed under the same
-[MIT License](LICENSE) that covers the project.
+terms as the rest of the project, which is dual-licensed: text you write for
+`book/` goes out under [CC-BY 4.0](LICENSE-CC-BY-4.0), and code — exercises,
+solutions, scripts, CI, and the samples inside the chapters — goes out under
+the [MIT License](LICENSE). A typical PR contains both; the same split applies
+inside it.

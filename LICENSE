@@ -1,3 +1,9 @@
+Going Unmanaged is dual-licensed. The MIT terms below cover the code:
+exercises/, solutions/, scripts/, .github/, and every code sample inside
+the book text — paste a snippet into your own work freely. The book text
+itself (book/, and the single file built from it) is CC-BY 4.0 instead;
+those terms are in LICENSE-CC-BY-4.0.
+
 MIT License
 
 Copyright (c) 2026 Maksim Khomutov
