@@ -192,7 +192,7 @@ The boundary is a promise, so plan for the version-two conversation before you h
 
 - **Exporting a class with inline methods.** The inline body is compiled into the caller; changing it later changes nothing for anyone who already built. It is a permanent commitment disguised as an implementation detail.
 - **`std::string` in an exported signature.** The single most common ABI break in practice, because it compiles, links, and works right up until a consumer uses a different standard library or configuration.
-- **Letting the caller `delete` your object.** Even with a virtual destructor, it uses the caller's allocator. Hand out `Destroy`.
+- **Letting the caller `delete` your object.** Without a virtual destructor it is undefined behavior. *With* one it quietly works, and that is the trap: `delete p` compiles to a vtable call into the deleting destructor, which was emitted alongside your class inside *your* library and calls *your* `operator delete` — the caller's allocator never runs. Correctness resting on where a vtable happened to be emitted is not a contract you can publish, and buying it costs you the protected non-virtual destructor above. Hand out `Destroy` and the question never arises.
 - **Assuming the same compiler forever.** "We control both sides" is true until a team upgrades a toolset, and the resulting bug reports do not mention that they did.
 - **Versioning by changing a struct in place.** Without a size field there is no way for either side to detect the mismatch, and no diagnostic will appear.
 
