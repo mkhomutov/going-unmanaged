@@ -227,11 +227,11 @@ freed by thread T0 here:
 previously allocated by thread T0 here:
     #0 ... operator new[]
     #1 ... Buffer::Buffer(unsigned long) Buffer.h:17
-    #2 ... Buffer::Buffer(unsigned long) Buffer.h:17
+    #2 ... Buffer::Buffer(unsigned long) Buffer.h:18
     #3 ... MoveLeavesSourceEmptyButValid() buffer_test.cpp:45
 ```
 
-Read that carefully, because the obvious reading is wrong. A double-free report has **three** stacks — the free it stopped, the free that came first, and the allocation — and each one is a single call chain, so no stack here contains two deletes. The pair of `Buffer::~Buffer()` frames is not two destructions; it is *one*. The ABI gives every destructor two entry points — a complete-object one and a base-object one, emitted even for a class like this with no base at all — and unoptimized, the first simply calls the second. The tell is in the third stack, where the same doubling happens to `Buffer::Buffer` — and a constructor plainly ran only once. Rebuild at `-O1` and both pairs collapse to a single frame while the double free stays exactly where it was.
+Read that carefully, because the obvious reading is wrong. A double-free report has **three** stacks — the free it stopped, the free that came first, and the allocation — and each one is a single call chain, so no stack here contains two deletes. The pair of `Buffer::~Buffer()` frames is not two destructions; it is *one*. The ABI gives every destructor two entry points — a complete-object one and a base-object one, emitted even for a class like this with no base at all — and unoptimized, the first simply calls the second. The tell is in the third stack, where the same doubling happens to `Buffer::Buffer` — and a constructor plainly ran only once. Rebuild at `-O1` and the pairs do not halve, they vanish: both entry points are inlined into their callers, no `Buffer` frame survives at all, and the summary line moves off `Buffer.h:20` onto the test function. The bug has not moved an inch; only the frames describing it have. Which is the lesson under the lesson — a frame count is a fact about your optimization level, never about how many times something ran.
 
 So: two deletes, both reported at `buffer_test.cpp:51`, the closing brace where the two objects go out of scope in reverse order of declaration — `moved` frees the block, then `a` frees it again — and the allocation stack names line 45, `Buffer a(3)`, the block they both think they own. Exit code 134 here, because on macOS the sanitizer runtime calls `abort()` after printing; on Linux it defaults to `_exit(1)` instead, so the same run reports the same thing and exits a plain 1. Different number, same verdict: the process died rather than finishing.
 
@@ -262,7 +262,7 @@ This is the difference in one page. In C# a passing suite is decent evidence the
 
 ### The real frameworks
 
-Write the harness once to understand it, then use something maintained. What you actually get from a real framework: readable assertion output that prints both operands, exception isolation per test — and crash *attribution*, which is the honest word: on POSIX a fatal signal ends the run, and what Catch2 and doctest give you is the name of the test that was running when it died, filtering and tagging, fixtures, parameterized tests, and machine-readable output for CI.
+Write the harness once to understand it, then use something maintained. What you actually get from a real framework: readable assertion output that prints both operands, exception isolation per test, filtering and tagging, fixtures, parameterized tests, and machine-readable output for CI. Crash *attribution* too — attribution being the honest word, because on POSIX a fatal signal ends the whole run whatever the framework does; what Catch2 and doctest add is the name of the test that was running when it died.
 
 - **doctest** is a genuine single header: drop it in, `#include` it, done. **Catch2** was too, up to v2; the maintained v3 line is built as a static library, but it still ships an amalgamated header plus one `.cpp` you can drop straight into your build. Neither needs a package manager, which matters more than it sounds on a locked-down work machine where installing one is a ticket and downloading a file or two is not.
 - **GoogleTest** is heavier and must be built, which makes it a Chapter 27 dependency decision rather than a file copy. It is extremely common in large codebases, and its `EXPECT_*` / `ASSERT_*` vocabulary is worth recognizing.

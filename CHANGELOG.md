@@ -12,6 +12,29 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **Corrections: six defects in the audit corrections themselves** (PATCH — no
+  number moved, no key principle changed). A pass back over the four
+  correction rounds, re-running the claims against a compiler and vendor
+  documentation rather than re-reading the prose. The substantive rewrites all
+  held — Chapter 21's `container-overflow`, Chapter 25's Finding 10, Chapter
+  28's three-stack report, the `/Zc:nrvo` and `/GL`/`/LTCG` details — but six
+  edits introduced or left problems of their own:
+  - **Chapter 3** — the 512 KB secondary-thread stack is macOS's; glibc sizes
+    a new thread from `RLIMIT_STACK`, the same ~8 MB the main thread gets, as
+    Chapter 29 already said. And the `/RTCu` fix contradicted the sentence
+    above it: the example never prints `-858993460`, because `/RTCu` stops the
+    program first.
+  - **Chapter 6** — the C++17 elision correction was anchored to
+    `Take(MakeBuffer())`, a line demonstrating overload selection rather than
+    return-value elision. The two mechanisms are now stated separately.
+  - **Chapter 10** — the C++17 caveat named `std::format` as a C++20 exception
+    "above"; the chapter never shows it.
+  - **Chapter 27** — "v140–v145" implies a v144 that does not exist.
+  - **Chapter 28** — the `-O1` rebuild offered as proof of the destructor's two
+    ABI entry points does not reproduce: the frames are inlined away entirely
+    and the summary line moves. Also a list severed by an unclosed
+    interjection, and a transcript line number (`:17` twice, should be `:17`
+    and `:18`).
 - **Corrections: the audit's 36 low-severity candidates, all verified and
   applied** (PATCH — no number moved). The audit swept these but did not
   adversarially verify them, so each was checked here first; all held. Two key

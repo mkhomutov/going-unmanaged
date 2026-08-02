@@ -105,7 +105,7 @@ uint32_t, int64_t                // from <cstdint>: 'int' size isn't
 
 ### In the wild: C-style SDKs
 
-Most actively maintained SDKs now require C++17, so nearly all of this is usable in your plug-in or driver code — the exceptions being the two C++20 features above, ranges and `std::format`, which need a newer toolchain. The professional style: modern C++ in *your* logic — optional, lambdas, RAII wrappers — with a thin, disciplined layer where you touch the raw C API. The older the SDK's surface, the more valuable the modern layer you build on top of it.
+Most actively maintained SDKs now require C++17, so nearly all of this is usable in your plug-in or driver code — the exception being the ranges above, which are C++20 and need a newer toolchain. The professional style: modern C++ in *your* logic — optional, lambdas, RAII wrappers — with a thin, disciplined layer where you touch the raw C API. The older the SDK's surface, the more valuable the modern layer you build on top of it.
 
 ---
 
