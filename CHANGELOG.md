@@ -12,6 +12,23 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **Corrections: the four disputed audit items, all upheld on re-verification**
+  (PATCH — no number moved, no key principle changed). These were the ones the
+  audit's two verifiers split on, so each was re-checked from scratch:
+  - **Chapter 3** — `/RTC1` is `/RTCs` *plus* `/RTCu`, so a Visual Studio Debug
+    build stops on the chapter's own uninitialized read rather than silently
+    showing `-858993460`. The silent pattern is what you get once a variable is
+    aliased, or for members and array elements — which is the case the chapter
+    goes on to discuss.
+  - **Chapter 9** — dropped "interned" from the C# string recap; interning is
+    not a property of the type, and by default the C# compiler does not even
+    guarantee it for literals.
+  - **Chapter 24** — Day 2 no longer promises that ASan catches all three
+    deliberate breaks. The non-virtual destructor produces no sanitizer report
+    at all on macOS/arm64; it is a compiler warning and then a leak.
+  - **Chapter 25, Finding 1** — names the small-string optimization. The
+    Tracer's own strings are short enough that the "allocates a brand-new heap
+    block" step allocates nothing; the Finding's argument is unchanged.
 - **Corrections: the remaining fifteen accuracy fixes from the same audit**
   (PATCH — again no chapter, Finding or appendix number moved). One key
   principle changed wording, mirrored in Appendix B in the same commit:
