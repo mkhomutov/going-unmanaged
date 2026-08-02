@@ -214,12 +214,26 @@ Run it under `-fsanitize=address,undefined` and the truth arrives:
 ```text
 ==68609==ERROR: AddressSanitizer: attempting double-free on 0x602000000190 in thread T0:
     #0 ... operator delete[]
-    #1 ... Buffer::~Buffer() Buffer.h:13
-    #2 ... Buffer::~Buffer() Buffer.h:13
+    #1 ... Buffer::~Buffer() Buffer.h:20
+    #2 ... Buffer::~Buffer() Buffer.h:20
+    #3 ... MoveLeavesSourceEmptyButValid() buffer_test.cpp:51
+
+freed by thread T0 here:
+    #0 ... operator delete[]
+    #1 ... Buffer::~Buffer() Buffer.h:20
+    #2 ... Buffer::~Buffer() Buffer.h:20
+    #3 ... MoveLeavesSourceEmptyButValid() buffer_test.cpp:51
+
+previously allocated by thread T0 here:
+    #0 ... operator new[]
+    #1 ... Buffer::Buffer(unsigned long) Buffer.h:17
+    #2 ... Buffer::Buffer(unsigned long) Buffer.h:17
     #3 ... MoveLeavesSourceEmptyButValid() buffer_test.cpp:45
 ```
 
-Two destructor frames — the same block deleted twice — and the third frame names the test that did it, at the closing brace where both objects go out of scope. Exit code 134: the process aborted rather than finishing.
+Read that carefully, because the obvious reading is wrong. A double-free report has **three** stacks — the free it stopped, the free that came first, and the allocation — and each one is a single call chain, so no stack here contains two deletes. The pair of `Buffer::~Buffer()` frames is not two destructions; it is *one*. The ABI gives every destructor two entry points — a complete-object one and a base-object one, emitted even for a class like this with no base at all — and unoptimized, the first simply calls the second. The tell is in the third stack, where the same doubling happens to `Buffer::Buffer` — and a constructor plainly ran only once. Rebuild at `-O1` and both pairs collapse to a single frame while the double free stays exactly where it was.
+
+So: two deletes, both reported at `buffer_test.cpp:51`, the closing brace where the two objects go out of scope in reverse order of declaration — `moved` frees the block, then `a` frees it again — and the allocation stack names line 45, `Buffer a(3)`, the block they both think they own. Exit code 134: the process aborted rather than finishing.
 
 Now compare that with what you get *without* the sanitizer. Build the identical broken code with plain `-Wall -Wextra` and run it:
 

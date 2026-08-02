@@ -12,6 +12,34 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **Corrections: six accuracy fixes from a pre-announcement audit** (PATCH — no
+  chapter, Finding or appendix number moved, and no key principle changed).
+  Each was verified against the standard, vendor documentation, or a compiler
+  before editing:
+  - **Chapter 7** — the bolded thesis taught an erasure model of C# generics.
+    .NET generics are reified: the runtime specializes per value type and
+    shares one instantiation across reference types. The real contrast is
+    *when* and *from what*, which is now what the sentence says.
+  - **Chapter 14** — NRVO was presented as guaranteed C++17 elision. C++17
+    mandates elision only for prvalue returns; `MakeTracer` returns a named
+    local. Also flagged that the chapter's own `cl /std:c++17` line does not
+    enable `/Zc:nrvo`, so MSVC prints a move the annotated output omits.
+  - **Chapter 21** — `vector::erase` frees nothing, so ASan cannot report
+    `heap-use-after-free` for Task 1. It reports `container-overflow`, whose
+    giveaway is an allocation stack and no "freed by" stack.
+  - **Chapter 25, Finding 10** — the `std::exchange` self-move walkthrough was
+    arithmetically inverted: `x = std::exchange(x, v)` leaves `x` unchanged, so
+    the printed code double-frees and ASan reports it loudly. The silent
+    outcome the Finding is about belongs to the two-statement steal, which is
+    now shown alongside it. The Finding's conclusion, number and Habit are
+    unchanged.
+  - **Chapter 28** — the narration misread its own double-free report. The
+    excerpt was one stack, not two deletes; the doubled `~Buffer` frames are a
+    single destructor's two ABI entry points. All three stacks are now shown.
+  - **Chapter 30** — delete-through-virtual-destructor was stated backwards.
+    The deleting destructor is emitted with your class and calls *your*
+    `operator delete`, not the caller's. `Destroy` is still the advice, for
+    the accurate reason.
 - **Project:** dual licensing, made explicit before the first outside
   contribution lands — the book text under CC-BY 4.0 (new
   `LICENSE-CC-BY-4.0`), all code under MIT, including every code sample inside
