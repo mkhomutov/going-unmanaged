@@ -205,7 +205,7 @@ The boundary is a promise, so plan for the version-two conversation before you h
 
 ### Try it
 
-Take something you have already written — the Chapter 15 Buffer is ideal, since it owns a resource and has real state — and publish it three ways.
+Take something you have already written — the Chapter 15 Buffer is ideal, since it owns a resource and has real state — and publish it three ways. The three boundaries printed above are checked in as `exercises/abilab/`, each with a caller of its own, so do the Buffer versions cold first and compare afterwards.
 
 1. **Break it on purpose first.** Put the Buffer's members in the header, compile a caller against it, then add a private member and rebuild *only* the library. Confirm `sizeof` changed, run it, and then rebuild both sides with `-fsanitize=address` to see the overflow. Note that instrumenting only the library hides it.
 2. **PIMPL it.** Move the state behind `struct Impl`. Deliberately omit the destructor declaration first so you meet the incomplete-type error on purpose and recognize it forever. Then prove stability: compile the caller once, change `Impl` substantially, relink without recompiling the caller, and watch `sizeof` stay at one pointer.

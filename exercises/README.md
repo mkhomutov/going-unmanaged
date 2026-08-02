@@ -22,20 +22,23 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [The Build-Model Lab](buildlab/TASK.md) | 23 | error-stage triage: preprocessor / compile / link | ~45 min | none — your notes are the artifact |
 | [The Test Lab](testlab/TASK.md) | 28 | a test framework from scratch, and testing ownership | ~60 min | the files themselves: [tiny_test.h](testlab/tiny_test.h), [buffer_test.cpp](testlab/buffer_test.cpp) |
 | [The Threaded Callback](threadlab/TASK.md) | 29 | callback lifetime across a thread boundary, under TSan | ~2 h | [device_threaded_solution.cpp](../solutions/device_threaded_solution.cpp) |
+| [The ABI Lab](abilab/TASK.md) | 30 | publishing a boundary instead of consuming one | ~2 h | the files themselves: [Widget.h](abilab/Widget.h), [IScorer.h](abilab/IScorer.h), [engine.h](abilab/engine.h) + their implementations and callers |
 
 Chapter 24 (the practice plan) sequences everything above the test lab — the
 nine Part V exercises plus the Bestiary reading — into a one-week schedule; the
-last two belong to Part VI and come later. The threaded callback is the one to
-save for last: it is the Device SDK lab again with a driver thread in front of
-it, and it assumes you have already done that one cold.
+last three belong to Part VI and come later. The threaded callback assumes you
+have already done the Device SDK lab cold — it is that lab again with a driver
+thread in front of it — and the ABI lab assumes both SDK labs, since it asks you
+to publish the shapes those two taught you to consume.
 
-Two directories hold their reference in the open, rather than behind a fold.
+Three directories hold their reference in the open, rather than behind a fold.
 `buildlab/` does double duty: it is Chapter 23's lab, and Chapter 26 builds that
 same trio with CMake, so the reference
 [`CMakeLists.txt`](buildlab/CMakeLists.txt) lives there. `testlab/` holds
-Chapter 28's harness and suite, which the chapter prints in full anyway. Both
-are kept green by `scripts/build_all.sh`. Write your own first — in a directory
-of your own, without reading these.
+Chapter 28's harness and suite, which the chapter prints in full anyway, and
+`abilab/` holds Chapter 30's three worked boundaries for the same reason. All
+three are kept green by `scripts/build_all.sh`. Write your own first — in a
+directory of your own, without reading these.
 
 ## Building your attempt
 
