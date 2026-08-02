@@ -12,7 +12,7 @@ Worth understanding before you use one, because it explains their strange shape.
 
 In C# a test framework finds your tests by reflection: it loads the assembly, looks for `[Fact]`, and calls what it finds. If an assertion needs the file and line it came from, `[CallerLineNumber]` supplies it, and the failure message can quote your expression because the compiler kept it.
 
-C++ has none of that. There is no reflection, no attribute the runtime can query, and a function cannot know its own call site. Everything a framework needs must be captured at compile time, and the only tool that sees source text is the preprocessor. Hence `#expr` to stringify an expression, `__FILE__` and `__LINE__` to stamp a location, and a macro to register a test function before `main` runs. The macros are not laziness; they are the only mechanism available.
+C++ has none of that. There is no reflection and no attribute the runtime can query — and until C++20 a function could not learn its own call site either. `std::source_location`, taken as a defaulted parameter, is that missing `[CallerLineNumber]`, and it arrived long after these frameworks were built. What no version of C++ has is a way to quote *source text* outside the preprocessor. Hence `#expr` to stringify an expression, `__FILE__` and `__LINE__` to stamp a location, and a macro to register a test function before `main` runs. The macros are not laziness; for the expression text the preprocessor is still the only mechanism available.
 
 Which means you can build one, and you should, once — the same way Chapter 18 says to write the trampoline once and recognize it forever.
 
