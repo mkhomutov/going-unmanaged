@@ -41,7 +41,7 @@ One line each. If you can say these fluently and back them with code, the concep
 
 **Dependencies**
 
-- "C++ libraries ship as source because a compiled binary is only valid for one compiler, one standard library, one configuration, and one architecture — I build my dependencies with my toolchain so they match by construction."
+- "C++ libraries ship as source because binary compatibility is per-ecosystem and fragile — it depends on the compiler, the standard library, the configuration and the architecture all agreeing — so I build my dependencies with my toolchain and they match by construction."
 - "Two versions of one library in a binary is an ODR violation, and it is silent — no resolver, no binding redirect, no diagnostic. One version per binary, decided on purpose."
 - "I pin dependencies to a tag or a commit, never a branch — and I write down the version and any local patch next to the vendored code."
 
