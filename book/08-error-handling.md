@@ -96,7 +96,7 @@ Use(*cfg);                          // the T side - dereference, like optional
 Most codebases are not on C++23, so most codebases that want this shape ship their own: Abseil's `StatusOr`, Boost.Outcome, LLVM's `Expected`, or a house `Result<T, E>`. They differ in spelling and in how loudly they complain when you get it wrong; they are all the same idea, and recognizing the shape when you meet it under a new name is the actual skill.
 
 > [!WARNING]
-> **Trap:** assuming these types force the check. `*cfg` without testing `cfg` first is undefined behaviour on the error side, exactly as `optional`'s `operator*` is — the same bug class as an ignored error code, wearing a nicer type. Only an exception is impossible to ignore.
+> **Trap:** assuming these types force the check. `*cfg` without testing `cfg` first is undefined behavior on the error side, exactly as `optional`'s `operator*` is — the same bug class as an ignored error code, wearing a nicer type. Only an exception is impossible to ignore.
 
 ### Choosing: is the failure a bug, a value, or an event?
 
@@ -140,6 +140,11 @@ Then answer the Bestiary's failure-contract question, which is the one people sk
 The spine of all of it is **translation at the boundary**, in both directions. Inbound: an SDK's error enum is not an error value you should keep — map it once, at the wrapper, into your own vocabulary, or the vendor's enum spreads through your codebase and swapping the SDK becomes a rewrite. Outbound: at every entry point the host calls, nothing escapes.
 
 ```cpp
+// The status crosses the boundary, so its width is pinned rather than
+// compiler-chosen - a plain enum's underlying type is the compiler's choice.
+typedef int32_t PluginStatus;
+enum : int32_t { PluginOk = 0, PluginFailed = 1, PluginOutOfMemory = 2 };
+
 // The entry point the host calls. Nothing escapes it.
 extern "C" PluginStatus Plugin_Process(Ctx* ctx) {
     try {
@@ -156,7 +161,7 @@ extern "C" PluginStatus Plugin_Process(Ctx* ctx) {
 }
 ```
 
-The `catch (...)` is not paranoia. The host's frames were compiled by someone else's toolchain, quite possibly with exceptions disabled entirely — unwinding into them is undefined behaviour on a good day and a silent `terminate` on a normal one. [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) makes this one of the rules of authoring a boundary of your own.
+The `catch (...)` is not paranoia. The host's frames were compiled by someone else's toolchain, quite possibly with exceptions disabled entirely — unwinding into them is undefined behavior on a good day and a silent `terminate` on a normal one. [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) makes this one of the rules of authoring a boundary of your own.
 
 ---
 
