@@ -12,12 +12,58 @@ numbers may still move.
 
 ## [0.2.0] — Unreleased
 
-Navigation and usability, one correction, the first six appended chapters,
-the split of the book into per-chapter files, and GitHub-native rendering;
-no existing chapter or Finding number changed meaning. That last point is
-what makes this MINOR rather than MAJOR: the version contract is about what
-a *number* refers to, and nothing renumbered — only the file the text lives
+Navigation and usability, one correction, the first six appended chapters, a
+new exercise, the split of the book into per-chapter files, and GitHub-native
+rendering; no existing chapter or Finding number changed meaning. That last
+point is what makes this MINOR rather than MAJOR: the version contract is about
+what a *number* refers to, and nothing renumbered — only the file the text lives
 in changed.
+
+- **New exercise: the threaded callback** (MINOR — a new exercise with its
+  reference solution, which is appended content rather than wiring, unlike the
+  two entries below it). Chapter 29's *Try it* was the lab in chapter form and
+  nothing else: no task card, no threaded code in `solutions/`, and so no TSan
+  anywhere in CI. It is now `exercises/threadlab/` — a task card and nothing
+  else, because the lab is the Chapter 18 device with a driver thread the reader
+  builds out of `Device_Poll`, so it links `exercises/fakedevice/`'s vendor code
+  where it lives and copies none of it. The reference solution,
+  `solutions/device_threaded_solution.cpp`, is the chapter's step 3 in full
+  rather than the naive version: a poller thread owning every `Device_*` call
+  (the header documents nothing about cross-thread use, so by Chapter 16's rule
+  it is not thread-safe), a mutex-guarded job queue carrying open, register,
+  unregister and close, and the teardown the chapter derives — Sink with mutex
+  and alive flag, a heap `weak_ptr` as the SDK context, the flag published
+  before an unregistration that is now *deferred*. Deferring it is what earns
+  the exercise: it turns a device that only ever calls back on one thread into
+  the non-quiescing SDK the fix exists for. `scripts/build_all.sh` builds and
+  runs it under the canonical flags with everything else, and again under
+  `-fsanitize=thread` in a section of its own, since the two sanitizers do not
+  combine; `scripts/check.sh` grows a `SAN` variable so a learner can run their
+  own attempt both ways. ROADMAP item 4 and the carried-over threaded-callback
+  gap are both closed; item 6's note now records Chapter 30 as the last of the
+  four.
+  - **The chapter's never-freed context needed its sanctioned variant, not its
+    listing.** Chapter 29 leaves the callback contexts deliberately unfreed and
+    offers, in one sentence, the alternative of owning them at file scope and
+    clearing them after the SDK's thread is joined. The reference solution has
+    to take that route: LeakSanitizer runs at exit on Linux — where CI runs —
+    and would report every context as a leak, turning the new gate red. "Do not
+    free it in the destructor" and "do not leak it" are both satisfiable, but
+    only in that order, and joining first is the only moment the ordering is
+    knowable.
+  - **The gate was tested by breaking it.** Putting `delete ctx_` back at the
+    end of the destructor — the chapter's own step 4 — gives
+    `heap-use-after-free` under AddressSanitizer on ten runs out of ten, and
+    **nothing at all** under ThreadSanitizer on six. That is the chapter's last
+    pitfall reproduced on this program: running one sanitizer and calling it
+    covered would have shipped the bug. Step 4 itself stays book-only, like
+    Chapter 31's sabotage runs, because it exists to fail.
+  - **`--require-tsan`, and a probe that does the thing.** The new section
+    follows the `--require-cmake` bargain — SKIPPED on a machine without the
+    tool, never skippable in CI — with one difference now written into
+    CONTRIBUTING.md: it decides by compiling *and running* a trivial
+    instrumented program, because ThreadSanitizer can be perfectly well
+    installed and still fail to start.
 
 - **New: Chapter 28's test harness and suite are under CI** (PATCH-level —
   verification wiring for code the chapter already printed; no text rewritten

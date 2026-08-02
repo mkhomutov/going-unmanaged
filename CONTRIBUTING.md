@@ -15,9 +15,8 @@ writing it down properly.
    the book disagrees with [cppreference](https://cppreference.com) or the
    [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/), they win;
    a PR aligning the book with them is always welcome.
-3. **New exercises** — especially new SDK shapes. Known gaps: a COM-style
-   refcounting lab (Bestiary Shape 3 has no lab yet) and a threaded-callback
-   lab (currently only a FakeDevice stretch goal).
+3. **New exercises** — especially new SDK shapes. Known gap: a COM-style
+   refcounting lab (Bestiary Shape 3 has no lab yet).
 4. **Missing chapters** — subjects the book does not cover yet.
    [ROADMAP.md](ROADMAP.md) is the standing list, ranked by what they cost a
    reader who hits them unprepared. Tier 1 is now closed — build systems,
@@ -109,7 +108,10 @@ home, decided once so no PR has to argue it again:
   already holds the Chapter 23 Greeter trio and Chapter 26's reference
   `CMakeLists.txt`, and `exercises/testlab/` holds Chapter 28's `tiny_test.h`
   and `buffer_test.cpp`. Reference *solutions* stay where they are: flat,
-  standard-library-only `.cpp` files in `solutions/`.
+  standard-library-only `.cpp` files in `solutions/`. A lab that is a second
+  pass over an SDK the repository already carries links that vendor code where
+  it lives and copies nothing — `exercises/threadlab/` is Chapter 29's, and has
+  no code of its own beyond its task card.
 - **A header in `solutions/` is permitted exactly when a chapter requires the
   demo/test split.** Chapter 28 forced the first one: its suite tests the
   Chapter 15 Buffer, which cannot be tested while it shares a translation unit
@@ -121,20 +123,24 @@ home, decided once so no PR has to argue it again:
 - **Everything verifiable is wired into `scripts/build_all.sh`.** That script
   remains the single repo invariant — it must print `ALL GREEN` — and adding
   chapter code without adding it to the script is half a contribution.
-- **A step that needs a tool which may be absent locally** (cmake today,
-  ThreadSanitizer later) follows the `check_mermaid.sh` precedent: print a
+- **A step that needs a tool which may be absent locally** (cmake and
+  ThreadSanitizer today) follows the `check_mermaid.sh` precedent: print a
   `SKIPPED` line and stay green on a machine that lacks it, and take a
   `--require-*` flag that refuses to skip. CI always passes that flag, so a
   step can never silently skip there. A local run should never look like a
-  pass it did not earn. Name the flag for the tool — `--require-cmake` in
-  `build_all.sh`, which may grow a second one; `check_mermaid.sh` predates the
-  pattern and spells its own `--required`, and checks one thing, so it stays.
+  pass it did not earn. Name the flag for the tool — `--require-cmake` and
+  `--require-tsan` in `build_all.sh`; `check_mermaid.sh` predates the pattern
+  and spells its own `--required`, and checks one thing, so it stays. **Probe
+  by doing the thing, not by looking for the tool.** The TSan step compiles
+  *and runs* a trivial instrumented program, because ThreadSanitizer can be
+  installed and still fail to start — a `command -v` style check would call
+  that machine covered.
 - **Deliberately broken programs stay in the book.** Chapter 31's sabotage
   runs and Chapter 30's break-it-first steps exist to fail, and are unverified
   on purpose — the reader's job is to reproduce them. ROADMAP item 5 records
   the reasoning. Do not try to make them green.
 
-Chapters 26 and 28 are done under this convention; Chapters 29 and 30 carry the
+Chapters 26, 28 and 29 are done under this convention; Chapter 30 carries the
 same debt and will be closed the same way.
 
 ## Ground rules (CI enforces the first one)

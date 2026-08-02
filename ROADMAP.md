@@ -148,7 +148,7 @@ Expect one practical snag — a single-header framework will not survive
 `-Wall -Wextra` silently, so include it with `-isystem` and keep the strict
 flags meaning what they mean for our code.
 
-### 4. Concurrency — DONE (chapter only; lab and TSan CI still open)
+### 4. Concurrency — DONE
 
 **Delivered:** Chapter 29 — *Concurrency*. This was the item the book owed most
 plainly: Chapter 16 tells you to ask *"what thread calls me back?"*, Chapter 18
@@ -178,14 +178,30 @@ what the chapter is built around, with TSan finding in one run what the program
 would never show. TSan is introduced as the third sanitizer, including that it
 cannot be combined with ASan and so needs its own build.
 
-**Still open from this item:** the threaded-callback lab under
-[Known gaps carried over](#known-gaps-carried-over) is *not* closed. Chapter 29's
-"Try it" is that lab in chapter form, but there is no task card under
-`exercises/` and no threaded code in `solutions/`, so CI runs no TSan job and
-none of the chapter's threaded code is verified by `build_all.sh`. Promoting the
-exercise properly — task card, reference solution, and a TSan step in CI — is
-the obvious follow-up, and it is what would let the repo's own invariant cover
-the material this chapter teaches.
+**The lab that was open here is now done**, and with it the carried-over gap
+below. Chapter 29's "Try it" was the lab in chapter form and nothing else; it now
+has a task card at `exercises/threadlab/` and a reference solution at
+`solutions/device_threaded_solution.cpp`, which `scripts/build_all.sh` builds and
+runs twice — under the canonical ASan/UBSan flags with everything else, and again
+under `-fsanitize=thread` in a section of its own, because the two sanitizers do
+not combine. That section follows the cmake precedent with one addition: the
+probe compiles *and runs* a trivial instrumented program, since ThreadSanitizer
+can be installed and still fail to start, and CI passes `--require-tsan`.
+
+Two things the wiring settled that the chapter only asserts. The reference
+solution has to use the file-scope registry the chapter offers in passing —
+holders owned at file scope and released after the poller is joined — rather than
+the simpler never-freed variant of the listing, because LeakSanitizer runs at
+exit on Linux and would report every context as a leak; "do not free it in the
+destructor" and "do not leak it" are both satisfiable, but only by that one
+ordering. And running the sabotage confirmed the chapter's last pitfall on this
+program: `delete ctx_` in the destructor is a `heap-use-after-free` ASan names on
+every run and **TSan does not report at all**. One sanitizer is genuinely half
+the check here.
+
+**Still open from this item:** nothing. What stays book-only is step 4 of the
+*Try it* — the deliberate `delete ctx_` and the removed alive flag — by the same
+rule as Chapter 31's sabotage runs: it exists to fail.
 
 ---
 
@@ -265,8 +281,11 @@ convention down (*Where chapter code lives*, CONTRIBUTING.md — code under
 in CI when a step needs a tool that may be absent) and closed item 1 under it;
 item 3 then closed under the same convention, adding `exercises/testlab/` and
 the one amendment it required (a header in `solutions/` when a chapter forces
-the demo/test split). Chapters 29 and 30 remain, and each is now a mechanical
-application of that convention rather than a decision.
+the demo/test split); item 4 closed next, adding `exercises/threadlab/`, a
+reference solution, and the convention's first `--require-<tool>` flag for a
+sanitizer rather than a build tool. **Chapter 30 is the only one of the four
+left**, and it is now a mechanical application of that convention rather than a
+decision.
 
 ### 7. Byte-level protocol work
 
@@ -343,8 +362,10 @@ Already recorded in [CONTRIBUTING.md](CONTRIBUTING.md) and still open:
 
 - **A COM-style refcounting lab.** Bestiary Shape 3 is the only one of the
   five shapes without an exercise.
-- **A threaded-callback lab.** Currently only a FakeDevice stretch goal;
-  the natural companion to item 4.
+- **A threaded-callback lab** — **DONE.** It was a FakeDevice stretch goal, then
+  Chapter 29's *Try it*; it is now `exercises/threadlab/` with
+  `solutions/device_threaded_solution.cpp` and a ThreadSanitizer step in CI.
+  See item 4 above.
 
 ## Deliberately out of scope
 

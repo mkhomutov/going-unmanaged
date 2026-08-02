@@ -2,15 +2,19 @@
 # Build and run every reference solution under strict flags + sanitizers.
 # This is the repo's core invariant; CI runs the same script.
 #
-#   scripts/build_all.sh                   -> everything; cmake step may SKIP
+#   scripts/build_all.sh                   -> everything; cmake and TSan may SKIP
 #   scripts/build_all.sh --require-cmake   -> also fail if cmake is missing (CI)
+#   scripts/build_all.sh --require-tsan    -> also fail if ThreadSanitizer is
+#                                             unusable here (CI)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 REQUIRE_CMAKE=0
+REQUIRE_TSAN=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --require-cmake) REQUIRE_CMAKE=1; shift ;;
+        --require-tsan)  REQUIRE_TSAN=1;  shift ;;
         *) echo "build_all.sh: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -27,6 +31,11 @@ run "tracer"      $CXX $FLAGS   solutions/tracer.cpp                    -o $OUT/
 run "buffer"      $CXX $FLAGS   solutions/buffer.cpp                    -o $OUT/buffer
 run "fakesdk"     $CXX $FLAGS   exercises/fakesdk/FakeSDK.cpp solutions/fakesdk_solution.cpp -I exercises/fakesdk -o $OUT/fakesdk
 run "device"      $CXX $FLAGS   exercises/fakedevice/FakeDevice.cpp solutions/device_solution.cpp -I exercises/fakedevice -o $OUT/device
+# Chapter 29's lab. Built here under ASan/UBSan and again under TSan further
+# down: the two do not combine, and a threaded lifetime bug is a use-after-free
+# ASan names outright while TSan may say nothing at all - so one build is half
+# the check. The chapter's own last pitfall, applied to this script.
+run "threaded"    $CXX $FLAGS   exercises/fakedevice/FakeDevice.cpp solutions/device_threaded_solution.cpp -I exercises/fakedevice -o $OUT/threaded
 run "words"       $CXX $FLAGS20 solutions/words.cpp                     -o $OUT/words
 run "shapes"      $CXX $FLAGS   solutions/shapes.cpp                    -o $OUT/shapes
 run "invalid"     $CXX $FLAGS20 solutions/invalid.cpp                   -o $OUT/invalid
@@ -46,6 +55,11 @@ $OUT/tracer > /dev/null
 $OUT/buffer > /dev/null
 $OUT/fakesdk > /dev/null
 $OUT/device > /dev/null
+# halt_on_error, unlike every line around it: UBSan's default is
+# report-and-continue, so a finding here would print and still exit 0 - and this
+# binary exists to BE a gate. (The rest of the script predates the point; see
+# ROADMAP item 5.)
+UBSAN_OPTIONS=halt_on_error=1 $OUT/threaded > /dev/null
 $OUT/words exercises/words/words_sample.txt > /dev/null
 $OUT/shapes > /dev/null
 $OUT/invalid > /dev/null
@@ -137,6 +151,41 @@ elif [ "$REQUIRE_CMAKE" = 1 ]; then
     exit 1
 else
     echo "  SKIPPED - cmake not installed (CI runs this for real)"
+fi
+
+# Chapter 29's lab under the third sanitizer. TSan cannot be combined with ASan,
+# so this is a second build of the same source rather than a longer flag list -
+# which is the chapter's point about them made structurally.
+#
+# Same bargain as the cmake step above, for the same reason: ThreadSanitizer is
+# not part of the toolchain the rest of this script needs. It is missing from
+# some cross-compilers and 32-bit targets, and on a Linux host it can also be
+# present but unable to start, because its shadow mapping collides with the
+# host's ASLR entropy. So the probe below both COMPILES and RUNS a trivial
+# program - "the flag exists" is not the question, "does an instrumented binary
+# start here" is. CI passes --require-tsan, which refuses to skip.
+echo "== threaded tsan =="
+TFLAGS="-std=c++17 -Wall -Wextra -fsanitize=thread -g"
+printf 'int main() { return 0; }\n' > "$OUT/tsan_probe.cpp"
+if $CXX $TFLAGS "$OUT/tsan_probe.cpp" -o "$OUT/tsan_probe" > /dev/null 2>&1 \
+   && "$OUT/tsan_probe" > /dev/null 2>&1; then
+    $CXX $TFLAGS exercises/fakedevice/FakeDevice.cpp \
+        solutions/device_threaded_solution.cpp -I exercises/fakedevice \
+        -o "$OUT/threaded_tsan"
+    # halt_on_error buys a shorter log here, not a failing run - unlike the
+    # UBSan line further up, whose default really is report-and-exit-0. TSan
+    # fails the run on its own (exitcode=66 on Linux, abort on Darwin), so what
+    # this adds is stopping AT the first race rather than letting it scroll past
+    # under whatever the program goes on to report.
+    TSAN_OPTIONS=halt_on_error=1 "$OUT/threaded_tsan" > /dev/null
+    echo "  ok   solutions/device_threaded_solution.cpp under -fsanitize=thread"
+elif [ "$REQUIRE_TSAN" = 1 ]; then
+    echo "build_all.sh: ThreadSanitizer cannot build and run a trivial program" >&2
+    echo "  with $CXX, and --require-tsan was given. Re-run the probe by hand to" >&2
+    echo "  see why: $CXX $TFLAGS <a main() returning 0>" >&2
+    exit 1
+else
+    echo "  SKIPPED - no usable ThreadSanitizer here (CI runs this for real)"
 fi
 
 echo "ALL GREEN"

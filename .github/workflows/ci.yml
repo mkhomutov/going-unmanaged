@@ -19,7 +19,12 @@ jobs:
       # configured, built and run both ways - SKIPS on a machine without
       # cmake, which is right on a laptop and very wrong here. Both hosted
       # images ship cmake, so the flag only ever fires if that changes.
-      - run: ./scripts/build_all.sh --require-cmake
+      # --require-tsan: same bargain for the ThreadSanitizer build of
+      # Chapter 29's lab. That one is the reason this job matters most on
+      # ubuntu - LeakSanitizer is unsupported on macOS/arm64, so only the
+      # Linux leg can say anything about the callback contexts the chapter
+      # deliberately never frees inside the destructor.
+      - run: ./scripts/build_all.sh --require-cmake --require-tsan
 
   # The job above runs the Greeter CMakeLists on two Unix compilers and never
   # touches its `if(MSVC)` branches, which is how untested code gets into a
