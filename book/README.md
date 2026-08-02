@@ -61,7 +61,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 
 **[Appendices](A-fundamentals-refresher.md#appendices)**
 
-- A. [Fundamentals Refresher](A-fundamentals-refresher.md#appendix-a--fundamentals-refresher): pointers, references, explicit, = delete, const, .lib files
+- A. [Fundamentals Refresher](A-fundamentals-refresher.md#appendix-a--fundamentals-refresher): pointers, references, explicit, = delete, const, .lib files, signed vs unsigned and size_t
 - B. [Core Principles](B-core-principles.md#appendix-b--core-principles-cheat-sheet) — the one-page cheat sheet
 - C. [Working Without AI Assistants](C-working-without-ai.md#appendix-c--working-without-ai-assistants)
 - D. [Resources, Further Reading, and First-Week Tips](D-resources.md#appendix-d--resources-further-reading-and-first-week-tips)
