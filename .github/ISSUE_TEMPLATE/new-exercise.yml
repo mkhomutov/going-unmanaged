@@ -1,0 +1,35 @@
+name: New exercise
+description: "A new lab or SDK shape, with its reference solution. Known gap: Bestiary Shape 3 — COM-style refcounting — has no lab yet."
+labels: ["exercise"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The ground rules are in
+        [CONTRIBUTING.md](https://github.com/mkhomutov/going-unmanaged/blob/main/CONTRIBUTING.md#ground-rules-ci-enforces-the-first-one)
+        and they are structural: solutions use the standard library only;
+        vendor-style `Fake*` code freezes once its contract is quoted in the
+        book (changing it means changing the chapter in the same commit); and
+        everything verifiable is wired into `scripts/build_all.sh`, which must
+        print **ALL GREEN**. *Where chapter code lives*, in the same file, says
+        where the files go.
+  - type: textarea
+    id: shape
+    attributes:
+      label: The proposed SDK shape or lab
+      description: What vendor idiom does it model, and what does the reader actually build?
+    validations:
+      required: true
+  - type: input
+    id: trains
+    attributes:
+      label: What it trains
+      description: Which chapter — or Bestiary shape — does this exercise give hands-on practice for?
+      placeholder: e.g. Bestiary Shape 3 (Chapter 16)
+    validations:
+      required: true
+  - type: textarea
+    id: sketch
+    attributes:
+      label: Sketch (optional)
+      description: Task-card outline, the vendor header's surface, the pitfalls you would expect the reader to hit.

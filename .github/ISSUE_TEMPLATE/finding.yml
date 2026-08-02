@@ -1,0 +1,64 @@
+name: Finding
+description: You did an exercise, hit something instructive, and can write it up in the Chapter 25 shape. This is the heart of the project.
+labels: ["finding"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Findings follow one strict shape — **Found in / The theory / broken vs
+        fixed code / Habit** — and this form collects exactly those pieces. The
+        full template and voice notes are in
+        [CONTRIBUTING.md](https://github.com/mkhomutov/going-unmanaged/blob/main/CONTRIBUTING.md#the-finding-template),
+        and reading a couple of the existing Findings in
+        [Chapter 25](https://github.com/mkhomutov/going-unmanaged/blob/main/book/25-findings-from-practice.md)
+        first is the best preparation: honest, practical, first person, with C#
+        comparisons where they illuminate.
+
+        An accepted Finding may credit its finder in the **Found in** line, in
+        the book's own voice — *"found by @handle"*. That is optional: say here
+        if you'd rather not be named.
+  - type: input
+    id: found-in
+    attributes:
+      label: Found in
+      description: Which exercise — or real-world situation — surfaced it?
+      placeholder: e.g. the Buffer exercise (Chapter 15)
+    validations:
+      required: true
+  - type: textarea
+    id: theory
+    attributes:
+      label: The theory
+      description: Why the language behaves this way — the mental model a C# developer is missing. Cite chapters by number where relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: broken
+    attributes:
+      label: The broken version
+      description: The code as actually (mis)written, with a comment on the wrong line. Dissect what it really does — comments are fine for that here.
+      render: cpp
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: The fix
+      description: The corrected code — with a comment on what changed and why the fixed version is right.
+      render: cpp
+    validations:
+      required: true
+  - type: textarea
+    id: habit
+    attributes:
+      label: Habit
+      description: One or two sentences, imperative — the reflex to build, something you can actually check for in your own code from now on.
+    validations:
+      required: true
+  - type: checkboxes
+    id: lived-experience
+    attributes:
+      label: Lived experience
+      options:
+        - label: I hit this mistake myself — it is not hypothetical. That lived experience is what makes a Finding worth reading.
+          required: true

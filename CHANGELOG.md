@@ -10,6 +10,13 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [Unreleased]
+
+- **Project:** the contributor funnel — issue forms for the four contribution
+  kinds (Finding, correction, new exercise, new chapter), a PR checklist
+  naming every check CI runs, and the labels to match (PATCH-level repo
+  tooling; no book content changed).
+
 ## [0.2.0] — 2026-08-02
 
 Navigation and usability, two corrections, the first six appended chapters, a

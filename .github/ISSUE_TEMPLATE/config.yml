@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: The contributing guide
+    url: https://github.com/mkhomutov/going-unmanaged/blob/main/CONTRIBUTING.md
+    about: How the handbook grows — what to contribute, the Finding template, and the ground rules.
