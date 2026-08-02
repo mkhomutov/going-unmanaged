@@ -1,6 +1,8 @@
 ## Chapter 7 — Templates vs C# Generics
 
-They look identical — `List<T>` vs `std::vector<T>` — but the machinery is completely different. **C# generics are one compiled thing that works for any T at runtime; C++ templates are a code-generation machine** — the compiler stamps out a separate, fully compiled version for *each* T you use, at compile time. This is called **instantiation**.
+They look identical — `List<T>` vs `std::vector<T>` — but the machinery is completely different. **C# generics are compiled once to IL and specialized by the runtime — one shared body for every reference type, a fresh one for each value type; C++ templates are a code-generation machine** — the compiler stamps out a separate, fully compiled version for *each* T you use, at compile time, from source. This is called **instantiation**.
+
+Note what that does and does not say. .NET generics are *reified*, not erased: the JIT really does emit a distinct specialization per value type, which is why `List<int>` boxes nothing and why `typeof(T)` works. The difference is *when* and *from what* — the JIT specializes from IL at run time, on demand, for the types actually used; C++ specializes from source at compile time, and every instantiation is in the binary before the program starts.
 
 ```cpp
 template <typename T>
