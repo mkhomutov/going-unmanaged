@@ -14,7 +14,7 @@ b.name = "second";
 std::cout << a.name;     // still "first"
 ```
 
-(In C++, class and struct are identical except default visibility — private vs public. Nothing to do with copy semantics.)
+(In C++, class and struct are identical except for two defaults: member *access* — private vs public — and base-class access, so `class D : B` inherits privately where `struct D : B` inherits publicly. Nothing to do with copy semantics.)
 
 ### You choose the semantics per variable
 
