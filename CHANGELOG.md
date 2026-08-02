@@ -24,6 +24,9 @@ numbers may still move.
     Chapter 29 already said. And the `/RTCu` fix contradicted the sentence
     above it: the example never prints `-858993460`, because `/RTCu` stops the
     program first.
+  - **Chapter 6** — the C++17 elision correction was anchored to
+    `Take(MakeBuffer())`, a line demonstrating overload selection rather than
+    return-value elision. The two mechanisms are now stated separately.
   - **Chapter 10** — the C++17 caveat named `std::format` as a C++20 exception
     "above"; the chapter never shows it.
   - **Chapter 27** — "v140–v145" implies a v144 that does not exist.

@@ -63,7 +63,9 @@ Take(std::move(x));   // second - you granted permission to steal
 Take(MakeBuffer());   // second - temporaries are fair game automatically
 ```
 
-That last line is why returning containers by value is cheap. Since C++17 it is not even a move: when you return a temporary outright, elision is **mandatory** — the object is built directly in the caller's storage, and no copy or move constructor is called or even required to exist. Return a *named* local instead and you are back to the optional flavour, NRVO, with an implicit move as the fallback (Chapter 14 watches both happen).
+That last line is the one to keep: a function's result is a temporary, so it selects the stealing overload on its own — you never write `std::move` around a call, and nothing is copied into `Take`.
+
+Returning containers by value is cheap for a *separate* reason, and the two are worth holding apart because they are routinely conflated. Since C++17, a function that returns a temporary outright — `return Buffer(n);` — gets **mandatory** elision: the object is built directly in the caller's storage, and no copy or move constructor is called or even required to exist. Return a *named* local instead and you are back to the optional flavour, NRVO, with an implicit move as the fallback (Chapter 14 watches both happen).
 
 ### The canonical exercise: Rule of Five for a raw buffer
 
