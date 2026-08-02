@@ -1,0 +1,29 @@
+name: New chapter
+description: For ROADMAP items and new subjects. CONTRIBUTING's rule — large chapters start with an issue, so nobody writes the same chapter twice.
+labels: ["chapter"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        [ROADMAP.md](https://github.com/mkhomutov/going-unmanaged/blob/main/ROADMAP.md)
+        is the standing list of gaps, ranked by what they cost a reader who hits
+        them unprepared — check whether yours is already on it. Everything on
+        that list **appends** (Chapter 32 onward, Appendix E onward), so no item
+        moves an existing number; a chapter that genuinely belongs *inside* an
+        existing part is a renumbering discussion, which is a MAJOR version
+        event and needs this issue even more.
+  - type: input
+    id: roadmap-item
+    attributes:
+      label: Which ROADMAP item?
+      description: The item number — or "new", if the book is missing something the ROADMAP has not recorded yet.
+      placeholder: e.g. item 7
+    validations:
+      required: true
+  - type: textarea
+    id: case
+    attributes:
+      label: The gap, and your take on it
+      description: For a ROADMAP item the entry is already the spec — say what you would add or do differently. For a new subject — what is missing, the evidence in the current text, and what the chapter would concretely look like.
+    validations:
+      required: true

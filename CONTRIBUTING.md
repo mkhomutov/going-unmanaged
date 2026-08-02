@@ -228,6 +228,12 @@ Contribute, and become a co-author — concretely:
 
 ## Submitting
 
+The issue forms know these rules: opening an issue offers a template for each
+of the four contribution kinds — Finding, correction, new exercise, new
+chapter — and each asks for exactly the pieces this file describes and applies
+the matching label. The PR checklist does the same for the ground rules and
+the scripts CI runs. Then:
+
 1. Fork, branch, make your change.
 2. Run `./scripts/build_all.sh` — it must print `ALL GREEN`. If you touched
    `book/`, run `./scripts/build_book.sh` too (and `--write-nav` if you added

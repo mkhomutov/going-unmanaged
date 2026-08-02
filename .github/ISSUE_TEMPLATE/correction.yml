@@ -1,0 +1,26 @@
+name: Correction
+description: The text is wrong, outdated, or misleading. Where the book disagrees with cppreference or the Core Guidelines, they win.
+labels: ["correction"]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Where in the book
+      description: Chapter or appendix, and the section. Numbers are stable and citable, so "Chapter 12, the linker-errors section" pins it exactly.
+      placeholder: e.g. Chapter 12, "Reading linker errors"
+    validations:
+      required: true
+  - type: textarea
+    id: what-is-wrong
+    attributes:
+      label: What is wrong
+      description: What the text currently says, and what is wrong, outdated, or misleading about it.
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: The source that wins
+      description: The book defers to [cppreference](https://cppreference.com) and the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/) — link the page that contradicts it. A compiler run under the canonical flags is evidence too.
+    validations:
+      required: true
