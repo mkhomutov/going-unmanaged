@@ -115,7 +115,7 @@ The confusing part: on Windows, DLLs ship with a companion .lib — an **import 
 
 ### A.7 signed, unsigned, and size_t
 
-`size_t` is the standard library's **unsigned** integer type for sizes and indices — 64-bit on any machine you are likely to build for. Every container's `.size()` returns it, `sizeof` yields it, and every index-taking member function takes it.
+`size_t` is the standard library's **unsigned** integer type for sizes and indices — 64-bit on a desktop build, and 32-bit on a 32-bit target such as the peripheral firmware behind Chapter 18's device (where every wrapped value below is 4294967295 rather than 18446744073709551615; the arithmetic is identical, the number is not). Every container's `.size()` returns it, `sizeof` yields it, and every index-taking member function takes it.
 
 In C#, `Count` and `Length` are `int` — signed, always. `uint` and `ulong` exist, and the framework guidelines steer you away from them in public APIs, so in practice nobody uses them. The consequence is worth naming plainly: a C# developer arrives with **no instinct for unsigned arithmetic at all**, and meets it on day one, in the first loop they write.
 

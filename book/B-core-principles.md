@@ -108,7 +108,7 @@ One line each. If you can say these fluently and back them with code, the concep
 - "static_cast for conversions I can prove, dynamic_cast to query at runtime; const_cast and reinterpret_cast are code-review question marks."
 - "std::string is an encoding-unaware byte buffer — I keep it UTF-8 and convert to/from vendor strings explicitly, naming the encoding."
 - "UB means the compiler assumes it never happens — Debug-works-Release-breaks is the signature. Sanitizers regularly."
-- "`size()` is unsigned, so `size() - 1` on an empty container is a huge number, not -1 — I compare with `<` instead of subtracting, and no sanitizer will ever warn me, because the wrap is legal."
+- "size() is unsigned, so size() - 1 on an empty container is a huge number, not -1 — I compare with < instead of subtracting, and no sanitizer will ever warn me, because the wrap is legal."
 - "Heap use is a deliberate choice in C++ — containers and smart pointers, never bare new."
 
 **C-style SDK specifics**
