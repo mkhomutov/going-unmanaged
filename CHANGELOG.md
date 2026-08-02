@@ -30,11 +30,15 @@ in changed.
     definite assignment makes reading an unassigned local a *compile error*, so
     this bug has never once happened to them and no reflex exists for it. Now a
     list entry and a section of its own — indeterminate values, why Debug shows
-    0 and Release shows garbage (the chapter's own works-on-my-machine
-    signature), the three places the rule reaches past a plain local (a member
-    missed by the initializer list, `new T[n]` without braces, an API struct),
-    and the habit, including treating a *may be used uninitialized* warning as
-    a certainty. Chapter 4, Finding 7 and the `= {}` idiom are cross-referenced
+    0 on Linux and macOS but `0xcccccccc` under MSVC's `/RTC1` while Release
+    shows garbage (the chapter's own works-on-my-machine signature), the fact
+    that Address and UB sanitizers do not report an uninitialized read at all
+    (that is MemorySanitizer, Linux-and-clang-only), the three places the rule
+    reaches past a plain local (a member missed by the initializer list,
+    `new T[n]` without braces, an API struct), and the habit, including
+    treating a *might be used uninitialized* warning as a certainty, under
+    whichever of the three compilers' spellings you meet it. Chapter 4,
+    Finding 7 and the `= {}` idiom are cross-referenced
     rather than re-taught, and the plug-in angle stays where it was, closing
     the UB section.
   - **New: Appendix A.7 — signed, unsigned, and `size_t`.** Appended after A.6;
