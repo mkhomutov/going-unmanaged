@@ -16,7 +16,9 @@ numbers may still move.
   contribution lands — the book text under CC-BY 4.0 (new
   `LICENSE-CC-BY-4.0`), all code under MIT, including every code sample inside
   a chapter, so a pasted snippet carries no attribution obligation. `LICENSE`
-  keeps the MIT text with a preamble scoping it; README, CONTRIBUTING and the
+  is the unmodified MIT text and the split is stated in a new `NOTICE` file —
+  a scoping preamble inside `LICENSE` breaks GitHub's license detection, which
+  is worth knowing before anyone tries it again. README, CONTRIBUTING and the
   book's front matter say the same thing (PATCH-level repo change; no book
   content changed).
 - **Project:** the contributor funnel — issue forms for the four contribution

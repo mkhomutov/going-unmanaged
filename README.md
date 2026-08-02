@@ -80,7 +80,8 @@ Accepted contributors are added here — see [CONTRIBUTING.md](CONTRIBUTING.md#a
 
 ## License
 
-Dual-licensed, and the split is deliberate. The book text — everything under
+Dual-licensed ([NOTICE](NOTICE) has it in one place), and the split is
+deliberate. The book text — everything under
 [book/](book/README.md) and the single file built from it — is
 [CC-BY 4.0](LICENSE-CC-BY-4.0): share it, translate it, adapt it, teach from
 it, as long as you say where it came from. All the code is
