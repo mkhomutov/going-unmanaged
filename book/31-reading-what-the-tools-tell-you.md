@@ -84,7 +84,7 @@ UBSAN_OPTIONS=halt_on_error=1 ./app          # runtime: stop at the first findin
 c++ ... -fno-sanitize-recover=undefined      # build time: same effect, baked in
 ```
 
-Both give exit code 134. This repository's `scripts/check.sh` uses the first, which is why a learner's attempt containing undefined behavior fails the check rather than passing it quietly.
+Both make the run exit nonzero — 134 on macOS, where the sanitizer runtime calls `abort()` after printing, and 1 on Linux, where it exits with the runtime's default `exitcode`. What matters is that it is no longer 0. This repository's `scripts/check.sh` uses the first, which is why a learner's attempt containing undefined behavior fails the check rather than passing it quietly.
 
 And when the one-line report is not enough to locate the cause, UBSan will produce a stack on request:
 
