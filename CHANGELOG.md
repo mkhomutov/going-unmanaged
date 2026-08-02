@@ -28,9 +28,10 @@ in changed.
   `Widget.h`/`.cpp`, `IScorer.h` and `engine.h` verbatim from the listings,
   `scorer.cpp` and the rest of `engine.cpp` completing what the chapter
   excerpts, and a caller for each. Everything compiled clean under `-Wall
-  -Wextra` with no adjustment, so the repository's copies and the chapter's
-  listings are identical. `scripts/build_all.sh` builds and runs all three
-  under the canonical flags with `halt_on_error`, since they assert values
+  -Wextra` first time; two defects no warning could see needed fixing (below),
+  in the chapter and the files together, so the repository's copies and the
+  chapter's listings are identical. `scripts/build_all.sh` builds and runs all
+  three under the canonical flags with `halt_on_error`, since they assert values
   rather than survival. ROADMAP item 6's "still open" paragraph is resolved,
   and with it the four-chapter Part VI debt — 26, 28, 29 and 30 — that the
   *Where chapter code lives* convention was written to settle. The convention
@@ -53,6 +54,19 @@ in changed.
     is `-Wdelete-non-virtual-dtor`: a class with virtual functions and a
     non-virtual destructor is a hazard for anything deriving from it. Nothing
     can derive from this one. The warning is right, and the fix is the design.
+  - **Two fixes to the published headers that no warning could have found.**
+    `IScorer.h` and `engine.h` were the only headers in the repository without
+    an include guard, and a header written to be *published* is precisely the
+    one that gets included twice: twice, `IScorer.h` was a redefinition error
+    and `engine.h` a `-Wtypedef-redefinition` warning under C99, which
+    undercuts the "consumable by C" line it opens with. Both now carry
+    `#pragma once` — matching `Widget.h`, and the `FakeDevice.h` the chapter
+    tells the reader to lay `engine.h` beside. Separately, `engine.h`'s error
+    table said code 2 meant "the call did nothing": true of `Engine_Create` and
+    `Engine_Score`, which write no output parameter, and false of
+    `Engine_Destroy`, which has already begun freeing. A reader who took that
+    sentence at its word and retried a failed destroy would double free, which
+    is a poor thing to teach in the chapter about failure contracts.
   - **The break-it-first half stays book-only**, like Chapter 31's sabotage
     runs: the `Naive` layout break, the pure-virtual method inserted at the top
     of an interface, the relink against a changed `Impl`. Each needs a caller
