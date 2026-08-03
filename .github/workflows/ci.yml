@@ -26,6 +26,43 @@ jobs:
       # deliberately never frees inside the destructor.
       - run: ./scripts/build_all.sh --require-cmake --require-tsan
 
+  # The book states sanitizer behavior that differs between the maintainer's
+  # macOS/arm64 machine and Linux - exit codes, leak detection, whether a frame
+  # carries a column number - and an audit found several places where one
+  # platform's behavior had been written down as the rule. The corrections cite
+  # compiler-rt documentation for the Linux half because there was no Linux to
+  # run them on. This job is that Linux, and macOS alongside it so the contrast
+  # is asserted from both ends rather than assumed from one.
+  platform-claims:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      # Chapter 31 claims columns come from llvm-symbolizer specifically. Without
+      # it the runtime falls back to addr2line and prints none, which would be a
+      # fact about the runner rather than a counter-example - so the script skips
+      # that check, and --required turns any skip into a failure. Guarantee the
+      # tool instead of discovering it is missing as a red X.
+      - name: Ensure llvm-symbolizer
+        if: runner.os == 'Linux'
+        run: |
+          if ! command -v llvm-symbolizer > /dev/null; then
+            sym=$(ls /usr/bin/llvm-symbolizer-* 2>/dev/null | sort -V | tail -1 || true)
+            if [ -n "$sym" ]; then
+              sudo ln -s "$sym" /usr/local/bin/llvm-symbolizer
+            else
+              sudo apt-get update && sudo apt-get install -y llvm
+            fi
+          fi
+          llvm-symbolizer --version
+      # --required: the script SKIPS a check whose tool is missing, which is
+      # right on a laptop and very wrong here - a skipped check that reads as a
+      # pass is exactly how the wrong claims survived the first time.
+      - run: ./scripts/check_platform_claims.sh --required
+
   # The job above runs the Greeter CMakeLists on two Unix compilers and never
   # touches its `if(MSVC)` branches, which is how untested code gets into a
   # book. This job configures and builds the same file with MSVC, both ways,
