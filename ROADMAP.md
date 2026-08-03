@@ -15,7 +15,7 @@ Delivered items stay where they are, marked **DONE** with a pointer to the
 chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
-**Everything on this list appends.** New chapters go at the end (Chapter 34
+**Everything on this list appends.** New chapters go at the end (Chapter 35
 onward, in whatever order they land); new appendices continue from E. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
@@ -326,7 +326,7 @@ separation between translation units *is* the lesson, keep it. Chapters 26, 28,
 29 and 30 are all verified on every push, and the convention now stands for
 whatever Part VI gains next rather than for a backlog.
 
-### 7. Byte-level protocol work
+### 7. Byte-level protocol work — DONE (Chapter 34)
 
 **Missing:** struct layout, padding, packing, endianness, alignment.
 
@@ -343,6 +343,21 @@ strict-aliasing trap rather than a clever shortcut.
 
 This item wears item 11's ticket framing naturally — *"parse this capture"*
 — and a single contribution can close both entries.
+
+**Delivered as Chapter 34 — *Parse This Capture* — the third ticket
+chapter, closing this item and an item 11 candidate in one contribution,
+exactly as the paragraph above predicted.** Every element of the sketch is
+in it: `sizeof` 12 against the ICD's 8 with the `offsetof` table beside the
+document's, `#pragma pack(1)` staged as the half-fix that turns scrambled
+values into mirrored ones (padding scrambles, endianness mirrors — the
+first bug hides the second), the strict-aliasing illegality of the overlay
+stated with the honest caveat that **no sanitizer checks it** — the
+chapter's distinct lesson is that the canonical flags stay green on all
+three of its bugs, so the oracle is the ICD plus a hand decode of the
+attached capture. The lab is `exercises/capturelab/` (fixed state; the
+broken overlay parser is book-only), asserted by `build_all.sh` against
+the hand-decoded values, with the capture's second frame deliberately
+unaligned. See item 11's delivered notes for the ticket-format details.
 
 ### 8. Consolidated const-correctness
 
@@ -401,9 +416,10 @@ the reader reaches the fix. Candidates, each its own chapter:
 - Item 7's byte-level protocol work is this framing already (*"parse this
   capture"*), and the carried-over COM refcounting lab is *"the vendor
   upgraded the SDK, and the new API is refcounted"* — one contribution can
-  close two entries.
+  close two entries. **Item 7 landed as Chapter 34, closing both at once;
+  the COM lab remains.**
 
-The settled rules hold unchanged: chapters append (34 onward now),
+The settled rules hold unchanged: chapters append (35 onward now),
 deliberately broken programs stay book-only or generated, and everything
 green is wired into `build_all.sh`.
 
@@ -433,8 +449,22 @@ tempting non-fixes before asserting them, and both are kept as pitfalls:
 storing a copy is sanitizer-clean and wrong from the first frame (the copy
 freezes at pin time — value semantics, not a lifetime bug), and
 `reserve(16)` runs clean at nine sensors and produces the identical report
-at seventeen. The item stays open: item 7's capture and the COM upgrade
-remain unwritten.
+at seventeen.
+
+Chapter 34 — *Parse This Capture* — is the third, delivering item 7 inside
+the format (one contribution, two entries closed, as both items predicted).
+Its inversion: the toolchain goes silent. The first two tickets end with a
+sanitizer naming the crime; here the canonical flags stay green on all
+three bugs — padding, byte order, aliasing — and the attached evidence is
+a twenty-byte bus capture plus the vendor's header table, so the oracle is
+the reader's own hand decode. The committed lab (`exercises/capturelab/`)
+is the fixed state, asserted by `build_all.sh` against the hand-decoded
+values, with the capture's second frame deliberately off every four-byte
+boundary. The staged half-fix was verified before being asserted:
+`#pragma pack(1)` makes `sizeof` match and turns every multi-byte value
+into its mirror image — and silences the one report UBSan had, since a
+packed struct's alignment requirement drops to one. The item stays open:
+the COM upgrade remains unwritten.
 
 ---
 
