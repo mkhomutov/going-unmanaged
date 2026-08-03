@@ -23,6 +23,7 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [The Test Lab](testlab/TASK.md) | 28 | a test framework from scratch, and testing ownership | ~60 min | the files themselves: [tiny_test.h](testlab/tiny_test.h), [buffer_test.cpp](testlab/buffer_test.cpp) |
 | [The Threaded Callback](threadlab/TASK.md) | 29 | callback lifetime across a thread boundary, under TSan | ~2 h | [device_threaded_solution.cpp](../solutions/device_threaded_solution.cpp) |
 | [The ABI Lab](abilab/TASK.md) | 30 | publishing a boundary instead of consuming one | ~2 h | the files themselves: [Widget.h](abilab/Widget.h), [IScorer.h](abilab/IScorer.h), [engine.h](abilab/engine.h) + their implementations and callers |
+| [The Exit Crash](exitlab/TASK.md) | 32 | a ticket, not a task: static init/destruction order across TUs | ~60 min | the files themselves: the fixed [logger.cpp](exitlab/logger.cpp) + [audit.cpp](exitlab/audit.cpp), green in both link orders |
 
 Chapter 24 (the practice plan) sequences everything above the test lab — the
 nine Part V exercises plus the Bestiary reading — into a one-week schedule; the
@@ -35,7 +36,10 @@ to publish the shapes those two taught you to consume.
 recipe listings, compiled and asserted by `build_all.sh` so the cookbook
 cannot rot (its README has the sync rule). Nothing there to attempt cold.
 
-Three directories hold their reference in the open, rather than behind a fold.
+Four directories hold their reference in the open, rather than behind a fold.
+`exitlab/` is the ticket-shaped one: its TASK.md carries the broken 2.4.1
+code to work from, and the files beside it are the fixed state, built in two
+link orders by `build_all.sh` because order-independence is the fix's claim.
 `buildlab/` does double duty: it is Chapter 23's lab, and Chapter 26 builds that
 same trio with CMake, so the reference
 [`CMakeLists.txt`](buildlab/CMakeLists.txt) lives there. `testlab/` holds

@@ -69,6 +69,10 @@ One line each. If you can say these fluently and back them with code, the concep
 - "A stack from an optimized build is missing frames — I reproduce at -O0 -g before I believe what a trace does or doesn't say."
 - "When I need to know who changed a value, I set a watchpoint — old value, new value, and the frame that did it — instead of adding print statements."
 
+**Static lifetime**
+
+- "A namespace-scope object with a constructor is a bet on link order. I construct on first use, and I touch my dependencies in my constructor — so teardown unwinds in the order I chose, not the order the linker did."
+
 **Modern C++**
 
 - "Capture by copy when a lambda outlives its scope; by reference dangles."

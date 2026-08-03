@@ -197,5 +197,5 @@ Everything here uses code you already have.
 
 
 <!-- nav:begin -->
-[← Chapter 30 — Authoring an ABI Boundary](30-authoring-an-abi-boundary.md) · [Contents](README.md) · [Appendix A — Fundamentals Refresher →](A-fundamentals-refresher.md)
+[← Chapter 30 — Authoring an ABI Boundary](30-authoring-an-abi-boundary.md) · [Contents](README.md) · [Chapter 32 — It Crashes on Exit →](32-it-crashes-on-exit.md)
 <!-- nav:end -->
