@@ -6,14 +6,16 @@ Cookbook*), one translation unit per domain —
 
 | File | Recipes |
 |---|---|
-| `files.cpp` | 1 — read a whole file into a string |
+| `files.cpp` | 1, 9 — read and write a whole file |
 | `strings.cpp` | 2–5 — split, join, build, format |
 | `timing.cpp` | 6 — time a call |
 | `handles.cpp` | 7 — wrap a C handle so it frees itself |
 | `lookups.cpp` | 8 — look up a key without inserting it |
+| `paths.cpp` | 10–12 — combine, the exists pair, listing |
+| `async.cpp` | 13 — run work on another thread and wait for it |
 
 — each with a `main()` that asserts what its recipes claim.
-`scripts/build_all.sh` builds and runs all five under the canonical flags on
+`scripts/build_all.sh` builds and runs all seven under the canonical flags on
 every push, so a recipe that stops being true stops being green.
 
 The sync rule is the testlab discipline: the recipe functions here are quoted

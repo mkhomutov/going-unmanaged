@@ -69,6 +69,8 @@ run "cb_strings"  $CXX $FLAGS   exercises/cookbook/strings.cpp          -o $OUT/
 run "cb_timing"   $CXX $FLAGS   exercises/cookbook/timing.cpp           -o $OUT/cb_timing
 run "cb_handles"  $CXX $FLAGS   exercises/cookbook/handles.cpp          -o $OUT/cb_handles
 run "cb_lookups"  $CXX $FLAGS   exercises/cookbook/lookups.cpp          -o $OUT/cb_lookups
+run "cb_paths"    $CXX $FLAGS   exercises/cookbook/paths.cpp            -o $OUT/cb_paths
+run "cb_async"    $CXX $FLAGS   exercises/cookbook/async.cpp            -o $OUT/cb_async
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -106,6 +108,8 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_strings > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_timing > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_handles > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_lookups > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_paths > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_async > /dev/null
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from

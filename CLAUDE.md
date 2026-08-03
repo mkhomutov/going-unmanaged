@@ -59,8 +59,9 @@ Chapter 25's Finding 10.
   `../fakedevice/`'s vendor code rather than copying it; the reference solution
   is `solutions/device_threaded_solution.cpp`
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
-  (files, strings, timing, handles, lookups), each with a `main()` asserting
-  what its recipes claim; build_all.sh builds and runs all five. Same sync
+  (files, strings, timing, handles, lookups, paths, async), each with a
+  `main()` asserting what its recipes claim; build_all.sh builds and runs
+  all seven. Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
   same commit (the mains are scaffolding and appear in no listing)
@@ -263,8 +264,9 @@ stay on the list marked DONE so item numbers never shift. Short version:
   Authoring an ABI boundary was item 6 and is now Chapter 30; the debugging
   chapter was item 5 and is now Chapter 31
 - Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E). The Rosetta
-  Cookbook was item 12 and is now Appendix F, seeded with Recipes 1–8; it
-  grows by PR like the Findings log (Recipe template in CONTRIBUTING.md)
+  Cookbook was item 12 and is now Appendix F — Recipes 1–8, then 9–13
+  (files, paths, async); it grows by PR like the Findings log (Recipe
+  template in CONTRIBUTING.md)
 - Carried over: COM-style refcounting exercise (Bestiary Shape 3 has no lab).
   The threaded-callback lab was the other one and is DONE — `exercises/threadlab/`
   plus `solutions/device_threaded_solution.cpp` under a TSan CI gate
