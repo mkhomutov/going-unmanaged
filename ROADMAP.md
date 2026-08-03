@@ -442,47 +442,37 @@ per term, each pointing at the chapter where the idea actually lives. Terms
 the book already uses come first; terms the reader will merely *hear* come
 second, marked as such.
 
-### 12. The Rosetta Cookbook — recipes indexed by the C# reflex
+### 12. The Rosetta Cookbook — DONE
 
-**Missing:** a task index. The book is indexed by concept (the Contents) and
-by bug (the Findings log, Chapter 31's report shapes), but not by task —
-nothing serves the mid-task minute of "read a file, split a string, time
-this call". That moment exists whether or not the book serves it: the reader
-searches the web, inherits whatever idiom the top answer carries, and gets
-no C# anchor and no trap line with it. A general C++ cookbook already
-exists; one indexed by *the C# API being reached for* does not, and this
-handbook is the only place it could live.
+**Delivered:** Appendix F — *The Rosetta Cookbook*, seeded with Recipes 1–8:
+read a file, split, join, build a string, format, time a call, wrap a C
+handle in a deleter, and `find` versus the inserting `[]`. The shape this
+entry sketched survived contact intact: an index table from the C# name to
+the recipe, one strict shape per recipe (**In C# / The recipe / Why it looks
+like this / Trap**, the trap a one-line `[!WARNING]`), whys that
+cross-reference the owning chapter rather than re-teach, and Finding-style
+numbering — recipes append and are never renumbered, so a citation of
+"Recipe 7" stays right. The listings compile: `exercises/cookbook/` holds
+one translation unit per domain (files, strings, timing, handles, lookups),
+each with a `main()` asserting what its recipes claim, built and run by
+`build_all.sh` under the canonical flags. It landed as Appendix F with E
+left for the glossary, so the letters skip one until item 10 lands. The
+collections domain was already indexed — Chapter 11's LINQ table — and the
+appendix points there rather than competing.
 
-**Evidence:** zero hits for `Stopwatch`, `ReadAllText`, `StringBuilder` and
-`TryGetValue` — the names a C# developer actually reaches for. Zero hits for
-`<chrono>` (every match for the string is the word "synchronously"), so
-timing an operation is absent entirely. Splitting a string appears nowhere.
-"Deleter" has zero hits, so the transition's single most load-bearing recipe
-— `using` becomes `unique_ptr` with a custom deleter around a C handle —
-exists only as Chapter 18's hand-rolled wrapper class, never in its
-three-line form. Reading a file happens twice (Chapter 1's RAII
-demonstration, Chapter 19's exercise), but as teaching, not as a page found
-in a minute. The counter-example proving the format: Chapter 11's LINQ →
-`<algorithm>` table is exactly this kind of index, and it stops at one
-domain.
+**One thing the wiring caught.** `build_book.sh` had the appendix letters
+hardcoded as `[A-D]` in both its file glob and its cross-file link rewriter,
+so the new appendix silently vanished from the single-file build — nav
+footers "OK", markup "OK", one file short. Both patterns now read `[A-Z]`,
+so the next appendix letter cannot repeat this. The tell was the file count
+in the build output; worth a glance on any appendix-adding PR.
 
-**A contribution looks like:** an appendix — next free letter; the glossary,
-item 10, has the earlier claim — of numbered recipes in one strict shape
-mirroring the Finding template: **In C# / The recipe / Why it looks like
-this / Trap**, the trap a `[!WARNING]` callout, the why a cross-reference to
-the chapter that owns the concept (item 8's rule: cross-reference, don't
-duplicate). Recipe numbers are citable and append-only, like Findings, so
-adding one is MINOR. The listings compile: recipe code lives under
-`exercises/cookbook/`, one translation unit per domain group, wired into
-`build_all.sh` under the testlab discipline — editing a listing means
-editing the appendix in the same commit. The admission filter is
-CONTRIBUTING's question 11, applied per recipe: it belongs only if the SDK
-transition presents the task in the first months *and* it displaces a
-nameable C# reflex — otherwise it is a search engine's job, not ours. A seed
-batch of week-one recipes: read a file, split and join, build a string,
-format, time a call, wrap a C handle in a deleter, `TryGetValue` (`find`
-versus the inserting `[]`) — with Chapter 11's LINQ table extended or
-cross-referenced as the collections domain's index.
+**Still open from this item:** nothing blocking — the cookbook is a living
+surface like the Findings log, and it grows by PR under the Recipe template
+in CONTRIBUTING.md. Candidate next recipes, in likely order of need: write a
+file, `DateTime.Now` (timestamps, as distinct from Recipe 6's intervals),
+trim and case conversion, `Path.Combine`, environment variables, sleep, and
+random numbers — each admitted only under question 11's double filter.
 
 ---
 

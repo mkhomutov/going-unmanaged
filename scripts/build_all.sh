@@ -60,6 +60,15 @@ run "buffer_test" $CXX $FLAGS   exercises/testlab/buffer_test.cpp -I solutions -
 run "widget"      $CXX $FLAGS   exercises/abilab/Widget.cpp exercises/abilab/widget_demo.cpp -o $OUT/widget
 run "scorer"      $CXX $FLAGS   exercises/abilab/scorer.cpp exercises/abilab/scorer_demo.cpp -o $OUT/scorer
 run "engine"      $CXX $FLAGS   exercises/abilab/engine.cpp exercises/abilab/engine_demo.cpp -o $OUT/engine
+# Appendix F's recipes, one binary per domain. The recipe functions are quoted
+# verbatim in book/F-rosetta-cookbook.md (the testlab discipline: editing one
+# means editing the appendix in the same commit), and each main() asserts what
+# its recipes claim - so a green run keeps the cookbook true, not just compiling.
+run "cb_files"    $CXX $FLAGS   exercises/cookbook/files.cpp            -o $OUT/cb_files
+run "cb_strings"  $CXX $FLAGS   exercises/cookbook/strings.cpp          -o $OUT/cb_strings
+run "cb_timing"   $CXX $FLAGS   exercises/cookbook/timing.cpp           -o $OUT/cb_timing
+run "cb_handles"  $CXX $FLAGS   exercises/cookbook/handles.cpp          -o $OUT/cb_handles
+run "cb_lookups"  $CXX $FLAGS   exercises/cookbook/lookups.cpp          -o $OUT/cb_lookups
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -91,6 +100,12 @@ tail -1 "$OUT/buffer_test.log"
 UBSAN_OPTIONS=halt_on_error=1 $OUT/widget > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/scorer > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/engine > /dev/null
+# The cookbook binaries assert values too - same reasoning, same option.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_files > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_strings > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_timing > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_handles > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_lookups > /dev/null
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from

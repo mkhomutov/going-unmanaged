@@ -6,9 +6,10 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 31 chapters, appendices A–D), indexed by `book/README.md`. The
+(6 parts, 31 chapters, appendices A–D and F), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
-artifact produced by `scripts/build_book.sh`.
+artifact produced by `scripts/build_book.sh`. Appendices run A–D plus F —
+E waits for the glossary (ROADMAP item 10).
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
 concurrency, authoring an ABI boundary, reading tool output. Chapter 29
@@ -27,8 +28,9 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–31, `A-`…`D-<slug>.md` for the appendices
-  (digits sort before letters, so the listing is the reading order)
+  `NN-<slug>.md` for chapters 01–31, `A-`…`F-<slug>.md` for the appendices,
+  E absent until the glossary lands (digits sort before letters, so the
+  listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
 - `exercises/` — one directory per exercise, each with a TASK.md task card;
@@ -56,6 +58,12 @@ Chapter 25's Finding 10.
   the Chapter 18 device with a driver thread the reader builds, so it links
   `../fakedevice/`'s vendor code rather than copying it; the reference solution
   is `solutions/device_threaded_solution.cpp`
+- `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
+  (files, strings, timing, handles, lookups), each with a `main()` asserting
+  what its recipes claim; build_all.sh builds and runs all five. Same sync
+  discipline as testlab: the recipe functions are quoted verbatim in the
+  appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
+  same commit (the mains are scaffolding and appear in no listing)
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
@@ -165,6 +173,9 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
   reference solution / pitfalls / stretch goals*.
 - Findings (Chapter 25) follow strictly: **Found in / The theory /
   broken-vs-fixed code / Habit**. Community findings via PR keep this shape.
+- Recipes (Appendix F) follow strictly: **In C# / The recipe / Why it looks
+  like this / Trap** — the trap a one-line `[!WARNING]`, the why
+  cross-references to the owning chapter, numbers append-only like Findings.
 - Key-principle quotes are in speakable first person ("I check every error
   code...") — they double as a cheat sheet (Appendix B mirrors them; keep
   the two in sync when adding one).
@@ -251,8 +262,9 @@ stay on the list marked DONE so item numbers never shift. Short version:
   not task cards (item 11; item 7 and the COM lab are candidate tickets).
   Authoring an ABI boundary was item 6 and is now Chapter 30; the debugging
   chapter was item 5 and is now Chapter 31
-- Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E), the Rosetta
-  Cookbook — recipes indexed by the C# reflex (item 12)
+- Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E). The Rosetta
+  Cookbook was item 12 and is now Appendix F, seeded with Recipes 1–8; it
+  grows by PR like the Findings log (Recipe template in CONTRIBUTING.md)
 - Carried over: COM-style refcounting exercise (Bestiary Shape 3 has no lab).
   The threaded-callback lab was the other one and is DONE — `exercises/threadlab/`
   plus `solutions/device_threaded_solution.cpp` under a TSan CI gate
