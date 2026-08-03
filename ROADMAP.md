@@ -15,7 +15,7 @@ Delivered items stay where they are, marked **DONE** with a pointer to the
 chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
-**Everything on this list appends.** New chapters go at the end (Chapter 32
+**Everything on this list appends.** New chapters go at the end (Chapter 33
 onward, in whatever order they land); new appendices continue from E. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
@@ -393,7 +393,7 @@ the reader reaches the fix. Candidates, each its own chapter:
   across translation units. The broken program follows the
   `check_platform_claims.sh` precedent (generated into a temp dir, never
   committed); the fixed shape — Chapter 28's function-local static — is the
-  lab's green state.
+  lab's green state. **Now Chapter 32; see below.**
 - **"Here is the report"** — an ASan report plus the source that produced
   it; the reader locates the bug from the report alone, and the fix is
   verified under `scripts/check.sh`. Chapter 31 taught the reading; this is
@@ -403,9 +403,25 @@ the reader reaches the fix. Candidates, each its own chapter:
   upgraded the SDK, and the new API is refcounted"* — one contribution can
   close two entries.
 
-The settled rules hold unchanged: chapters append (32 onward), deliberately
-broken programs stay book-only or generated, and everything green is wired
-into `build_all.sh`.
+The settled rules hold unchanged: chapters append (33 onward now),
+deliberately broken programs stay book-only or generated, and everything
+green is wired into `build_all.sh`.
+
+**Delivered so far:** Chapter 32 — *It Crashes on Exit* — the first ticket,
+in exactly this shape: the symptom opens the chapter, the broken 2.4.1 code
+lives in `exercises/exitlab/TASK.md` for the reader to recreate cold, the
+diagnosis sits behind a spoiler fold, and the committed files are the fixed
+state, which `build_all.sh` builds **twice with the translation units in
+opposite orders** and runs both — order-independence is the fix's whole
+claim, and one build cannot prove a claim about two. Two things the writing
+verified the hard way, both kept in the chapter's pitfalls: libc++'s
+container annotations un-poison a freed block on `push_back`, so the first
+draft's vector-based logger crashed at exit and ASan said *nothing*
+(Finding 10's file grows); and libc++'s `unique_ptr` nulls its pointer
+during destruction where libstdc++ leaves it stale — so the lab's logger
+holds a raw `char*`, keeping the demonstration one mechanism on both CI
+platforms. The item stays open: "Here is the report", item 7's capture, and
+the COM upgrade remain unwritten.
 
 ---
 

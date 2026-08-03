@@ -171,5 +171,5 @@ Know-they-exist, for when you meet them: C++20 adds `std::ssize(c)` — the same
 
 
 <!-- nav:begin -->
-[← Chapter 31 — Reading What the Tools Tell You](31-reading-what-the-tools-tell-you.md) · [Contents](README.md) · [Appendix B — Core Principles (Cheat Sheet) →](B-core-principles.md)
+[← Chapter 32 — It Crashes on Exit](32-it-crashes-on-exit.md) · [Contents](README.md) · [Appendix B — Core Principles (Cheat Sheet) →](B-core-principles.md)
 <!-- nav:end -->
