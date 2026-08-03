@@ -452,10 +452,15 @@ the recipe, one strict shape per recipe (**In C# / The recipe / Why it looks
 like this / Trap**, the trap a one-line `[!WARNING]`), whys that
 cross-reference the owning chapter rather than re-teach, and Finding-style
 numbering — recipes append and are never renumbered, so a citation of
-"Recipe 7" stays right. The listings compile: `exercises/cookbook/` holds
-one translation unit per domain (files, strings, timing, handles, lookups),
-each with a `main()` asserting what its recipes claim, built and run by
-`build_all.sh` under the canonical flags. It landed as Appendix F with E
+"Recipe 7" stays right. A second batch followed at once — Recipes 9–13:
+write a file, `Path.Combine`, the `File.Exists`/`Directory.Exists` pair,
+`Directory.GetFiles`, and `Task.Run`/`await` as `std::async` — closing the
+`std::filesystem` gap (one incidental Chapter 8 appearance in the whole
+book) and discharging Chapter 29's model into a recipe, blocking-destructor
+trap included. The listings compile: `exercises/cookbook/` holds one
+translation unit per domain (files, strings, timing, handles, lookups,
+paths, async), each with a `main()` asserting what its recipes claim, built
+and run by `build_all.sh` under the canonical flags. It landed as Appendix F with E
 left for the glossary, so the letters skip one until item 10 lands. The
 collections domain was already indexed — Chapter 11's LINQ table — and the
 appendix points there rather than competing.
@@ -469,10 +474,15 @@ in the build output; worth a glance on any appendix-adding PR.
 
 **Still open from this item:** nothing blocking — the cookbook is a living
 surface like the Findings log, and it grows by PR under the Recipe template
-in CONTRIBUTING.md. Candidate next recipes, in likely order of need: write a
-file, `DateTime.Now` (timestamps, as distinct from Recipe 6's intervals),
-trim and case conversion, `Path.Combine`, environment variables, sleep, and
-random numbers — each admitted only under question 11's double filter.
+in CONTRIBUTING.md. Candidate next recipes, in likely order of need:
+`DateTime.Now` (timestamps, as distinct from Recipe 6's intervals), trim and
+case conversion, environment variables, sleep, and random numbers — each
+admitted only under question 11's double filter. What stays prose-only, per
+that same filter: REST (the standard library has no HTTP client and no
+sockets at all — a genuine C# shock worth a named library paragraph near
+Chapter 27, not an exercise the offline rule forbids), and JSON/XML parsing
+(third-party territory; the practical JSON coverage is an item 11 candidate
+ticket — a hand-rolled mini-parser, stdlib-only).
 
 ---
 

@@ -24,6 +24,11 @@ stays right.
 | `Stopwatch` | [Recipe 6 — Time a call](#recipe-6--time-a-call) |
 | `using` / `IDisposable` | [Recipe 7 — Wrap a C handle so it frees itself](#recipe-7--wrap-a-c-handle-so-it-frees-itself) |
 | `TryGetValue` | [Recipe 8 — Look up a key without inserting it](#recipe-8--look-up-a-key-without-inserting-it) |
+| `File.WriteAllText` | [Recipe 9 — Write a string to a file](#recipe-9--write-a-string-to-a-file) |
+| `Path.Combine` | [Recipe 10 — Build a path from pieces](#recipe-10--build-a-path-from-pieces) |
+| `File.Exists` / `Directory.Exists` | [Recipe 11 — Check that a file or directory exists](#recipe-11--check-that-a-file-or-directory-exists) |
+| `Directory.GetFiles` | [Recipe 12 — List the files in a directory](#recipe-12--list-the-files-in-a-directory) |
+| `Task.Run` / `await` | [Recipe 13 — Run work on another thread and wait for it](#recipe-13--run-work-on-another-thread-and-wait-for-it) |
 | LINQ | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -263,6 +268,149 @@ identical.
 
 > [!WARNING]
 > **Trap:** reading a missing key with `settings["timeout"]` default-constructs a value and inserts it — the read mutates the map. That is also why `[]` does not compile on a `const` map: the compiler is telling you it writes.
+
+### Recipe 9 — Write a string to a file
+
+**In C#:** `File.WriteAllText(path, text);`
+
+**The recipe:**
+
+```cpp
+void write_all_text(const std::string& path, const std::string& text) {
+    std::ofstream out(path, std::ios::binary);
+    if (!out) {
+        throw std::runtime_error("cannot create: " + path);
+    }
+    out << text;
+    if (!out.flush()) {
+        throw std::runtime_error("write failed: " + path);
+    }
+}
+```
+
+**Why it looks like this.** The mirror of
+[Recipe 1](#recipe-1--read-a-whole-file-into-a-string), with one asymmetry
+that matters: on the way out, errors arrive *late*. The operating system
+buffers writes, so a full disk or a yanked drive often surfaces only when
+the buffer flushes — and the destructor's close, which also flushes, cannot
+report it, because destructors do not throw. The explicit `flush()` before
+scope end is therefore the one place the failure can become an exception
+instead of silence. `std::ios::binary` for the same reason as Recipe 1:
+bytes as written, no platform newline translation. Needs `<fstream>`,
+`<stdexcept>`.
+
+> [!WARNING]
+> **Trap:** skip the flush-and-check and a full disk is silent data loss — the write "succeeds", the destructor swallows the error, and the file is short. C# threw; here the check is yours.
+
+### Recipe 10 — Build a path from pieces
+
+**In C#:** `var full = Path.Combine(dir, "logs", "app.txt");`
+
+**The recipe:**
+
+```cpp
+std::filesystem::path log_path(const std::filesystem::path& dir) {
+    return dir / "logs" / "app.txt";    // '/' inserts the platform's separator
+}
+```
+
+**Why it looks like this.** `std::filesystem::path` (C++17) overloads
+division, so the code reads like the path it builds, and the separator is
+the platform's problem again — the thing you lost leaving `Path.Combine`
+behind. It is a real type, not a string convention: `.filename()`,
+`.extension()` and `.parent_path()` replace the `Path.Get*` family. And one
+C# rule ports exactly: an absolute right-hand side replaces everything to
+its left, just as it does in `Path.Combine` — that reflex survives the move.
+Needs `<filesystem>`.
+
+> [!WARNING]
+> **Trap:** `p += "logs"` compiles and glues — `+=` is string concatenation with no separator, so one character separates `dir/logs` from `dirlogs`; the separator-aware append is `/=` (or `/`).
+
+### Recipe 11 — Check that a file or directory exists
+
+**In C#:** `if (File.Exists(path))` / `if (Directory.Exists(path))`
+
+**The recipe:**
+
+```cpp
+namespace fs = std::filesystem;
+
+bool config_present(const fs::path& p) {
+    return fs::is_regular_file(p);    // File.Exists: it exists AND is a file
+}
+
+bool logs_dir_present(const fs::path& p) {
+    return fs::is_directory(p);       // Directory.Exists: exists AND is a directory
+}
+```
+
+**Why it looks like this.** The split is the same split C# makes:
+`is_regular_file` is `File.Exists` (it exists *and* is a file),
+`is_directory` is `Directory.Exists`, and the bare `fs::exists` — either
+kind — is the one with no C# name. Every `std::filesystem` function ships as
+[Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
+pair — a throwing overload and an `error_code` overload — so the error
+dialect is your choice per call site; the alias line is the convention
+everyone writes. Needs `<filesystem>`.
+
+> [!WARNING]
+> **Trap:** check-then-open is a race — the file can vanish between the two, so gate nothing on this that the open will not re-verify itself; Recipe 1's `if (!in)` is the check that counts, this one is for reporting.
+
+### Recipe 12 — List the files in a directory
+
+**In C#:** `foreach (var f in Directory.GetFiles(dir))`
+
+**The recipe:**
+
+```cpp
+std::vector<std::filesystem::path> list_files(const std::filesystem::path& dir) {
+    std::vector<std::filesystem::path> files;
+    for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+        if (entry.is_regular_file()) {
+            files.push_back(entry.path());
+        }
+    }
+    return files;
+}
+```
+
+**Why it looks like this.** The iterator *is* the enumeration: range-`for`
+over a `directory_iterator` visits each entry once, the entry answers
+`is_regular_file()` from what the traversal already knows, and
+`recursive_directory_iterator` is `SearchOption.AllDirectories`. There is no
+pattern argument — filter on `.extension()` yourself, which costs a line and
+spares you a glob dialect. Needs `<filesystem>`, `<vector>`.
+
+> [!WARNING]
+> **Trap:** the order is unspecified — the same loop lists alphabetically on your machine and arbitrarily on the CI box, and C# never promised an order either, it just tended to deliver one; `std::sort` the result if order matters.
+
+### Recipe 13 — Run work on another thread and wait for it
+
+**In C#:** `var task = Task.Run(CountDefects); ... var n = await task;`
+
+**The recipe:**
+
+```cpp
+int overlap_work() {
+    std::future<int> task = std::async(std::launch::async, count_defects);
+    const int other = do_other_work();    // runs while count_defects runs
+    return other + task.get();            // the await: blocks until the result arrives
+}
+```
+
+**Why it looks like this.** `std::async` is `Task.Run` without the runtime:
+usually a fresh OS thread, no pool unless you build one —
+[Chapter 29](29-concurrency.md#chapter-29--concurrency)'s model, in one
+line. `.get()` is `await` spelled as a block: this thread stops until the
+result arrives; nothing suspends, nothing resumes elsewhere. The
+`std::launch::async` policy is not decoration — the default *may defer* the
+work to run lazily inside `.get()`, on this thread, which is the opposite of
+what `Task.Run` means. One behavior ports exactly: a throw inside the work
+is captured and rethrown at `.get()`, the same unwrapping `await` did for
+you. Needs `<future>`.
+
+> [!WARNING]
+> **Trap:** the future returned by `std::async` blocks in its destructor until the work finishes — dropping it to fire-and-forget turns "run this in the background" into "stop here until it is done", silently serializing the program.
 
 <!-- nav:begin -->
 [← Appendix D — Resources, Further Reading, and First-Week Tips](D-resources.md) · [Contents](README.md)
