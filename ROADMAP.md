@@ -478,11 +478,12 @@ in CONTRIBUTING.md. Candidate next recipes, in likely order of need:
 `DateTime.Now` (timestamps, as distinct from Recipe 6's intervals), trim and
 case conversion, environment variables, sleep, and random numbers — each
 admitted only under question 11's double filter. What stays prose-only, per
-that same filter: REST (the standard library has no HTTP client and no
-sockets at all — a genuine C# shock worth a named library paragraph near
-Chapter 27, not an exercise the offline rule forbids), and JSON/XML parsing
-(third-party territory; the practical JSON coverage is an item 11 candidate
-ticket — a hand-rolled mini-parser, stdlib-only).
+that same filter, is now delivered as prose: Chapter 27's *The batteries C#
+included* names the libraries the ecosystem converged on (nlohmann/json,
+pugixml, libcurl/cpr) and states the shock outright — the standard library
+has no HTTP client and no sockets at all. JSON/XML *parsing* remains
+third-party territory; the practical JSON coverage is an item 11 candidate
+ticket — a hand-rolled mini-parser, stdlib-only.
 
 ---
 
