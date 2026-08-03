@@ -89,7 +89,12 @@ Chapter 25's Finding 10.
   book at `build/going-unmanaged.md` (gitignored); `--write-nav` regenerates
   the nav footers, `--check-nav` fails if one is stale
 - `.github/workflows/ci.yml` — runs build_all.sh on every push/PR, plus a
-  `platform-claims` job (check_platform_claims.sh on ubuntu and macos) and a
+  `platform-claims` job (check_platform_claims.sh on ubuntu and macos), a
+  `buildlab-msvc` job (Chapter 26's CMakeLists under MSVC both ways, then
+  Chapter 14's `/Zc:nrvo` claim: the chapter's own `cl /std:c++17 /W4 /EHsc`
+  line must print exactly one extra move-construction in the RVO section, and
+  adding `/Zc:nrvo` must print none — it is the one claim in the book resting
+  on a vendor default rather than on the standard), and a
   `book` job: build_book.sh, --check-nav, check_markup.sh,
   check_mermaid.sh (which installs mermaid-cli, the job's one slow step),
   and a lychee link check
