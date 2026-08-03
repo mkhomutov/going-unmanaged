@@ -12,6 +12,10 @@ body:
         moves an existing number; a chapter that genuinely belongs *inside* an
         existing part is a renumbering discussion, which is a MAJOR version
         event and needs this issue even more.
+
+        Delivering an item is more than covering the topic:
+        [the questions in CONTRIBUTING.md](https://github.com/mkhomutov/going-unmanaged/blob/main/CONTRIBUTING.md#the-questions-every-piece-of-material-answers)
+        are the review bar — sketch against them before writing.
   - type: input
     id: roadmap-item
     attributes:
@@ -27,3 +31,8 @@ body:
       description: For a ROADMAP item the entry is already the spec — say what you would add or do differently. For a new subject — what is missing, the evidence in the current text, and what the chapter would concretely look like.
     validations:
       required: true
+  - type: textarea
+    id: questions
+    attributes:
+      label: Against the questions (optional here, required of the PR)
+      description: From CONTRIBUTING's "The questions every piece of material answers" — name the ones doing the work. At minimum, which C# reflex this confronts (does it help or betray?), where the reader feels it fail, and who tells them they are wrong. A sketch is enough at issue stage; the full walk happens at PR review.

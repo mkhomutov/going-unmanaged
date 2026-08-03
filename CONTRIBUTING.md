@@ -67,6 +67,101 @@ honest, practical, first person, with C# comparisons where they illuminate.
 Number your Finding as the next free number at the end of the log; do not
 renumber existing ones.
 
+## The questions every piece of material answers
+
+The handbook has four goals — learn, change the mindset, practice, help solve
+real problems — and they behave like a pipeline: information becomes behavior
+only where an old reflex visibly fails, behavior becomes durable only inside
+a feedback loop, and skill pays off only if the reader can find the right
+page at the moment a symptom arrives. The questions below are that pipeline
+written down. A contribution answers the ones that apply **with a mechanism
+in the material itself** — a callout, a broken-vs-fixed pair, a check, an
+index entry — never with an intention in the PR description. Review reads
+new material against this list; the Finding template above is what the list
+looks like instantiated (**Found in** is the moment, **The theory** is the
+reflex, broken-vs-fixed is the failure, **Habit** is what survives).
+
+A correction needs only the last question. A new chapter, exercise, or
+appendix section should have an answer to each; where the honest answer is
+"not applicable", say so in the PR and why.
+
+**Getting it in — learning**
+
+1. **What moment of need does this serve?** The reader is a timeline, not a
+   person: syllabus-reader before day one, survivor in week one,
+   ticket-holder in month one, reviewer in month six. The moment decides the
+   home (part, lab, appendix) and the shape. Material that serves no
+   nameable moment serves nobody.
+2. **Is this for reading or for looking up?** Learning wants narrative and
+   struggle — that is why solutions sit behind spoiler folds. Reference
+   wants speed — that is why Appendix B is one page. The two shapes are
+   incompatible; pick one, and let it decide where the piece lives.
+3. **What must the reader already believe first?** Cite the chapters this
+   builds on, and prefer discharging a promise an earlier chapter made —
+   Chapter 30 answers a question Chapters 16 and 18 planted. If no earlier
+   chapter leads here, ask whether this is the book's material at all.
+
+**Changing the mindset**
+
+4. **Which C# reflex does this confront — and does that reflex help or
+   betray?** Every concept sits somewhere between positive transfer
+   (`using` → RAII, and RAII is stronger) and false friend (`readonly` vs
+   `const`, finalizer vs destructor). Say which, explicitly: the false
+   friends are where the reader's instinct is confident *and* wrong, and
+   they are what the **Surprise for C# devs** callout exists for.
+5. **Where does the reader feel the old reflex fail?** Telling changes
+   nothing; a mindset changes when the old habit visibly produces the bug.
+   The mechanism is broken-vs-fixed with a tool naming the crime — and an
+   exercise earns its place by being built so that the natural C# move *is*
+   the trap.
+6. **What does wrong look like when it looks like working?** In C#, wrong
+   throws; in C++, wrong compiles, runs, and passes the test. Material that
+   teaches a hazard answers three sub-questions: how the failure presents,
+   which tool names it, and on which platform that tool stays silent —
+   Finding 10 of Chapter 25 exists because of the last one.
+
+**Making it stick — practice**
+
+7. **Who tells the reader they are wrong?** There is no teacher here; the
+   toolchain is the teacher. Name the feedback loop — the canonical flags,
+   the sanitizer, `check.sh` — and make sure it works offline, alone, on the
+   reader's own machine.
+8. **Does this train the habit or only the instance?** A solved exercise is
+   an instance; the **Habit:** line and the speakable key principle are the
+   residue that transfers. The test for "done": can this piece produce its
+   one-sentence principle for Appendix B? If it cannot, the reader will not
+   carry it out of the room.
+
+**Paying off — real problems**
+
+9. **How does the reader find this page from a symptom?** Real problems
+   arrive as symptoms — a sanitizer report, a crash on exit, a review
+   comment — not as chapter titles. Ask what the reader would grep or search
+   for when it bites, and make sure that string is on the page. Chapter 31's
+   report shapes are a symptom index; the bold callout labels keep the
+   advice greppable.
+10. **What does the reader check against when there is no reference
+    solution?** The job has no oracle. Material that simulates real work is
+    graded on the verification *ritual* it transfers — build under the
+    flags, run under both sanitizers, read from frame `#1` — not on whether
+    the reader reaches the fix.
+11. **Is this ours to teach?** The filter is the job: does the SDK-work
+    transition present this in the first months? [ROADMAP.md](ROADMAP.md)'s
+    method — evidence from reading the book against the job it claims to
+    prepare you for — is the standing answer; general C++ material without
+    that evidence belongs in a general C++ book.
+
+**Always — honesty**
+
+12. **Did we run it — and what re-verifies the claim when toolchains move?**
+    Every demonstrated behavior was run before it was written down, and the
+    text says where (platform, compiler) when it matters. A claim CI can
+    check gets a check — `check_platform_claims.sh` is the pattern; a claim
+    nothing checks is stated as such (ROADMAP item 1 makes that admission
+    for Chapter 26's intermediate snippets). Chapter 29 is the precedent for
+    the payoff: the planned demo did not reproduce, and the truth made a
+    better chapter.
+
 ## Where the book lives
 
 The book is one file per chapter under [book/](book/README.md):
@@ -242,7 +337,10 @@ the scripts CI runs. Then:
    exercise per PR.
 4. In the PR description, say which exercise or chapter the change belongs to
    and (for Findings) confirm you hit the mistake yourself — that lived
-   experience is what makes a Finding worth reading.
+   experience is what makes a Finding worth reading. For a new chapter,
+   exercise, or appendix section, walk it once against
+   [the questions](#the-questions-every-piece-of-material-answers) — review
+   will read it against the same list.
 
 Contributors of accepted material are credited as co-authors of the handbook.
 

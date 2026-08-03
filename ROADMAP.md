@@ -24,6 +24,29 @@ first — see the numbering rules in [CONTRIBUTING.md](CONTRIBUTING.md).
 Before starting a large item, open an issue saying so, so two people don't
 write the same chapter twice.
 
+## What earns a place here — and what "done" has to answer
+
+An item makes this list on evidence: the job this book prepares you for
+presents the problem, the current text does not cover it, and the entry can
+say what it costs the reader who hits it unprepared — that cost is the
+ranking. *Is this ours to teach?* is the gate. A subject can be important
+C++ and still not belong here, if the SDK-work transition never presents it;
+that is what [Deliberately out of scope](#deliberately-out-of-scope) below
+is for.
+
+Delivering an item is more than covering the topic. The handbook's goals —
+learn, change the mindset, practice, solve real problems — come with a
+standing set of questions any new material must answer with a mechanism in
+the material itself: which C# reflex it confronts, where the reader feels
+that reflex fail, what wrong looks like when it looks like working, what
+tells the reader they are wrong, how they find the page from a symptom, what
+one habit survives a year later, and what re-verifies every claim when
+toolchains move. The full list lives in
+[CONTRIBUTING.md](CONTRIBUTING.md#the-questions-every-piece-of-material-answers)
+— sketch a contribution against it before writing, because review will read
+it against the same list. The chapters that closed items 1–6 are worked
+examples of those questions answered; steal their moves.
+
 ---
 
 ## Tier 1 — the load-bearing gaps

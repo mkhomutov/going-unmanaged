@@ -150,6 +150,15 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 ## Content conventions
 
+- New material (chapters, exercises, appendix sections) is reviewed against
+  the twelve questions in CONTRIBUTING.md, "The questions every piece of
+  material answers" (decided once; full text there): moment of need, which
+  C# reflex it confronts, what wrong-that-looks-like-working looks like,
+  the feedback loop that tells the reader they are wrong, the one-sentence
+  principle for Appendix B, findability from a symptom, and what re-verifies
+  each claim. Answers are mechanisms in the material, never intentions;
+  corrections need only the last question. ROADMAP.md's "What earns a place
+  here" section is the same list applied to whether an item belongs at all.
 - Voice: honest, practical, first-person-curator; C# comparisons are the
   pedagogical spine ("in C# this would..."). British-neutral English.
 - Every exercise chapter follows: *trains / vendor code (if any) / the task /
