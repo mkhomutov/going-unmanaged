@@ -15,7 +15,7 @@ Delivered items stay where they are, marked **DONE** with a pointer to the
 chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
-**Everything on this list appends.** New chapters go at the end (Chapter 27
+**Everything on this list appends.** New chapters go at the end (Chapter 32
 onward, in whatever order they land); new appendices continue from E. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
@@ -341,6 +341,9 @@ buffer: what `sizeof` reports and why, what a packing pragma does and costs,
 host versus network byte order, and why `reinterpret_cast` over a buffer is a
 strict-aliasing trap rather than a clever shortcut.
 
+This item wears item 11's ticket framing naturally — *"parse this capture"*
+— and a single contribution can close both entries.
+
 ### 8. Consolidated const-correctness
 
 **Missing:** const as one coherent subject.
@@ -357,6 +360,52 @@ and adds what is missing — const as an interface contract, const member
 functions, `mutable`, and why const-correctness is retrofitted with pain but
 free if it is there from the start. Cross-reference rather than duplicate;
 the fragments stay where they are.
+
+### 11. Scenario chapters — tickets, not task cards
+
+**Missing:** the bridge between exercise and job. Every exercise in the book
+announces its diagnosis before the symptom — the chapter shape opens with
+*what it trains*, so the reader always knows which trap is coming. The job
+inverts that: work arrives as a symptom attached to code that already
+exists, and no page in the book starts from that side.
+
+**Evidence:** the exercise-chapter structure itself (*trains / task /
+solution / pitfalls*) — pedagogically right for Part V, and exactly what a
+ticket never gives you. Chapter 31 now supplies annotated sanitizer reports
+but never hands over an unsolved one. And the first candidate below is a
+genuine coverage hole: the static-order fiasco is asserted twice in passing
+— Chapter 28's "a namespace-scope vector would be a bet on initialization
+order", Chapter 30's "static initialization across modules is not ordered" —
+and never demonstrated, while "why does it crash on exit?" is a canonical
+month-one ticket that is invisible from C#, where module initialization is
+the runtime's problem.
+
+**A contribution looks like:** a Part VI chapter framed as a ticket. The
+symptom opens the chapter, the code it happened to lives under
+`exercises/<lab-name>/`, the reader is told to diagnose before reading on,
+and the walkthrough sits behind a spoiler fold like any reference solution.
+Against CONTRIBUTING's questions the load-bearing ones are 9 and 10: the
+title and opening lines are what the reader will one day search for, and the
+chapter is graded on the verification ritual it transfers, not on whether
+the reader reaches the fix. Candidates, each its own chapter:
+
+- **"It crashes on exit"** — static initialization and destruction order
+  across translation units. The broken program follows the
+  `check_platform_claims.sh` precedent (generated into a temp dir, never
+  committed); the fixed shape — Chapter 28's function-local static — is the
+  lab's green state.
+- **"Here is the report"** — an ASan report plus the source that produced
+  it; the reader locates the bug from the report alone, and the fix is
+  verified under `scripts/check.sh`. Chapter 31 taught the reading; this is
+  the exam.
+- Item 7's byte-level protocol work is this framing already (*"parse this
+  capture"*), and the carried-over COM refcounting lab is *"the vendor
+  upgraded the SDK, and the new API is refcounted"* — one contribution can
+  close two entries.
+
+The settled rules hold unchanged: chapters append (32 onward), deliberately
+broken programs stay book-only or generated, and everything green is wired
+into `build_all.sh`.
 
 ---
 
@@ -393,6 +442,48 @@ per term, each pointing at the chapter where the idea actually lives. Terms
 the book already uses come first; terms the reader will merely *hear* come
 second, marked as such.
 
+### 12. The Rosetta Cookbook — recipes indexed by the C# reflex
+
+**Missing:** a task index. The book is indexed by concept (the Contents) and
+by bug (the Findings log, Chapter 31's report shapes), but not by task —
+nothing serves the mid-task minute of "read a file, split a string, time
+this call". That moment exists whether or not the book serves it: the reader
+searches the web, inherits whatever idiom the top answer carries, and gets
+no C# anchor and no trap line with it. A general C++ cookbook already
+exists; one indexed by *the C# API being reached for* does not, and this
+handbook is the only place it could live.
+
+**Evidence:** zero hits for `Stopwatch`, `ReadAllText`, `StringBuilder` and
+`TryGetValue` — the names a C# developer actually reaches for. Zero hits for
+`<chrono>` (every match for the string is the word "synchronously"), so
+timing an operation is absent entirely. Splitting a string appears nowhere.
+"Deleter" has zero hits, so the transition's single most load-bearing recipe
+— `using` becomes `unique_ptr` with a custom deleter around a C handle —
+exists only as Chapter 18's hand-rolled wrapper class, never in its
+three-line form. Reading a file happens twice (Chapter 1's RAII
+demonstration, Chapter 19's exercise), but as teaching, not as a page found
+in a minute. The counter-example proving the format: Chapter 11's LINQ →
+`<algorithm>` table is exactly this kind of index, and it stops at one
+domain.
+
+**A contribution looks like:** an appendix — next free letter; the glossary,
+item 10, has the earlier claim — of numbered recipes in one strict shape
+mirroring the Finding template: **In C# / The recipe / Why it looks like
+this / Trap**, the trap a `[!WARNING]` callout, the why a cross-reference to
+the chapter that owns the concept (item 8's rule: cross-reference, don't
+duplicate). Recipe numbers are citable and append-only, like Findings, so
+adding one is MINOR. The listings compile: recipe code lives under
+`exercises/cookbook/`, one translation unit per domain group, wired into
+`build_all.sh` under the testlab discipline — editing a listing means
+editing the appendix in the same commit. The admission filter is
+CONTRIBUTING's question 11, applied per recipe: it belongs only if the SDK
+transition presents the task in the first months *and* it displaces a
+nameable C# reflex — otherwise it is a search engine's job, not ours. A seed
+batch of week-one recipes: read a file, split and join, build a string,
+format, time a call, wrap a C handle in a deleter, `TryGetValue` (`find`
+versus the inserting `[]`) — with Chapter 11's LINQ table extended or
+cross-referenced as the collections domain's index.
+
 ---
 
 ## Known gaps carried over
@@ -400,7 +491,8 @@ second, marked as such.
 Already recorded in [CONTRIBUTING.md](CONTRIBUTING.md) and still open:
 
 - **A COM-style refcounting lab.** Bestiary Shape 3 is the only one of the
-  five shapes without an exercise.
+  five shapes without an exercise. Item 11 names it as a candidate ticket —
+  *"the vendor upgraded the SDK, and the new API is refcounted."*
 - **A threaded-callback lab** — **DONE.** It was a FakeDevice stretch goal, then
   Chapter 29's *Try it*; it is now `exercises/threadlab/` with
   `solutions/device_threaded_solution.cpp` and a ThreadSanitizer step in CI.

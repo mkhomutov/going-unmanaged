@@ -247,10 +247,12 @@ stay on the list marked DONE so item numbers never shift. Short version:
   testing was item 3 and is now Chapter 28; concurrency was item 4 and is
   now Chapter 29
 - Tier 2: byte-level protocol work (item 7) leads the list, then
-  consolidated const-correctness (item 8). Authoring an ABI boundary was
-  item 6 and is now Chapter 30; the debugging chapter was item 5 and is now
-  Chapter 31
-- Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E)
+  consolidated const-correctness (item 8) and scenario chapters — tickets,
+  not task cards (item 11; item 7 and the COM lab are candidate tickets).
+  Authoring an ABI boundary was item 6 and is now Chapter 30; the debugging
+  chapter was item 5 and is now Chapter 31
+- Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E), the Rosetta
+  Cookbook — recipes indexed by the C# reflex (item 12)
 - Carried over: COM-style refcounting exercise (Bestiary Shape 3 has no lab).
   The threaded-callback lab was the other one and is DONE — `exercises/threadlab/`
   plus `solutions/device_threaded_solution.cpp` under a TSan CI gate
