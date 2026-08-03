@@ -79,6 +79,12 @@ run "cb_logging"  $CXX $FLAGS   exercises/cookbook/logging.cpp          -o $OUT/
 # claim. The broken 2.4.1 version stays book-only (it exists to fail).
 run "exitlab_a"   $CXX $FLAGS   exercises/exitlab/logger.cpp exercises/exitlab/audit.cpp exercises/exitlab/main.cpp -o $OUT/exitlab_a
 run "exitlab_b"   $CXX $FLAGS   exercises/exitlab/audit.cpp exercises/exitlab/logger.cpp exercises/exitlab/main.cpp -o $OUT/exitlab_b
+# Chapter 33's lab. The committed files are the FIXED state (the broken 2.6.0
+# main lives in the lab's TASK.md and the chapter - it exists to fail). One
+# build, but run twice below at different hot-plug counts: the fix's claim is
+# that container growth stopped mattering, and one count cannot prove a claim
+# about all of them.
+run "reportlab"   $CXX $FLAGS   exercises/reportlab/registry.cpp exercises/reportlab/main.cpp -o $OUT/reportlab
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -123,6 +129,10 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_logging > /dev/null
 # Both link orders of the Chapter 32 lab: surviving exit IS the claim here.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_a > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_b > /dev/null
+# The Chapter 33 lab at both extremes: no container growth at all, and growth
+# several reallocations deep. Surviving growth IS the claim here.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/reportlab 0 > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/reportlab 100 > /dev/null
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from

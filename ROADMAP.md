@@ -15,7 +15,7 @@ Delivered items stay where they are, marked **DONE** with a pointer to the
 chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
-**Everything on this list appends.** New chapters go at the end (Chapter 33
+**Everything on this list appends.** New chapters go at the end (Chapter 34
 onward, in whatever order they land); new appendices continue from E. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
@@ -397,13 +397,13 @@ the reader reaches the fix. Candidates, each its own chapter:
 - **"Here is the report"** — an ASan report plus the source that produced
   it; the reader locates the bug from the report alone, and the fix is
   verified under `scripts/check.sh`. Chapter 31 taught the reading; this is
-  the exam.
+  the exam. **Now Chapter 33; see below.**
 - Item 7's byte-level protocol work is this framing already (*"parse this
   capture"*), and the carried-over COM refcounting lab is *"the vendor
   upgraded the SDK, and the new API is refcounted"* — one contribution can
   close two entries.
 
-The settled rules hold unchanged: chapters append (33 onward now),
+The settled rules hold unchanged: chapters append (34 onward now),
 deliberately broken programs stay book-only or generated, and everything
 green is wired into `build_all.sh`.
 
@@ -420,8 +420,21 @@ draft's vector-based logger crashed at exit and ASan said *nothing*
 (Finding 10's file grows); and libc++'s `unique_ptr` nulls its pointer
 during destruction where libstdc++ leaves it stale — so the lab's logger
 holds a raw `char*`, keeping the demonstration one mechanism on both CI
-platforms. The item stays open: "Here is the report", item 7's capture, and
-the COM upgrade remain unwritten.
+platforms.
+
+Chapter 33 — *Here Is the Report* — is the second, and it delivers the
+"Here is the report" candidate above in the same shape with one inversion:
+the sanitizer report arrives *with* the ticket (a nightly job nobody read),
+and the reader's first job is the diagnosis on paper — no compiler until it
+is written down. The committed lab (`exercises/reportlab/`) is the fixed
+state, run by `build_all.sh` at **0 hot-plugs and at 100** because
+growth-independence is the fix's whole claim. The writing verified its two
+tempting non-fixes before asserting them, and both are kept as pitfalls:
+storing a copy is sanitizer-clean and wrong from the first frame (the copy
+freezes at pin time — value semantics, not a lifetime bug), and
+`reserve(16)` runs clean at nine sensors and produces the identical report
+at seventeen. The item stays open: item 7's capture and the COM upgrade
+remain unwritten.
 
 ---
 

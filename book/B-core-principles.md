@@ -85,6 +85,7 @@ One line each. If you can say these fluently and back them with code, the concep
 - "map is a tree; unordered_map is the Dictionary equivalent."
 - "operator[] on a map inserts on read — I use find or contains."
 - "Erasing during iteration: use erase's return value, or erase_if. And push_back can invalidate everything via reallocation."
+- "A pointer into a growable container is a loan that the next reallocation calls in — I store the key and borrow at the point of use, and when my API hands out a pointer, the comment says how long the loan lasts."
 
 **Rule of Five / move semantics**
 

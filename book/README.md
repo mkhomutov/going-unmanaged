@@ -59,6 +59,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 30. [Authoring an ABI Boundary](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) — the other side of the Bestiary: shipping the thing someone else loads
 31. [Reading What the Tools Tell You](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you) — sanitizer reports line by line, and the debugger skills that differ
 32. [It Crashes on Exit](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit) — the first ticket: a crash after `main` returns, and the link-order bet behind it
+33. [Here Is the Report](33-here-is-the-report.md#chapter-33--here-is-the-report) — the second ticket: a sanitizer report arrives attached, and the guilty line is in none of its stacks
 
 **[Appendices](A-fundamentals-refresher.md#appendices)**
 
