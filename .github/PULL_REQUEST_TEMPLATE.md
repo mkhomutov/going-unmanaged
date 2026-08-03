@@ -25,6 +25,9 @@ One topic per PR: one Finding, one correction topic, or one exercise.
 - [ ] Findings follow the Chapter 25 shape exactly:
       **Found in / The theory / broken vs fixed code / Habit**
       (template in CONTRIBUTING.md)
+- [ ] New chapters, exercises, or appendix sections walked once against
+      CONTRIBUTING's "The questions every piece of material answers" —
+      each applicable question answered by a mechanism in the material
 - [ ] New key principles are mirrored in Appendix B in the same PR
 - [ ] Matches the book's voice: first-person curator, C# comparisons,
       British-neutral English; solutions use the standard library only

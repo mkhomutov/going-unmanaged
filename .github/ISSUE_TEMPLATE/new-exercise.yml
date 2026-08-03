@@ -13,6 +13,11 @@ body:
         everything verifiable is wired into `scripts/build_all.sh`, which must
         print **ALL GREEN**. *Where chapter code lives*, in the same file, says
         where the files go.
+
+        The review bar for the material itself is
+        [the questions in CONTRIBUTING.md](https://github.com/mkhomutov/going-unmanaged/blob/main/CONTRIBUTING.md#the-questions-every-piece-of-material-answers)
+        — for an exercise, the sharp ones are 5 and 6: build it so the natural
+        C# move *is* the trap, and know which tool names the failure.
   - type: textarea
     id: shape
     attributes:
@@ -33,3 +38,8 @@ body:
     attributes:
       label: Sketch (optional)
       description: Task-card outline, the vendor header's surface, the pitfalls you would expect the reader to hit.
+  - type: textarea
+    id: questions
+    attributes:
+      label: Against the questions (optional here, required of the PR)
+      description: Which C# reflex is the trap — the exercise should be built so the natural C# move is the bug — which tool names the failure when the reader hits it, and what Habit line survives. A sketch is enough at issue stage; the full walk happens at PR review.
