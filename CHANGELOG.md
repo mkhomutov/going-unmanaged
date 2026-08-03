@@ -10,6 +10,100 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [0.4.0] — 2026-08-03
+
+The book crosses the bridge its exercise chapters could not: from task cards
+to tickets. Every Part V exercise announces its diagnosis before the symptom
+— pedagogically right, and exactly what a job never does. This release
+delivers the first two scenario chapters of ROADMAP item 11, one for each
+way work actually arrives: as a symptom you must produce the evidence for
+(Chapter 32), and as a symptom with the evidence already attached and
+unread (Chapter 33). MINOR: two chapters and two labs appended; no existing
+chapter, Finding, Recipe or appendix letter changed meaning.
+
+- **New: Chapter 32 — It Crashes on Exit** (MINOR — an appended chapter and
+  the first instance of the ticket shape: the symptom opens the chapter, no
+  concept is named in advance, the broken code lives in the lab's task card
+  for the reader to recreate cold, and the diagnosis sits behind a spoiler
+  fold like any reference solution). The ticket: a segmentation fault
+  *after* `exit`, in `__cxa_finalize`, on the customer's machine only —
+  since the release that added one audit line to a destructor. The bug is
+  the **static initialization order fiasco**, asserted twice in the book
+  (Chapter 28's "a namespace-scope vector would be a bet on initialization
+  order", Chapter 30's "static initialization across modules is not
+  ordered") and demonstrated nowhere until now: across translation units
+  the standard refuses to order construction, destruction is the reverse of
+  whatever order the linker produced, and the program's fate turns on which
+  of two object files came first on a link line nobody chose. The fix is
+  construct-on-first-use plus the load-bearing second half — touch your
+  dependencies in your constructor, so reverse destruction becomes a
+  consequence instead of a bet.
+  - **The acceptance test has structural teeth.** `exercises/exitlab/`
+    holds the fixed state, and `build_all.sh` builds it **twice with the
+    translation units in opposite orders** and runs both — order
+    independence is the fix's whole claim, and one build cannot prove a
+    claim about two.
+  - **Two pitfalls were paid for during the writing** and are kept in the
+    chapter: the first draft's `std::vector<std::string>` logger crashed at
+    exit and ASan said *nothing* — libc++'s container annotations un-poison
+    a freed block on `push_back` before constructing into it (Finding 10's
+    file grows); and libc++'s `unique_ptr` nulls its pointer during
+    destruction where libstdc++ leaves it stale, which would have split the
+    demonstration into two per-platform mechanisms — so the lab's logger
+    holds a raw `char*`, one mechanism on both CI platforms.
+  - **The fiasco's first act is shown too:** make the auditor's constructor
+    log as well, and the bad link order now fails *before* `main`, with
+    AddressSanitizer's `initialization-order-fiasco` detector naming it
+    outright under `check_initialization_order=1:strict_init_order=1`.
+  - One new key principle, in a new Appendix B group — **Static
+    lifetime** — mirrored in the same commit.
+- **New: Chapter 33 — Here Is the Report** (MINOR — an appended chapter;
+  ROADMAP item 11's "Here is the report" candidate, delivered as specified:
+  an ASan report plus the source that produced it, and the reader locates
+  the bug **from the report alone**). The second ticket adds the inversion
+  the job supplies: the report arrives attached — a nightly sanitizer job
+  that had been red since the feature merged, unread — and the rule is *no
+  compiler until the diagnosis is written down*. Chapter 31 taught the
+  reading; this is the exam. The bug: a `Sensor*` pinned into a
+  `std::vector` before a growth-triggering `push_back` — Chapter 11's trap
+  and Chapter 21's Task 3 arriving as a month-one ticket, a hot-plugged
+  ninth sensor away from a dashboard reading 0.0 that no eight-sensor rig
+  can reproduce.
+  - **The exam's lesson: the guilty line is in none of the report's three
+    stacks.** The stacks name events — a read, a free, an allocation; the
+    bug is a decision (keeping a pointer across a mutation), and no stack
+    ever points at a decision. The region arithmetic does real work: `40
+    bytes inside of 128-byte region`, with `sizeof(Sensor) == 16`, names
+    element 2's `last` — the pinned sensor, the very number on the
+    dashboard — from an address and a struct definition. The quoted report
+    is genuine (macOS/AppleClang), with freed-by and allocated-by both
+    walking eight libc++ frames before landing on `Registry::add`, a
+    function that only ever adds.
+  - **Both tempting non-fixes were built before being asserted**, and are
+    kept as pitfalls: storing a copy (`Sensor watched = *reg.find(3);`) is
+    the C# reflex, sanitizer-clean, and wrong from the *first* frame — the
+    copy freezes at pin time, value semantics rather than a lifetime bug;
+    and `reserve(16)` runs clean at nine sensors and reproduces the
+    identical report at seventeen — the same bet with a higher table limit.
+  - **The acceptance test, same reasoning as exitlab's:**
+    `exercises/reportlab/` holds the fixed state (the broken 2.6.0 main
+    lives in the task card and the chapter — it exists to fail), and
+    `build_all.sh` runs it at **0 hot-plugs and at 100**, because
+    growth-independence is the fix's whole claim and one count cannot prove
+    a claim about all of them.
+  - One new key principle — the loan: store the key, borrow at the point of
+    use, and document how long the pointer lives — mirrored in Appendix B's
+    STL group in the same commit.
+- **Project: item 11 is half delivered, and everything knows it**
+  (PATCH-level docs; no book content beyond the chapters above). ROADMAP's
+  item 11 carries delivered-notes for both tickets and keeps item 7's
+  capture and the COM upgrade as the remaining candidates; the append point
+  moved to Chapter 34 in the ROADMAP intro, the chapter issue form and
+  CONTRIBUTING's file range; `exercises/README.md` gains the two ticket
+  rows and now counts five directories holding their reference in the open,
+  with the ticket-shaped pair's shared rule stated once — each fix's claim
+  is exactly what one build cannot prove; CLAUDE.md mirrors all of it.
+
 ## [0.3.0] — 2026-08-03
 
 The book gains its third index. It was indexed by concept (the Contents) and
