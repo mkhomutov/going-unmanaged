@@ -77,10 +77,19 @@ Chapter 25's Finding 10.
   diagram to mermaid-cli and fails if one does not draw. Needs `mmdc`
   (`npm install -g @mermaid-js/mermaid-cli`); without it a local run says
   SKIPPED rather than passing, and CI's `--required` refuses to skip
+- `scripts/check_platform_claims.sh` — runs the sanitizer demonstrations and
+  asserts what the chapters promise *per platform*: ASan's exit code (134 on
+  macOS, 1 on Linux), TSan's (134 / 66), whether LeakSanitizer reports at all
+  (no on macOS/arm64), and whether a frame carries a column number (Ch 31's
+  atos-vs-llvm-symbolizer point). CI runs it on ubuntu AND macos with
+  `--required`, because the platform overclaims it exists to catch are exactly
+  what a one-platform check cannot see. The broken programs are generated into
+  a temp dir, never committed — `solutions/` stays clean
 - `scripts/build_book.sh` — concatenates `book/` back into the single-file
   book at `build/going-unmanaged.md` (gitignored); `--write-nav` regenerates
   the nav footers, `--check-nav` fails if one is stale
 - `.github/workflows/ci.yml` — runs build_all.sh on every push/PR, plus a
+  `platform-claims` job (check_platform_claims.sh on ubuntu and macos) and a
   `book` job: build_book.sh, --check-nav, check_markup.sh,
   check_mermaid.sh (which installs mermaid-cli, the job's one slow step),
   and a lychee link check
