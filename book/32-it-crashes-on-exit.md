@@ -289,5 +289,5 @@ initialization order made explicit, because the implicit kind cannot be
 trusted. When you author your own boundary (Chapter 30), do the same.
 
 <!-- nav:begin -->
-[← Chapter 31 — Reading What the Tools Tell You](31-reading-what-the-tools-tell-you.md) · [Contents](README.md) · [Appendix A — Fundamentals Refresher →](A-fundamentals-refresher.md)
+[← Chapter 31 — Reading What the Tools Tell You](31-reading-what-the-tools-tell-you.md) · [Contents](README.md) · [Chapter 33 — Here Is the Report →](33-here-is-the-report.md)
 <!-- nav:end -->

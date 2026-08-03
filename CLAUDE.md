@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 32 chapters, appendices A–D and F), indexed by `book/README.md`. The
+(6 parts, 33 chapters, appendices A–D and F), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
 artifact produced by `scripts/build_book.sh`. Appendices run A–D plus F —
 E waits for the glossary (ROADMAP item 10).
@@ -16,9 +16,11 @@ concurrency, authoring an ABI boundary, reading tool output. Chapter 29
 discharges the threading promises made in Ch 16/18; Chapter 30 is the
 authoring side of Ch 16's Bestiary (which only teaches consuming those
 shapes); Chapter 31 supplies the sanitizer reports Ch 24's Day 2 tells the
-reader to study but never shows. Chapter 32 is the first ticket-shaped
-scenario chapter (ROADMAP item 11): symptom first, no concept named in
-advance, diagnosis behind a spoiler fold.
+reader to study but never shows. Chapters 32 and 33 are the ticket-shaped
+scenario chapters (ROADMAP item 11): symptom first, no concept named in
+advance, diagnosis behind a spoiler fold. Ch 33 adds the inversion the job
+supplies — the sanitizer report arrives attached to the ticket, and the
+diagnosis is made on paper from the report alone before anything is built.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -30,7 +32,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–32, `A-`…`F-<slug>.md` for the appendices,
+  `NN-<slug>.md` for chapters 01–33, `A-`…`F-<slug>.md` for the appendices,
   E absent until the glossary lands (digits sort before letters, so the
   listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
@@ -73,6 +75,12 @@ Chapter 25's Finding 10.
   build_all.sh builds them TWICE with the translation units in opposite
   orders and runs both — order-independence is the fix's claim, and one
   build cannot prove it
+- `exercises/reportlab/` — Chapter 33's ticket lab. TASK.md carries the
+  attached sanitizer report and the broken 2.6.0 main (book-only, it exists
+  to fail); the committed files are the FIXED state, quoted verbatim in the
+  chapter's fix section, and build_all.sh runs the binary at 0 hot-plugs
+  AND at 100 — growth-independence is the fix's claim, and one count
+  cannot prove it
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
@@ -268,7 +276,8 @@ stay on the list marked DONE so item numbers never shift. Short version:
   now Chapter 29
 - Tier 2: byte-level protocol work (item 7) leads the list, then
   consolidated const-correctness (item 8) and scenario chapters — tickets,
-  not task cards (item 11; item 7 and the COM lab are candidate tickets).
+  not task cards (item 11; Chapters 32–33 delivered, item 7 and the COM
+  lab are the remaining candidate tickets).
   Authoring an ABI boundary was item 6 and is now Chapter 30; the debugging
   chapter was item 5 and is now Chapter 31
 - Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E), SOLID without
