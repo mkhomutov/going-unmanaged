@@ -10,14 +10,26 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
-## [Unreleased]
+## [0.2.1] — 2026-08-03
 
-- **Corrections: six defects in the audit corrections themselves** (PATCH — no
-  number moved, no key principle changed). A pass back over the four
+A pre-announcement accuracy audit, applied in full and then audited itself.
+Five rounds of corrections across the book — the findings the audit confirmed,
+the four its two verifiers split on, the low-severity candidates it swept but
+never adversarially checked, and finally the defects the corrections themselves
+introduced — plus dual licensing, the contributor funnel, and CI that now runs
+the book's platform-specific claims rather than citing them.
+
+No chapter, Finding or appendix number changed meaning, and the two key
+principles whose wording changed were mirrored in Appendix B in the same
+commit. That is what makes the whole release PATCH: every claim in it is a
+correction to something already numbered, and nothing was appended or moved.
+
+- **Corrections: seven defects in the audit corrections themselves** (PATCH —
+  no number moved, no key principle changed). A pass back over the four
   correction rounds, re-running the claims against a compiler and vendor
   documentation rather than re-reading the prose. The substantive rewrites all
   held — Chapter 21's `container-overflow`, Chapter 25's Finding 10, Chapter
-  28's three-stack report, the `/Zc:nrvo` and `/GL`/`/LTCG` details — but six
+  28's three-stack report, the `/Zc:nrvo` and `/GL`/`/LTCG` details — but seven
   edits introduced or left problems of their own:
   - **Chapter 3** — the 512 KB secondary-thread stack is macOS's; glibc sizes
     a new thread from `RLIMIT_STACK`, the same ~8 MB the main thread gets, as
@@ -171,6 +183,28 @@ numbers may still move.
   kinds (Finding, correction, new exercise, new chapter), a PR checklist
   naming every check CI runs, and the labels to match (PATCH-level repo
   tooling; no book content changed).
+- **Project:** CI now *executes* the book's platform-specific claims instead of
+  citing them (PATCH-level repo tooling; no book content changed). The audit
+  above kept finding the same error class — behavior observed on one machine
+  written down as the rule — and the corrections for the Linux half had to be
+  sourced from compiler-rt documentation, because there was no Linux to run
+  them on. Two new checks close that:
+  - `scripts/check_platform_claims.sh` runs the sanitizer demonstrations and
+    asserts what each chapter promises for the platform it is on: ASan's exit
+    code (134 on macOS, 1 on Linux), TSan's (134 / 66), whether LeakSanitizer
+    reports at all (no on macOS/arm64), and whether a frame carries a column
+    number (Chapter 31's atos-vs-llvm-symbolizer point). CI runs it on ubuntu
+    **and** macos, because a platform overclaim is invisible from one platform
+    by construction. The broken programs are generated into a temp directory,
+    never committed, so `solutions/` stays clean.
+  - `buildlab-msvc` now also checks Chapter 14's `/Zc:nrvo` claim — the
+    chapter's own `cl /std:c++17 /W4 /EHsc` line must print exactly one extra
+    move-construction in the RVO section, and adding `/Zc:nrvo` must print
+    none. It is the one claim in the book resting on a vendor default rather
+    than on the standard, so it is pinned from both sides.
+
+  All five claims held on first run. What changed is that they are now provable
+  rather than merely correct.
 
 ## [0.2.0] — 2026-08-02
 
