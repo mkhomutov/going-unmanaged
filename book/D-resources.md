@@ -39,5 +39,5 @@ Seventeen years of C# is not baggage here — it is architecture sense, debuggin
 
 
 <!-- nav:begin -->
-[← Appendix C — Working Without AI Assistants](C-working-without-ai.md) · [Contents](README.md)
+[← Appendix C — Working Without AI Assistants](C-working-without-ai.md) · [Contents](README.md) · [Appendix F — The Rosetta Cookbook →](F-rosetta-cookbook.md)
 <!-- nav:end -->

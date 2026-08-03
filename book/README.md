@@ -6,7 +6,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 
 *Who this is for:* developers with solid C# (or Java) experience who once knew C++ or are learning it now, and need to become productive in a real C++ codebase — typically one built around a vendor SDK: a plug-in API for a desktop application, a peripheral-device SDK, a game or media engine, an embedded HAL. Each chapter therefore ends with an "In the wild" section connecting the concept to the C-flavored APIs you will actually meet, and Part V trains on two miniature SDKs written in those idioms.
 
-*How to use it:* Parts I–IV are the syllabus — read once, then return by chapter when a topic resurfaces at work. Part V is where knowledge becomes skill: a worked example, a practice plan, and a growing log of real findings from real exercises. Part VI is the real codebase — what a project has that an exercise does not; read it when you land in one, or when the thing it covers lands on you. The appendices are the survival kit: the fundamentals refresher, the one-page cheat sheet for any morning, and the offline-work playbook.
+*How to use it:* Parts I–IV are the syllabus — read once, then return by chapter when a topic resurfaces at work. Part V is where knowledge becomes skill: a worked example, a practice plan, and a growing log of real findings from real exercises. Part VI is the real codebase — what a project has that an exercise does not; read it when you land in one, or when the thing it covers lands on you. The appendices are the survival kit: the fundamentals refresher, the one-page cheat sheet for any morning, the offline-work playbook, and the cookbook indexed by the C# API you are reaching for.
 
 ## Contents
 
@@ -65,6 +65,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 - B. [Core Principles](B-core-principles.md#appendix-b--core-principles-cheat-sheet) — the one-page cheat sheet
 - C. [Working Without AI Assistants](C-working-without-ai.md#appendix-c--working-without-ai-assistants)
 - D. [Resources, Further Reading, and First-Week Tips](D-resources.md#appendix-d--resources-further-reading-and-first-week-tips)
+- F. [The Rosetta Cookbook](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) — everyday tasks, indexed by the C# reflex (E is the glossary's letter, when it lands)
 
 *License:* this text is © 2026 Maksim Khomutov and licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) — share and adapt it with attribution to "Going Unmanaged — A Hands-On C++ Handbook for C# Developers" and a link to [the repository](https://github.com/mkhomutov/going-unmanaged). The code is MIT, including every code sample below: paste it into your own work freely.
 

@@ -31,7 +31,7 @@ done
 # Reading order: chapters 01-NN, then appendices A-D. Digits sort before
 # letters in the C locale, so the glob order IS the reading order.
 export LC_ALL=C
-FILES=("$BOOK"/[0-9][0-9]-*.md "$BOOK"/[A-D]-*.md)
+FILES=("$BOOK"/[0-9][0-9]-*.md "$BOOK"/[A-Z]-*.md)
 [ -e "${FILES[0]}" ] || { echo "build_book.sh: no chapter files in $BOOK/" >&2; exit 1; }
 
 # The chapter/appendix title, taken from the file's own H2 heading.
@@ -84,7 +84,7 @@ strip_nav() {
 # every chapter in it, so ](26-build-systems-and-cmake.md#anchor) -> ](#anchor).
 # Pinned to the NN-/A-D- chapter filenames on purpose: a link to a file OUTSIDE
 # book/ (../CONTRIBUTING.md#..., an external .md URL) must keep its path.
-inline_links() { sed -E 's%\]\(([0-9]{2}|[A-D])-[^)#]*\.md#%](#%g'; }
+inline_links() { sed -E 's%\]\(([0-9]{2}|[A-Z])-[^)#]*\.md#%](#%g'; }
 
 case "$MODE" in
 write-nav|check-nav)

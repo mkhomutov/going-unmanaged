@@ -11,13 +11,19 @@ writing it down properly.
 1. **Findings** — you did an exercise, hit something instructive, and can write
    it up in the Chapter 25 shape (see the template below). This is the heart of
    the project.
-2. **Corrections** — anywhere the text is wrong, outdated, or misleading. Where
+2. **Recipes** — Appendix F, *The Rosetta Cookbook*, grows the way the
+   Findings log does: you reached for a C# API mid-task, worked out the C++
+   spelling, and can write it in the Recipe shape (template below). The bar
+   is double (question 11): the task shows up in the first months of SDK
+   work, *and* it displaces a nameable C# reflex — otherwise it is a search
+   engine's job.
+3. **Corrections** — anywhere the text is wrong, outdated, or misleading. Where
    the book disagrees with [cppreference](https://cppreference.com) or the
    [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/), they win;
    a PR aligning the book with them is always welcome.
-3. **New exercises** — especially new SDK shapes. Known gap: a COM-style
+4. **New exercises** — especially new SDK shapes. Known gap: a COM-style
    refcounting lab (Bestiary Shape 3 has no lab yet).
-4. **Missing chapters** — subjects the book does not cover yet.
+5. **Missing chapters** — subjects the book does not cover yet.
    [ROADMAP.md](ROADMAP.md) is the standing list, ranked by what they cost a
    reader who hits them unprepared. Tier 1 is now closed — build systems,
    dependency management, testing and concurrency landed as Chapters 26-29,
@@ -25,7 +31,7 @@ writing it down properly.
    Chapter 31 — so byte-level protocol work and const-correctness now lead.
    Open an issue before starting a large one, so nobody writes the same
    chapter twice.
-5. **Translations and tooling** — build scripts, per-platform notes, anything
+6. **Translations and tooling** — build scripts, per-platform notes, anything
    that lowers friction.
 
 ## The Finding template
@@ -66,6 +72,38 @@ Read a couple of existing Findings before writing yours — match their voice:
 honest, practical, first person, with C# comparisons where they illuminate.
 Number your Finding as the next free number at the end of the log; do not
 renumber existing ones.
+
+## The Recipe template
+
+Recipes live in Appendix F — `book/F-rosetta-cookbook.md` — and follow one
+strict shape, the Finding template's sibling:
+
+````markdown
+### Recipe N — <the task, stated as the thing you are trying to do>
+
+**In C#:** `<the API you would have reached for>`
+
+**The recipe:**
+
+```cpp
+// the idiom, complete enough to paste
+```
+
+**Why it looks like this.** <Two to four sentences: why C++ spells it this
+way, anchored to the chapter that owns the concept — cross-reference, don't
+re-teach. End with the headers it needs.>
+
+> [!WARNING]
+> **Trap:** <one line: the way this goes wrong that costs an afternoon>.
+````
+
+Two rules beyond the shape. The listing is code, not prose: it lives in
+`exercises/cookbook/` (one translation unit per domain, a `main()` that
+asserts what the recipe claims, wired into `build_all.sh`), and the appendix
+quotes it **verbatim** — editing either side means editing both in the same
+commit, exactly as testlab works. And the numbering is the Findings
+contract: add your recipe at the end with the next free number, add its row
+to the index table, never renumber existing ones.
 
 ## The questions every piece of material answers
 
@@ -166,7 +204,8 @@ appendix section should have an answer to each; where the honest answer is
 
 The book is one file per chapter under [book/](book/README.md):
 `01-ownership-and-raii.md` … `31-reading-what-the-tools-tell-you.md`, then
-`A-`…`D-<slug>.md` for the appendices, with `book/README.md` carrying the
+`A-`…`F-<slug>.md` for the appendices (E stays free until the glossary,
+ROADMAP item 10, lands), with `book/README.md` carrying the
 front matter and the Contents. Concretely, for a contributor:
 
 - **Editing a chapter** — edit that one file. Nothing else moves.
@@ -323,10 +362,11 @@ Contribute, and become a co-author — concretely:
 
 ## Submitting
 
-The issue forms know these rules: opening an issue offers a template for each
-of the four contribution kinds — Finding, correction, new exercise, new
-chapter — and each asks for exactly the pieces this file describes and applies
-the matching label. The PR checklist does the same for the ground rules and
+The issue forms know these rules: opening an issue offers a template for four
+of the contribution kinds — Finding, correction, new exercise, new chapter —
+and each asks for exactly the pieces this file describes and applies the
+matching label. (Recipes are Finding-sized: no form, go straight to PR under
+the template above.) The PR checklist does the same for the ground rules and
 the scripts CI runs. Then:
 
 1. Fork, branch, make your change.
