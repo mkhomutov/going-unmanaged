@@ -65,9 +65,10 @@ jobs:
 
   # The job above runs the Greeter CMakeLists on two Unix compilers and never
   # touches its `if(MSVC)` branches, which is how untested code gets into a
-  # book. This job configures and builds the same file with MSVC, both ways,
-  # and nothing else - build_all.sh is a bash script that wants g++, so it is
-  # not the thing to run here.
+  # book. This job configures and builds the same file with MSVC, both ways -
+  # build_all.sh is a bash script that wants g++, so it is not the thing to run
+  # here - and then checks the one other claim in the book that rests on an
+  # MSVC default rather than on the standard.
   buildlab-msvc:
     runs-on: windows-latest
     defaults:
@@ -96,6 +97,45 @@ jobs:
           cmake --build build/msvc-asan --config Debug
           asan_dll=$(ls "/c/Program Files/Microsoft Visual Studio"/*/*/VC/Tools/MSVC/*/bin/Hostx64/x64/clang_rt.asan_dynamic-x86_64.dll | tail -1)
           PATH="$(dirname "$asan_dll"):$PATH" ./build/msvc-asan/Debug/greet.exe
+
+      # cl is not on PATH in this shell; the steps above never needed it because
+      # cmake locates the toolchain itself. Deliberately placed AFTER them, so
+      # putting the compiler on PATH cannot change which generator or compiler
+      # those two steps pick up.
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      # Chapter 14 tells the reader that `cl /std:c++17 /W4 /EHsc` - the exact
+      # line in tracer.cpp's own header - does not perform NRVO, so an extra
+      # move-construction appears in the RVO section that clang and GCC never
+      # print, shifting every #id after it by one. That rests entirely on a
+      # Microsoft default (/Zc:nrvo is off unless /O2, /permissive- or
+      # /std:c++20 turns it on), and a vendor default is the kind of fact that
+      # changes under a book without telling anyone. Assert both halves: the
+      # documented line shows the move, and /Zc:nrvo elides it. If Microsoft
+      # ever flips the default, the first assertion fails and names the chapter.
+      - name: Chapter 14's /Zc:nrvo claim
+        env:
+          # Git Bash rewrites arguments that look like paths, which would mangle
+          # every /flag below into a C:/... directory.
+          MSYS_NO_PATHCONV: 1
+          MSYS2_ARG_CONV_EXCL: '*'
+        run: |
+          # The chapter's claim is about the RVO section specifically; the rest
+          # of the program move-constructs all over the place on every compiler.
+          moves_in_rvo_section() {
+            tr -d '\r' < "$1" | sed -n '/--- RVO ---/,/--- vector ---/p' \
+              | grep -c "move-CONSTRUCTED" || true
+          }
+          cl /nologo /std:c++17 /W4 /EHsc solutions/tracer.cpp /Fe:tracer_default.exe
+          ./tracer_default.exe > default.log
+          cl /nologo /std:c++17 /W4 /EHsc /Zc:nrvo solutions/tracer.cpp /Fe:tracer_nrvo.exe
+          ./tracer_nrvo.exe > nrvo.log
+          d=$(moves_in_rvo_section default.log)
+          n=$(moves_in_rvo_section nrvo.log)
+          echo "move-constructions in the RVO section: default=$d, /Zc:nrvo=$n"
+          sed -n '/--- RVO ---/,/--- vector ---/p' default.log
+          [ "$d" = 1 ] || { echo "FAIL: Chapter 14 says the documented cl line shows exactly one extra move-construction here; saw $d"; exit 1; }
+          [ "$n" = 0 ] || { echo "FAIL: /Zc:nrvo should elide it entirely; saw $n"; exit 1; }
 
   book:
     runs-on: ubuntu-latest
