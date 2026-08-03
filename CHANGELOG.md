@@ -10,6 +10,102 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [0.3.0] — 2026-08-03
+
+The book gains its third index. It was indexed by concept (the Contents) and
+by bug (the Findings log, Chapter 31's report shapes); it is now also indexed
+by *task*, keyed on the C# API being reached for — a new Appendix F with
+sixteen compiled, CI-asserted recipes — plus the named-library prose the
+appendix's own admission rules exclude, and the review bar all of it was
+written against. MINOR: an appendix was appended and recipe numbers join the
+public contract; no existing chapter, Finding or appendix letter changed
+meaning. Appendix F deliberately skips E, which stays reserved for the
+glossary (ROADMAP item 10) — letters append like numbers, and none moved.
+
+- **New: Appendix F — The Rosetta Cookbook** (MINOR — a new appendix;
+  Recipes 1–16 are numbered, citable, and append-only like Findings). The
+  page for the mid-task minute: an index table from the C# name to the
+  recipe, then one strict shape per recipe — **In C# / The recipe / Why it
+  looks like this / Trap** — with whys that cross-reference the owning
+  chapter rather than re-teach, traps as one-line `[!WARNING]`s, and the
+  headers each recipe needs. Chapter 11's LINQ table is cited as the
+  format's in-book precedent and serves as the collections domain's index.
+  Landed in three batches:
+  - **Recipes 1–8, the week-one seed:** `File.ReadAllText`, `string.Split`
+    (with the trailing-empty-field difference from C# stated), `string.Join`,
+    `StringBuilder` (`std::string` *is* the builder — the rare reflex to
+    unlearn outright), `string.Format` (the honest no-interpolation-in-C++17
+    answer), `Stopwatch`, `using`/`IDisposable` as `unique_ptr` with a custom
+    deleter ("deleter" had zero hits in the whole book), and `TryGetValue`
+    (`find` versus the inserting `[]`).
+  - **Recipes 9–13, the filesystem batch and async:** write a file (the
+    flush-and-check, because destructors cannot report a full disk),
+    `Path.Combine` (`/=` versus the gluing `+=`), the
+    `File.Exists`/`Directory.Exists` pair, `Directory.GetFiles` (listing
+    order is unspecified), and `Task.Run`/`await` as
+    `std::async`/`.get()` — including the trap that the future blocks in its
+    destructor, so fire-and-forget silently serializes the program.
+    `std::filesystem` had appeared exactly once in the book before this.
+  - **Recipes 14–16, the authoring side:** expose an event (token-based
+    unsubscribe, because `std::function` has no `operator==` — and the C#
+    event leak *inverted*: nothing keeps a dead subscriber alive), print a
+    diagnostic you will actually see (Chapter 28's buffering lesson made a
+    habit; `std::endl` is a flush), and the repeating timer the standard
+    library does not have (the host's tick is the timer in plug-in work;
+    otherwise a worker thread whose destructor join *is* the `Stop()`).
+  - **Every listing compiles and is asserted.** `exercises/cookbook/` holds
+    one translation unit per domain — nine in all — each with a `main()`
+    asserting what its recipes claim, trap demonstrations included, built
+    and run by `build_all.sh` under the canonical flags. The listings are
+    quoted verbatim (checked byte-for-byte), under the testlab sync
+    discipline: editing either side means editing both in the same commit.
+    The Recipe template sits in CONTRIBUTING.md beside the Finding template,
+    and the PR checklist knows the shape.
+  - **A latent bug found by the wiring:** `build_book.sh` hardcoded the
+    appendix letters as `[A-D]` in both its file glob and its link rewriter,
+    so a new appendix silently vanished from the single-file build — nav OK,
+    markup OK, one file short. Both patterns now read `[A-Z]`; the tell was
+    the file count in the build output.
+- **New: Chapter 27 — "The batteries C# included"** (MINOR — an appended
+  section; no number moved). What the appendix's admission rules exclude,
+  said in prose instead of left silent: `System.Text.Json`, `XDocument` and
+  `HttpClient` are in the box in C#, and every one is a dependency decision
+  here — with the starkest fact as a Surprise-for-C#-devs callout: the C++
+  standard library has no networking at all, not just no `HttpClient` but no
+  sockets. The names the ecosystem converged on, all open-source study
+  material under the naming rule: nlohmann/json and RapidJSON; pugixml and
+  TinyXML-2, with the note that this line of work mostly *reads* XML
+  (`.vcxproj`, Qt `.ui`) rather than parses it; libcurl — a Bestiary-shaped
+  C API, so consuming it is exactly the Chapter 17/18 skill — plus cpr and
+  Boost.Beast; and SQLite as the data battery, Bestiary Shape 1 in
+  production, meaning Chapter 17 already trained the reader for it. Closes
+  by stating why none of them appears in the exercises: the offline,
+  standard-library-only rule doing its job.
+- **Project: the questions every piece of material answers** (PATCH-level
+  docs; no book content changed). The handbook's four goals — learn, change
+  the mindset, practice, help solve real problems — written down as twelve
+  review questions in CONTRIBUTING.md, each answered *by a mechanism in the
+  material*, never by an intention in the PR description; the Finding
+  template shown as the list instantiated. ROADMAP gained the matching gate
+  (what earns an item a place, and what "done" has to answer), CLAUDE.md
+  mirrors the list, the chapter and new-exercise issue forms ask for a
+  sketch against it, and the PR checklist asks for the walk. Every entry
+  below this line was written against that list — it shipped first on
+  purpose.
+- **Project: ROADMAP items 11–13** (PATCH-level docs). Item 11, *scenario
+  chapters — tickets, not task cards*: the bridge between exercise and job,
+  with "It crashes on exit" (the static-order fiasco, asserted twice in the
+  book and demonstrated nowhere), "Here is the report", and item 7 / the COM
+  lab named as candidate tickets. Item 12, *the Rosetta Cookbook* — opened,
+  then delivered by this release, its entry now carrying the audit verdicts
+  (REST and JSON/XML parsing stay prose-only; the hand-rolled mini-JSON
+  parser is an item 11 candidate; `FileSystemWatcher` is an honest-answer
+  recipe candidate). Item 13, *SOLID without the runtime*: the reader's
+  design vocabulary un-fused from the .NET machinery it arrived welded to —
+  zero hits for the names against full fragment coverage without them. Also
+  corrected in passing: the ROADMAP intro's stale "Chapter 27 onward" is now
+  32, matching the issue forms.
+
 ## [0.2.1] — 2026-08-03
 
 A pre-announcement accuracy audit, applied in full and then audited itself.
