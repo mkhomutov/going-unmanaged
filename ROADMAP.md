@@ -486,7 +486,50 @@ case conversion, environment variables, random numbers, and
 `FileSystemWatcher` — the last as an honest-answer recipe on Recipe 5's
 no-interpolation precedent: no portable equivalent exists, the stdlib
 fallback is polling `fs::last_write_time`, and the real answers are
-platform APIs. Each admitted only under question 11's double filter. What stays prose-only, per
+platform APIs. Each admitted only under question 11's double filter.
+
+### 13. SOLID without the runtime
+
+**Missing:** the translation of the reader's design vocabulary. SOLID was
+born in C++, and C# inherited the principles fused to machinery — reflection,
+DI containers, interfaces that cost nothing, mocks fabricated at runtime. A
+seventeen-year C# developer does not hold the principles; they hold the
+principles welded to `IServiceCollection` and Moq. Nothing in the book
+un-fuses them, and month one is design reviews conducted in exactly this
+vocabulary — the reader who proposes extracting an interface where the C++
+answer is a template seam, or reaches for a container that is not there, is
+paying the cost this entry exists to name.
+
+**Evidence:** zero hits for SOLID, Liskov, "single responsibility",
+"open/closed", "dependency injection" and "dependency inversion" — while the
+fragments are everywhere, taught without the names. Appendix B already
+carries the seam principle ("there is no reflection, so there are no runtime
+mocks — I design the seam first, as an interface or a template parameter");
+the Rule of Zero (Chapter 6) is single responsibility applied to resources —
+one resource or none; slicing (Chapter 20) and the non-virtual destructor
+(Chapter 5) are Liskov violations C# cannot even express, mechanical rather
+than aspirational; Chapter 30's you-cannot-insert-a-virtual-method is
+open/closed enforced by the linker and the shipped binary; and the
+Bestiary's function-pointer-plus-context is dependency inversion in C
+clothing, practised since Chapter 18. The one page that assembles them does
+not exist.
+
+**A contribution looks like:** a chapter in item 8's gather-and-translate
+shape — cross-reference, don't duplicate; the fragments stay where they are.
+Principle by principle: what the reader believed, which machinery it was
+welded to, what replaces the machinery here, and the mechanical failure mode
+that raises the stakes. Three through-lines carry it. The cost model
+inverts: abstraction has a visible price, and C++ offers three tools where
+C# had one — the pure-virtual interface, the template parameter,
+`std::function` — so choosing is the new skill. Every dependency edge gains
+an ownership annotation: DI without a GC means owner-or-borrower is the
+first line of the signature, teardown order is a design artifact, and the
+captive-dependency bug becomes a dangling reference a sanitizer can name.
+And DI without a container is constructor parameters wired in `main()` —
+which was the principle all along, with the plug-in twist that the host *is*
+the container, delivering dependencies through init structs and context
+pointers. C++ container libraries exist and are culturally marginal; one
+honest sentence covers them. What stays prose-only, per
 that same filter, is now delivered as prose: Chapter 27's *The batteries C#
 included* names the libraries the ecosystem converged on (nlohmann/json,
 pugixml, libcurl/cpr) and states the shock outright — the standard library
