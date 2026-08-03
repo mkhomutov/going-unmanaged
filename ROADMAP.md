@@ -457,10 +457,16 @@ write a file, `Path.Combine`, the `File.Exists`/`Directory.Exists` pair,
 `Directory.GetFiles`, and `Task.Run`/`await` as `std::async` — closing the
 `std::filesystem` gap (one incidental Chapter 8 appearance in the whole
 book) and discharging Chapter 29's model into a recipe, blocking-destructor
-trap included. The listings compile: `exercises/cookbook/` holds one
-translation unit per domain (files, strings, timing, handles, lookups,
-paths, async), each with a `main()` asserting what its recipes claim, built
-and run by `build_all.sh` under the canonical flags. It landed as Appendix F with E
+trap included. A third batch — Recipes 14–16: expose an event (the C# leak
+inverted: nothing keeps a dead subscriber alive, so the dangling side is
+yours to manage), diagnostics that survive a crash (Chapter 28's buffering
+lesson, made a habit), and the timer the standard library does not have —
+plus a fourth battery paragraph in Chapter 27: SQLite as Bestiary Shape 1
+in production, the Chapter 17 discipline under a different header. The
+listings compile: `exercises/cookbook/` holds one translation unit per
+domain (files, strings, timing, handles, lookups, paths, async, events,
+logging), each with a `main()` asserting what its recipes claim, built and
+run by `build_all.sh` under the canonical flags. It landed as Appendix F with E
 left for the glossary, so the letters skip one until item 10 lands. The
 collections domain was already indexed — Chapter 11's LINQ table — and the
 appendix points there rather than competing.
@@ -476,8 +482,11 @@ in the build output; worth a glance on any appendix-adding PR.
 surface like the Findings log, and it grows by PR under the Recipe template
 in CONTRIBUTING.md. Candidate next recipes, in likely order of need:
 `DateTime.Now` (timestamps, as distinct from Recipe 6's intervals), trim and
-case conversion, environment variables, sleep, and random numbers — each
-admitted only under question 11's double filter. What stays prose-only, per
+case conversion, environment variables, random numbers, and
+`FileSystemWatcher` — the last as an honest-answer recipe on Recipe 5's
+no-interpolation precedent: no portable equivalent exists, the stdlib
+fallback is polling `fs::last_write_time`, and the real answers are
+platform APIs. Each admitted only under question 11's double filter. What stays prose-only, per
 that same filter, is now delivered as prose: Chapter 27's *The batteries C#
 included* names the libraries the ecosystem converged on (nlohmann/json,
 pugixml, libcurl/cpr) and states the shock outright — the standard library

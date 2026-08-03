@@ -29,6 +29,9 @@ stays right.
 | `File.Exists` / `Directory.Exists` | [Recipe 11 — Check that a file or directory exists](#recipe-11--check-that-a-file-or-directory-exists) |
 | `Directory.GetFiles` | [Recipe 12 — List the files in a directory](#recipe-12--list-the-files-in-a-directory) |
 | `Task.Run` / `await` | [Recipe 13 — Run work on another thread and wait for it](#recipe-13--run-work-on-another-thread-and-wait-for-it) |
+| `event` / `EventHandler` | [Recipe 14 — Expose an event](#recipe-14--expose-an-event) |
+| `Console.WriteLine` / `Console.Error` | [Recipe 15 — Print a diagnostic you will actually see](#recipe-15--print-a-diagnostic-you-will-actually-see) |
+| `System.Timers.Timer` / `Task.Delay` | [Recipe 16 — Run something every interval](#recipe-16--run-something-every-interval) |
 | LINQ | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -411,6 +414,141 @@ you. Needs `<future>`.
 
 > [!WARNING]
 > **Trap:** the future returned by `std::async` blocks in its destructor until the work finishes — dropping it to fire-and-forget turns "run this in the background" into "stop here until it is done", silently serializing the program.
+
+### Recipe 14 — Expose an event
+
+**In C#:** `public event EventHandler<int> SampleReady;` … `SampleReady?.Invoke(this, s);`
+
+**The recipe:**
+
+```cpp
+class SampleSource {
+public:
+    using Handler = std::function<void(int)>;
+
+    int subscribe(Handler handler) {
+        handlers_.emplace_back(next_id_, std::move(handler));
+        return next_id_++;    // the token is how -= works without delegate identity
+    }
+
+    void unsubscribe(int id) {
+        handlers_.erase(std::remove_if(handlers_.begin(), handlers_.end(),
+                            [id](const auto& entry) { return entry.first == id; }),
+                        handlers_.end());
+    }
+
+    void raise(int sample) {    // the ?.Invoke: an empty list is a zero-pass loop
+        for (const auto& entry : handlers_) {
+            entry.second(sample);
+        }
+    }
+
+private:
+    std::vector<std::pair<int, Handler>> handlers_;
+    int next_id_ = 0;
+};
+```
+
+**Why it looks like this.** `event` is language sugar over a delegate field;
+here the field is explicit — a vector of callables — and `std::function` is
+the delegate ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)).
+The token replaces `-=`: C# unsubscribes by delegate identity, but
+`std::function` cannot be compared for equality, so subscribers hold the id
+that `subscribe` returned. The `?.Invoke` null-check disappears — an empty
+vector loops zero times — and "only the declaring class may raise" is an
+access decision you make (put `raise` in `private`), not a language rule.
+Two C# habits to check at the door: a handler that unsubscribes *during*
+`raise` mutates the vector mid-loop — Chapter 21's invalidation, arriving
+through an event — and the whole consuming side of this pattern is
+[Chapter 22](22-exercise-lambda-lifetimes.md#chapter-22--exercise-lambda-lifetimes)'s
+subject. Needs `<functional>`, `<vector>`, `<algorithm>`, `<utility>`.
+
+> [!WARNING]
+> **Trap:** the C# leak runs the other way here — C#'s classic event bug is the publisher keeping dead subscribers *alive*; nothing here keeps anything alive, so a subscriber that dies without `unsubscribe` leaves a dangling capture, and the next `raise` is a use-after-free delivered by your own class.
+
+### Recipe 15 — Print a diagnostic you will actually see
+
+**In C#:** `Console.WriteLine(...)` / `Console.Error.WriteLine(...)`
+
+**The recipe:**
+
+```cpp
+void report_progress(int done, int total) {
+    std::cout << "processed " << done << " of " << total << '\n';    // buffered: fast
+}
+
+void report_failure(const std::string& what) {
+    std::cerr << "error: " << what << '\n';    // unbuffered: survives a crash
+}
+```
+
+**Why it looks like this.** The mapping is direct — `cout` is `Console.Out`,
+`cerr` is `Console.Error` — but the split that matters is buffering.
+`cout` is line-buffered at a terminal and *fully* buffered into a file or CI
+log, and a process that dies takes the buffer with it —
+[Chapter 28](28-testing.md#chapter-28--testing) watched four `[ ok ]` lines
+vanish exactly this way. `cerr` is unbuffered: slower per line, on screen
+before the next statement runs, which is precisely what you want from the
+message that explains the crash. When the codebase needs real logging —
+levels, sinks, rotation — the ecosystem default is **spdlog**; in plug-in
+work, first check whether the host SDK hands you a log *callback*, because
+writing into the host's log is worth more than owning your own. And for
+Chapter 29's bugs, prints are the wrong tool entirely — they change the
+timing (Chapter 31's point); reach for the sanitizer instead. Needs
+`<iostream>`.
+
+> [!WARNING]
+> **Trap:** `std::endl` is a flush, not a newline — in a hot loop it turns buffered output into a syscall per line; but drop flushing entirely and Chapter 28's fate awaits: the crash eats the buffer and the log ends four lines early. `'\n'` by default, flush on purpose.
+
+### Recipe 16 — Run something every interval
+
+**In C#:** `var t = new System.Timers.Timer(250); t.Elapsed += OnTick; t.Start();`
+
+**The recipe:**
+
+```cpp
+class RepeatingTimer {
+public:
+    RepeatingTimer(std::chrono::milliseconds interval, std::function<void()> tick)
+        : worker_([this, interval, tick = std::move(tick)] {
+              while (!stop_) {
+                  // Task.Delay, spelled honestly: a thread you own, blocked.
+                  std::this_thread::sleep_for(interval);
+                  if (!stop_) {
+                      tick();
+                  }
+              }
+          }) {}
+
+    ~RepeatingTimer() {
+        stop_ = true;
+        worker_.join();    // Chapter 29's obligation - and this join IS the Stop()
+    }
+
+private:
+    std::atomic<bool> stop_{false};    // declared before worker_: initialized first
+    std::thread worker_;
+};
+```
+
+**Why it looks like this.** The standard library has no timer, and the
+honest answer has two halves. In plug-in work, *the host's tick or idle
+callback is the timer* — starting your own thread inside someone else's
+event loop is a transplant error, so read the SDK's threading documentation
+before writing this class. When you do own the process, a timer is exactly
+this: a worker thread, a sleep loop (`sleep_for` is `Task.Delay`, blocking a
+real thread — [Chapter 29](29-concurrency.md#chapter-29--concurrency)'s
+model), and an atomic stop flag the destructor sets before the join that
+Chapter 29 obliges. The member order is Finding 2 of Chapter 25 applied:
+`stop_` is declared before `worker_` so the thread never reads an
+uninitialized flag. And the captured `this` is why the type must not move —
+Chapter 14's re-register-on-move lesson; the user-declared destructor
+conveniently suppresses the moves. Teardown waits out at most one interval;
+a `condition_variable` turns that into an immediate wake when it matters.
+Needs `<atomic>`, `<chrono>`, `<functional>`, `<thread>`.
+
+> [!WARNING]
+> **Trap:** a timer whose tick touches an object must not outlive it — and C# let you forget `Stop()` because the GC kept the target alive; here the join in the destructor *is* the Stop, and skipping it (a detached thread) is a tick delivered into freed memory.
 
 <!-- nav:begin -->
 [← Appendix D — Resources, Further Reading, and First-Week Tips](D-resources.md) · [Contents](README.md)
