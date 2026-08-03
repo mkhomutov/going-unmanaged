@@ -263,7 +263,9 @@ stay on the list marked DONE so item numbers never shift. Short version:
   not task cards (item 11; item 7 and the COM lab are candidate tickets).
   Authoring an ABI boundary was item 6 and is now Chapter 30; the debugging
   chapter was item 5 and is now Chapter 31
-- Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E). The Rosetta
+- Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E), SOLID without
+  the runtime (item 13 — the reader's design vocabulary, un-fused from the
+  .NET machinery; a gather-and-translate chapter like item 8). The Rosetta
   Cookbook was item 12 and is now Appendix F — Recipes 1–8, then 9–13
   (files, paths, async), then 14–16 (events, logging, timers); it grows by
   PR like the Findings log (Recipe template in CONTRIBUTING.md)
