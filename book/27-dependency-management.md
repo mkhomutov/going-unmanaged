@@ -74,6 +74,17 @@ A header-only library has no library file and no build integration: you put the 
 
 The cost is compile time, paid by every translation unit that includes it, forever (Chapter 12's header-hygiene material). For a small utility that trade is obviously right. For something large it is how a five-minute build becomes a forty-minute build.
 
+### The batteries C# included
+
+In C#, parsing JSON, reading XML and calling an HTTP endpoint are not dependency decisions — `System.Text.Json`, `XDocument` and `HttpClient` are in the box. The C++ standard library has none of them: no JSON, no XML, and no HTTP client — the last for a starker reason than the first two.
+
+> [!NOTE]
+> **Surprise for C# devs:** the C++ standard library has no networking at all — not just no `HttpClient`, no *sockets*. Anything that touches the network is a dependency you choose, add and build yourself, under the strategies above.
+
+So your first real dependency is very likely one of these, and the ecosystem has largely converged on names. For JSON, **nlohmann/json** ("JSON for Modern C++") is the default — a single header, which makes it the poster child for the header-only story above and the usual first test of whichever strategy your team runs; **RapidJSON** is the one you meet when parsing speed is the point. For XML, **pugixml** or **TinyXML-2** — though notice where you actually meet XML in this line of work: `.vcxproj` and `.csproj` files, Qt `.ui` files — formats you read and let tools own, rarely ones you parse yourself. For HTTP, the workhorse is **libcurl** — a C API straight out of Chapter 16's Bestiary, opaque handle, `setopt` calls, error codes and all, so consuming it is exactly the skill Chapters 17 and 18 train — with **cpr** as the common C++ wrapper over it, and **Boost.Beast** where a codebase is already committed to Boost.
+
+None of them appears in this book's exercises, and that is the offline, standard-library-only rule doing its job rather than an oversight. What the book trains is the part that transfers: the strategies above decide how one of these lands in your build, and the Bestiary shapes describe the API you will meet when it does.
+
 ### The diamond, and why C++ makes it dangerous
 
 Two of your dependencies each want a different version of a third. In C# this is routine: NuGet unifies each package to one version at restore, and the runtime binds exactly what `deps.json` records. (On .NET Framework an app.config binding redirect papered over the rest; modern .NET has no such mechanism and does not need one.) Loud when it fails, and it usually does not fail.
