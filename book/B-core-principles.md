@@ -73,6 +73,10 @@ One line each. If you can say these fluently and back them with code, the concep
 
 - "A namespace-scope object with a constructor is a bet on link order. I construct on first use, and I touch my dependencies in my constructor — so teardown unwinds in the order I chose, not the order the linker did."
 
+**Wire formats**
+
+- "A struct's layout belongs to my compiler and a frame's belongs to the wire — I never overlay one on the other. I decode at documented offsets with readers that spell the wire's byte order, and the same code is right on every host."
+
 **Modern C++**
 
 - "Capture by copy when a lambda outlives its scope; by reference dangles."

@@ -85,6 +85,14 @@ run "exitlab_b"   $CXX $FLAGS   exercises/exitlab/audit.cpp exercises/exitlab/lo
 # that container growth stopped mattering, and one count cannot prove a claim
 # about all of them.
 run "reportlab"   $CXX $FLAGS   exercises/reportlab/registry.cpp exercises/reportlab/main.cpp -o $OUT/reportlab
+# Chapter 34's lab. The committed files are the FIXED state (the broken
+# overlay parser lives in the lab's TASK.md and the chapter - it exists to
+# fail). The binary asserts the decode of the ticket's capture against the
+# chapter's hand decode, because the oracle for this lab is the ICD, not a
+# sanitizer: nothing in the canonical flags checks padding, byte order, or
+# aliasing. The capture's second frame sits at offset 10, off every
+# four-byte boundary - decoding at any offset is part of the fix's claim.
+run "capturelab"  $CXX $FLAGS   exercises/capturelab/wire.cpp exercises/capturelab/main.cpp -o $OUT/capturelab
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -133,6 +141,9 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_b > /dev/null
 # several reallocations deep. Surviving growth IS the claim here.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/reportlab 0 > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/reportlab 100 > /dev/null
+# The Chapter 34 lab: the golden-capture assert IS the gate here - the
+# sanitizers have nothing to say about this chapter's bug class.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/capturelab > /dev/null
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from

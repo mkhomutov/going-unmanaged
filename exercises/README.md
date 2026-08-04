@@ -25,6 +25,7 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [The ABI Lab](abilab/TASK.md) | 30 | publishing a boundary instead of consuming one | ~2 h | the files themselves: [Widget.h](abilab/Widget.h), [IScorer.h](abilab/IScorer.h), [engine.h](abilab/engine.h) + their implementations and callers |
 | [The Exit Crash](exitlab/TASK.md) | 32 | a ticket, not a task: static init/destruction order across TUs | ~60 min | the files themselves: the fixed [logger.cpp](exitlab/logger.cpp) + [audit.cpp](exitlab/audit.cpp), green in both link orders |
 | [Here Is the Report](reportlab/TASK.md) | 33 | a ticket with the sanitizer report attached: locate the bug from the report alone | ~60 min | the files themselves: the fixed [main.cpp](reportlab/main.cpp) + [registry.h](reportlab/registry.h), green at 0 and 100 hot-plugs |
+| [Parse This Capture](capturelab/TASK.md) | 34 | a ticket with the capture attached: padding, byte order, and the overlay that was never legal | ~90 min | the files themselves: the fixed [wire.cpp](capturelab/wire.cpp) + [main.cpp](capturelab/main.cpp), asserted against the hand decode |
 
 Chapter 24 (the practice plan) sequences everything above the test lab — the
 nine Part V exercises plus the Bestiary reading — into a one-week schedule; the
@@ -37,13 +38,15 @@ to publish the shapes those two taught you to consume.
 recipe listings, compiled and asserted by `build_all.sh` so the cookbook
 cannot rot (its README has the sync rule). Nothing there to attempt cold.
 
-Five directories hold their reference in the open, rather than behind a fold.
-`exitlab/` and `reportlab/` are the ticket-shaped ones: each TASK.md carries
-the broken code to work from (and, for `reportlab/`, the sanitizer report
-that is the ticket's whole point), and the files beside it are the fixed
-state — built in two link orders for `exitlab/`, run at two hot-plug counts
-for `reportlab/`, because each fix's claim is exactly what one build cannot
-prove.
+Six directories hold their reference in the open, rather than behind a fold.
+`exitlab/`, `reportlab/` and `capturelab/` are the ticket-shaped ones: each
+TASK.md carries the broken code to work from plus the ticket's attached
+evidence (reportlab's sanitizer report, capturelab's bus capture and ICD
+table), and the files beside it are the fixed state — built in two link
+orders for `exitlab/`, run at two hot-plug counts for `reportlab/`,
+asserted against a hand-decoded capture with a deliberately unaligned
+frame for `capturelab/` — because each fix's claim is exactly what one
+build cannot prove.
 `buildlab/` does double duty: it is Chapter 23's lab, and Chapter 26 builds that
 same trio with CMake, so the reference
 [`CMakeLists.txt`](buildlab/CMakeLists.txt) lives there. `testlab/` holds

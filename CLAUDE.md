@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 33 chapters, appendices A–D and F), indexed by `book/README.md`. The
+(6 parts, 34 chapters, appendices A–D and F), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
 artifact produced by `scripts/build_book.sh`. Appendices run A–D plus F —
 E waits for the glossary (ROADMAP item 10).
@@ -16,11 +16,15 @@ concurrency, authoring an ABI boundary, reading tool output. Chapter 29
 discharges the threading promises made in Ch 16/18; Chapter 30 is the
 authoring side of Ch 16's Bestiary (which only teaches consuming those
 shapes); Chapter 31 supplies the sanitizer reports Ch 24's Day 2 tells the
-reader to study but never shows. Chapters 32 and 33 are the ticket-shaped
+reader to study but never shows. Chapters 32–34 are the ticket-shaped
 scenario chapters (ROADMAP item 11): symptom first, no concept named in
 advance, diagnosis behind a spoiler fold. Ch 33 adds the inversion the job
 supplies — the sanitizer report arrives attached to the ticket, and the
 diagnosis is made on paper from the report alone before anything is built.
+Ch 34 closes item 7 inside the format (padding, endianness, the overlay
+cast) with the opposite inversion: the canonical flags stay green on all
+three of its bugs, so the attached capture hand-decoded against the ICD is
+the only oracle.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -32,7 +36,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–33, `A-`…`F-<slug>.md` for the appendices,
+  `NN-<slug>.md` for chapters 01–34, `A-`…`F-<slug>.md` for the appendices,
   E absent until the glossary lands (digits sort before letters, so the
   listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
@@ -81,6 +85,13 @@ Chapter 25's Finding 10.
   chapter's fix section, and build_all.sh runs the binary at 0 hot-plugs
   AND at 100 — growth-independence is the fix's claim, and one count
   cannot prove it
+- `exercises/capturelab/` — Chapter 34's ticket lab. TASK.md carries the
+  attached capture, the ICD table and the broken overlay parser (book-only,
+  it exists to fail); the committed files are the FIXED state, quoted
+  verbatim in the chapter's fix section, and build_all.sh asserts the
+  decode against the chapter's hand-decoded values — the sanitizers are
+  silent on this chapter's bug class, and the capture's second frame is
+  deliberately unaligned
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
@@ -274,12 +285,12 @@ stay on the list marked DONE so item numbers never shift. Short version:
   Chapter 26; dependency management was item 2 and is now Chapter 27;
   testing was item 3 and is now Chapter 28; concurrency was item 4 and is
   now Chapter 29
-- Tier 2: byte-level protocol work (item 7) leads the list, then
-  consolidated const-correctness (item 8) and scenario chapters — tickets,
-  not task cards (item 11; Chapters 32–33 delivered, item 7 and the COM
-  lab are the remaining candidate tickets).
-  Authoring an ABI boundary was item 6 and is now Chapter 30; the debugging
-  chapter was item 5 and is now Chapter 31
+- Tier 2: consolidated const-correctness (item 8) leads the list, then
+  scenario chapters — tickets, not task cards (item 11; Chapters 32–34
+  delivered, the COM lab is the remaining candidate ticket). Byte-level
+  protocol work was item 7 and is now Chapter 34, closing item 11's
+  capture candidate with it; authoring an ABI boundary was item 6 and is
+  now Chapter 30; the debugging chapter was item 5 and is now Chapter 31
 - Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E), SOLID without
   the runtime (item 13 — the reader's design vocabulary, un-fused from the
   .NET machinery; a gather-and-translate chapter like item 8). The Rosetta
