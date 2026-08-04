@@ -10,6 +10,101 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [0.5.0] — 2026-08-04
+
+The ticket arc, completed. v0.4.0 delivered the first two scenario chapters;
+this release delivers the last two and closes ROADMAP item 11 outright —
+along with item 7, both carried-over items, and two of the five seeded
+launch issues. The four tickets now cover the four ways diagnostic work
+actually arrives: produce the evidence (32), read the attached evidence
+(33), work without tools (34), and repair a misread convention with a type
+(35) — each lab proven in CI by exactly the thing one build cannot show.
+MINOR: two chapters, two labs and a third vendor SDK appended; no existing
+chapter, Finding, Recipe or appendix letter changed meaning.
+
+- **New: Chapter 34 — Parse This Capture** (MINOR — an appended chapter;
+  closes ROADMAP item 7 *inside* item 11's format, one contribution for two
+  entries, exactly as both entries predicted). The ticket is a bring-up,
+  not a regression: the vendor's viewer decodes every capture from the new
+  bus analyzer, our ingest calls them all malformed, and the header's kind
+  field reads 165 on a frame the viewer calls kind 1. Attached: a
+  twenty-byte hex capture and the vendor's ICD table ("8 bytes, network
+  byte order, no padding"). The shipped parser transcribed the table into a
+  struct and `reinterpret_cast` it onto the bytes — Chapter 9's
+  "serialization/interop only" question mark, cashed.
+  - **This ticket's inversion: the toolchain goes silent.** The canonical
+    flags stay green on all three bugs — padding, byte order, aliasing —
+    so the oracle is the reader's own hand decode of the capture, done on
+    paper before the compiler contributes anything but confirmation.
+  - **Two-stage diagnosis, every number run-verified.** The overlay
+    scrambles: `sizeof(Header)` 12 against the ICD's 8, offsets 0/4/8/10
+    against the document's 0/1/5/7, and the 165 findable in the dump — it
+    is the next frame's sync byte. `#pragma pack(1)` then mirrors:
+    sequence 16777216 (`0x01000000` — the hand decode's 1, backwards),
+    length 512 (the mirrored 2). *Padding scrambles, endianness mirrors —
+    and the first bug hides the second.* Verified bonus pitfall: packing
+    silences the one report UBSan had, since a packed struct's alignment
+    requirement drops to one — the unaligned frame-2 overlay draws a
+    genuine misaligned-address report unpacked and runs quietly packed.
+  - **The fix: the wire gets offsets, the struct gets the results.** Named
+    offsets cited to the ICD; readers that spell the wire's byte order
+    with shifts — no host detection, no `#if`, correct on any host;
+    structs survive only as destinations. `exercises/capturelab/` holds
+    the fixed state (the broken overlay parser is book-only); `build_all.sh`
+    asserts the decode against the hand-decoded values, with the capture's
+    second frame deliberately at offset 10 — offset-independence is part
+    of the claim, and one aligned frame cannot prove it.
+  - One new key principle, in a new Appendix B group — **Wire formats** —
+    mirrored in the same commit. Closed seeded issue #20.
+- **New: Chapter 35 — Still Live at Unload** (MINOR — an appended chapter;
+  closes ROADMAP item 11 and the carried-over Bestiary Shape 3 gap in one
+  contribution: *"the vendor upgraded the SDK, and the new API is
+  refcounted"*, delivered as written). Chapter 17's vendor ships SDK 2.0 as
+  a **new vendor drop** — `exercises/comlab/FakeSDK2.*`, with `fakesdk/`
+  untouched, because version 1.x did not change and neither do its files.
+  Payloads become shared, reference-counted objects, and the mechanical
+  port misreads the migration notes' two sentences in opposite directions
+  at once: it never releases what it acquired, and releases what it peeked.
+  - **The run-verified centrepiece is the cancellation.** The two bugs
+    cancel on the active Thing — its leak (+1) and its over-release (−1)
+    sum to zero — so the host's counter reports **4 of 5** still live, and
+    the object the port mistreated worst is the one the counter cannot
+    see. Fixing the leak alone makes the plain build print 0 and exit 0 —
+    it looks completely fixed, because the dangling decrement corrupted
+    the counter's own arithmetic — while promoting the over-release crash
+    from "two customers, sometimes" to every close, with the culprit line
+    sitting ON the report's freed-by stack: the deliberate inversion of
+    Chapter 33, where the crime was a decision no stack could name; here
+    it is an event, and the report hands it over.
+  - **The fix is a type, not a patch.** `ref.h`'s `ThingHandle`: the
+    migration notes' two sentences as two named constructors — `adopt` for
+    references you were handed owning, `share` for borrows you choose to
+    keep — copy retains the *claim* (the Chapter 15 Buffer's Rule of Five
+    with one substitution), copy-and-swap, and a destructor that pays on
+    every path, including the `continue` that silently leaked. The fixed
+    port contains not one `Retain` or `Release`: Shape 3's "never call
+    Release by hand", turned from advice into a greppable property.
+  - **Two judges in CI, one per direction of a refcount mistake.** The
+    binary asserts the vendor's live-object counter reaches 0 after
+    shutdown (a release too few — the direction no macOS sanitizer names),
+    and the sanitizers catch the opposite (a release too many — the
+    direction no counter can be trusted about, as the fold demonstrates),
+    with copies of the handle in play. `check.sh` grows a `comlab` vendor
+    option. One new key principle in Appendix B's C-style SDK group;
+    Chapter 16's Shape 3 gains a one-sentence forward pointer. Closed
+    seeded issue #22.
+- **Project: item 11 closed as listed, format left open** (PATCH-level
+  docs). ROADMAP's item 11 heading reads DONE (Chapters 32–35) with the
+  note that the ticket *format* stays open — new scenario chapters arrive
+  by PR against CONTRIBUTING's questions, graded as ever on questions 9
+  and 10; item 7 and both carried-over items are marked DONE; the append
+  point moved to Chapter 36 across ROADMAP, the chapter issue form and
+  CONTRIBUTING's file range. `exercises/README.md` now counts seven
+  directories holding their reference in the open, four of them tickets,
+  and states the vendor-drop rule comlab added: an upgraded SDK is a new
+  drop, never an edit to the old one. CLAUDE.md's hard invariant 2 names
+  Chapter 35 alongside 17/18 for the `Fake*` sync rule.
+
 ## [0.4.0] — 2026-08-03
 
 The book crosses the bridge its exercise chapters could not: from task cards
