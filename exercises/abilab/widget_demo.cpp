@@ -24,8 +24,10 @@ int main() {
     assert(a.Score() == 7);
 
     // The move operations are declared in the header and defaulted in the .cpp,
-    // so they exist and they work; omitting either declaration is the
-    // incomplete-type error the chapter's Trap describes.
+    // so they exist and they work. Defaulting one in the header instead is the
+    // incomplete-type error the chapter's Trap describes; omitting it entirely
+    // deletes the moves (user-declared destructor), and this std::move would
+    // fall back to the deleted copy instead.
     Widget b(std::move(a));                 // a is now a husk: do not ask it anything
     assert(b.Score() == 7);
 

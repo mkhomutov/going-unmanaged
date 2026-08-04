@@ -10,7 +10,7 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 
 | Exercise | Chapter | Trains | Time | Reference solution |
 |---|---|---|---|---|
-| [The Lifetime Tracer](tracer/TASK.md) | 14 | all six special members, observed live | ~60 min | [tracer.cpp](../solutions/tracer.cpp) |
+| [The Lifetime Tracer](tracer/TASK.md) | 14 | every special member it defines, observed live | ~60 min | [tracer.cpp](../solutions/tracer.cpp) |
 | [The Buffer](buffer/TASK.md) | 15 | the Rule of Five on a raw pointer | ~90 min | [Buffer.h](../solutions/Buffer.h) + [buffer.cpp](../solutions/buffer.cpp) |
 | *(reading)* The SDK Bestiary | 16 | the five shapes vendor APIs take — read before the SDK labs | ~20 min | — |
 | [The FakeSDK](fakesdk/TASK.md) | 17 | RAII + error codes (desktop-plugin style) | ~90 min | [fakesdk_solution.cpp](../solutions/fakesdk_solution.cpp) |
@@ -30,7 +30,7 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 
 Chapter 24 (the practice plan) sequences everything above the test lab — the
 nine Part V exercises plus the Bestiary reading — into a one-week schedule; the
-last three belong to Part VI and come later. The threaded callback assumes you
+rows below it belong to Part VI and come later. The threaded callback assumes you
 have already done the Device SDK lab cold — it is that lab again with a driver
 thread in front of it — and the ABI lab assumes both SDK labs, since it asks you
 to publish the shapes those two taught you to consume.

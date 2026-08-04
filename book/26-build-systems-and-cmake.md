@@ -177,7 +177,7 @@ find_package(VendorSDK REQUIRED)                       # locates it, defines tar
 target_link_libraries(greet PRIVATE VendorSDK::Core)   # headers + libs + defines
 ```
 
-That imported target carries its own include directories, its libraries, and any required compile definitions — the Chapter 12 trio (headers for the compiler, .lib for the linker, runtime for the loader) handled in one line.
+That imported target carries its own include directories, its libraries, and any required compile definitions — the first two of the Chapter 12 trio (headers for the compiler, .lib for the linker) handled in one line. The third, the runtime reaching the loader, is still yours: CMake copies no vendor DLL next to your binary by default, and the sanitizer-runtime warning earlier in this section is exactly that stage failing — PATH, an explicit copy step, or RPATH closes it.
 
 Plenty of SDKs ship no such thing. Then you locate the pieces by hand — `find_path` for headers, `find_library` for the binary — and wrap them in an imported target yourself so the rest of your build stays clean. Do that once, in one file, rather than scattering include paths through the project.
 

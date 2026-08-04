@@ -282,7 +282,7 @@ once you know what you are looking at. `std::cout` is safe to use from
 another TU's constructor only because `<iostream>` plants a small counter
 object in every file that includes it, forcing the stream's setup ahead of
 yours. Qt ships `Q_GLOBAL_STATIC` — construct-on-first-use as a macro. And
-Chapter 16's Shape 5 warned that embedded HALs treat some resources as
+Chapter 16's Shape 4 warned that embedded HALs treat some resources as
 "singletons whose ownership *is* initialization order" — the vendors'
 `X_Init`/`X_DeInit` pairs are this chapter's lesson, shipped as API:
 initialization order made explicit, because the implicit kind cannot be

@@ -203,7 +203,7 @@ a#3 destroyed
 husk#2 destroyed  husk#1 destroyed        <- the gutted b and a, normal destruction
 ```
 
-Eleven constructions, eleven destructions — balanced books, no leaks. Destruction runs in reverse construction order within each scope. The husks in the roll-call are visual proof of which objects were genuinely emptied.
+Eleven constructions, eleven destructions — balanced books, no leaks. Destruction runs in reverse construction order within each scope — a guarantee for the *named locals*; the order of the two element lines inside the vector is the standard library's business (libstdc++ destroys front-to-back as shown here, libc++ on a Mac back-to-front, and the standard blesses both). The husks in the roll-call are visual proof of which objects were genuinely emptied.
 
 ### Three experiments to run
 

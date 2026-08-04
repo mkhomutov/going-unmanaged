@@ -110,7 +110,7 @@ public:
 C# forbids multiple base classes; C++ allows them — which is exactly how it does "implementing multiple interfaces". Full multiple inheritance of classes *with data* brings the famous diamond problem:
 
 ```cpp
-class Device        { int id_; };
+struct Device       { int id_; };   // struct: a plain data bag (see below)
 class Scanner : public Device { };
 class Printer : public Device { };
 class Copier  : public Scanner, public Printer { };
@@ -121,7 +121,7 @@ class Scanner : virtual public Device { };
 class Printer : virtual public Device { };
 ```
 
-The stance to hold: "I keep multiple inheritance to interface-style bases — pure virtual, no data — which sidesteps the diamond entirely. Virtual inheritance exists but I treat needing it as a design smell."
+The stance to hold: "I keep multiple inheritance to interface-style bases — pure virtual, no data — which defuses the worst of the diamond: no duplicated state. Two interfaces sharing an ancestor still leave an ambiguous upcast the compiler flags; virtual inheritance resolves it, and I treat needing that as a design smell."
 
 ### Odds and ends worth 10 seconds each
 

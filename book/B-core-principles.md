@@ -87,8 +87,8 @@ One line each. If you can say these fluently and back them with code, the concep
 
 - "vector by default — contiguous memory beats theoretical complexity."
 - "map is a tree; unordered_map is the Dictionary equivalent."
-- "operator[] on a map inserts on read — I use find or contains."
-- "Erasing during iteration: use erase's return value, or erase_if. And push_back can invalidate everything via reallocation."
+- "operator[] on a map inserts on read — I use find (or C++20's contains)."
+- "Erasing during iteration: use erase's return value, or C++20's erase_if. And push_back can invalidate everything via reallocation."
 - "A pointer into a growable container is a loan that the next reallocation calls in — I store the key and borrow at the point of use, and when my API hands out a pointer, the comment says how long the loan lasts."
 
 **Rule of Five / move semantics**
@@ -103,7 +103,7 @@ One line each. If you can say these fluently and back them with code, the concep
 
 - "Members are constructed in the initializer list, in declaration order — const and reference members can only be initialized, never assigned in the body."
 - "An interface is an abstract class: all pure virtual, virtual destructor, no data."
-- "I keep multiple inheritance to interface-style bases — that sidesteps the diamond problem entirely."
+- "I keep multiple inheritance to interface-style bases — no data, so no duplicated state; two interfaces sharing an ancestor still make the upcast ambiguous, and needing virtual inheritance to fix that is a design smell."
 - "Default inheritance for 'class' is private — I always write ': public Base' explicitly."
 - "I mark every single-argument constructor explicit unless I deliberately want the implicit conversion."
 - "No universal Object root — no free ToString/Equals; comparison and printing are opt-in."
@@ -116,7 +116,7 @@ One line each. If you can say these fluently and back them with code, the concep
 - "No exception crosses the add-on boundary — I catch at entry points and translate to error codes. Destructors never throw."
 - "static_cast for conversions I can prove, dynamic_cast to query at runtime; const_cast and reinterpret_cast are code-review question marks."
 - "std::string is an encoding-unaware byte buffer — I keep it UTF-8 and convert to/from vendor strings explicitly, naming the encoding."
-- "UB means the compiler assumes it never happens — Debug-works-Release-breaks is the signature. Sanitizers regularly."
+- "UB means the compiler assumes it never happens — Debug-works-Release-breaks is the signature. I treat warnings as errors, run sanitizers regularly, and reach for AddressSanitizer the moment anything smells like memory corruption."
 - "size() is unsigned, so size() - 1 on an empty container is a huge number, not -1 — I compare with < instead of subtracting, because the wrap is legal and my -fsanitize=address,undefined build stays silent about it."
 - "Heap use is a deliberate choice in C++ — containers and smart pointers, never bare new."
 

@@ -242,7 +242,7 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
   carries the weight. Type follows from the label, not from how strongly you
   feel about the sentence:
   - `[!TIP]` — **Key principle:**, **The stance to hold:**, **Habit:**. The
-    book's advice, and by far the common case (29 of the 40).
+    book's advice, and by far the common case (36 of the 72 at last count).
   - `[!WARNING]` — **Trap:**, **Gotcha:**. Something that compiles, runs,
     and is wrong.
   - `[!IMPORTANT]` — the two non-negotiable rules only: Chapter 5's virtual

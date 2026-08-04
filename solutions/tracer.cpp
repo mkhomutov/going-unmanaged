@@ -32,7 +32,7 @@ public:
 
     Tracer& operator=(const Tracer& other) {
         // std::string::operator= releases our old buffer internally.
-        // With a raw resource, WE would have to release it here. (G.4)
+        // With a raw resource, WE would have to release it here. (Finding 4)
         name_ = other.name_;
         Log("copy-ASSIGNED from " + other.Label());
         return *this;
@@ -40,14 +40,14 @@ public:
 
     // ---- move: steals, source becomes a husk ------------------------------
     Tracer(Tracer&& other) noexcept
-        : name_(std::move(other.name_)), id_(++counter_)   // steal FIRST (G.1)
+        : name_(std::move(other.name_)), id_(++counter_)   // steal FIRST (Finding 1)
     {
         ++alive_;
         Log("move-CONSTRUCTED, gutting " + other.MarkHusk());
     }
 
     Tracer& operator=(Tracer&& other) noexcept {
-        if (this != &other) {                              // self-move guard (G.5)
+        if (this != &other) {                              // self-move guard (Finding 5)
             name_ = std::move(other.name_);                // steal
             Log("move-ASSIGNED, gutting " + other.MarkHusk());
         }

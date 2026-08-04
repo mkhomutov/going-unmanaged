@@ -40,7 +40,7 @@ private:
 };
 ```
 
-`sizeof(Naive)` goes from 32 to 40. Recompile the library, ship it, and do not recompile the caller — which is the entire point of shipping a library. The caller still reserves 32 bytes and still believes `score_` sits where it used to. The v2 constructor initializes `weight_` at offset 32, writing eight bytes past the object the caller allocated:
+`sizeof(Naive)` goes from 32 to 40 here — libc++'s numbers; libstdc++'s bigger `std::string` makes it 40 to 48, and that the numbers differ per standard library is itself this chapter's point. Recompile the library, ship it, and do not recompile the caller — which is the entire point of shipping a library. The caller still reserves the old size and still believes `score_` sits where it used to. The v2 constructor initializes `weight_` at the old object's end — offset 32 in this transcript — writing eight bytes past the object the caller allocated:
 
 ```text
 ERROR: AddressSanitizer: stack-buffer-overflow
@@ -100,7 +100,7 @@ impl v2 -> sizeof(Widget) as the CALLER sees it = 8, Score()=7
 Eight bytes, both times: one pointer. The implementation can grow without limit and the caller never notices, because there is nothing in the header left to change.
 
 > [!WARNING]
-> **Trap:** omit that `~Widget();` declaration and the code fails to compile at the *call site*, with `error: invalid application of 'sizeof' to an incomplete type 'Widget::Impl'` pointing into `unique_ptr`'s internals — the compiler-generated destructor is emitted where the caller is, and there `Impl` is still incomplete. The same applies to the move operations. Declare all of them in the header, define them in the .cpp with `= default`. This trap catches everyone exactly once.
+> **Trap:** omit that `~Widget();` declaration and the code fails to compile at the *call site*, with `error: invalid application of 'sizeof' to an incomplete type 'Widget::Impl'` pointing into `unique_ptr`'s internals — the compiler-generated destructor is emitted where the caller is, and there `Impl` is still incomplete. The move operations obey the same rule — declare them in the header, `= default` them in the .cpp — but they fail differently: default one in the header and you meet the same incomplete-type error, while omitting them entirely means the user-declared destructor suppresses the implicit moves and `std::move` falls back to a `call to implicitly-deleted copy constructor` — a different error for the same root cause. This trap catches everyone exactly once.
 
 PIMPL costs a heap allocation per object, an indirection per access, and the loss of inlining — real costs, worth paying at a boundary and not worth paying inside your own code. It also cuts compile-time coupling, which is Chapter 12's forward-declaration argument arriving as a bonus.
 

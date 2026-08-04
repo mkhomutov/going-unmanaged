@@ -209,7 +209,7 @@ void report_batch_time() {
 underneath all along. The subtraction gives a typed `duration` rather than a
 bare number, and `duration_cast` makes the unit visible at the call site —
 where `ElapsedMilliseconds` buried it in a property name, here you choose it,
-and `<chrono>` will not let you mix units by accident. Needs `<chrono>`.
+and `<chrono>` will not let you mix units by accident. Needs `<chrono>`, `<iostream>`.
 
 > [!WARNING]
 > **Trap:** `system_clock` is the wall clock — NTP or the user can move it mid-measurement, backwards included. Intervals come from `steady_clock`; `system_clock` is for timestamps only.
@@ -350,7 +350,8 @@ bool logs_dir_present(const fs::path& p) {
 **Why it looks like this.** The split is the same split C# makes:
 `is_regular_file` is `File.Exists` (it exists *and* is a file),
 `is_directory` is `Directory.Exists`, and the bare `fs::exists` — either
-kind — is the one with no C# name. Every `std::filesystem` function ships as
+kind — maps to .NET 7's late-arriving `Path.Exists`; before that it had no
+C# name. Every `std::filesystem` function ships as
 [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
 pair — a throwing overload and an `error_code` overload — so the error
 dialect is your choice per call site; the alias line is the convention
@@ -402,7 +403,9 @@ int overlap_work() {
 ```
 
 **Why it looks like this.** `std::async` is `Task.Run` without the runtime:
-usually a fresh OS thread, no pool unless you build one —
+on gcc/clang usually a fresh OS thread, no pool unless you build one; MSVC
+runs it on the Windows thread pool, recycling threads — so never rely on
+fresh-thread guarantees like `thread_local` starting clean —
 [Chapter 29](29-concurrency.md#chapter-29--concurrency)'s model, in one
 line. `.get()` is `await` spelled as a block: this thread stops until the
 result arrives; nothing suspends, nothing resumes elsewhere. The
@@ -484,8 +487,9 @@ void report_failure(const std::string& what) {
 
 **Why it looks like this.** The mapping is direct — `cout` is `Console.Out`,
 `cerr` is `Console.Error` — but the split that matters is buffering.
-`cout` is line-buffered at a terminal and *fully* buffered into a file or CI
-log, and a process that dies takes the buffer with it —
+`cout` is line-buffered at a terminal on POSIX (a Windows console flushes
+per call — even sooner) and *fully* buffered into a file or CI
+log everywhere, and a process that dies takes the buffer with it —
 [Chapter 28](28-testing.md#chapter-28--testing) watched four `[ ok ]` lines
 vanish exactly this way. `cerr` is unbuffered: slower per line, on screen
 before the next statement runs, which is precisely what you want from the
@@ -542,7 +546,7 @@ model), and an atomic stop flag the destructor sets before the join that
 Chapter 29 obliges. The member order is Finding 2 of Chapter 25 applied:
 `stop_` is declared before `worker_` so the thread never reads an
 uninitialized flag. And the captured `this` is why the type must not move —
-Chapter 14's re-register-on-move lesson; the user-declared destructor
+Chapter 18's re-register-on-move lesson; the user-declared destructor
 conveniently suppresses the moves. Teardown waits out at most one interval;
 a `condition_variable` turns that into an immediate wake when it matters.
 Needs `<atomic>`, `<chrono>`, `<functional>`, `<thread>`.

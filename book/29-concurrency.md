@@ -205,7 +205,7 @@ private:
 
 Twenty create-destroy cycles against a running driver thread, with callbacks actually flowing: clean under TSan, and clean under `-fsanitize=address,undefined`, twenty-five runs each.
 
-Two things in that listing carry over unchanged from Chapter 18, and both are easy to drop when threads are doing the distracting. The handle is still closed exactly once — a driver thread does not repeal an obligation — and the copy operations are deleted, because this object owns a handle and a heap allocation and the Rule of Five (Chapter 5) does not care what else is going on. Moves, if you want them, would be safe to add and would need no `Rebind()`: the SDK points at the standalone holder, not at `this`. That is one more thing the extra indirection buys you.
+Two things in that listing carry over unchanged from Chapter 18, and both are easy to drop when threads are doing the distracting. The handle is still closed exactly once — a driver thread does not repeal an obligation — and the copy operations are deleted, because this object owns a handle and a heap allocation and the Rule of Five (Chapter 6) does not care what else is going on. Moves, if you want them, would be safe to add and would need no `Rebind()`: the SDK points at the standalone holder, not at `this`. That is one more thing the extra indirection buys you.
 
 The two threads racing, in one picture — and why the context at the bottom of that listing can never be freed:
 

@@ -22,7 +22,7 @@ public: void Draw() override { std::cout << "Circle"; } };  // prints "Circle"
 
 ### Always write override
 
-It makes the compiler verify you are actually overriding. Without it, this classic bug compiles silently:
+It makes the compiler verify you are actually overriding. Without it, this classic bug compiles — silently on GCC and MSVC; clang's `-Wall` does flag it (`-Woverloaded-virtual`), but a warning you may or may not get is not a contract:
 
 ```cpp
 class Circle : public Shape {
@@ -36,7 +36,7 @@ public:
 
 ### Under the hood — the vtable
 
-Each class with virtual functions gets a **vtable** — a hidden array of function pointers. Each object carries one hidden pointer to its class's vtable. A virtual call is a lookup through that pointer. Cost: one pointer per object, one indirection per call, and no inlining *unless the compiler can prove the dynamic type* — which it often can, for a local, a `final` class or method, or under LTO, and then the call devirtualizes and inlines like any other. That is why C++ makes it opt-in — you do not pay unless you ask.
+Each class with virtual functions gets a **vtable** — a hidden array of function pointers. Each object carries one hidden pointer to its class's vtable. A virtual call is a lookup through that pointer. Cost: one pointer per object (one per polymorphic base, if you inherit several), one indirection per call, and no inlining *unless the compiler can prove the dynamic type* — which it often can, for a local, a `final` class or method, or under LTO, and then the call devirtualizes and inlines like any other. That is why C++ makes it opt-in — you do not pay unless you ask.
 
 ### The question that always comes up: why must a base destructor be virtual?
 

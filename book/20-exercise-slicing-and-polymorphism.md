@@ -73,7 +73,7 @@ int main() {
 
 **`vector<unique_ptr<Shape>>` is *the* polymorphic container.** Objects live on the heap behind pointers; the vector holds owners. Copying the vector is deleted (unique_ptr), which is honest: a hierarchy of polymorphic objects has no cheap, obvious copy semantics — if you need copying, you design a virtual `Clone()` method, explicitly.
 
-**`virtual ~Shape() = default;` is load-bearing, not boilerplate.** Each `unique_ptr<Shape>` deletes through a `Shape*`. Without the virtual destructor that is undefined behavior (Chapter 5): derived destructors never run, derived members leak. The demonstration to run: give `Circle` a `std::vector<double>` member, remove `virtual` from `~Shape`, and ASan's leak report at exit points at the vector's allocation — a leak with one stack, exactly the Finding 10 report shape.
+**`virtual ~Shape() = default;` is load-bearing, not boilerplate.** Each `unique_ptr<Shape>` deletes through a `Shape*`. Without the virtual destructor that is undefined behavior (Chapter 5): derived destructors never run, derived members leak. The demonstration to run: give `Circle` a `std::vector<double>` member, remove `virtual` from `~Shape`, and — on a platform with LeakSanitizer (Linux; not macOS/arm64, where a leaking run stays silent, Chapter 31) — ASan's leak report at exit points at the vector's allocation: a leak with one stack, exactly the Finding 10 report shape. On a Mac your evidence is clang's `-Wdelete-non-abstract-non-virtual-dtor` warning at compile time instead.
 
 **`final` on the leaves** documents that the hierarchy ends here and lets the compiler devirtualize calls where it can prove the type.
 

@@ -3,8 +3,9 @@
 Full statement, the complete instrument, and annotated output: **Chapter 14** of the book.
 This one you build and KEEP — it is a diagnostic instrument, not a puzzle.
 
-Write: a `Tracer` class printing from all six special member functions (ctor, dtor,
-copy ctor/assign, move ctor/assign), stamped with an instance ID and its own address.
+Write: a `Tracer` class printing from the five special member functions it defines
+(dtor, copy ctor/assign, move ctor/assign) plus the ordinary constructor that names
+it, stamped with an instance ID and its own address.
 Push several into a `std::vector` WITHOUT `reserve` and predict every output line
 before running.
 

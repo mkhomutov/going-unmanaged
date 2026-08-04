@@ -112,7 +112,7 @@ Notes on the choices:
 - **Move assignment deletes first and that is fine here** — nothing after the `delete[]` can throw. The same shape inside *copy* assignment is a bug (Finding 6): the difference is what follows the delete.
 - **The const-overload pair for `At`** — `int& At(size_t)` plus `const int& At(size_t) const`. Same name; the compiler picks by the constness of the object. This is exactly how `vector::operator[]` works (Finding 8). The `assert` documents the bounds contract; throwing `std::out_of_range` would be the `.at()`-style alternative.
 - **Destructor is one line** — `delete[]` on `nullptr` is a safe no-op, and nulling members in a destructor is dead work: the object ceases to exist in the next instant (Finding 9).
-- The deliberate `c = std::move(c)` in `main` draws a compiler warning (`-Wself-move`) — good: the compiler flags suspicious code, and the class survives it anyway, which is the requirement.
+- The deliberate `c = std::move(c)` in `main` draws a compiler warning on clang and GCC 13+ (`-Wself-move`); older GCC and MSVC `/W4` stay silent. Where it appears, good — the compiler flags suspicious code; either way the class must survive it, which is the requirement.
 
 </details>
 
@@ -132,7 +132,7 @@ Buffer& operator=(const Buffer& other) {
 }
 ```
 
-If the allocation throws, the exception propagates out mid-function and the object is a zombie: `data_` still points at freed memory. During stack unwinding its destructor runs — `delete[] data_` — **freeing the same block twice**. The assignment didn't just fail to copy; it corrupted the heap on the way out. The principle: **do all the throwing work before touching your own state.** Copy-and-swap makes the correct ordering structural rather than a discipline to remember.
+If the allocation throws, the exception propagates out mid-function and the object is a zombie: `data_` still points at freed memory. Once stack unwinding reaches it (which needs a handler somewhere above — an exception nobody catches terminates without unwinding, Chapter 1), its destructor runs `delete[] data_`, **freeing the same block twice**. The assignment didn't just fail to copy; it corrupted the heap on the way out. The principle: **do all the throwing work before touching your own state.** Copy-and-swap makes the correct ordering structural rather than a discipline to remember.
 
 ### Experiments (sabotage runs under ASan)
 
@@ -141,7 +141,7 @@ Take a working copy, break one thing at a time, build with `-fsanitize=address -
 1. **Remove the null-out in the move constructor** → double-free; ASan shows both freeing stacks.
 2. **Make copy assignment shallow** (`data_ = other.data_;`) → double-free plus a leak of the orphaned old block.
 3. **Remove the self-move guard**, run `b = std::move(b)` → reason first about whether your implementation gives use-after-free or silent data loss, then verify.
-4. **Simulate the unhappy path**: revert to release-before-acquire and insert `throw std::bad_alloc{};` after the `delete[]` — watch Finding 6 detonate.
+4. **Simulate the unhappy path**: revert to release-before-acquire, insert `throw std::bad_alloc{};` after the `delete[]` — and, the step that matters, catch it in `main` (`try { c = a; } catch (const std::bad_alloc&) {}`) so the zombie outlives the failure. Thrown uncaught it just terminates, no unwinding, and ASan reports nothing; with the handler, the next touch of `c` is a loud use-after-free and its destructor the double-free — Finding 6 detonating on schedule.
 
 ### Why you would never ship this class
 

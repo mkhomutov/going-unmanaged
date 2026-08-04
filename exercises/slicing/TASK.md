@@ -9,7 +9,9 @@ the areas — predict what happens, then observe (make the base abstract and wat
 the design error become a compile error). Then fix the design so polymorphism
 actually works, and prove with output that the right `Area()` runs per element.
 Finally: remove `virtual` from the base destructor and demonstrate under ASan
-(heap-allocated derived object owning memory) what breaks.
+(heap-allocated derived object owning memory) what breaks — note the leak report
+needs LeakSanitizer, i.e. Linux; on macOS/arm64 the run stays silent (Ch 31) and
+your evidence is the compiler warning instead.
 
 Build: g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g your.cpp -o task
   (or: ../../scripts/check.sh your.cpp — from this directory)
