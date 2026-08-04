@@ -58,10 +58,10 @@ You have spent years in managed code — the runtime tracked your objects, the G
 29. [Concurrency](29-concurrency.md#chapter-29--concurrency) — no runtime, no await, and the thread that calls you back
 30. [Authoring an ABI Boundary](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) — the other side of the Bestiary: shipping the thing someone else loads
 31. [Reading What the Tools Tell You](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you) — sanitizer reports line by line, and the debugger skills that differ
-32. [It Crashes on Exit](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit) — the first ticket: a crash after `main` returns, and the link-order bet behind it
+32. [It Crashes on Exit](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit) — the first ticket: a crash after `main` returns that support cannot reproduce — work it cold
 33. [Here Is the Report](33-here-is-the-report.md#chapter-33--here-is-the-report) — the second ticket: a sanitizer report arrives attached, and the guilty line is in none of its stacks
-34. [Parse This Capture](34-parse-this-capture.md#chapter-34--parse-this-capture) — the third ticket: an attached hex dump, a struct that padded itself, and a wire the host read backwards
-35. [Still Live at Unload](35-still-live-at-unload.md#chapter-35--still-live-at-unload) — the fourth ticket: the vendor's 2.0 is refcounted, and two opposite bugs cancel on one object
+34. [Parse This Capture](34-parse-this-capture.md#chapter-34--parse-this-capture) — the third ticket: an attached hex dump the vendor's viewer decodes fine and your parser doesn't — while every sanitizer stays green
+35. [Still Live at Unload](35-still-live-at-unload.md#chapter-35--still-live-at-unload) — the fourth ticket: the vendor's 2.0 is refcounted, and the host says objects are still live at unload
 
 **[Appendices](A-fundamentals-refresher.md#appendices)**
 

@@ -131,9 +131,9 @@ The compiler lays out a struct for the CPU, not for the wire: each member goes a
 
 The third contract is subtler and has no tool behind it at all: **strict aliasing**. `unsigned char*` may inspect the bytes of anything; pointing a `Header*` at a byte buffer is the reverse direction, and it is undefined behavior even when the offsets and the byte order happen to line up — license the optimizer can and does use. No sanitizer in this book's toolchain checks it. The legal spellings are `std::memcpy` into an object, or — better, because it dissolves the padding and endianness questions in the same motion — not overlaying at all.
 
-### The fix: the wire gets offsets, the struct gets the results
+### The fix
 
-The committed lab replaces the overlay with two small commitments. First, the wire's layout becomes *data about the document* — named offsets, cited to the ICD, in one place:
+The wire gets offsets, the struct gets the results. The committed lab replaces the overlay with two small commitments. First, the wire's layout becomes *data about the document* — named offsets, cited to the ICD, in one place:
 
 ```cpp
 #pragma once

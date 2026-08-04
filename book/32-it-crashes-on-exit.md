@@ -3,9 +3,9 @@
 Every exercise so far told you what it trains before you wrote a line. This
 chapter — the first of the ticket-shaped ones — works the way the job does:
 you get a symptom, the code it happened to, and no chapter title spoiling
-the diagnosis. Work it cold, then open the fold. What it trains, named only
-after you have felt the need for it: **static initialization and destruction
-order across translation units**, and reading an exit-time sanitizer report.
+the diagnosis. Work it cold, then open the fold; the thing it trains gets
+its name only after you have felt the need for it, on the far side of the
+diagnosis.
 
 ### The ticket
 
@@ -173,7 +173,7 @@ the same symptom twice, and it certainly does not owe you one on the
 machine you debug on. Chapter 27's diamond was decided by link order too —
 this is the same silent coin, flipped at exit.
 
-### The fix: construct on first use
+### The fix
 
 The global moves behind a function, and the function's local static *is*
 the logger:

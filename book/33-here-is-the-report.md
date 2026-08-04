@@ -158,7 +158,9 @@ A name for the notes file, now that you have earned it: **pointer invalidation a
 
 The instinct "hold a reference to the thing" was never wrong *in C#*, because a C# reference follows the object wherever the runtime moves it. A C++ pointer is an address. When the object moves, the pointer goes on pointing at where it used to live — and Chapter 3 explains why living there is not even an error until someone checks.
 
-### The fix: store the key, borrow at the point of use
+### The fix
+
+Store the key, borrow at the point of use: the fixed main remembers the watched sensor as an id — the one thing growth cannot move — and asks the registry for a pointer only at the moment of each read:
 
 ```cpp
 #include "registry.h"

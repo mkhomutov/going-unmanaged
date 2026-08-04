@@ -1,6 +1,6 @@
 ## Chapter 35 — Still Live at Unload
 
-The fourth ticket-shaped chapter, and the one where the vendor moves the ground under you: an SDK upgrade changes the object model, and code that was correct for ten years becomes wrong by convention. The previous three tickets each ended at a guilty line. This one has no single guilty line to end at — the bug is a *misread rule*, so it recurs at every call site, in both directions at once — and that changes what "the fix" means: not a patch, but a type. Chapter 16's Bestiary promised that Shape 3 was "shared_ptr, someone else's implementation"; this is the ticket where you build the missing half of that sentence.
+The fourth ticket-shaped chapter, and the one where the vendor moves the ground under you: an SDK upgrade changes the object model, and a port that dutifully swapped every 1.x call for its 2.0 spelling now has the host complaining at unload. The migration notes arrive attached, the way they do. The previous three tickets each ended at a guilty line; part of working this one cold is discovering what kind of ending it has.
 
 ### The ticket
 
@@ -186,9 +186,9 @@ A name for the notes file: **manual reference counting** — shared ownership wh
 > [!NOTE]
 > **Surprise for C# devs:** you have been a COM client for most of your career — every Office interop object was one, and the runtime wrapped each in an RCW that did the counting for you. The folklore you may remember — `Marshal.ReleaseComObject`, "never use two dots with interop" — was exactly this chapter leaking up through that abstraction. There is no wrapper here: the count moves only when you move it, and a C# reference's superpower — being *seen* by the collector — is the one thing a raw `ThingRef*` does not have.
 
-This is also `shared_ptr`'s discipline with the count relocated. `shared_ptr` keeps the count in a control block beside the object, and copies of the `shared_ptr` move it; a refcounted SDK keeps the count *inside* the object, because the object crosses a C boundary where no control block could follow. Same invariant — last release destroys — different bookkeeper. (One axis of Shape 3 this lab leaves unmodelled: COM's `QueryInterface`, capability lookup by ID. It rides the same rule — every successful query hands back a reference you own — so nothing below changes when you meet it.)
+This is also `shared_ptr`'s discipline with the count relocated — Chapter 16's Bestiary called Shape 3 "`shared_ptr`, someone else's implementation", and this ticket is where that sentence pays out. `shared_ptr` keeps the count in a control block beside the object, and copies of the `shared_ptr` move it; a refcounted SDK keeps the count *inside* the object, because the object crosses a C boundary where no control block could follow. Same invariant — last release destroys — different bookkeeper. (One axis of Shape 3 this lab leaves unmodelled: COM's `QueryInterface`, capability lookup by ID. It rides the same rule — every successful query hands back a reference you own — so nothing below changes when you meet it.)
 
-### The fix: encode the convention in a type
+### The fix
 
 Patching call sites is the 2.0.1 story again with more steps: every future call site retakes the same exam, and the codebase converges on correct only as fast as its slowest reviewer. The fix that closes the ticket is Chapter 16's habit applied to a count — *wrap the answers in a guard type* — and the migration notes' two sentences become two named constructors:
 
