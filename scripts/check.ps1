@@ -29,9 +29,9 @@ $sdk = ''
 $runArgs = @()
 if ($Rest -and $Rest.Count -gt 0 -and $Rest[0] -in @('fakesdk', 'fakedevice', 'comlab')) {
     $sdk = $Rest[0]
-    if ($Rest.Count -gt 1) { $runArgs = $Rest[1..($Rest.Count - 1)] }
+    if ($Rest.Count -gt 1) { $runArgs = @($Rest[1..($Rest.Count - 1)]) }
 } elseif ($Rest) {
-    $runArgs = $Rest
+    $runArgs = @($Rest)
 }
 
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
@@ -41,8 +41,10 @@ try {
     $flags = @('/nologo', "/std:$std", '/W4', '/EHsc', '/Zi', '/fsanitize=address')
     if ($sdk) {
         $sdkDir = Join-Path $root "exercises/$sdk"
-        $vendor = Get-ChildItem $sdkDir -Filter 'Fake*.cpp' | ForEach-Object FullName
-        cl @flags "/I$sdkDir" @vendor $Source "/Fe:$out" "/Fo$tmp/" "/Fd$tmp/"
+        # @(...) forces an array even for a single vendor file: splatting a
+        # bare string hands cl one argument per CHARACTER (found the hard way).
+        $vendor = @(Get-ChildItem $sdkDir -Filter 'Fake*.cpp' | ForEach-Object FullName)
+        cl @flags "/I$sdkDir" $vendor $Source "/Fe:$out" "/Fo$tmp/" "/Fd$tmp/"
     } else {
         cl @flags $Source "/Fe:$out" "/Fo$tmp/" "/Fd$tmp/"
     }
