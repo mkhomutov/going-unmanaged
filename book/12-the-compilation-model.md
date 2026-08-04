@@ -70,6 +70,10 @@ error LNK2019: unresolved external symbol "void Widget::Draw(void)"
      (Also what you get putting a template's body in a .cpp.)
 ```
 
+### Name mangling — why the symbol looks like that
+
+The linker resolves *symbols*, and a C++ symbol is not your function's name. Overloading means `Draw(int)` and `Draw(double)` must link as different symbols, so the compiler encodes the whole signature into the name — `_ZN6Widget4DrawEv` in the Itanium world, `?Draw@Widget@@QEAAXXZ` from MSVC. That is **name mangling**, and it is why a raw linker error quotes something stranger than anything you wrote (`c++filt` decodes it, `undname` on Windows; Chapter 31 reads mangled frames in sanitizer stacks). Two consequences worth keeping: every compiler mangles its own way, one more reason binaries from different toolchains refuse to mix (Chapter 27); and `extern "C"` on a function switches mangling off — exported under its plain C name, findable by any language and any compiler, which is why every plug-in entry point in this book wears it (Chapter 8's `Plugin_Process`; Chapter 30 makes it a whole technique).
+
 ### Include guards
 
 Since #include is paste, a header included twice via diamond paths would define the class twice in one translation unit. Every header, always:

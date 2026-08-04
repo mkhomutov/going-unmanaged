@@ -15,3 +15,4 @@ your evidence is the compiler warning instead.
 
 Build: g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g your.cpp -o task
   (or: ../../scripts/check.sh your.cpp — from this directory)
+  (Windows: ..\..\scripts\check.ps1 your.cpp — from a Developer PowerShell)

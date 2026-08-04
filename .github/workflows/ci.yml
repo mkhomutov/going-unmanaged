@@ -137,6 +137,18 @@ jobs:
           [ "$d" = 1 ] || { echo "FAIL: Chapter 14 says the documented cl line shows exactly one extra move-construction here; saw $d"; exit 1; }
           [ "$n" = 0 ] || { echo "FAIL: /Zc:nrvo should elide it entirely; saw $n"; exit 1; }
 
+      # scripts/check.ps1 is the Windows mirror of check.sh, and the TASK cards
+      # point Windows readers at it - so it gets the same treatment as every
+      # other claim: exercised here, where a Developer-shell PATH (msvc-dev-cmd
+      # above) provides cl.exe and the ASan runtime, so it cannot rot unnoticed.
+      # One plain build, one through the vendor-code path.
+      - name: check.ps1 smoke test
+        shell: pwsh
+        run: |
+          Set-Content smoke.cpp "#include <cstdio>`nint main() { std::puts(`"hi`"); return 0; }"
+          ./scripts/check.ps1 smoke.cpp
+          ./scripts/check.ps1 solutions/fakesdk_solution.cpp fakesdk
+
   book:
     runs-on: ubuntu-latest
     steps:
@@ -157,6 +169,10 @@ jobs:
       # link, and a diff that looks fine. Runs after the build so it covers the
       # single file too. Cannot check mermaid grammar - see the script's header.
       - run: ./scripts/check_markup.sh
+      # Code the book quotes must equal the code the repo ships. The same-commit
+      # discipline failed silently once (tracer.cpp's Finding labels drifted);
+      # now it is enforced, not trusted.
+      - run: ./scripts/check_verbatim.sh
       # check_markup.sh checks the fence; this checks what is inside it, by
       # drawing every diagram with a real mermaid. Pinned to the major version
       # GitHub itself renders with, so a green run here means what it looks

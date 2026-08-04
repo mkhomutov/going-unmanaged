@@ -2,6 +2,8 @@
 
 If a method is not marked **virtual**, the compiler decides which function to call based on the **variable's type, not the object's actual type**. C# would at least warn about hiding; C++ silently does the wrong thing.
 
+**For Java readers:** your reflex is the more dangerous one here. In Java every instance method has always been virtual and overriding just works; in C++ (as in C#) forgetting the keyword means dispatch silently goes static, with no warning. `override` is `@Override` with teeth.
+
 ```cpp
 class Shape  { public: void Draw() { std::cout << "Shape"; } };   // NOT virtual
 class Circle : public Shape {
@@ -11,6 +13,8 @@ Circle c;
 Shape* p = &c;
 p->Draw();     // prints "Shape"!  - static dispatch, compile-time decision
 ```
+
+**Try it (30 seconds).** Predict what the listing prints before running it. Then add `virtual` and `override` and run again — same variable, same object, different function.
 
 The fix, and the modern habit:
 

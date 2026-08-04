@@ -11,3 +11,4 @@ and `FakeSdk_LiveAllocations()` must be 0 after every scenario.
 
 Build: g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g FakeSDK.cpp your.cpp -o task
   (or: ../../scripts/check.sh your.cpp fakesdk — from this directory)
+  (Windows: ..\..\scripts\check.ps1 your.cpp fakesdk — from a Developer PowerShell)

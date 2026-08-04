@@ -43,6 +43,8 @@ void Rename(Widget w)  { w.name = "new"; }  // edits a COPY - useless
 void Rename(Widget& w) { w.name = "new"; }  // caller's actual object (C# ref)
 ```
 
+(For Java readers: the `T&` line behaves like every object parameter you have ever passed — the callee sees the caller's object. The genuinely new thing is the first line, C++'s default: the entire object, copied.)
+
 Parameter decision guide: small type (int, double, GUID) — by value; big object, read only — **`const T&`** (the workhorse of C++); need to modify caller's object — `T&`; "no object" must be valid — pointer `T*` (can be null). C has no references, which is why C-style APIs use pointers.
 
 ### A.3 explicit

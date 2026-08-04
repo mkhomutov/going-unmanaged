@@ -4,7 +4,7 @@
 
 ## Chapter 10 — Modern C++ Fluency
 
-C++ has had a major update every 3 years since 2011 (C++11/14/17/20/23). These features, used casually, are the difference between current C++ and 2008-era C++.
+C++ has had a major update every 3 years since 2011 (C++11/14/17/20/23/26). These features, used casually, are the difference between current C++ and 2008-era C++.
 
 ### auto — type inference (C#'s var)
 
@@ -75,6 +75,10 @@ void Print(std::string_view sv);  // accepts std::string, literals,
 
 A pointer + length, like C#'s `ReadOnlySpan<char>`. Replaces `const std::string&` for read-only string parameters. Danger: non-owning means it can dangle — never store a string_view to a temporary.
 
+**Try it (30 seconds).** Return a `string_view` of a local `std::string` from a function and read it at the call site under ASan. clang already objects at compile time (`-Wreturn-stack-address`), and the run is a textbook heap-use-after-free — Chapter 31 teaches you to read that report; here it is enough to watch the trap fire.
+
+And string_view is the string-shaped case of an idea your C# already names in general: `Span<T>`/`ReadOnlySpan<T>` over *any* contiguous buffer is **`std::span<T>`** — C++20, so this book's C++17 exercises spell the same thing as the pointer-plus-length pair you will meet in every C API of Chapter 16. When your codebase has span, use it; until then you are writing span by hand and should feel no shame.
+
 ### Structured bindings (C# 7 deconstruction)
 
 ```cpp
@@ -105,7 +109,9 @@ uint32_t, int64_t                // from <cstdint>: 'int' size isn't
 
 ### In the wild: C-style SDKs
 
-Most actively maintained SDKs now require C++17, so nearly all of this is usable in your plug-in or driver code — the exception being the ranges above, which are C++20 and need a newer toolchain. The professional style: modern C++ in *your* logic — optional, lambdas, RAII wrappers — with a thin, disciplined layer where you touch the raw C API. The older the SDK's surface, the more valuable the modern layer you build on top of it.
+Most actively maintained SDKs now require C++17, so nearly all of this is usable in your plug-in or driver code — the exception being the ranges above, which are C++20; every maintained toolchain has had them for years, so whether you may write them is a property of the codebase's `-std=` setting and policy, not of your compiler's age — Chapter 8's dialect lesson again. The professional style: modern C++ in *your* logic — optional, lambdas, RAII wrappers — with a thin, disciplined layer where you touch the raw C API. The older the SDK's surface, the more valuable the modern layer you build on top of it.
+
+The baseline question deserves a straight answer while we are here, because a current reader is entitled to ask why this book pins `-std=c++17` when C++20 is complete in all three compilers and GCC now defaults to it. Because vendor-SDK work inherits its host's toolset: the pinned compiler of Chapter 13's checklist, the plug-in ABI, the embedded toolchain two versions behind — your floor is set by the oldest thing you must link against, and C++17 is what that world lets you *rely* on. Everything taught here is valid C++20 and C++23. A newer-standard codebase changes spellings — `jthread` for thread-plus-join, `erase_if` for erase-remove, `format` for the stream dance, `span` for pointer-plus-length — and this book flags each of those where it teaches the C++17 form. The lessons don't move; only the spellings do.
 
 ---
 

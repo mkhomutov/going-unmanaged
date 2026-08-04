@@ -27,6 +27,8 @@ What it means in practice is the part that matters on your first day: **which wo
 > [!NOTE]
 > **Surprise for C# devs:** this split simply does not exist for you today — there is no `-fno-exceptions` for the CLR, no .NET codebase where `throw` fails to compile, and no library that assumes you cannot catch. In C++, "can I throw here?" is a real question with a per-codebase answer.
 
+**Try it (30 seconds).** Compile `int main() { throw 1; }` with `-fno-exceptions` and read the refusal — one line, and you have seen the other dialect with your own eyes.
+
 ### What a throw actually costs
 
 Modern C++ implementations use **table-based** ("zero-cost") exceptions. The compiler emits side tables mapping instruction ranges to the cleanup actions and handlers for that range, and the generated code contains no checks at all: entering a `try` block costs nothing, and neither does calling a function that might throw. Compare that with an error code, which pays a compare-and-branch at *every* call site on *every* call, whether or not anything ever fails. On the success path, exceptions are the cheaper of the two mechanisms — this is the half of the trade-off that surprises people.
@@ -102,6 +104,8 @@ Most codebases are not on C++23, so most codebases that want this shape ship the
 
 This is the decision C# never asks you to make, and the one that separates C++ code that reads well from C++ code that merely compiles. Ask what *kind of thing* the failure is.
 
+**For Java readers:** you *were* asked — checked versus unchecked is this exact split, with unchecked as the bug row and checked as the value row. An error code is a checked exception without the compiler, and C++'s removed `throw(A, B)` specification was your `throws` clause; the instinct transfers, only the enforcement is gone.
+
 **A bug** — a broken precondition, a violated contract, a state that cannot occur unless someone upstream is wrong. This gets an **`assert`**. It dies loudly in Debug, compiles to nothing under `NDEBUG`, and documents the contract in the one place that cannot go stale. Finding 8 of [Chapter 25](25-findings-from-practice.md#chapter-25--findings-from-practice-a-living-log) is the book's own example: `int& At(size_t i) { assert(i < size_); ... }`. Do not "handle" this case — a caller cannot do anything sensible with the news, because the caller is what is broken. (The same Finding names the alternative: `.at()`, which *throws* `std::out_of_range`. That is the right choice when the index arrives from outside your program — a file, a user, a socket. At that point it stopped being a bug and became the next category.)
 
 **A value** — an expected, recoverable runtime failure. The file is missing, the device is busy, the input does not parse, the key is not in the map. This gets an **error code, `optional`, or `expected`**: failure is *data*, it appears in the signature, and the caller handles it as a normal part of using the function. Most failures in most programs are here.
@@ -145,7 +149,8 @@ The spine of all of it is **translation at the boundary**, in both directions. I
 typedef int32_t PluginStatus;
 enum : int32_t { PluginOk = 0, PluginFailed = 1, PluginOutOfMemory = 2 };
 
-// The entry point the host calls. Nothing escapes it.
+// The entry point the host calls, exported under its plain C name -
+// extern "C" switches off name mangling (Chapter 12). Nothing escapes it.
 extern "C" PluginStatus Plugin_Process(Ctx* ctx) {
     try {
         DoWork(ctx);                       // my code, my rules: it may throw

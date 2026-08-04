@@ -2,6 +2,8 @@
 
 **The single biggest mental shift from C#.** In C#, the type decides: class = reference, struct = value. In C++, **everything behaves like a C# struct by default** — assignment copies, passing copies, returning copies. Whether something is shared is decided *at the point of use*, not by the type's author.
 
+**For Java readers:** no struct intuition to borrow — read it as *everything assigns like a Java primitive: the whole object copied, fields and methods included*. Java has no such type at all, so this is the one anchor you build from scratch; the code below is the construction kit.
+
 ```cpp
 class Widget {          // 'class' keyword, but behaves like a C# STRUCT
 public:
@@ -40,6 +42,8 @@ for (const auto& w : widgets)  // read-only pass - the idiom for viewing
 
 > [!WARNING]
 > **Trap:** The missing `&` is dead silent — compiles, runs, does nothing. One of the most common real-world C++ bugs.
+
+**Try it (30 seconds).** `void AddOne(std::vector<int> v) { v.push_back(1); }` — call it and predict the caller's `v.size()`. Then add the `&` and predict again. The first answer is this Trap; the second is the fix.
 
 ### Trap 2 — modifying a copy returned from a function
 

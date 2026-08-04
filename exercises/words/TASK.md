@@ -12,4 +12,5 @@ map-to-vector transfer, a two-key sort lambda, filtering, and bounded output.
 Build: g++ -std=c++20 -Wall -Wextra -fsanitize=address,undefined -g your.cpp -o task
   (C++20 for std::erase_if;
    or: STD=c++20 ../../scripts/check.sh your.cpp words_sample.txt — from this directory)
+   (Windows: $env:STD='c++20'; ..\..\scripts\check.ps1 your.cpp words_sample.txt)
 Run:   ./task words_sample.txt

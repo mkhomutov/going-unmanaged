@@ -20,6 +20,7 @@ constructor, watch every assertion still pass, and rebuild under
 book-only on purpose: it exists to fail, so it is not in `build_all.sh`.
 
 Build: ../../scripts/check.sh your_test.cpp
+  (Windows: ..\..\scripts\check.ps1 your_test.cpp — from a Developer PowerShell)
   (from a directory of your own, with YOUR `Buffer.h` next to your test.
    Extracting it is step 2 — build against your own extraction, not this
    repository's, or you have skipped the part the chapter is about. check.sh

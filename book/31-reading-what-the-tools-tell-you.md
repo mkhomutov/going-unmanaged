@@ -193,6 +193,27 @@ Everything here uses code you already have.
 5. **Use a watchpoint in anger.** Take any program with a value that changes more than once, break after it is constructed, set a watchpoint on one member, and let it stop at every write. Do this once and you will reach for it forever.
 6. **Practise on a leak you cannot see** (Mac only): confirm that a deliberately leaking program under ASan reports nothing at all on your machine, and then decide how *you* will catch leaks — CI, a container, or platform tooling. Write the answer in your notes; it is a permanent property of your setup.
 
+### The symptom index
+
+Real problems do not arrive labelled with the chapter that owns them; they arrive as something on a screen. The four ticket chapters are already titled as their symptoms — this table routes the rest of the book the same way, from what you see to where it is taught.
+
+| What you see | Where it is taught |
+|---|---|
+| A crash after `main` returns — `__cxa_finalize` or `atexit` in the stack | [Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit) |
+| Works in Debug, breaks in Release | [Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior), [Chapter 13](13-toolchain-quick-reference.md#chapter-13--toolchain-quick-reference), and this chapter's `-O2` section |
+| `undefined reference` / `Undefined symbols` / `LNK2019` | [Chapter 12](12-the-compilation-model.md#chapter-12--the-compilation-model), [Chapter 23](23-exercise-the-build-model-lab.md#chapter-23--exercise-the-build-model-lab); the sanitizer-runtime variant, [Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake) |
+| `multiple definition` / `duplicate symbol` / `LNK2005` | [Chapter 12](12-the-compilation-model.md#chapter-12--the-compilation-model), [Chapter 23](23-exercise-the-build-model-lab.md#chapter-23--exercise-the-build-model-lab); two versions of one library, [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) |
+| A watched value goes wrong after a container grows | [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation), [Chapter 21](21-exercise-iterator-invalidation.md#chapter-21--exercise-iterator-invalidation), [Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report) |
+| The host says objects are still live at shutdown | [Chapter 17](17-exercise-the-fakesdk.md#chapter-17--exercise-the-fakesdk), [Chapter 35](35-still-live-at-unload.md#chapter-35--still-live-at-unload) |
+| A crash inside a callback, or after the callback's owner died | [Chapter 18](18-exercise-the-device-sdk.md#chapter-18--exercise-the-device-sdk), [Chapter 22](22-exercise-lambda-lifetimes.md#chapter-22--exercise-lambda-lifetimes), [Chapter 29](29-concurrency.md#chapter-29--concurrency) |
+| Garbage — or mirrored — values decoded from a wire or a file | [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture) |
+| Sanitizers green, values wrong | Finding 10 in [Chapter 25](25-findings-from-practice.md#chapter-25--findings-from-practice-a-living-log), [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture) |
+| No leak report on a Mac that should have one | This chapter's leak section, and Finding 10 in [Chapter 25](25-findings-from-practice.md#chapter-25--findings-from-practice-a-living-log) |
+| Non-ASCII text corrupts, or a string's length looks wrong | [Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings), Recipe 17 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) |
+| `-858993460` or `0xcccccccc` in a variable | [Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior) |
+| It broke when the library added a private member | [Chapter 27](27-dependency-management.md#chapter-27--dependency-management), [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) |
+| The process died in CI and the log is empty | [Chapter 28](28-testing.md#chapter-28--testing), Recipe 15 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) |
+
 ---
 
 

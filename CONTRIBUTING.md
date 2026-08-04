@@ -105,6 +105,14 @@ commit, exactly as testlab works. And the numbering is the Findings
 contract: add your recipe at the end with the next free number, add its row
 to the index table, never renumber existing ones.
 
+The verbatim rule, made precise (it applies to every quoted pairing, not
+just recipes): a committed lab file may open with a `//`-comment provenance
+banner that the chapter listing omits — the contract covers everything below
+the banner, character for character. `scripts/check_verbatim.sh` enforces
+all of it in CI, so a drifted pairing fails the build rather than waiting
+for a reader to notice; if you add a new quoted listing, add its pairing to
+that script in the same commit.
+
 ## The questions every piece of material answers
 
 The handbook has four goals — learn, change the mindset, practice, help solve

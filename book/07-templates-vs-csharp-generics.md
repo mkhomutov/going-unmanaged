@@ -4,6 +4,8 @@ They look identical — `List<T>` vs `std::vector<T>` — but the machinery is c
 
 Note what that does and does not say. .NET generics are *reified*, not erased: the JIT really does emit a distinct specialization per value type, which is why `List<int>` boxes nothing and why `typeof(T)` works. The difference is *when* and *from what* — the JIT specializes from IL at run time, on demand, for the types actually used; C++ specializes from source at compile time, and every instantiation is in the binary before the program starts.
 
+**For Java readers:** your baseline is the opposite one — erasure, one shared body, boxed primitives — so do not pattern-match the C# column onto your generics. The compensation: C++ templates are the per-type specialization Java never had, while Consequence 4's T-is-gone-at-runtime is the erasure you have always lived with. Half of this chapter is home turf.
+
 ```cpp
 template <typename T>
 T Max(T a, T b) { return (a > b) ? a : b; }
@@ -31,6 +33,8 @@ void Sort(std::ranges::range auto& container);   // terse form
 ### Consequence 2 — templates live in headers
 
 The compiler must see the full template source to stamp out a version for your T, so template code cannot hide in a .cpp file — implementation and all go in the header. Put it in a .cpp and consumers get **linker errors** (unresolved external). (The one sanctioned exception, which you will meet in vendor code: a library that knows every T it will ever serve can keep the body in a .cpp and add an **explicit instantiation** — `template class Foo<int>;` — for exactly those types. It is a build-time optimization for closed sets, not the default.)
+
+**Try it (30 seconds).** Move a template's body into a .cpp behind a declaring header and predict the failure *stage* — compiler or linker — before building from another file. Telling those two apart at a glance is the Chapter 12 skill, arriving early.
 
 ### Consequence 3 — templates are more powerful than generics
 

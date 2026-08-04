@@ -15,7 +15,7 @@ Then the sabotage runs under AddressSanitizer (see "Experiments" below).
 <details>
 <summary><strong>Show the solution — do the exercise cold first</strong></summary>
 
-One file, as your attempt will be. In this repository the same code is now two: the class in `solutions/Buffer.h`, the demo `main()` in `solutions/buffer.cpp`. Nothing about the class changed — but a class sharing a translation unit with an entry point cannot be linked into a test binary, so [Chapter 28](28-testing.md#chapter-28--testing) has to split it before it can test it. Read this listing as one file; that split is a later chapter's problem.
+One file, as your attempt will be. In this repository the same code is now two: the class in `solutions/Buffer.h`, the demo `main()` in `solutions/buffer.cpp`. Nothing about the class changed — but a class sharing a translation unit with an entry point cannot be linked into a test binary, so [Chapter 28](28-testing.md#chapter-28--testing) has to split it before it can test it. Read this listing as one file; that split is a later chapter's problem. (One more repository-only difference: the committed demo wraps the deliberate self-move in pragmas silencing `-Wself-move`, so `build_all.sh` stays warning-clean — your own one-file attempt should *see* that warning, as the notes below say.)
 
 ```cpp
 #include <algorithm>

@@ -49,6 +49,8 @@ std::vector<int> c = std::move(a);  // MOVE: c takes a's pointer.
 > [!NOTE]
 > **The big reveal:** std::move moves nothing. It is just a cast — it marks a value as "you may steal from this", making the compiler select the move overload instead of the copy one. The stealing happens inside the move constructor. After moving from a variable, don't use it except to assign or destroy it.
 
+**Try it (30 seconds).** Write a bare `std::move(a);` statement — no receiver — and predict `a.size()` on the next line. Nothing moved: the cast did everything it ever does on its own, which is nothing. (Newer standard libraries even warn that you discarded the result.)
+
 ### Rvalue references — the && syntax
 
 `Buffer&&` means "reference to something I'm allowed to steal from": a temporary, or something explicitly marked with `std::move`.

@@ -1,4 +1,5 @@
-// Appendix F, Recipes 2-5 - strings: split, join, build, format.
+// Appendix F, Recipes 2-5 and 17 - strings: split, join, build, format,
+// and the UTF-8 <-> UTF-16 boundary.
 //
 // The recipe functions below are quoted VERBATIM in book/F-rosetta-cookbook.md:
 // editing one means editing the appendix in the same commit (the testlab
@@ -9,6 +10,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 // Recipe 2 - string.Split
@@ -61,6 +63,76 @@ std::string describe_c(int count, double ratio) {
     return buffer;
 }
 
+// Recipe 17 - the UTF-8 <-> UTF-16 boundary
+// UTF-8 -> UTF-16. Invalid input becomes U+FFFD, the convention browsers
+// follow; no exceptions, no locale, no deprecated machinery.
+std::u16string utf8_to_utf16(std::string_view utf8) {
+    std::u16string out;
+    for (std::size_t i = 0; i < utf8.size(); ) {
+        const auto b0 = static_cast<unsigned char>(utf8[i]);
+        std::size_t n = b0 < 0x80          ? 1
+                      : (b0 & 0xE0) == 0xC0 ? 2
+                      : (b0 & 0xF0) == 0xE0 ? 3
+                      : (b0 & 0xF8) == 0xF0 ? 4 : 0;
+        char32_t cp = n == 1 ? b0
+                    : n     ? b0 & (0x7Fu >> n)   // the lead byte's payload
+                            : 0xFFFDu;            // stray or invalid lead
+        std::size_t taken = 1;
+        for (std::size_t k = 1; n && k < n && i + k < utf8.size(); ++k) {
+            const auto bk = static_cast<unsigned char>(utf8[i + k]);
+            if ((bk & 0xC0) != 0x80) { n = 0; break; }  // sequence cut short
+            cp = (cp << 6) | (bk & 0x3Fu);
+            ++taken;
+        }
+        if (n == 0 || taken != n || cp > 0x10FFFFu ||
+            (cp >= 0xD800u && cp <= 0xDFFFu) ||           // surrogates
+            (n == 2 && cp < 0x80u) || (n == 3 && cp < 0x800u) ||
+            (n == 4 && cp < 0x10000u))                    // overlong forms
+            cp = 0xFFFDu;
+        i += taken;
+        if (cp < 0x10000u) {
+            out.push_back(static_cast<char16_t>(cp));
+        } else {                                  // astral plane: a pair
+            cp -= 0x10000u;
+            out.push_back(static_cast<char16_t>(0xD800u + (cp >> 10)));
+            out.push_back(static_cast<char16_t>(0xDC00u + (cp & 0x3FFu)));
+        }
+    }
+    return out;
+}
+
+// UTF-16 -> UTF-8. Lone surrogates become U+FFFD; everything else is
+// mechanical: split the code point across 1-4 bytes, high bits first.
+std::string utf16_to_utf8(std::u16string_view utf16) {
+    std::string out;
+    for (std::size_t i = 0; i < utf16.size(); ++i) {
+        char32_t cp = utf16[i];
+        if (cp >= 0xD800u && cp <= 0xDBFFu && i + 1 < utf16.size() &&
+            utf16[i + 1] >= 0xDC00u && utf16[i + 1] <= 0xDFFFu) {
+            cp = 0x10000u + ((cp - 0xD800u) << 10) + (utf16[i + 1] - 0xDC00u);
+            ++i;                                  // consumed the pair
+        } else if (cp >= 0xD800u && cp <= 0xDFFFu) {
+            cp = 0xFFFDu;                         // lone surrogate
+        }
+        if (cp < 0x80u) {
+            out.push_back(static_cast<char>(cp));
+        } else if (cp < 0x800u) {
+            out.push_back(static_cast<char>(0xC0u | (cp >> 6)));
+            out.push_back(static_cast<char>(0x80u | (cp & 0x3Fu)));
+        } else if (cp < 0x10000u) {
+            out.push_back(static_cast<char>(0xE0u | (cp >> 12)));
+            out.push_back(static_cast<char>(0x80u | ((cp >> 6) & 0x3Fu)));
+            out.push_back(static_cast<char>(0x80u | (cp & 0x3Fu)));
+        } else {
+            out.push_back(static_cast<char>(0xF0u | (cp >> 18)));
+            out.push_back(static_cast<char>(0x80u | ((cp >> 12) & 0x3Fu)));
+            out.push_back(static_cast<char>(0x80u | ((cp >> 6) & 0x3Fu)));
+            out.push_back(static_cast<char>(0x80u | (cp & 0x3Fu)));
+        }
+    }
+    return out;
+}
+
 int main() {
     // Recipe 2, including the two behaviors the appendix claims: interior
     // empty fields are kept, the final empty field is not (C# keeps it).
@@ -80,5 +152,30 @@ int main() {
     // Recipe 5: both spellings produce the same text.
     assert(describe(3, 0.5) == "3 samples, ratio 0.50");
     assert(describe_c(3, 0.5) == "3 samples, ratio 0.50");
+
+    // Recipe 17: the appendix's numbers, the damage policy, and - the real
+    // oracle - every Unicode scalar value round-tripped both ways.
+    {
+        const std::string g = "Gr\xc3\xbc\xc3\x9f""e";          // "Grüße" spelled in bytes
+        assert(g.size() == 7);
+        assert(utf8_to_utf16(g).size() == 5);
+        assert(utf16_to_utf8(utf8_to_utf16(g)) == g);
+        const std::string clef = "\xf0\x9d\x84\x9e";            // U+1D11E, one code point
+        assert(clef.size() == 4 && utf8_to_utf16(clef).size() == 2);
+        assert(utf8_to_utf16("\xC3") == u"\uFFFD");               // cut short
+        assert(utf8_to_utf16("\xC0\xAF") == u"\uFFFD");           // overlong form
+        assert(utf16_to_utf8(std::u16string(1, char16_t(0xD800))) == "\xEF\xBF\xBD");
+        for (char32_t cp = 0; cp <= 0x10FFFFu; ++cp) {
+            if (cp >= 0xD800u && cp <= 0xDFFFu) continue;
+            std::u16string u16;
+            if (cp < 0x10000u) u16.push_back(static_cast<char16_t>(cp));
+            else {
+                const char32_t v = cp - 0x10000u;
+                u16.push_back(static_cast<char16_t>(0xD800u + (v >> 10)));
+                u16.push_back(static_cast<char16_t>(0xDC00u + (v & 0x3FFu)));
+            }
+            assert(utf8_to_utf16(utf16_to_utf8(u16)) == u16);
+        }
+    }
     return 0;
 }

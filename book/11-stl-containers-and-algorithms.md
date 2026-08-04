@@ -36,6 +36,8 @@ if (it != m.end()) Use(it->second);   // ->first key, ->second value
 if (m.contains("wall")) ...  // C++20, like ContainsKey
 ```
 
+**Try it (30 seconds).** Predict `m.size()` after `if (m["answer"] == 42) {}` on an empty map — then print it. The comparison read nothing; it *made* something.
+
 ### Iterators
 
 An iterator is a generalized pointer: `begin()` points at the first element, `end()` points **one past the last** (a sentinel — never dereference it). The half-open range [begin, end) is the universal STL currency.

@@ -58,6 +58,8 @@ or, from this directory:
 ```
 ../../scripts/check.sh your.cpp fakedevice              # ASan + UBSan
 SAN=thread ../../scripts/check.sh your.cpp fakedevice   # ThreadSanitizer
+# Windows: ..\..\scripts\check.ps1 your.cpp fakedevice covers the ASan half;
+# MSVC has no TSan, so run the SAN=thread build under clang/gcc (WSL works).
 ```
 
 ## Done means

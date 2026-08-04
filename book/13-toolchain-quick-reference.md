@@ -17,6 +17,20 @@ cl /std:c++17 /W4 /EHsc /Zi /fsanitize=address main.cpp
 
 These are the commands you type while learning. On a real project you type them once, into a build description, and a tool reproduces them for every file and every configuration — see [Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake).
 
+### The cheap always-on check: hardened standard library modes
+
+Sanitizers are development-only; this switch is cheap enough to leave on. Each standard library ships a hardening mode — a compile-time define that turns `v[i]` out of bounds and its relatives into a guaranteed immediate trap instead of quiet UB:
+
+```bash
+# libstdc++ (GCC, most Linux):
+g++ -std=c++17 -D_GLIBCXX_ASSERTIONS main.cpp
+# libc++ (clang, Apple):
+clang++ -std=c++17 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE main.cpp
+# MSVC: Debug builds check iterators by default; /sdl adds more
+```
+
+`std::vector<int> v(3); v[7];` runs to a shrug without it and dies on the spot with it. This is not a sanitizer replacement — no report, no stacks, just an honest crash at the scene of the crime — but it costs little enough to ship, which a sanitizer never does. And it is where the language is headed: C++26 standardizes exactly this as hardened guarantees on `vector`, `span`, `string` and friends (the broader "safety profiles" effort moved to C++29), so when the memory-safety discourse reaches your team, these switches are its deployable half, today.
+
 ### Debugging a plug-in inside a host application
 
 - **Visual Studio:** Debug > Attach to Process > the host's .exe (or set your plug-in project's debug command to launch the host directly). Breakpoints in your plug-in code hit once the DLL is loaded.

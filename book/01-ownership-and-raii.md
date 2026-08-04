@@ -1,5 +1,13 @@
 # Part I — The Mental Shift
 
+Two standing offers before anything else. If `*`, `&`, `->`, `const`, `size_t` or `explicit` are rusty — or new — read [Appendix A](A-fundamentals-refresher.md#appendix-a--fundamentals-refresher) first: ten minutes, then come back; Chapter 1 uses all of them without slowing down. And none of these chapters is meant to be taken on trust. Every snippet in Parts I–IV runs with one line:
+
+```bash
+clang++ -std=c++17 -Wall -Wextra file.cpp -o t && ./t
+```
+
+(`g++` spells it the same; MSVC is `cl /std:c++17 /W4 /EHsc file.cpp`, and the full toolchain story is [Chapter 13](13-toolchain-quick-reference.md#chapter-13--toolchain-quick-reference).) The **Try it** paragraphs scattered through these chapters are thirty-second uses of that line: predict out loud first, then run. Being wrong in under a minute is the cheapest lesson this book can sell you.
+
 ---
 
 ## Chapter 1 — Ownership and RAII
@@ -14,6 +22,8 @@ void ProcessFile() {
     // ... use file ...
 }   // <- destructor runs HERE, file closed. Always. No finally needed.
 ```
+
+**Try it (30 seconds).** Give a struct a printing destructor, make one local in `main` and one at namespace scope, and end `main` twice — once with `return 0;`, once with `std::exit(0);`. Predict which `~` lines each run prints before you look: that is the guarantee above, and its escape hatch, observed.
 
 ### The old bad way that RAII replaces
 
@@ -91,7 +101,8 @@ struct Child  {
 class FileHandle {
     FILE* f;
 public:
-    explicit FileHandle(const char* path) : f(std::fopen(path, "r")) {
+    explicit FileHandle(const char* path)      // 'explicit': Appendix A.3
+        : f(std::fopen(path, "r")) {
         if (!f) throw std::runtime_error("open failed");
     }
     ~FileHandle() { if (f) std::fclose(f); }   // cleanup guaranteed

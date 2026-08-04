@@ -1,8 +1,8 @@
 ## Appendix F — The Rosetta Cookbook
 
 Parts I–VI teach the language. This appendix serves a different moment:
-mid-task, the C# name already in your head, fifteen seconds to spend. Find
-the thing you are reaching for in the left column; the recipe gives the C++
+mid-task, the C# name already in your head — or the Java name, middle
+column — and fifteen seconds to spend. Find the thing you are reaching for; the recipe gives the C++
 spelling, says why it looks that way, and names the trap that costs an
 afternoon. The *why* paragraphs cross-reference the chapter that owns each
 concept rather than re-teaching it — this page is for looking up, not for
@@ -14,25 +14,26 @@ asserts what each one claims on every push. Recipe numbers are stable —
 recipes append and are never renumbered — so a note that says "Recipe 7"
 stays right.
 
-| Reaching for... | The recipe |
-|---|---|
-| `File.ReadAllText` | [Recipe 1 — Read a whole file into a string](#recipe-1--read-a-whole-file-into-a-string) |
-| `string.Split` | [Recipe 2 — Split a string](#recipe-2--split-a-string) |
-| `string.Join` | [Recipe 3 — Join strings](#recipe-3--join-strings) |
-| `StringBuilder` | [Recipe 4 — Build a string in a loop](#recipe-4--build-a-string-in-a-loop) |
-| `string.Format` / `$"..."` | [Recipe 5 — Format values into a string](#recipe-5--format-values-into-a-string) |
-| `Stopwatch` | [Recipe 6 — Time a call](#recipe-6--time-a-call) |
-| `using` / `IDisposable` | [Recipe 7 — Wrap a C handle so it frees itself](#recipe-7--wrap-a-c-handle-so-it-frees-itself) |
-| `TryGetValue` | [Recipe 8 — Look up a key without inserting it](#recipe-8--look-up-a-key-without-inserting-it) |
-| `File.WriteAllText` | [Recipe 9 — Write a string to a file](#recipe-9--write-a-string-to-a-file) |
-| `Path.Combine` | [Recipe 10 — Build a path from pieces](#recipe-10--build-a-path-from-pieces) |
-| `File.Exists` / `Directory.Exists` | [Recipe 11 — Check that a file or directory exists](#recipe-11--check-that-a-file-or-directory-exists) |
-| `Directory.GetFiles` | [Recipe 12 — List the files in a directory](#recipe-12--list-the-files-in-a-directory) |
-| `Task.Run` / `await` | [Recipe 13 — Run work on another thread and wait for it](#recipe-13--run-work-on-another-thread-and-wait-for-it) |
-| `event` / `EventHandler` | [Recipe 14 — Expose an event](#recipe-14--expose-an-event) |
-| `Console.WriteLine` / `Console.Error` | [Recipe 15 — Print a diagnostic you will actually see](#recipe-15--print-a-diagnostic-you-will-actually-see) |
-| `System.Timers.Timer` / `Task.Delay` | [Recipe 16 — Run something every interval](#recipe-16--run-something-every-interval) |
-| LINQ | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
+| Reaching for... | ...or, in Java | The recipe |
+|---|---|---|
+| `File.ReadAllText` | `Files.readString` | [Recipe 1 — Read a whole file into a string](#recipe-1--read-a-whole-file-into-a-string) |
+| `string.Split` | `String.split` | [Recipe 2 — Split a string](#recipe-2--split-a-string) |
+| `string.Join` | `String.join` | [Recipe 3 — Join strings](#recipe-3--join-strings) |
+| `StringBuilder` | `StringBuilder` (same name) | [Recipe 4 — Build a string in a loop](#recipe-4--build-a-string-in-a-loop) |
+| `string.Format` / `$"..."` | `String.format` | [Recipe 5 — Format values into a string](#recipe-5--format-values-into-a-string) |
+| `Stopwatch` | `System.nanoTime` | [Recipe 6 — Time a call](#recipe-6--time-a-call) |
+| `using` / `IDisposable` | try-with-resources | [Recipe 7 — Wrap a C handle so it frees itself](#recipe-7--wrap-a-c-handle-so-it-frees-itself) |
+| `TryGetValue` | `Map.get` / `getOrDefault` | [Recipe 8 — Look up a key without inserting it](#recipe-8--look-up-a-key-without-inserting-it) |
+| `File.WriteAllText` | `Files.writeString` | [Recipe 9 — Write a string to a file](#recipe-9--write-a-string-to-a-file) |
+| `Path.Combine` | `Path.of` / `resolve` | [Recipe 10 — Build a path from pieces](#recipe-10--build-a-path-from-pieces) |
+| `File.Exists` / `Directory.Exists` | `Files.exists` / `isRegularFile` | [Recipe 11 — Check that a file or directory exists](#recipe-11--check-that-a-file-or-directory-exists) |
+| `Directory.GetFiles` | `Files.list` | [Recipe 12 — List the files in a directory](#recipe-12--list-the-files-in-a-directory) |
+| `Task.Run` / `await` | `ExecutorService` + `Future.get` | [Recipe 13 — Run work on another thread and wait for it](#recipe-13--run-work-on-another-thread-and-wait-for-it) |
+| `event` / `EventHandler` | `addXxxListener` | [Recipe 14 — Expose an event](#recipe-14--expose-an-event) |
+| `Console.WriteLine` / `Console.Error` | `System.out` / `System.err` | [Recipe 15 — Print a diagnostic you will actually see](#recipe-15--print-a-diagnostic-you-will-actually-see) |
+| `System.Timers.Timer` / `Task.Delay` | `ScheduledExecutorService` | [Recipe 16 — Run something every interval](#recipe-16--run-something-every-interval) |
+| `Encoding.UTF8.GetString` / `GetBytes` | `getBytes(UTF_8)` / `new String(bytes, UTF_8)` | [Recipe 17 — Convert between UTF-8 and UTF-16](#recipe-17--convert-between-utf-8-and-utf-16) |
+| LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
 
@@ -553,6 +554,102 @@ Needs `<atomic>`, `<chrono>`, `<functional>`, `<thread>`.
 
 > [!WARNING]
 > **Trap:** a timer whose tick touches an object must not outlive it — and C# let you forget `Stop()` because the GC kept the target alive; here the join in the destructor *is* the Stop, and skipping it (a detached thread) is a tick delivered into freed memory.
+
+### Recipe 17 — Convert between UTF-8 and UTF-16
+
+**In C#:** `Encoding.UTF8.GetBytes(s)` / `Encoding.UTF8.GetString(bytes)` — or nothing at all, because `string` *was* UTF-16 and the runtime converted at every boundary without telling you.
+
+**The recipe:**
+
+```cpp
+// UTF-8 -> UTF-16. Invalid input becomes U+FFFD, the convention browsers
+// follow; no exceptions, no locale, no deprecated machinery.
+std::u16string utf8_to_utf16(std::string_view utf8) {
+    std::u16string out;
+    for (std::size_t i = 0; i < utf8.size(); ) {
+        const auto b0 = static_cast<unsigned char>(utf8[i]);
+        std::size_t n = b0 < 0x80          ? 1
+                      : (b0 & 0xE0) == 0xC0 ? 2
+                      : (b0 & 0xF0) == 0xE0 ? 3
+                      : (b0 & 0xF8) == 0xF0 ? 4 : 0;
+        char32_t cp = n == 1 ? b0
+                    : n     ? b0 & (0x7Fu >> n)   // the lead byte's payload
+                            : 0xFFFDu;            // stray or invalid lead
+        std::size_t taken = 1;
+        for (std::size_t k = 1; n && k < n && i + k < utf8.size(); ++k) {
+            const auto bk = static_cast<unsigned char>(utf8[i + k]);
+            if ((bk & 0xC0) != 0x80) { n = 0; break; }  // sequence cut short
+            cp = (cp << 6) | (bk & 0x3Fu);
+            ++taken;
+        }
+        if (n == 0 || taken != n || cp > 0x10FFFFu ||
+            (cp >= 0xD800u && cp <= 0xDFFFu) ||           // surrogates
+            (n == 2 && cp < 0x80u) || (n == 3 && cp < 0x800u) ||
+            (n == 4 && cp < 0x10000u))                    // overlong forms
+            cp = 0xFFFDu;
+        i += taken;
+        if (cp < 0x10000u) {
+            out.push_back(static_cast<char16_t>(cp));
+        } else {                                  // astral plane: a pair
+            cp -= 0x10000u;
+            out.push_back(static_cast<char16_t>(0xD800u + (cp >> 10)));
+            out.push_back(static_cast<char16_t>(0xDC00u + (cp & 0x3FFu)));
+        }
+    }
+    return out;
+}
+
+// UTF-16 -> UTF-8. Lone surrogates become U+FFFD; everything else is
+// mechanical: split the code point across 1-4 bytes, high bits first.
+std::string utf16_to_utf8(std::u16string_view utf16) {
+    std::string out;
+    for (std::size_t i = 0; i < utf16.size(); ++i) {
+        char32_t cp = utf16[i];
+        if (cp >= 0xD800u && cp <= 0xDBFFu && i + 1 < utf16.size() &&
+            utf16[i + 1] >= 0xDC00u && utf16[i + 1] <= 0xDFFFu) {
+            cp = 0x10000u + ((cp - 0xD800u) << 10) + (utf16[i + 1] - 0xDC00u);
+            ++i;                                  // consumed the pair
+        } else if (cp >= 0xD800u && cp <= 0xDFFFu) {
+            cp = 0xFFFDu;                         // lone surrogate
+        }
+        if (cp < 0x80u) {
+            out.push_back(static_cast<char>(cp));
+        } else if (cp < 0x800u) {
+            out.push_back(static_cast<char>(0xC0u | (cp >> 6)));
+            out.push_back(static_cast<char>(0x80u | (cp & 0x3Fu)));
+        } else if (cp < 0x10000u) {
+            out.push_back(static_cast<char>(0xE0u | (cp >> 12)));
+            out.push_back(static_cast<char>(0x80u | ((cp >> 6) & 0x3Fu)));
+            out.push_back(static_cast<char>(0x80u | (cp & 0x3Fu)));
+        } else {
+            out.push_back(static_cast<char>(0xF0u | (cp >> 18)));
+            out.push_back(static_cast<char>(0x80u | ((cp >> 12) & 0x3Fu)));
+            out.push_back(static_cast<char>(0x80u | ((cp >> 6) & 0x3Fu)));
+            out.push_back(static_cast<char>(0x80u | (cp & 0x3Fu)));
+        }
+    }
+    return out;
+}
+```
+
+**Why it looks like this.** The honest part first: the standard library has
+no good answer — `<codecvt>` was deprecated in C++17 with no replacement —
+so real codebases convert with the platform (`MultiByteToWideChar` /
+`WideCharToMultiByte` on Windows, where vendor "wide" strings and 16-bit
+`wchar_t` live), with ICU or their framework, or with the vendor SDK's own
+helpers. [Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)'s
+rule is only that the conversion is *named*, wherever it lives. What
+hand-rolling the mechanism once buys you is the demystification: seventy
+lines cover every code point Unicode will ever assign, both directions are
+bit-work at documented offsets — [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
+wire discipline applied to text — and damaged input becomes `U+FFFD` (the
+browser convention) instead of an exception, which is the policy question
+every converter must answer and most APIs bury. `char16_t` is the portable
+spelling of "16-bit unit"; on Windows it and `wchar_t` are the same bits.
+Needs `<string>`, `<string_view>`.
+
+> [!WARNING]
+> **Trap:** none of the three `size()`s counts characters — "Grüße" is five characters, seven UTF-8 bytes and five UTF-16 units, while one 𝄞 is one, four and two. A length check that "worked for years" on ASCII is an encoding bug with a long fuse.
 
 <!-- nav:begin -->
 [← Appendix D — Resources, Further Reading, and First-Week Tips](D-resources.md) · [Contents](README.md)

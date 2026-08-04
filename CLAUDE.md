@@ -117,6 +117,19 @@ Chapter 25's Finding 10.
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
   flags (optional 2nd arg links fakesdk/fakedevice vendor code); `SAN=thread`
   switches the sanitizer for the threadlab's second build
+- `scripts/check.ps1` — check.sh's Windows/MSVC mirror (`cl /std:c++17 /W4
+  /EHsc /fsanitize=address`, same vendor argument; MSVC has no UBSan and no
+  TSan, and the script says so). Smoke-tested by the buildlab-msvc CI job so
+  it cannot rot on a Mac-based maintainer
+- `scripts/check_verbatim.sh` — enforces every book↔code verbatim pairing
+  mechanically: full-file containment (vendor headers, ticket-lab fixed
+  files, solution folds), banner-stripped containment for testlab/abilab
+  (the convention: a committed lab file may open with a `//` provenance
+  banner the chapter listing omits; the verbatim contract covers everything
+  below it), every Appendix F cpp fence in a cookbook TU, and the four
+  ticket TASK cards' broken listings in their chapters. Run it after
+  touching any quoted listing; adding a new quoted pairing means adding it
+  to this script in the same commit. CI runs it in the book job
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
   below over `book/` and the built single file; run by CI, and worth running
   locally after touching either. Structure only, never mermaid grammar
@@ -141,8 +154,9 @@ Chapter 25's Finding 10.
   Chapter 14's `/Zc:nrvo` claim: the chapter's own `cl /std:c++17 /W4 /EHsc`
   line must print exactly one extra move-construction in the RVO section, and
   adding `/Zc:nrvo` must print none — it is the one claim in the book resting
-  on a vendor default rather than on the standard), and a
-  `book` job: build_book.sh, --check-nav, check_markup.sh,
+  on a vendor default rather than on the standard — then a check.ps1 smoke
+  test, one plain build and one through the fakesdk vendor path), and a
+  `book` job: build_book.sh, --check-nav, check_markup.sh, check_verbatim.sh,
   check_mermaid.sh (which installs mermaid-cli, the job's one slow step),
   and a lychee link check
   (`--offline --include-fragments`: relative links and anchors are blocking,

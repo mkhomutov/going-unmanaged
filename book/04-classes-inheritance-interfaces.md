@@ -31,6 +31,8 @@ int Widget::count_ = 0;                    // static member definition
 Widget::Widget() : Widget(0, "unnamed") {} // delegating ctor (C++11)
 ```
 
+(That trailing `const` on `GetSize` — a promise the call changes nothing — is Appendix A.5's subject, along with `const` parameters.)
+
 Key deltas from C#: access specifiers label whole sections rather than each member; there are no properties (write Get/Set methods — no `get; set;` sugar); static data members need a separate definition in a .cpp (pre-C++17; `inline static` fixes it now); and the closing brace takes a **semicolon** — the classic returning-developer stumble.
 
 ### Constructors and the member initializer list
@@ -120,6 +122,8 @@ class Copier  : public Scanner, public Printer { };
 class Scanner : virtual public Device { };
 class Printer : virtual public Device { };
 ```
+
+**Try it (30 seconds).** Type the broken diamond in and ask for `copier.id_`: the complaint names both `Device` subobjects. Predict what happens to that line under the virtual-inheritance fix before rebuilding.
 
 The stance to hold: "I keep multiple inheritance to interface-style bases — pure virtual, no data — which defuses the worst of the diamond: no duplicated state. Two interfaces sharing an ancestor still leave an ambiguous upcast the compiler flags; virtual inheritance resolves it, and I treat needing that as a design smell."
 

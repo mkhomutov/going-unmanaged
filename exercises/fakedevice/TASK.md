@@ -11,3 +11,4 @@ session (predict what breaks first!); error paths; `FakeDevice_OpenHandles() == 
 
 Build: g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g FakeDevice.cpp your.cpp -o task
   (or: ../../scripts/check.sh your.cpp fakedevice — from this directory)
+  (Windows: ..\..\scripts\check.ps1 your.cpp fakedevice — from a Developer PowerShell)
