@@ -203,7 +203,7 @@ appendix section should have an answer to each; where the honest answer is
 ## Where the book lives
 
 The book is one file per chapter under [book/](book/README.md):
-`01-ownership-and-raii.md` … `34-parse-this-capture.md`, then
+`01-ownership-and-raii.md` … `35-still-live-at-unload.md`, then
 `A-`…`F-<slug>.md` for the appendices (E stays free until the glossary,
 ROADMAP item 10, lands), with `book/README.md` carrying the
 front matter and the Contents. Concretely, for a contributor:

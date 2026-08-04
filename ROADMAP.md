@@ -15,7 +15,7 @@ Delivered items stay where they are, marked **DONE** with a pointer to the
 chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
-**Everything on this list appends.** New chapters go at the end (Chapter 35
+**Everything on this list appends.** New chapters go at the end (Chapter 36
 onward, in whatever order they land); new appendices continue from E. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
@@ -376,7 +376,7 @@ functions, `mutable`, and why const-correctness is retrofitted with pain but
 free if it is there from the start. Cross-reference rather than duplicate;
 the fragments stay where they are.
 
-### 11. Scenario chapters — tickets, not task cards
+### 11. Scenario chapters — tickets, not task cards — DONE (Chapters 32–35)
 
 **Missing:** the bridge between exercise and job. Every exercise in the book
 announces its diagnosis before the symptom — the chapter shape opens with
@@ -416,10 +416,10 @@ the reader reaches the fix. Candidates, each its own chapter:
 - Item 7's byte-level protocol work is this framing already (*"parse this
   capture"*), and the carried-over COM refcounting lab is *"the vendor
   upgraded the SDK, and the new API is refcounted"* — one contribution can
-  close two entries. **Item 7 landed as Chapter 34, closing both at once;
-  the COM lab remains.**
+  close two entries. **Item 7 landed as Chapter 34, and the COM lab as
+  Chapter 35 — the candidate list is closed.**
 
-The settled rules hold unchanged: chapters append (35 onward now),
+The settled rules hold unchanged: chapters append (36 onward now),
 deliberately broken programs stay book-only or generated, and everything
 green is wired into `build_all.sh`.
 
@@ -463,8 +463,26 @@ values, with the capture's second frame deliberately off every four-byte
 boundary. The staged half-fix was verified before being asserted:
 `#pragma pack(1)` makes `sizeof` match and turns every multi-byte value
 into its mirror image — and silences the one report UBSan had, since a
-packed struct's alignment requirement drops to one. The item stays open:
-the COM upgrade remains unwritten.
+packed struct's alignment requirement drops to one.
+
+Chapter 35 — *Still Live at Unload* — is the fourth and last of the listed
+candidates, closing this item and the carried-over Bestiary Shape 3 gap in
+one contribution. The vendor from Chapter 17 ships SDK 2.0 (a new vendor
+drop, `exercises/comlab/FakeSDK2.*` — version 1.x's files did not change),
+the mechanical port misreads the ownership convention in both directions
+at once, and the two bugs cancel on one object: the host's counter says
+**4 of 5** still live, and the object the port mistreated worst is the one
+the counter cannot see. The staged patch was verified before being
+asserted: fixing the leak alone makes the plain build print 0 and exit 0 —
+it looks completely fixed — while promoting the over-release crash from
+"two customers, sometimes" to every close, with the culprit line sitting
+ON the report's freed-by stack (the deliberate inversion of Chapter 33).
+The fix is a type, not a patch: `ref.h`'s adopt/share wrapper, held by
+`build_all.sh` to **two judges at once** — the vendor's live-object
+counter for a release too few, the sanitizers for a release too many.
+This item is now DONE as listed; the ticket *format* stays open — new
+scenario chapters arrive by PR against the CONTRIBUTING questions, graded
+as ever on questions 9 and 10.
 
 ---
 
@@ -602,9 +620,11 @@ ticket — a hand-rolled mini-parser, stdlib-only.
 
 Already recorded in [CONTRIBUTING.md](CONTRIBUTING.md) and still open:
 
-- **A COM-style refcounting lab.** Bestiary Shape 3 is the only one of the
-  five shapes without an exercise. Item 11 names it as a candidate ticket —
-  *"the vendor upgraded the SDK, and the new API is refcounted."*
+- **A COM-style refcounting lab — DONE.** Bestiary Shape 3 was the only one
+  of the five shapes without an exercise; it is now Chapter 35 and
+  `exercises/comlab/`, delivered inside item 11's ticket framing exactly as
+  the candidate line predicted — *"the vendor upgraded the SDK, and the new
+  API is refcounted."* See item 11's delivered notes.
 - **A threaded-callback lab** — **DONE.** It was a FakeDevice stretch goal, then
   Chapter 29's *Try it*; it is now `exercises/threadlab/` with
   `solutions/device_threaded_solution.cpp` and a ThreadSanitizer step in CI.

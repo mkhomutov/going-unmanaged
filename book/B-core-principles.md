@@ -127,6 +127,7 @@ One line each. If you can say these fluently and back them with code, the concep
 - "Vendor containers and strings mirror the STL — same concepts and invalidation rules; convert at the boundary, encoding named."
 - "A plug-in is a DLL: headers for the compiler, SDK .libs for the linker, the host exports the symbols at runtime."
 - "No exception crosses the plug-in boundary, and callbacks registered with the SDK must outlive their registration."
+- "In a refcounted API, the function's name tells me whether I own a release — acquired, copied or created means yes; peeked or borrowed means no. I encode each answer once, in a wrapper's named constructors — adopt or share — and after that no line of mine spells Retain or Release."
 
 ---
 

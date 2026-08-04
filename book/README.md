@@ -61,6 +61,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 32. [It Crashes on Exit](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit) — the first ticket: a crash after `main` returns, and the link-order bet behind it
 33. [Here Is the Report](33-here-is-the-report.md#chapter-33--here-is-the-report) — the second ticket: a sanitizer report arrives attached, and the guilty line is in none of its stacks
 34. [Parse This Capture](34-parse-this-capture.md#chapter-34--parse-this-capture) — the third ticket: an attached hex dump, a struct that padded itself, and a wire the host read backwards
+35. [Still Live at Unload](35-still-live-at-unload.md#chapter-35--still-live-at-unload) — the fourth ticket: the vendor's 2.0 is refcounted, and two opposite bugs cancel on one object
 
 **[Appendices](A-fundamentals-refresher.md#appendices)**
 

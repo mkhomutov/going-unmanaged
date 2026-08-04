@@ -93,6 +93,14 @@ run "reportlab"   $CXX $FLAGS   exercises/reportlab/registry.cpp exercises/repor
 # aliasing. The capture's second frame sits at offset 10, off every
 # four-byte boundary - decoding at any offset is part of the fix's claim.
 run "capturelab"  $CXX $FLAGS   exercises/capturelab/wire.cpp exercises/capturelab/main.cpp -o $OUT/capturelab
+# Chapter 35's lab. FakeSDK2.* is vendor code (the 2.0 upgrade of Chapter
+# 17's SDK); ref.h and main.cpp are the FIXED port (the broken 2.0 port
+# lives in the lab's TASK.md and the chapter - it exists to fail). The
+# fix's claim is exact balance - every reference released once, none twice
+# - and each direction needs its own judge: the binary asserts the
+# vendor's live-object counter reaches 0 after shutdown (a release too
+# few), and the sanitizers watch for the opposite (a release too many).
+run "comlab"      $CXX $FLAGS   exercises/comlab/FakeSDK2.cpp exercises/comlab/main.cpp -o $OUT/comlab
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -144,6 +152,9 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/reportlab 100 > /dev/null
 # The Chapter 34 lab: the golden-capture assert IS the gate here - the
 # sanitizers have nothing to say about this chapter's bug class.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/capturelab > /dev/null
+# The Chapter 35 lab: both judges at once - the counter assert inside the
+# binary, the sanitizers around it.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/comlab > /dev/null
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from

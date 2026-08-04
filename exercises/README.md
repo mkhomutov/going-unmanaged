@@ -1,7 +1,7 @@
 # Exercises — the index
 
 Every exercise is stated in full in the book; each directory here holds a task
-card (`TASK.md`) — and, for the two SDK labs, the vendor code — so you can
+card (`TASK.md`) — and, for the SDK labs, the vendor code — so you can
 attempt everything cold, without the book's reference solution on the next screen.
 
 The rule that makes it work (Chapter 24): **do the exercises cold** — compiler,
@@ -26,6 +26,7 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [The Exit Crash](exitlab/TASK.md) | 32 | a ticket, not a task: static init/destruction order across TUs | ~60 min | the files themselves: the fixed [logger.cpp](exitlab/logger.cpp) + [audit.cpp](exitlab/audit.cpp), green in both link orders |
 | [Here Is the Report](reportlab/TASK.md) | 33 | a ticket with the sanitizer report attached: locate the bug from the report alone | ~60 min | the files themselves: the fixed [main.cpp](reportlab/main.cpp) + [registry.h](reportlab/registry.h), green at 0 and 100 hot-plugs |
 | [Parse This Capture](capturelab/TASK.md) | 34 | a ticket with the capture attached: padding, byte order, and the overlay that was never legal | ~90 min | the files themselves: the fixed [wire.cpp](capturelab/wire.cpp) + [main.cpp](capturelab/main.cpp), asserted against the hand decode |
+| [Still Live at Unload](comlab/TASK.md) | 35 | a ticket against an upgraded SDK: manual refcounting, and the wrapper that ends it | ~90 min | the files themselves: [ref.h](comlab/ref.h) + the fixed [main.cpp](comlab/main.cpp), balanced under both judges |
 
 Chapter 24 (the practice plan) sequences everything above the test lab — the
 nine Part V exercises plus the Bestiary reading — into a one-week schedule; the
@@ -38,15 +39,17 @@ to publish the shapes those two taught you to consume.
 recipe listings, compiled and asserted by `build_all.sh` so the cookbook
 cannot rot (its README has the sync rule). Nothing there to attempt cold.
 
-Six directories hold their reference in the open, rather than behind a fold.
-`exitlab/`, `reportlab/` and `capturelab/` are the ticket-shaped ones: each
-TASK.md carries the broken code to work from plus the ticket's attached
-evidence (reportlab's sanitizer report, capturelab's bus capture and ICD
-table), and the files beside it are the fixed state — built in two link
-orders for `exitlab/`, run at two hot-plug counts for `reportlab/`,
-asserted against a hand-decoded capture with a deliberately unaligned
-frame for `capturelab/` — because each fix's claim is exactly what one
-build cannot prove.
+Seven directories hold their reference in the open, rather than behind a
+fold. `exitlab/`, `reportlab/`, `capturelab/` and `comlab/` are the
+ticket-shaped ones: each TASK.md carries the broken code to work from plus
+the ticket's attached evidence (reportlab's sanitizer report, capturelab's
+bus capture and ICD table, comlab's migration notes), and the files beside
+it are the fixed state — built in two link orders for `exitlab/`, run at
+two hot-plug counts for `reportlab/`, asserted against a hand-decoded
+capture with a deliberately unaligned frame for `capturelab/`, and held to
+two judges at once for `comlab/` (the vendor's live-object counter and the
+sanitizers, one per direction of a refcount mistake) — because each fix's
+claim is exactly what one build cannot prove.
 `buildlab/` does double duty: it is Chapter 23's lab, and Chapter 26 builds that
 same trio with CMake, so the reference
 [`CMakeLists.txt`](buildlab/CMakeLists.txt) lives there. `testlab/` holds
@@ -67,6 +70,7 @@ where you stand:
 scripts/check.sh path/to/your.cpp                 # plain exercises
 scripts/check.sh your.cpp fakesdk                 # links the FakeSDK vendor code
 scripts/check.sh your.cpp fakedevice              # links the FakeDevice vendor code
+scripts/check.sh your.cpp comlab                  # links the FakeSDK 2.0 vendor code (Ch 35)
 STD=c++20 scripts/check.sh your.cpp file.txt      # C++20 + args passed to the run
 SAN=thread scripts/check.sh your.cpp fakedevice   # ThreadSanitizer instead
 ```
@@ -75,7 +79,9 @@ That last one is for the threaded lab, and it is a *second* run rather than a
 replacement: ThreadSanitizer cannot be combined with AddressSanitizer, so
 threaded code needs both builds to be checked at all (Chapter 29).
 
-Vendor code (`fakesdk/Fake*`, `fakedevice/Fake*`) is read-only: read it, compile
-it, link it — never edit it. `threadlab/` has none of its own: it links
-`fakedevice/`'s from where it lives, which is what a second lab against the same
-SDK should do.
+Vendor code (`fakesdk/Fake*`, `fakedevice/Fake*`, `comlab/FakeSDK2.*`) is
+read-only: read it, compile it, link it — never edit it. `threadlab/` has
+none of its own: it links `fakedevice/`'s from where it lives, which is what
+a second lab against the same SDK should do. `comlab/`'s is deliberately a
+*new* vendor drop rather than an edit to `fakesdk/` — the vendor shipped
+2.0; version 1.x did not change, and neither do its files.
