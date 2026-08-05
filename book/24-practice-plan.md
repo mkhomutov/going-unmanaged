@@ -20,6 +20,17 @@ A one-week hands-on plan (compress or stretch as needed). Each day's exercise no
 - **Cold rewrites:** FileHandle, ThingDataGuard, and the Rule of Five Buffer — until each takes under ten minutes without references.
 - **Narrate:** explain your reasoning out loud while coding. You'll be explaining decisions to colleagues; the habit transfers directly to code reviews and pair sessions.
 
+### Week 2 and beyond
+
+The week above builds the skills; what keeps them is retrieval on a schedule, because the forgetting curve does not care how good Day 7 felt. Everything below is self-grading — the bar is already defined, so no willpower is spent deciding whether you passed.
+
+- **Day 14, and again around Day 30 — the Buffer, cold.** One fresh file, from memory, all five operations, `noexcept` and `explicit` where they belong, and `scripts/check.sh` green on the first run. The bar is the standing drills' own: under ten minutes without references. Day 14 will be humbling and Day 30 will not be — that difference *is* the curve, measured.
+- **Week 3 — one ticket, from the card alone.** Pick a ticket chapter you have already worked ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit) onward) and redo it from its `exercises/*/TASK.md` card only — recreate the broken state, diagnose on paper, fix, and run the chapter's own acceptance test — without opening the chapter. The tickets are the book's best retrieval events precisely because they force half a dozen earlier chapters back into play at once; treat them as scheduled practice, not as pages you visit when a real codebase finally goes wrong.
+- **Every ticket chapter ends with a "Reproduce it cold" prompt** — a closed-book rebuild of that bug class in a fresh file. Fold them into weeks 2–4, one per sitting; ten minutes each. Building the disease from memory is the strongest evidence you will recognize it in the wild, where it does not announce its chapter number.
+- **Before your first real code review — Appendix B, once through.** The principles are in speakable first person for exactly this moment: the reviewer's comment lands, and the sentence that answers it is already yours.
+
+If the job has already started, the schedule compresses honestly: real tickets replace the drills the moment they arrive, and the only item that must survive contact is the cold Buffer rewrite — it is ten minutes, and it is the whole ownership model in one file.
+
 ---
 
 ---

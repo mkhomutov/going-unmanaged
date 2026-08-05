@@ -173,5 +173,5 @@ Know-they-exist, for when you meet them: C++20 adds `std::ssize(c)` — the same
 
 
 <!-- nav:begin -->
-[← Chapter 35 — Still Live at Unload](35-still-live-at-unload.md) · [Contents](README.md) · [Appendix B — Core Principles (Cheat Sheet) →](B-core-principles.md)
+[← Chapter 37 — No Repro, Dump Attached](37-no-repro-dump-attached.md) · [Contents](README.md) · [Appendix B — Core Principles (Cheat Sheet) →](B-core-principles.md)
 <!-- nav:end -->

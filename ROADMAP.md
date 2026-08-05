@@ -15,8 +15,8 @@ Delivered items stay where they are, marked **DONE** with a pointer to the
 chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
-**Everything on this list appends.** New chapters go at the end (Chapter 36
-onward, in whatever order they land); new appendices continue from E. No item
+**Everything on this list appends.** New chapters go at the end (Chapter 38
+onward, in whatever order they land); new appendices continue from G. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
 first — see the numbering rules in [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -376,6 +376,10 @@ functions, `mutable`, and why const-correctness is retrofitted with pain but
 free if it is there from the start. Cross-reference rather than duplicate;
 the fragments stay where they are.
 
+**Sequencing note (2026-08):** still worth doing and still open — but item 9
+(P/Invoke) now comes first; see the note there for why the deep review
+re-ordered them.
+
 ### 11. Scenario chapters — tickets, not task cards — DONE (Chapters 32–35)
 
 **Missing:** the bridge between exercise and job. Every exercise in the book
@@ -482,7 +486,76 @@ The fix is a type, not a patch: `ref.h`'s adopt/share wrapper, held by
 counter for a release too few, the sanitizers for a release too many.
 This item is now DONE as listed; the ticket *format* stays open — new
 scenario chapters arrive by PR against the CONTRIBUTING questions, graded
-as ever on questions 9 and 10.
+as ever on questions 9 and 10. (Items 14 and 15 have since appended
+Chapters 36 and 37 in exactly this format — the performance ticket and
+the crash-dump ticket, each with an inversion of its own.)
+
+### 14. The performance ticket — DONE (Chapter 36)
+
+**Missing:** performance and profiling, anywhere — the 2026 deep review's
+competitive pass found zero hits for profiling or benchmarking, no
+remaining roadmap item covering them, and called it the largest genuine
+content gap against the reader's actual job: a C# developer arrives with a
+dotTrace/BenchmarkDotNet reflex and the assumption "C++ is fast", then
+meets accidental copies and allocation in hot paths, and "the plug-in
+makes the host laggy" is a canonical month-two ticket. The `const auto&`
+reflex was taught (Chapter 10) but never measured.
+
+**A contribution looks like:** a ticket-format chapter — the host stutters,
+profiler evidence attached in Chapter 33's inversion, an accidental copy
+in a hot callback as the diagnosis, and a fix verified by an asserted
+timing/allocation-count harness.
+
+**Delivered as Chapter 36 — *The Host Stutters* — with one honest turn the
+sketch did not predict.** Building the lab and measuring it showed the
+accidental copies barely move the *mean* (~15–20% on the maintainer's
+machine — a 4 KB block copies through a warm cache in microseconds), so a
+chapter claiming "the copy made it slow" would have failed its own
+verification standard. What the copies actually break is the *deadline*:
+thirty-three allocator calls per tick on the host's real-time thread,
+where malloc's lock and unbounded worst case turn a 21.3 ms budget into
+occasional 24–26 ms misses no sampling profiler can catch in the act. So
+the ticket became the first whose attached evidence appears to *acquit*
+(support's percentages are correct and irrelevant), the fix stayed the
+promised two ampersands, and the acceptance harness asserts the one number
+that is a claim about every tick at once: **zero heap allocations**,
+counted by a replaced `operator new`, run by `build_all.sh` at two session
+lengths (`exercises/perflab/`). The C# bridge writes itself: the reader
+already owns this discipline as "avoiding GC pressure"; only the spelling
+of the allocation is new. One new Appendix B group (Deadline code),
+mirrored in the same commit.
+
+### 15. The crash-dump ticket — DONE (Chapter 37)
+
+**Missing:** post-mortem debugging. Every ticket's evidence was
+sanitizer-era and developer-side, while the artifact that actually arrives
+from the field in SDK work is a crash report, core file, or minidump: a
+Release-build stack of raw addresses, symbols to be supplied by you, no
+sanitizer anywhere, and no repro. The deep review called it the natural
+sequel to Chapter 31 and the last gap between the ticket arc and the real
+inbox.
+
+**A contribution looks like:** a ticket-format chapter — customer crash
+report attached, no repro on the bench; symbols and symbolication, a
+Release stack with a frame inlined out of existence, the fault-address
+arithmetic, and the honest limits of post-mortem evidence.
+
+**Delivered as Chapter 37 — *No Repro, Dump Attached* — every artifact in
+it generated from a real crash on the maintainer's machine.** The fault
+address is `0x10` — null plus `offsetof`, the member named from the
+address before any tool runs (Chapter 33's arithmetic with the sign
+flipped); naive symbolication of the crash PC names `Report()` at a line
+that *cannot fault*, because the guilty helper was inlined — verified: the
+debugger reconstructs it as a bracketed `[inlined]` frame, `atos -i` /
+`addr2line -i` expand it, and the stripped binary shows the customer's
+two-anonymous-frames view. The bug is capability-shaped (the calibration
+pack exists only on bench units — the *bench bias*), so the fix's
+acceptance is a configuration matrix: `build_all.sh` runs
+`exercises/dumplab/` under both device configurations, because the crash
+lived only in the one the matrix never had — and the canonical flags name
+the bug's exact line in that configuration, which is the chapter's
+coverage lesson. Two new Appendix B principles under Debugging, mirrored
+in the same commit.
 
 ---
 
@@ -495,6 +568,17 @@ here.
 
 **Missing:** P/Invoke, marshalling, and the round trip home.
 
+**Sequenced first (2026-08).** The tier said "distinctive"; the 2026 deep
+review's competitive pass said "underpriced" and re-sequenced it: this is
+now the next *major* chapter investment, ahead of item 8. The reasoning is
+the reader, not the topic — exposing the native code back to C# (a test
+harness, an internal tool, a UI) is a near-certain need within months for
+exactly this book's reader; the callback-lifetime lessons of Chapters 22
+and 29 have a direct and harder-biting analogue when the callee is a
+garbage-collected delegate; and no competitor covers the round trip from
+the native side. Item numbers never shift, so it stays filed here — the
+number is its address, not its priority.
+
 **Evidence:** one passing mention of P/Invoke, nothing on marshalling. A
 developer with 17 years of C# behind them, now working against a native SDK,
 very plausibly ends up exposing that native code to C# — a test harness, an
@@ -506,7 +590,7 @@ conversion at the boundary, who owns memory that crosses it, and callback
 lifetime when a delegate is handed to native code. The Chapter 22 lambda
 lifetime lesson has a direct analogue here, and it bites harder.
 
-### 10. A glossary
+### 10. A glossary — DONE
 
 **Missing:** Appendix E.
 
@@ -518,6 +602,20 @@ colleagues will use ADL, POD, CRTP and SFINAE without introduction.
 per term, each pointing at the chapter where the idea actually lives. Terms
 the book already uses come first; terms the reader will merely *hear* come
 second, marked as such.
+
+**Delivered as Appendix E — *Glossary* — in exactly the sketched shape:**
+two alphabetical groups (some thirty-five terms the book uses, then the
+recognition-only five: ADL, CRTP, linkage, POD, SFINAE), one or two
+sentences each, every entry ending in the owning chapter's link so the
+definition is the on-ramp rather than the destination. Two small calls the
+sketch left open, decided in the writing: the symptom-to-page half of
+"where do I look this up" was **not** duplicated here — Chapter 31's
+symptom index already owns it, and the appendix's intro hands off to it —
+and `volatile` landed in the *uses* group rather than the *hear* group,
+because Chapter 29 turned out to already teach it (it is the C# reflex
+trap of the second group's kind, but with a chapter to point at). The
+appendix letters now run A–F with no gap, which retires the "letters skip
+one until item 10 lands" caveat recorded under item 12.
 
 ### 12. The Rosetta Cookbook — DONE
 

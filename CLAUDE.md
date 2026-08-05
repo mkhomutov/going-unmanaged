@@ -6,19 +6,19 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 35 chapters, appendices A–D and F), indexed by `book/README.md`. The
+(6 parts, 37 chapters, appendices A–F), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
-artifact produced by `scripts/build_book.sh`. Appendices run A–D plus F —
-E waits for the glossary (ROADMAP item 10).
+artifact produced by `scripts/build_book.sh`. Appendices run A–F with no
+gap — E is the glossary (ROADMAP item 10, DONE).
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
 concurrency, authoring an ABI boundary, reading tool output. Chapter 29
 discharges the threading promises made in Ch 16/18; Chapter 30 is the
 authoring side of Ch 16's Bestiary (which only teaches consuming those
 shapes); Chapter 31 supplies the sanitizer reports Ch 24's Day 2 tells the
-reader to study but never shows. Chapters 32–35 are the ticket-shaped
-scenario chapters (ROADMAP item 11, DONE): symptom first, no concept named
-in advance, diagnosis behind a spoiler fold. Ch 33 adds the inversion the
+reader to study but never shows. Chapters 32–37 are the ticket-shaped
+scenario chapters (ROADMAP items 11, 14 and 15, all DONE): symptom first,
+no concept named in advance, diagnosis behind a spoiler fold. Ch 33 adds the inversion the
 job supplies — the sanitizer report arrives attached to the ticket, and the
 diagnosis is made on paper from the report alone before anything is built.
 Ch 34 closes item 7 inside the format (padding, endianness, the overlay
@@ -26,7 +26,14 @@ cast) with the opposite inversion: the canonical flags stay green on all
 three of its bugs, so the attached capture hand-decoded against the ICD is
 the only oracle. Ch 35 closes the carried-over Bestiary Shape 3 gap:
 FakeSDK ships a refcounted 2.0, two opposite ownership bugs cancel on one
-object, and the fix is a type (adopt/share wrapper), not a patch.
+object, and the fix is a type (adopt/share wrapper), not a patch. Ch 36
+(item 14) is the performance ticket, whose attached profile appears to
+ACQUIT — support's percentages are correct and irrelevant, because the
+crime is 33 allocator calls per tick on a deadline thread; the judge is a
+replaced-operator-new allocation counter, not a timing. Ch 37 (item 15)
+is the crash-dump ticket — nothing to run, a stripped customer crash
+report, fault address 0x10 read as null+offsetof, and the guilty frame
+inlined out of the stack; the acceptance is a two-configuration matrix.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -38,9 +45,8 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–35, `A-`…`F-<slug>.md` for the appendices,
-  E absent until the glossary lands (digits sort before letters, so the
-  listing is the reading order)
+  `NN-<slug>.md` for chapters 01–37, `A-`…`F-<slug>.md` for the appendices
+  (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
 - `exercises/` — one directory per exercise, each with a TASK.md task card;
@@ -103,6 +109,21 @@ Chapter 25's Finding 10.
   at once — the binary asserts the vendor's live-object counter reaches 0
   after shutdown (catches a release too few), the sanitizers catch a
   release too many. check.sh links it via the `comlab` argument
+- `exercises/perflab/` — Chapter 36's ticket lab. TASK.md carries the
+  broken 2.1.0 Tick, the attached profile and the host's engine log (the
+  broken shape is book-only, it exists to fail); meter.h/.cpp + main.cpp
+  are the FIXED state, quoted verbatim in the chapter, and build_all.sh
+  runs the harness at 50 AND 1000 ticks — the harness replaces operator
+  new and asserts ZERO heap allocations, because the sanitizers are
+  silent on an accidental copy and a timing assert would measure the
+  runner instead of the code
+- `exercises/dumplab/` — Chapter 37's ticket lab. TASK.md carries the
+  broken 3.4.0 session.cpp and the attached customer crash report (the
+  broken shape is book-only, it exists to fail — at -O2, so the reader
+  can hold a post-mortem on the corpse); session.h/.cpp + main.cpp are
+  the FIXED state, quoted verbatim in the chapter, and build_all.sh runs
+  both device configurations — the crash lived only in the one the bench
+  never had
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
@@ -128,7 +149,7 @@ Chapter 25's Finding 10.
   files, solution folds), banner-stripped containment for testlab/abilab
   (the convention: a committed lab file may open with a `//` provenance
   banner the chapter listing omits; the verbatim contract covers everything
-  below it), every Appendix F cpp fence in a cookbook TU, and the four
+  below it), every Appendix F cpp fence in a cookbook TU, and the six
   ticket TASK cards' broken listings in their chapters. Run it after
   touching any quoted listing; adding a new quoted pairing means adding it
   to this script in the same commit. CI runs it in the book job
@@ -307,24 +328,30 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 32+, Appendix E+) — no item requires renumbering. Delivered items
+(Chapter 38+, Appendix G+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
   Chapter 26; dependency management was item 2 and is now Chapter 27;
   testing was item 3 and is now Chapter 28; concurrency was item 4 and is
   now Chapter 29
-- Tier 2: consolidated const-correctness (item 8) is all that remains.
-  Scenario chapters were item 11 and are DONE — Chapters 32–35, the format
-  open to new tickets by PR. Byte-level protocol work was item 7 and is
-  now Chapter 34, closing item 11's capture candidate with it; authoring
-  an ABI boundary was item 6 and is now Chapter 30; the debugging chapter
-  was item 5 and is now Chapter 31
-- Tier 3: C++/C# interop (P/Invoke), a glossary (Appendix E), SOLID without
-  the runtime (item 13 — the reader's design vocabulary, un-fused from the
-  .NET machinery; a gather-and-translate chapter like item 8). The Rosetta
+- Tier 2: consolidated const-correctness (item 8) is all that remains —
+  and it now sequences AFTER item 9 (P/Invoke), which the 2026 deep
+  review promoted to the next major chapter. Scenario chapters were item
+  11 and are DONE — Chapters 32–35, then items 14 and 15 appended the
+  performance ticket (Chapter 36 + perflab) and the crash-dump ticket
+  (Chapter 37 + dumplab) in the same format, which stays open to new
+  tickets by PR. Byte-level protocol work was item 7 and is now Chapter
+  34; authoring an ABI boundary was item 6 and is now Chapter 30; the
+  debugging chapter was item 5 and is now Chapter 31
+- Tier 3: C++/C# interop (item 9, P/Invoke — re-sequenced as the next
+  major chapter, see Tier 2), SOLID without the runtime (item 13 — the
+  reader's design vocabulary, un-fused from the .NET machinery; a
+  gather-and-translate chapter like item 8). The glossary was item 10 and
+  is now Appendix E (letters run A–F with no gap). The Rosetta
   Cookbook was item 12 and is now Appendix F — Recipes 1–8, then 9–13
-  (files, paths, async), then 14–16 (events, logging, timers); it grows by
+  (files, paths, async), then 14–16 (events, logging, timers), then 17
+  (UTF-8↔UTF-16); it grows by
   PR like the Findings log (Recipe template in CONTRIBUTING.md)
 - Carried over: both DONE. The COM-style refcounting exercise (Bestiary
   Shape 3's missing lab) is Chapter 35 + `exercises/comlab/`; the

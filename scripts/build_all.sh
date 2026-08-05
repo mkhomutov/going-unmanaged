@@ -101,6 +101,20 @@ run "capturelab"  $CXX $FLAGS   exercises/capturelab/wire.cpp exercises/capturel
 # vendor's live-object counter reaches 0 after shutdown (a release too
 # few), and the sanitizers watch for the opposite (a release too many).
 run "comlab"      $CXX $FLAGS   exercises/comlab/FakeSDK2.cpp exercises/comlab/main.cpp -o $OUT/comlab
+# Chapter 36's lab. The committed files are the FIXED state (the broken
+# 2.1.0 Tick lives in the lab's TASK.md and the chapter - it exists to
+# fail). The harness replaces operator new and asserts ZERO heap
+# allocations across the session's ticks - the judge for this chapter's
+# bug class, because the sanitizers and the warnings are silent on an
+# accidental copy, and a timing assert would measure the runner instead
+# of the code. Run twice below at different session lengths.
+run "perflab"     $CXX $FLAGS   exercises/perflab/meter.cpp exercises/perflab/main.cpp -o $OUT/perflab
+# Chapter 37's lab. The committed files are the FIXED state (the broken
+# 3.4.0 session.cpp lives in the lab's TASK.md and the chapter - it
+# exists to fail, at -O2, so the reader can hold a post-mortem on the
+# corpse). Run twice below, once per device configuration: the crash
+# lived only in the configuration the test matrix never had.
+run "dumplab"     $CXX $FLAGS   exercises/dumplab/session.cpp exercises/dumplab/main.cpp -o $OUT/dumplab
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -155,6 +169,15 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/capturelab > /dev/null
 # The Chapter 35 lab: both judges at once - the counter assert inside the
 # binary, the sanitizers around it.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/comlab > /dev/null
+# The Chapter 36 lab at two session lengths: zero-allocations-per-tick is a
+# claim of independence from session length, and one length cannot prove it.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/perflab 50 > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/perflab 1000 > /dev/null
+# The Chapter 37 lab under both device configurations - the bench's
+# calibrated unit and the field's base model. The crash lived only in the
+# second, and one configuration cannot prove a claim about both.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/dumplab 1 > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/dumplab 0 > /dev/null
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from

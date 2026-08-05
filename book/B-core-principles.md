@@ -68,6 +68,8 @@ One line each. If you can say these fluently and back them with code, the concep
 - "The shape of a sanitizer report names the bug class before I read it — three stacks is a use-after-free, one is a leak, and no stack at all with a column number is UBSan."
 - "A stack from an optimized build is missing frames — I reproduce at -O0 -g before I believe what a trace does or doesn't say."
 - "When I need to know who changed a value, I set a watchpoint — old value, new value, and the frame that did it — instead of adding print statements."
+- "A fault address just past null is a member offset — I read it against the struct definition before I read a line of code."
+- "A crash report is only as good as the symbol files I archived on release day — I keep the dSYM or PDB for every shipped build, and I symbolicate with inline expansion, because the frame that did it may live inside the frame that is named."
 
 **Static lifetime**
 
@@ -76,6 +78,10 @@ One line each. If you can say these fluently and back them with code, the concep
 **Wire formats**
 
 - "A struct's layout belongs to my compiler and a frame's belongs to the wire — I never overlay one on the other. I decode at documented offsets with readers that spell the wire's byte order, and the same code is right on every host."
+
+**Deadline code**
+
+- "On a deadline thread I treat the allocator as I/O: the hot path allocates nothing, locks nothing, and blocks on nothing — and I prove it with a counter, because a profiler's mean flatters while a deadline punishes the worst case."
 
 **Modern C++**
 

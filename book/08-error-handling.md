@@ -168,6 +168,39 @@ extern "C" PluginStatus Plugin_Process(Ctx* ctx) {
 
 The `catch (...)` is not paranoia. The host's frames were compiled by someone else's toolchain, quite possibly with exceptions disabled entirely — unwinding into them is undefined behavior on a good day and a silent `terminate` on a normal one. [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) makes this one of the rules of authoring a boundary of your own.
 
+### The drill: ten failures, three verdicts
+
+The bug/value/event decision is the chapter's whole point, and reading about a decision trains nothing — so make it ten times, now, on paper. For each scenario write one of **assert**, **value** (error code / `optional` / `expected`), or **throw**, plus one sentence of why. Some are deliberately not what they first smell like; the reasoning is worth more than the verdict. Answers are in the fold below — no peeking until all ten are written.
+
+1. `Buffer::At(i)` receives `i >= size_`. The index came from your own loop, `for (size_t i = 0; i < buf.Size(); ++i)` — three lines above, in code you wrote.
+2. The same accessor, same class — but this time the index is a row number the operator typed into a "go to row" box on the dashboard.
+3. `Device_Read` returns `DeviceBusy`. The scanner is shared with the vendor's own control panel, and the manual says concurrent access is expected.
+4. Row 412,809 of a million-row import fails to parse. The spec says: skip malformed rows, finish the import, report how many were skipped.
+5. The same importer, first thing it does: the file's magic number is wrong. This is not our format at all — no row of it will mean anything.
+6. `SessionLog`'s constructor cannot open its log file.
+7. Deep inside a document operation, a `push_back` throws `std::bad_alloc`.
+8. Your plug-in exports `Plugin_GetData(Ctx*, Data*)`, and the host calls it with a null `Data*`. The SDK documentation says the host never does that.
+9. On first launch there is no preferences file yet. Defaults exist for everything.
+10. After a refactor added a fourth value to your own `enum class Mode`, a `switch` in your own dispatch function receives a `Mode` that matches no case.
+
+<details>
+<summary>Show the verdicts — write your ten down first</summary>
+
+1. **Assert.** A broken precondition in code you control on both sides: if `i` escapes your own loop bound, the loop is wrong, and no caller can "handle" its own arithmetic being broken. This is Finding 8's line exactly: `assert(i < size_)` — loud in Debug, free in Release, and the contract documented where it cannot go stale.
+2. **Value.** Same line of code, opposite verdict — because the classification follows the *source of the data*, not the function it lands in. An operator's typo is an expected runtime input, not a broken program: validate it and return something the dashboard can turn into a red border. (`.at()`, which throws `std::out_of_range`, is the standard library's shortcut here — defensible if the catch sits right at the input boundary and translates, but a validate-and-return reads better than a throw used as a range check.)
+3. **Value.** The manual told you this happens in normal operation, which is the definition of expected and recoverable: `DeviceBusy` is data, the caller's retry-or-report loop is ordinary control flow. Throwing here would file a documented steady-state condition under "exceptional" — and it will fire constantly.
+4. **Value.** Per-row failure at row 412,809 of a million is the hot-loop case from the cost section: signalled by throwing, a steady workload becomes one with latency spikes, and the spec even told you failure is part of the normal result (a skip count). The malformed row is a *datum* the importer accumulates, not an event that abandons it.
+5. **Throw.** One failure, at the start, that invalidates the entire operation — nothing to accumulate, nothing to resume, every frame between the magic check and the "Import…" menu handler can do nothing about it. This is the event pole: rare, non-local, abandon-the-operation. (Once per operation is cheap; note the contrast with 4, which is the same importer at a different frequency.)
+6. **Throw.** Constructors have no return channel — the one structural case with no alternative. If the codebase builds `-fno-exceptions`, the answer becomes [Chapter 18](18-exercise-the-device-sdk.md#chapter-18--exercise-the-device-sdk)'s static factory returning `optional<SessionLog>` — which is the same verdict routed around a missing mechanism, not a different verdict.
+7. **Throw — by doing nothing.** `push_back` already throws; your job is to *not* catch it six frames down where no sensible recovery exists. Let it unwind to the operation boundary (the menu handler, the request loop) where "the operation failed, memory is short" is actionable; RAII (Chapter 1) makes the flight through your frames leak-free. A local `try/catch` that logs and continues manufactures a half-completed operation.
+8. **Value — an error code — even though it is a bug.** The trap in the list. Between your own functions this is scenario 1 and gets an assert; at an ABI boundary you do not crash the host's process in Release to punish the host's mistake, and you certainly do not throw at it (the rules that do not bend, plus [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)). Check, return `PluginBadArgument`, optionally assert as well so *your* Debug builds still catch it loudly. The boundary changes the verdict.
+9. **Neither — absence is not a failure.** A missing preferences file on first launch is a normal state with a defined meaning, so the lookup's type is `optional` and the "handling" is applying defaults. Filing this under errors at all is the mistake; there is nothing to report and nobody to warn.
+10. **Assert.** Your enum, your switch, your refactor: a `Mode` matching no case means the program contradicts itself, and the missing case must die loudly in Debug at the switch, not limp onward. Belt-and-braces in Release: a `default:` that logs and returns a failure keeps a shipped binary from walking off the map — but the assert is the classification, the `default` is damage control.
+
+Score yourself the way a review would: 8 and 2 are the ones worth re-reading the chapter over, because both flip on context — *who produced the data* and *where the call crosses a boundary* — rather than on the line of code itself.
+
+</details>
+
 ---
 
 

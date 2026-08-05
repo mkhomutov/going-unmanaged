@@ -65,6 +65,12 @@ FULL = [
     ('book/35-still-live-at-unload.md',           'exercises/comlab/FakeSDK2.h'),
     ('book/35-still-live-at-unload.md',           'exercises/comlab/ref.h'),
     ('book/35-still-live-at-unload.md',           'exercises/comlab/main.cpp'),
+    ('book/36-the-host-stutters.md',              'exercises/perflab/meter.h'),
+    ('book/36-the-host-stutters.md',              'exercises/perflab/meter.cpp'),
+    ('book/36-the-host-stutters.md',              'exercises/perflab/main.cpp'),
+    ('book/37-no-repro-dump-attached.md',         'exercises/dumplab/session.h'),
+    ('book/37-no-repro-dump-attached.md',         'exercises/dumplab/session.cpp'),
+    ('book/37-no-repro-dump-attached.md',         'exercises/dumplab/main.cpp'),
 ]
 BANNER = [
     ('book/28-testing.md',                  'exercises/testlab/tiny_test.h'),
@@ -89,22 +95,24 @@ for i, block in enumerate(f_blocks, 1):
         failures.append(f"Appendix F cpp fence #{i} ({first!r}) is in no exercises/cookbook/ TU")
 
 # Ticket TASK cards: the broken listings are quoted in both places, identically.
-for lab, ch in [('exitlab', '32-it-crashes-on-exit'),
-                ('reportlab', '33-here-is-the-report'),
-                ('capturelab', '34-parse-this-capture'),
-                ('comlab', '35-still-live-at-unload')]:
+TICKETS = [('exitlab', '32-it-crashes-on-exit'),
+           ('reportlab', '33-here-is-the-report'),
+           ('capturelab', '34-parse-this-capture'),
+           ('comlab', '35-still-live-at-unload'),
+           ('perflab', '36-the-host-stutters'),
+           ('dumplab', '37-no-repro-dump-attached')]
+for lab, ch in TICKETS:
     chapter = open(f'book/{ch}.md').read()
     task = open(f'exercises/{lab}/TASK.md').read()
     for i, block in enumerate(re.findall(r'```cpp\n(.*?)```', task, re.S), 1):
         if block.rstrip('\n') not in chapter:
             failures.append(f"exercises/{lab}/TASK.md cpp fence #{i} is not in book/{ch}.md")
 
-n = len(FULL) + len(BANNER) + len(f_blocks) + 6
 if failures:
     print("check_verbatim.sh: DRIFT", file=sys.stderr)
     for f in failures:
         print(f"  {f}", file=sys.stderr)
     sys.exit(1)
 print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
-      f"{len(f_blocks)} cookbook fences, 4 ticket cards)")
+      f"{len(f_blocks)} cookbook fences, {len(TICKETS)} ticket cards)")
 PYEOF
