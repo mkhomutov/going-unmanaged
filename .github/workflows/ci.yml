@@ -141,13 +141,21 @@ jobs:
       # point Windows readers at it - so it gets the same treatment as every
       # other claim: exercised here, where a Developer-shell PATH (msvc-dev-cmd
       # above) provides cl.exe and the ASan runtime, so it cannot rot unnoticed.
-      # One plain build, one through the vendor-code path.
+      # One plain build, one through the vendor-code path, and one in the
+      # ticket labs' multi-TU form - two sources plus a run argument, so the
+      # source-list parsing AND the run-args boundary are both exercised.
+      # The if-guards are pwsh's spelling of bash's -e: a pwsh step only
+      # propagates the LAST line's exit code, so without them a failure in an
+      # earlier line would pass unnoticed.
       - name: check.ps1 smoke test
         shell: pwsh
         run: |
           Set-Content smoke.cpp "#include <cstdio>`nint main() { std::puts(`"hi`"); return 0; }"
           ./scripts/check.ps1 smoke.cpp
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           ./scripts/check.ps1 solutions/fakesdk_solution.cpp fakesdk
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          ./scripts/check.ps1 exercises/reportlab/registry.cpp exercises/reportlab/main.cpp 100
 
   book:
     runs-on: ubuntu-latest

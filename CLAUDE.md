@@ -115,12 +115,14 @@ Chapter 25's Finding 10.
   each prints SKIPPED and stays green; `--require-cmake` and `--require-tsan`
   (CI passes both) refuse to skip
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
-  flags (optional 2nd arg links fakesdk/fakedevice vendor code); `SAN=thread`
-  switches the sanitizer for the threadlab's second build
+  flags: one or more .cpp files, compiled in the order written (= link order,
+  which Chapter 32's two-order test turns on), then an optional vendor
+  argument (fakesdk/fakedevice/comlab), then run args; `SAN=thread` switches
+  the sanitizer for the threadlab's second build
 - `scripts/check.ps1` — check.sh's Windows/MSVC mirror (`cl /std:c++17 /W4
-  /EHsc /fsanitize=address`, same vendor argument; MSVC has no UBSan and no
-  TSan, and the script says so). Smoke-tested by the buildlab-msvc CI job so
-  it cannot rot on a Mac-based maintainer
+  /EHsc /fsanitize=address`, same source-list/vendor/run-args shapes; MSVC
+  has no UBSan and no TSan, and the script says so). Smoke-tested by the
+  buildlab-msvc CI job so it cannot rot on a Mac-based maintainer
 - `scripts/check_verbatim.sh` — enforces every book↔code verbatim pairing
   mechanically: full-file containment (vendor headers, ticket-lab fixed
   files, solution folds), banner-stripped containment for testlab/abilab
@@ -155,7 +157,8 @@ Chapter 25's Finding 10.
   line must print exactly one extra move-construction in the RVO section, and
   adding `/Zc:nrvo` must print none — it is the one claim in the book resting
   on a vendor default rather than on the standard — then a check.ps1 smoke
-  test, one plain build and one through the fakesdk vendor path), and a
+  test: one plain build, one through the fakesdk vendor path, and one in the
+  ticket labs' multi-TU form, two reportlab sources plus a run arg), and a
   `book` job: build_book.sh, --check-nav, check_markup.sh, check_verbatim.sh,
   check_mermaid.sh (which installs mermaid-cli, the job's one slow step),
   and a lychee link check

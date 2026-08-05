@@ -1,10 +1,16 @@
 # Build and run YOUR exercise attempt with the handbook's canonical flags - MSVC.
 #
-#   scripts\check.ps1 <your.cpp> [fakesdk|fakedevice|comlab] [args passed to the run...]
+#   scripts\check.ps1 <your.cpp> [more.cpp...] [fakesdk|fakedevice|comlab] [args passed to the run...]
 #
 #   scripts\check.ps1 attempt.cpp                     # plain exercise
 #   scripts\check.ps1 attempt.cpp fakesdk             # + vendor code
+#   scripts\check.ps1 registry.cpp main.cpp 100       # several TUs + run args
 #   $env:STD='c++20'; scripts\check.ps1 attempt.cpp   # C++20 (words, invalid)
+#
+# Every leading argument ending in .cpp is a source file; they are compiled
+# together in the order given (also the link order - Chapter 32's two-order
+# test depends on that). The first argument that is neither a .cpp file nor
+# a vendor name starts the run args.
 #
 # Run it from a Developer PowerShell for VS, so cl.exe is on PATH (Chapter 13).
 # This mirrors scripts/check.sh; the differences are MSVC's, not the script's:
@@ -25,14 +31,22 @@ if (-not (Get-Command cl -ErrorAction SilentlyContinue)) {
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $std = if ($env:STD) { $env:STD } else { 'c++17' }
 
-$sdk = ''
-$runArgs = @()
-if ($Rest -and $Rest.Count -gt 0 -and $Rest[0] -in @('fakesdk', 'fakedevice', 'comlab')) {
-    $sdk = $Rest[0]
-    if ($Rest.Count -gt 1) { $runArgs = @($Rest[1..($Rest.Count - 1)]) }
-} elseif ($Rest) {
-    $runArgs = @($Rest)
+# @(...) throughout: without it a one-element result decays to a scalar and
+# .Count / [i..j] slicing stop meaning what they say (found the hard way).
+$sources = @($Source)
+$rest = if ($Rest) { @($Rest) } else { @() }
+$i = 0
+while ($i -lt $rest.Count -and $rest[$i] -like '*.cpp') {
+    $sources += $rest[$i]
+    $i++
 }
+$sdk = ''
+if ($i -lt $rest.Count -and $rest[$i] -in @('fakesdk', 'fakedevice', 'comlab')) {
+    $sdk = $rest[$i]
+    $i++
+}
+$runArgs = @()
+if ($i -lt $rest.Count) { $runArgs = @($rest[$i..($rest.Count - 1)]) }
 
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
 New-Item -ItemType Directory -Path $tmp | Out-Null
@@ -44,9 +58,9 @@ try {
         # @(...) forces an array even for a single vendor file: splatting a
         # bare string hands cl one argument per CHARACTER (found the hard way).
         $vendor = @(Get-ChildItem $sdkDir -Filter 'Fake*.cpp' | ForEach-Object FullName)
-        cl @flags "/I$sdkDir" $vendor $Source "/Fe:$out" "/Fo$tmp/" "/Fd$tmp/"
+        cl @flags "/I$sdkDir" $vendor $sources "/Fe:$out" "/Fo$tmp/" "/Fd$tmp/"
     } else {
-        cl @flags $Source "/Fe:$out" "/Fo$tmp/" "/Fd$tmp/"
+        cl @flags $sources "/Fe:$out" "/Fo$tmp/" "/Fd$tmp/"
     }
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     Write-Host "== built clean: /std:$std /W4 /EHsc /fsanitize=address"

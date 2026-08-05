@@ -71,9 +71,15 @@ scripts/check.sh path/to/your.cpp                 # plain exercises
 scripts/check.sh your.cpp fakesdk                 # links the FakeSDK vendor code
 scripts/check.sh your.cpp fakedevice              # links the FakeDevice vendor code
 scripts/check.sh your.cpp comlab                  # links the FakeSDK 2.0 vendor code (Ch 35)
+scripts/check.sh registry.cpp main.cpp 100        # several TUs (ticket labs) + a run arg
 STD=c++20 scripts/check.sh your.cpp file.txt      # C++20 + args passed to the run
 SAN=thread scripts/check.sh your.cpp fakedevice   # ThreadSanitizer instead
 ```
+
+Several `.cpp` files build as one binary, in the order written — which is also
+the link order, the thing Chapter 32's two-order test turns on. The first
+argument that is not a `.cpp` file (after the optional vendor name) starts the
+run arguments. `scripts\check.ps1` accepts the same shapes.
 
 That last one is for the threaded lab, and it is a *second* run rather than a
 replacement: ThreadSanitizer cannot be combined with AddressSanitizer, so

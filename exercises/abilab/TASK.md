@@ -68,8 +68,7 @@ every push.
 
 ## Build
 
-Two translation units per binary, so this is a compiler line rather than
-`check.sh` (which builds one file):
+Two translation units per binary — implementation and caller, spelled out:
 
 ```
 g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g \
@@ -77,9 +76,9 @@ g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g \
 ```
 
 ...and the same shape for `scorer.cpp scorer_demo.cpp` and
-`engine.cpp engine_demo.cpp`. `scripts/check.sh` still fits the parts of your
-own attempt that are one file — a single-TU sketch of a façade, say — and
-`scripts/build_all.sh` builds all three of these.
+`engine.cpp engine_demo.cpp`. The one-line judge takes both files too —
+`../../scripts/check.sh Widget.cpp widget_demo.cpp` builds and runs them
+under the same flags — and `scripts/build_all.sh` builds all three of these.
 
 ## Done means
 

@@ -125,7 +125,7 @@ The ticket card is `exercises/reportlab/TASK.md`, with the report and the broken
 2. **Do the arithmetic.** `40 bytes inside of 128-byte region`, and `Sensor` is an `int` plus a `double`. How big is one `Sensor`? How many fit in the region? Which element is byte 40 inside, and which member of it? Name the sensor the program just read, by id, from the address alone.
 3. **Name the guilty line.** It appears in none of the three stacks. That is not a defect in the report; it is the lesson of this chapter.
 4. **Only now, reproduce.** Recreate the three files in a scratch directory, build plain (the 0.0, exit 0), then under the canonical flags — and check the report against your predictions, frame by frame.
-5. **Fix it and prove it.** `scripts/check.sh` on your fixed version, then again with the hot-plug count at 100. The acceptance test is that growth stopped mattering — not that one run went quiet.
+5. **Fix it and prove it.** `scripts/check.sh registry.cpp main.cpp` on your fixed version, then again with the hot-plug count at 100 (a run argument after the sources: `scripts/check.sh registry.cpp main.cpp 100`). The acceptance test is that growth stopped mattering — not that one run went quiet.
 6. **Stretch: build the two tempting non-fixes.** Store a copy (`Sensor watched = *reg.find(3);`), then instead give the registry a `reserve(16)`. Predict what each does before running — one is clean and wrong, the other is wrong and temporarily clean.
 
 ### The diagnosis, walked through

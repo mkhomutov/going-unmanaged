@@ -49,10 +49,11 @@ card.
 1. **Reproduce what support saw.** Build the broken version plain
    (`g++ -std=c++17 -Wall -Wextra -g`) and run it. It exits 0. So did every
    machine support tried.
-2. **Now the handbook's flags — twice.** Build under
-   `-fsanitize=address,undefined` with the sources in this order:
-   `logger.cpp audit.cpp main.cpp`. Run it. Then build again with
-   `audit.cpp logger.cpp main.cpp` — only the order changed. Run that.
+2. **Now the handbook's flags — twice.** The one-line judge builds the
+   sources in the order you write them, and that order is the link order:
+   `../../scripts/check.sh logger.cpp audit.cpp main.cpp`. Then again as
+   `../../scripts/check.sh audit.cpp logger.cpp main.cpp` — only the order
+   changed.
 3. **Read the report, Chapter 31 style.** Which shape is it? Whose stacks
    are the *write*, the *freed by*, the *allocated by* — and what do the
    frames below your own code say about *when* this is happening?

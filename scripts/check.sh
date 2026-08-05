@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 # Build and run YOUR exercise attempt with the handbook's canonical flags.
 #
-#   scripts/check.sh <your.cpp> [fakesdk|fakedevice|comlab] [args passed to the run...]
+#   scripts/check.sh <your.cpp> [more.cpp...] [fakesdk|fakedevice|comlab] [args passed to the run...]
 #
 #   scripts/check.sh attempt.cpp                                # plain exercise
 #   scripts/check.sh attempt.cpp fakesdk                        # + vendor code
 #   scripts/check.sh attempt.cpp comlab                         # + the 2.0 SDK (Ch 35)
+#   scripts/check.sh registry.cpp main.cpp 100                  # several TUs + run args
 #   STD=c++20 scripts/check.sh attempt.cpp words_sample.txt     # C++20 + run args
 #   SAN=thread scripts/check.sh attempt.cpp fakedevice          # ThreadSanitizer
 #
-# Works from any directory: your file and run args resolve relative to where
+# Every leading argument ending in .cpp is a source file; they are compiled
+# together IN THE ORDER GIVEN, which is also the link order - Chapter 32's
+# two-order test depends on that. The first argument that is neither a .cpp
+# file nor a vendor name starts the run args.
+# Works from any directory: your files and run args resolve relative to where
 # you run it (from an exercise directory: ../../scripts/check.sh your.cpp);
 # the vendor code is found relative to this script.
 # Env overrides: CXX (default g++), STD (default c++17),
@@ -19,7 +24,7 @@
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-    echo "usage: check.sh <your.cpp> [fakesdk|fakedevice|comlab] [run args...]" >&2
+    echo "usage: check.sh <your.cpp> [more.cpp...] [fakesdk|fakedevice|comlab] [run args...]" >&2
     exit 2
 fi
 
@@ -29,8 +34,12 @@ STD=${STD:-c++17}
 SAN=${SAN:-address,undefined}
 FLAGS="-std=$STD -Wall -Wextra -fsanitize=$SAN -g"
 
-src=$1
+srcs=("$1")
 shift
+while [[ $# -gt 0 && $1 == *.cpp ]]; do
+    srcs+=("$1")
+    shift
+done
 sdk=""
 case "${1:-}" in
     fakesdk|fakedevice|comlab) sdk=$1; shift ;;
@@ -40,9 +49,9 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 out="$tmp/attempt"
 if [[ -n $sdk ]]; then
-    $CXX $FLAGS "$root/exercises/$sdk"/Fake*.cpp "$src" -I "$root/exercises/$sdk" -o "$out"
+    $CXX $FLAGS "$root/exercises/$sdk"/Fake*.cpp "${srcs[@]}" -I "$root/exercises/$sdk" -o "$out"
 else
-    $CXX $FLAGS "$src" -o "$out"
+    $CXX $FLAGS "${srcs[@]}" -o "$out"
 fi
 echo "== built clean: $FLAGS"
 

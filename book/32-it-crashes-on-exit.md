@@ -86,10 +86,11 @@ the card are the fixed reference — no peeking). The steps, and do them in
 this order:
 
 1. Build plain, run: exit 0. You have now reproduced support's experience.
-2. Build under the handbook's flags with the sources in this order:
-   `logger.cpp audit.cpp main.cpp`. Run it.
-3. Build again with `audit.cpp logger.cpp main.cpp` — nothing changed but
-   the order on the command line. Run that.
+2. Build and run under the handbook's flags:
+   `scripts/check.sh logger.cpp audit.cpp main.cpp` — the sources build in
+   the order written, and that order is the link order.
+3. Again as `scripts/check.sh audit.cpp logger.cpp main.cpp` — nothing
+   changed but the order on the command line.
 4. Read what you get the Chapter 31 way: which report shape, whose stacks,
    and what the frames *below* your own code are telling you.
 5. Fix it so **both** link orders run clean. That is the acceptance test —

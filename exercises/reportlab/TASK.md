@@ -105,10 +105,12 @@ int main() {
    (`g++ -std=c++17 -Wall -Wextra -g`) and run it: the customer's 0.0,
    exit 0. Then build under the handbook's flags and check the report
    against your predictions, frame by frame.
-5. **Fix it and prove it.** `scripts/check.sh` on your fixed version must
-   run green — and stay green when the hot-plug count is 100. The
-   acceptance test is that growth stopped mattering, not that one run went
-   quiet.
+5. **Fix it and prove it.**
+   `../../scripts/check.sh registry.cpp main.cpp` on your fixed version
+   must run green — and stay green when the hot-plug count is 100 (the
+   fixed reference reads the count as a run argument:
+   `../../scripts/check.sh registry.cpp main.cpp 100`). The acceptance
+   test is that growth stopped mattering, not that one run went quiet.
 6. **Stretch: build the two tempting non-fixes.** Store a copy
    (`Sensor watched = *reg.find(3);`), then instead give the registry a
    `reserve(16)`. Predict what each does before running — one is clean and
