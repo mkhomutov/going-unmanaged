@@ -10,6 +10,68 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [0.6.0] — 2026-08-05
+
+The deep review's last tier, delivered — and the judge learns to count
+past one file. Two more tickets take the arc to six by adding the two
+kinds of evidence the first four never met: the profile that appears to
+*acquit* (36) and the crash report that is the only artifact there is
+(37). The glossary closes the appendix gap, and `check.sh`/`check.ps1`
+now take several translation units, so every ticket lab hands the reader
+the same one-line judge as the rest of the book. MINOR: two chapters,
+two labs and an appendix appended; no existing chapter, Finding, Recipe
+or appendix letter changed meaning.
+
+- **New: Chapter 36 — The Host Stutters** (MINOR — an appended chapter;
+  closes ROADMAP item 14, the performance ticket). The attached profile
+  is the ticket's trap: support's percentages — 6.7% of the thread, 0.2%
+  of the wall clock — are *correct and irrelevant*, because a mean can
+  only acquit a claim about throughput and this ticket is about a
+  deadline. The crime is 33 allocator calls per tick on a deadline
+  thread; the fix is two ampersands. The judge is the honest part: a
+  replaced `operator new` counting allocations on the deadline path,
+  asserting **zero at 50 ticks and at 1000**, because the sanitizers are
+  silent on an accidental copy and a timing assert would measure the
+  runner, not the code. `exercises/perflab/` holds the fixed state; the
+  broken meter is book-and-card only.
+- **New: Chapter 37 — No Repro, Dump Attached** (MINOR — an appended
+  chapter; closes ROADMAP item 15, the crash-dump ticket). Nothing to
+  run: a stripped customer crash report, worked as paperwork — fault
+  address `0x10` read as null-plus-`offsetof` before any tool opens, the
+  guilty frame *inlined out of the stack* so naive symbolication names a
+  line that cannot fault, and symbols as a release-day artifact you
+  either archived or do not have. Acceptance is **both device
+  configurations** — the crash lived only in the one the bench never
+  had. Every artifact in the chapter was generated from a real crash at
+  `-O2`. `exercises/dumplab/` holds the fixed state.
+- **New: Appendix E — Glossary** (closes ROADMAP item 10 and seeded
+  issue #24). ~35 terms the book actually uses, plus the
+  recognition-only five (ADL, CRTP, linkage, POD, SFINAE), every entry
+  pointing at its owning chapter. Appendix letters now run A–F with no
+  gap.
+- **Tooling: the one-line judge takes several translation units.**
+  `check.sh` and `check.ps1` accept multiple `.cpp` files before the
+  vendor argument, compiled in the order written — which is the link
+  order, the thing Chapter 32's two-order test turns on. The multi-TU
+  ticket cards and chapters now print the judge wherever the canonical
+  flags apply; the deliberately raw compiler lines stay (exitlab's plain
+  build and dumplab's `-O2` build exist to reproduce the customer's
+  silence, which the judge by design cannot). The buildlab-msvc job
+  smoke-tests the new form — two sources plus a run argument — with an
+  exit-code guard after every line, because a pwsh step only reports its
+  last line's verdict.
+- Smaller appends from the same review tier: Chapter 8's bug/value/event
+  classification drill (ten scenarios, verdicts behind a fold, two
+  deliberate context flips); Chapter 24's "Week 2 and beyond" retention
+  schedule and "Reproduce it cold" closers on all six ticket chapters;
+  README's team-lead section (what to assign, how to verify the labs
+  happened, review-don't-rescue pairing); an Appendix D refresh (named
+  guides with the division of labour, C++ Insights, the conference
+  archives, the EMC++ C++14 caveat); Appendix B's new Deadline-code
+  group and two Debugging principles, with the symptom index two rows
+  longer. ROADMAP re-sequences P/Invoke (item 9) ahead of
+  const-correctness; appends now land at Chapter 38+ / Appendix G+.
+
 ## [0.5.0] — 2026-08-04
 
 The ticket arc, completed. v0.4.0 delivered the first two scenario chapters;
