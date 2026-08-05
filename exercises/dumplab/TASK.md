@@ -110,12 +110,13 @@ double Session::Report() const {
    first *without* the inline flag, then with it. The difference is the
    chapter.
 7. **The run the matrix never had.** Build the broken shape under the
-   canonical flags and run `./monitor 0`: UBSan names the file, line and
-   column on the spot. The tool was never the gap; the configuration
-   matrix was.
+   canonical flags: `../../scripts/check.sh session.cpp main.cpp 0`.
+   UBSan names the file, line and column on the spot. The tool was never
+   the gap; the configuration matrix was.
 8. **Fix it and prove it.** Both configurations green under the flags:
-   `./monitor 1` and `./monitor 0`. One configuration cannot prove both
-   — that is this lab's two-run claim, and `build_all.sh` holds it.
+   `../../scripts/check.sh session.cpp main.cpp 1`, then `0`. One
+   configuration cannot prove both — that is this lab's two-run claim,
+   and `build_all.sh` holds it.
 9. **Stretch: the institutional half.** `strip` a copy of your `-O2 -g`
    build, crash it, and symbolicate the stripped binary's addresses
    against the *unstripped original* — the whole dSYM/PDB discipline in

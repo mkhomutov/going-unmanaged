@@ -107,11 +107,13 @@ use the one beside this card as-is.
    from the listings above, next to the committed `main.cpp`. Predict the
    allocation count per tick before you run — the profile shows where all
    of them come from — then:
-   `g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g meter.cpp main.cpp -o meter && ./meter`
+   `../../scripts/check.sh meter.cpp main.cpp`
    The harness is the acceptance test, and it fails with the number.
-6. **Fix it and prove it.** Zero allocations, at 50 ticks and at 1000 —
-   the claim is that the deadline path stopped allocating, and one
-   session length cannot prove independence from session length.
+6. **Fix it and prove it.** Zero allocations, at 50 ticks and at 1000
+   (the tick count is a run argument:
+   `../../scripts/check.sh meter.cpp main.cpp 50`, then `1000`) — the
+   claim is that the deadline path stopped allocating, and one session
+   length cannot prove independence from session length.
 7. **Stretch: measure what the fix did to the mean.** Build both versions
    `-O2` *without* sanitizers, time a long run of each, and see how
    little the average moved — then write one sentence on why the ticket

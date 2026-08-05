@@ -85,14 +85,14 @@ STD=c++20 scripts/check.sh your.cpp file.txt      # C++20 + args passed to the r
 SAN=thread scripts/check.sh your.cpp fakedevice   # ThreadSanitizer instead
 ```
 
+That last one is for the threaded lab, and it is a *second* run rather than a
+replacement: ThreadSanitizer cannot be combined with AddressSanitizer, so
+threaded code needs both builds to be checked at all (Chapter 29).
+
 Several `.cpp` files build as one binary, in the order written — which is also
 the link order, the thing Chapter 32's two-order test turns on. The first
 argument that is not a `.cpp` file (after the optional vendor name) starts the
 run arguments. `scripts\check.ps1` accepts the same shapes.
-
-That last one is for the threaded lab, and it is a *second* run rather than a
-replacement: ThreadSanitizer cannot be combined with AddressSanitizer, so
-threaded code needs both builds to be checked at all (Chapter 29).
 
 Vendor code (`fakesdk/Fake*`, `fakedevice/Fake*`, `comlab/FakeSDK2.*`) is
 read-only: read it, compile it, link it — never edit it. `threadlab/` has

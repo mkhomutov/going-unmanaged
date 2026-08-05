@@ -91,8 +91,8 @@ The ticket card is `exercises/perflab/TASK.md`, with both attachments and the br
 2. **Pair the attachments.** The budget is 21.3 ms; the worst miss is 26.1 ms. Of the symbols you listed, which have an *unbounded* worst case? What do they wait on — and who else in the process can be holding it?
 3. **Grade support's arithmetic.** Both numbers are correct. Write one sentence on what kind of claim a mean can acquit, and why this ticket is not that kind of claim.
 4. **Name the guilty characters.** There are two, one line each — and they are *absent*, not present.
-5. **Only now, reproduce.** Recreate the broken `meter.h`/`meter.cpp` from the card next to the committed `main.cpp`, predict the allocation count per tick — the profile shows where every one comes from — then build the two translation units under the canonical flags and run. The harness is the acceptance test, and it fails with the number.
-6. **Fix it and prove it.** Zero allocations at 50 ticks and at 1000.
+5. **Only now, reproduce.** Recreate the broken `meter.h`/`meter.cpp` from the card next to the committed `main.cpp`, predict the allocation count per tick — the profile shows where every one comes from — then build and run the two translation units under the canonical flags: `scripts/check.sh meter.cpp main.cpp`. The harness is the acceptance test, and it fails with the number.
+6. **Fix it and prove it.** Zero allocations at 50 ticks and at 1000 (the tick count is a run argument: `scripts/check.sh meter.cpp main.cpp 50`, then `1000`).
 7. **Stretch:** build both versions `-O2` *without* sanitizers, time them, and see how little the mean moved. Then write the sentence support needed: why the ticket was real anyway.
 
 ### The diagnosis, walked through
