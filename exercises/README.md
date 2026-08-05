@@ -27,6 +27,8 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [Here Is the Report](reportlab/TASK.md) | 33 | a ticket with the sanitizer report attached: locate the bug from the report alone | ~60 min | the files themselves: the fixed [main.cpp](reportlab/main.cpp) + [registry.h](reportlab/registry.h), green at 0 and 100 hot-plugs |
 | [Parse This Capture](capturelab/TASK.md) | 34 | a ticket with the capture attached: padding, byte order, and the overlay that was never legal | ~90 min | the files themselves: the fixed [wire.cpp](capturelab/wire.cpp) + [main.cpp](capturelab/main.cpp), asserted against the hand decode |
 | [Still Live at Unload](comlab/TASK.md) | 35 | a ticket against an upgraded SDK: manual refcounting, and the wrapper that ends it | ~90 min | the files themselves: [ref.h](comlab/ref.h) + the fixed [main.cpp](comlab/main.cpp), balanced under both judges |
+| [The Host Stutters](perflab/TASK.md) | 36 | a ticket with the profile attached: cost evidence, read without being lied to by an average | ~60 min | the files themselves: the fixed [meter.cpp](perflab/meter.cpp) + the counting [main.cpp](perflab/main.cpp), zero allocations at two session lengths |
+| [No Repro, Dump Attached](dumplab/TASK.md) | 37 | a ticket with the crash report attached: post-mortem from the paperwork alone | ~60 min | the files themselves: the fixed [session.cpp](dumplab/session.cpp) + [main.cpp](dumplab/main.cpp), green under both device configurations |
 
 Chapter 24 (the practice plan) sequences everything above the test lab — the
 nine Part V exercises plus the Bestiary reading — into a one-week schedule; the
@@ -39,16 +41,23 @@ to publish the shapes those two taught you to consume.
 recipe listings, compiled and asserted by `build_all.sh` so the cookbook
 cannot rot (its README has the sync rule). Nothing there to attempt cold.
 
-Seven directories hold their reference in the open, rather than behind a
-fold. `exitlab/`, `reportlab/`, `capturelab/` and `comlab/` are the
-ticket-shaped ones: each TASK.md carries the broken code to work from plus
-the ticket's attached evidence (reportlab's sanitizer report, capturelab's
-bus capture and ICD table, comlab's migration notes), and the files beside
+Nine directories hold their reference in the open, rather than behind a
+fold. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and
+`dumplab/` are
+the ticket-shaped ones: each TASK.md carries the broken code to work from
+plus the ticket's attached evidence (reportlab's sanitizer report,
+capturelab's bus capture and ICD table, comlab's migration notes,
+perflab's profile and engine log, dumplab's crash report), and the files
+beside
 it are the fixed state — built in two link orders for `exitlab/`, run at
 two hot-plug counts for `reportlab/`, asserted against a hand-decoded
-capture with a deliberately unaligned frame for `capturelab/`, and held to
+capture with a deliberately unaligned frame for `capturelab/`, held to
 two judges at once for `comlab/` (the vendor's live-object counter and the
-sanitizers, one per direction of a refcount mistake) — because each fix's
+sanitizers, one per direction of a refcount mistake), asserted
+allocation-free at two session lengths for `perflab/` (a counter, because
+the sanitizers are silent on an accidental copy and a timing would measure
+the runner), and run under both device configurations for `dumplab/` (the
+crash lived only in the one the bench never had) — because each fix's
 claim is exactly what one build cannot prove.
 `buildlab/` does double duty: it is Chapter 23's lab, and Chapter 26 builds that
 same trio with CMake, so the reference

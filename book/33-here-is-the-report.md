@@ -223,6 +223,10 @@ The acceptance test is the ticket card's, mechanized: `build_all.sh` runs the fi
 
 The loan sentence is everywhere once you look for it. The C standard's own `getenv` is allowed to invalidate its previous result on the next call; SQLite's `sqlite3_column_text` pointer is good only until the next step or reset; every vendor `Get*` that returns a pointer into an internal buffer carries the same clause in its docs — or tragically omits it, leaving you to establish the loan's term the way this chapter did. When a design genuinely needs long-lived handles to elements, change the container, not the discipline: `std::vector<std::unique_ptr<Sensor>>` reallocates the *pointers* while the sensors stand still — C#'s `List<T>` of references, rebuilt deliberately, at Chapter 1's price per element — and the node-based containers in Chapter 11's gentler column (`map`, `list`) never move an element at all. And when the pointer crosses a boundary you author (Chapter 30), the loan's term stops being a comment and becomes contract: write it in the header, because the caller on the far side cannot read your source.
 
+### Reproduce it cold
+
+A week or two from now, closed book, one fresh file: recreate this bug class from memory — a vector, a pointer into it, a `push_back` past capacity, a read through the stale pointer — and predict what the plain run prints before ASan names it. Then the fix from memory: store the key, borrow at the point of use, and prove it at no growth and at plenty. Bonus round: reconstruct the region arithmetic — which element, which member — from the report alone. The schedule is in [Chapter 24](24-practice-plan.md#chapter-24--practice-plan).
+
 <!-- nav:begin -->
 [← Chapter 32 — It Crashes on Exit](32-it-crashes-on-exit.md) · [Contents](README.md) · [Chapter 34 — Parse This Capture →](34-parse-this-capture.md)
 <!-- nav:end -->

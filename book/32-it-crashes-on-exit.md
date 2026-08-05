@@ -288,6 +288,10 @@ Chapter 16's Shape 4 warned that embedded HALs treat some resources as
 initialization order made explicit, because the implicit kind cannot be
 trusted. When you author your own boundary (Chapter 30), do the same.
 
+### Reproduce it cold
+
+A week or two from now, closed book, in a fresh directory: recreate this bug class from memory — two translation units, a static in one whose destructor uses a static in the other — and make it crash on exit. Then apply the fix from memory and prove it the way this chapter proved it: both link orders, both clean. If you can build the disease and the cure without looking, the chapter did its job; the schedule that makes this worth doing is in [Chapter 24](24-practice-plan.md#chapter-24--practice-plan).
+
 <!-- nav:begin -->
 [← Chapter 31 — Reading What the Tools Tell You](31-reading-what-the-tools-tell-you.md) · [Contents](README.md) · [Chapter 33 — Here Is the Report →](33-here-is-the-report.md)
 <!-- nav:end -->

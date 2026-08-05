@@ -195,7 +195,7 @@ Everything here uses code you already have.
 
 ### The symptom index
 
-Real problems do not arrive labelled with the chapter that owns them; they arrive as something on a screen. The four ticket chapters are already titled as their symptoms — this table routes the rest of the book the same way, from what you see to where it is taught.
+Real problems do not arrive labelled with the chapter that owns them; they arrive as something on a screen. The ticket chapters are already titled as their symptoms — this table routes the rest of the book the same way, from what you see to where it is taught.
 
 | What you see | Where it is taught |
 |---|---|
@@ -213,6 +213,8 @@ Real problems do not arrive labelled with the chapter that owns them; they arriv
 | `-858993460` or `0xcccccccc` in a variable | [Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior) |
 | It broke when the library added a private member | [Chapter 27](27-dependency-management.md#chapter-27--dependency-management), [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) |
 | The process died in CI and the log is empty | [Chapter 28](28-testing.md#chapter-28--testing), Recipe 15 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) |
+| Stutter, dropouts, or frame spikes with your code loaded — but the profile says you are cheap | [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters) |
+| A crash report full of raw addresses, or a fault address just past null | [Chapter 37](37-no-repro-dump-attached.md#chapter-37--no-repro-dump-attached) |
 
 ---
 
