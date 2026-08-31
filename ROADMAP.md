@@ -222,9 +222,12 @@ program: `delete ctx_` in the destructor is a `heap-use-after-free` ASan names o
 every run and **TSan does not report at all**. One sanitizer is genuinely half
 the check here.
 
-**Still open from this item:** nothing. What stays book-only is step 4 of the
-*Try it* — the deliberate `delete ctx_` and the removed alive flag — by the same
-rule as Chapter 31's sabotage runs: it exists to fail.
+**Still open from this item:** nothing in the chapter's own scope. What stays
+book-only is step 4 of the *Try it* — the deliberate `delete ctx_` and the
+removed alive flag — by the same rule as Chapter 31's sabotage runs: it exists
+to fail. What the chapter *promises* and never builds is filed separately, as
+item 16: the main-thread queue named in its *In the wild* bullet, and the
+reentrancy deadlock named in the bullet under that one.
 
 ---
 
@@ -590,6 +593,12 @@ conversion at the boundary, who owns memory that crosses it, and callback
 lifetime when a delegate is handed to native code. The Chapter 22 lambda
 lifetime lesson has a direct analogue here, and it bites harder.
 
+**Not to be confused with item 16**, which looks like the same subject and is
+not. This item is the in-process round trip for code you own; item 16 is the
+out-of-process bridge to a host you do *not* own, and needs no P/Invoke at
+all. They are independent, and this one goes first — item 16 carries the full
+split.
+
 ### 10. A glossary — DONE
 
 **Missing:** Appendix E.
@@ -723,13 +732,17 @@ C++, and the host's contract is *"C++, in my process, on my thread"*.
 dispatch-to-main mechanism if it has one, or a queue your main-thread code
 drains. This is C#'s synchronization context, except nothing does it for
 you" — and never builds one. The bullet under it names reentrancy and the
-deadlock it causes, and never shows either. Meanwhile the threadlab *Try it*
+deadlock it causes, and never shows either. Meanwhile step 3 of that same
+chapter's *Try it* — the lab whose task card is `exercises/threadlab/` —
 already has the reader build a mutex-guarded job queue drained by the
 polling thread, so the machinery is in their hands with no page saying what
-it generalizes to. Chapter 16's Shape 1 *is* this host — a desktop
-application plug-in SDK, error codes, one thread — and Chapter 30 authors a
-binary boundary inside the process without ever asking what changes when the
-boundary moves out of it.
+it generalizes to. Chapter 16's Shape 1 *is* this host — a
+desktop-application plug-in SDK, error codes, owned payloads — and notice
+what the Bestiary does *not* say there: Shape 1 describes an API surface and
+never names a calling thread, so the affinity that decides this whole
+subject reaches the reader only as Chapter 29's bullet above. Chapter 30
+then authors a binary boundary inside the process without ever asking what
+changes when the boundary moves out of it.
 
 The cost of hitting this unprepared is a specific wrong turn, and it is the
 one a C# developer takes first: load a runtime into the host and write the UI
@@ -747,32 +760,60 @@ be taught and verified: thread affinity as the single invariant every bridge
 obeys, the main-thread queue and its waker, reentrancy and self-deadlock,
 refusing work rather than queueing it silently, a domain model owned by the
 bridge rather than the vendor's structs on the wire, and an `IHostAdapter`
-seam with a fake behind it — Chapter 28's principle, third instance after
-FakeSDK and FakeDevice. The appendix (**G**) is the part that is looked up
-rather than read and that ages on someone else's schedule: the survey of
-mechanisms — runtime in-process versus server-in-the-host versus reusing the
-host's own automation channel — and a decision table. Lead the appendix with
-the host's existing channel, because "the host may already have solved this"
-is the shortest path that works and belongs before the custom ones.
+seam with a stand-in behind it — Chapter 28's principle, and the fourth
+stand-in in the repo after FakeSDK, FakeDevice and comlab's FakeSDK2
+(Chapter 28 names only the first two because it predates comlab). Call it
+`StubHostAdapter`, not `FakeHostAdapter`, and deliberately: hard invariant 2
+globs `exercises/*/Fake*.h|.cpp` as vendor code quoted verbatim in the book
+and almost never right to change, while this one is the opposite — a double
+the reader owns and is meant to extend. The appendix (**G**) is the part
+that is looked up rather than read and that ages on someone else's schedule:
+the survey of mechanisms — runtime in-process versus server-in-the-host
+versus reusing the host's own automation channel — and a decision table.
+Lead the appendix with the host's existing channel, because "the host may
+already have solved this" is the shortest path that works and belongs before
+the custom ones.
 
 **The lab is what makes this landable stdlib-only**, and the insight is that
 the transport is the part that does not need teaching: threads are a
 transport. `exercises/bridgelab/` needs no socket and no third-party
 dependency — a fake event loop on the main thread, client threads posting
-commands, a `FakeHostAdapter` that asserts the calling thread id and can go
+commands, a `StubHostAdapter` that asserts the calling thread id and can go
 modal — built twice by `build_all.sh` under the canonical flags and then
 under `-fsanitize=thread`, reusing the probe and `--require-tsan` bargain the
-threadlab step already established. Three broken-vs-fixed pairs are available
-without inventing any, and each fails in a different way: a `drain()` that
-skips a job while the host is modal and never completes its future (the
-client spins forever, and every unit test is green because nothing is modal
-in a test); an `invoke()` called from the main thread, which blocks on a
-future only the main thread can complete — a hang, with no sanitizer to name
-it, that appears the day someone moves a client in-process; and a handler
-registry read from a transport thread while another registers, which
-ThreadSanitizer names outright. Third-party stacks may be named in prose, as
-Chapters 16 and 27 name libusb and libcurl, but no listing may use one and
-nothing lands in `solutions/` — invariant 5 is not bent for this.
+threadlab step already established.
+
+Three broken-vs-fixed pairs are available without inventing any, and each
+fails in a different way: a `drain()` that skips a job while the host is
+modal and never completes its future (the client spins forever, and every
+unit test is green because nothing is modal in a test); an `invoke()` called
+from the main thread, which blocks on a future only the main thread can
+complete — a hang that appears the day someone moves a client in-process;
+and a handler registry read from a transport thread while another registers,
+which ThreadSanitizer names outright.
+
+**Only the third of those has a sanitizer, so the lab brings its own judge**
+— the move Chapters 34, 35 and 36 each had to make when the canonical flags
+went quiet, and the reason those chapters have a hand-decoded capture, a
+live-object counter and an allocation counter respectively. Here the judge
+is a **bounded wait**: every `invoke()` in the committed harness takes a
+deadline, and `main()` asserts that `wait_for` returned
+`std::future_status::ready` and not `timeout`. That converts both hangs into
+a failed assertion with a line number, and it is stdlib-only. It is also not
+optional. `build_all.sh` has no timeout of its own, so an unbounded wait in
+a committed program does not fail the repo invariant — it stops it, and CI
+with it, until a job-level timeout fires with nothing naming the cause. The
+broken halves stay book-only, as in every other ticket lab and as in
+Chapter 29's step 4 above: the committed files are the fixed state, and the
+broken listings live in `TASK.md` and the chapter, where they exist to fail.
+
+Third-party stacks may be named in prose, as Chapters 16 and 27 name libusb
+and libcurl, but no listing may use one and none may reach `solutions/` —
+invariant 5 is not bent for this. Where the lab's own reference solution
+lives is a separate question, settled by *Where chapter code lives*: the
+threadlab step whose TSan bargain this one reuses keeps its worked solution
+at `solutions/device_threaded_solution.cpp`, and that is the file that
+section builds.
 
 **Its relationship to item 9, since they look like one item and are not.**
 Item 9 is the in-process round trip for code you own: P/Invoke, marshalling,
