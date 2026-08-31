@@ -10,6 +10,22 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [Unreleased]
+
+- **New: Chapter 38 — The Bridge Out** (MINOR — an appended chapter; the
+  chapter half of ROADMAP item 16, the appendix half stays open). Pays
+  Chapter 29's nine-chapter IOU — "a queue your main-thread code drains" —
+  in full: thread affinity as the one invariant, a queue that completes
+  every job it accepts (refusal is a result, HOST_BUSY, never silence),
+  the inline path for the caller that must never wait on itself, and a
+  registry frozen before the first transport thread. `exercises/bridgelab/`
+  holds the fixed state under both sanitizer builds; two of its three
+  breaks are hangs, so the judge is a bounded wait — every harness invoke
+  carries a deadline, and a timeout fails with a line number instead of
+  stopping CI. Three key principles join Appendix B (*Bridging a host*),
+  the glossary gains *thread affinity*, Chapter 31's symptom index gains
+  the spinner row, and Chapter 29's two IOU bullets now point forward.
+
 ## [0.6.0] — 2026-08-05
 
 The deep review's last tier, delivered — and the judge learns to count

@@ -83,6 +83,12 @@ One line each. If you can say these fluently and back them with code, the concep
 
 - "On a deadline thread I treat the allocator as I/O: the hot path allocates nothing, locks nothing, and blocks on nothing — and I prove it with a counter, because a profiler's mean flatters while a deadline punishes the worst case."
 
+**Bridging a host**
+
+- "Foreign code never calls the SDK — it posts a job to the main thread's queue and waits, with a deadline, for the answer; and on the main thread itself I run the job inline, because the one thread that drains the queue cannot also wait on it."
+- "A bridge completes every job it accepts and bounds every wait — HOST_BUSY is an answer the client can act on, silence is a hang, and a deadline turns a hang into a line number."
+- "The vendor's types never appear on my wire — my bridge speaks a domain model it owns, the shim translates, and a host release rebuilds the shim and nothing else."
+
 **Modern C++**
 
 - "Capture by copy when a lambda outlives its scope; by reference dangles."

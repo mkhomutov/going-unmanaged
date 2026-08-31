@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 37 chapters, appendices A–F), indexed by `book/README.md`. The
+(6 parts, 38 chapters, appendices A–F), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
 artifact produced by `scripts/build_book.sh`. Appendices run A–F with no
 gap — E is the glossary (ROADMAP item 10, DONE).
@@ -34,6 +34,10 @@ replaced-operator-new allocation counter, not a timing. Ch 37 (item 15)
 is the crash-dump ticket — nothing to run, a stripped customer crash
 report, fault address 0x10 read as null+offsetof, and the guilty frame
 inlined out of the stack; the acceptance is a two-configuration matrix.
+Chapter 38 (item 16's chapter half) is the bridge-out chapter — the
+main-thread queue Ch 29 promised, a frozen command registry, and the
+StubHostAdapter seam; two of its three breaks are hangs no sanitizer
+names, so bridgelab's judge is a bounded wait on every invoke.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -45,7 +49,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–37, `A-`…`F-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–38, `A-`…`F-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -124,6 +128,16 @@ Chapter 25's Finding 10.
   the FIXED state, quoted verbatim in the chapter, and build_all.sh runs
   both device configurations — the crash lived only in the one the bench
   never had
+- `exercises/bridgelab/` — Chapter 38's lab. TASK.md carries the three
+  broken shapes (book-and-card, identical by rule — they exist to fail);
+  the committed headers + main.cpp are the FIXED state, quoted in the
+  chapter BY EXCERPT (check_verbatim runs both directions for this lab:
+  card fences must be in the chapter, chapter fences must be in the lab),
+  and build_all.sh builds it twice — canonical flags, then a second
+  source in the probe-gated TSan section — because the three breaks
+  split across the two builds. The harness allows no unbounded wait:
+  every invoke takes a deadline, the lab's judge, since a hang would
+  stop CI rather than fail it
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
@@ -348,11 +362,10 @@ stay on the list marked DONE so item numbers never shift. Short version:
   major chapter, see Tier 2), SOLID without the runtime (item 13 — the
   reader's design vocabulary, un-fused from the .NET machinery; a
   gather-and-translate chapter like item 8), and the bridge out (item 16 —
-  serving a foreign client from inside the host; a new Part VI chapter + a
-  stdlib-only `exercises/bridgelab/` for the main-thread queue, plus the
-  next free appendix letter — G today — for the survey of mechanisms, which
-  is lookup material and ages. Sequenced after item 9 and independent of it;
-  neither a chapter number nor a letter is pre-assigned to it).
+  chapter half DONE: Chapter 38 + stdlib-only `exercises/bridgelab/`, the
+  main-thread queue under a bounded-wait judge; the appendix half — the
+  survey of mechanisms at the next free letter, lookup material that
+  ages — stays open, so the item stays open).
   The glossary was item 10 and is now Appendix E (letters run A–F with no
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,

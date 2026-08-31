@@ -215,6 +215,7 @@ Real problems do not arrive labelled with the chapter that owns them; they arriv
 | The process died in CI and the log is empty | [Chapter 28](28-testing.md#chapter-28--testing), Recipe 15 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) |
 | Stutter, dropouts, or frame spikes with your code loaded — but the profile says you are cheap | [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters) |
 | A crash report full of raw addresses, or a fault address just past null | [Chapter 37](37-no-repro-dump-attached.md#chapter-37--no-repro-dump-attached) |
+| A client of your plug-in shows a spinner forever — or the host freezes with one thread parked in a wait | [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out) |
 
 ---
 

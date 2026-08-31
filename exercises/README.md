@@ -29,6 +29,7 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [Still Live at Unload](comlab/TASK.md) | 35 | a ticket against an upgraded SDK: manual refcounting, and the wrapper that ends it | ~90 min | the files themselves: [ref.h](comlab/ref.h) + the fixed [main.cpp](comlab/main.cpp), balanced under both judges |
 | [The Host Stutters](perflab/TASK.md) | 36 | a ticket with the profile attached: cost evidence, read without being lied to by an average | ~60 min | the files themselves: the fixed [meter.cpp](perflab/meter.cpp) + the counting [main.cpp](perflab/main.cpp), zero allocations at two session lengths |
 | [No Repro, Dump Attached](dumplab/TASK.md) | 37 | a ticket with the crash report attached: post-mortem from the paperwork alone | ~60 min | the files themselves: the fixed [session.cpp](dumplab/session.cpp) + [main.cpp](dumplab/main.cpp), green under both device configurations |
+| [The Bridge Lab](bridgelab/TASK.md) | 38 | serving a foreign client: the main-thread queue, refusing work, the bounded wait | ~2 h | the files themselves: [main_thread_queue.h](bridgelab/main_thread_queue.h), [host.h](bridgelab/host.h), [bridge_core.h](bridgelab/bridge_core.h) + the judging [main.cpp](bridgelab/main.cpp), green under both sanitizer builds |
 
 Chapter 24 (the practice plan) sequences everything above the test lab — the
 nine Part V exercises plus the Bestiary reading — into a one-week schedule; the
@@ -41,7 +42,7 @@ to publish the shapes those two taught you to consume.
 recipe listings, compiled and asserted by `build_all.sh` so the cookbook
 cannot rot (its README has the sync rule). Nothing there to attempt cold.
 
-Nine directories hold their reference in the open, rather than behind a
+Ten directories hold their reference in the open, rather than behind a
 fold. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and
 `dumplab/` are
 the ticket-shaped ones: each TASK.md carries the broken code to work from
@@ -59,6 +60,11 @@ the sanitizers are silent on an accidental copy and a timing would measure
 the runner), and run under both device configurations for `dumplab/` (the
 crash lived only in the one the bench never had) — because each fix's
 claim is exactly what one build cannot prove.
+`bridgelab/` holds Chapter 38's worked bridge core under the same card
+discipline as the tickets — the three broken shapes are quoted in its
+TASK.md and the chapter, identically — and its harness doubles as the
+lab's judge: no wait in it is unbounded, because two of the breaks are
+hangs and a hang cannot fail a script, only stop it.
 `buildlab/` does double duty: it is Chapter 23's lab, and Chapter 26 builds that
 same trio with CMake, so the reference
 [`CMakeLists.txt`](buildlab/CMakeLists.txt) lives there. `testlab/` holds

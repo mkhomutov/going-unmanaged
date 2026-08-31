@@ -248,5 +248,5 @@ This chapter's artifact has an industry around it. Hosts and large applications 
 A week or two from now, closed book: take any struct from your own code, write down its members' offsets by hand, and say what fault address a null-pointer access to each member would produce — then check yourself with `offsetof`. Re-state the two principles from memory: what a near-null address converts to, and what a crash report is worth without the symbol file. If you can also explain why a symbolicated line can be innocent — whose code range an inlined instruction lives in — you will never again lose an afternoon interrogating `return FoldedMean();`. The schedule is in [Chapter 24](24-practice-plan.md#chapter-24--practice-plan).
 
 <!-- nav:begin -->
-[← Chapter 36 — The Host Stutters](36-the-host-stutters.md) · [Contents](README.md) · [Appendix A — Fundamentals Refresher →](A-fundamentals-refresher.md)
+[← Chapter 36 — The Host Stutters](36-the-host-stutters.md) · [Contents](README.md) · [Chapter 38 — The Bridge Out →](38-the-bridge-out.md)
 <!-- nav:end -->
