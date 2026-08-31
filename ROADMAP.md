@@ -766,13 +766,14 @@ stand-in in the repo after FakeSDK, FakeDevice and comlab's FakeSDK2
 `StubHostAdapter`, not `FakeHostAdapter`, and deliberately: hard invariant 2
 globs `exercises/*/Fake*.h|.cpp` as vendor code quoted verbatim in the book
 and almost never right to change, while this one is the opposite — a double
-the reader owns and is meant to extend. The appendix (**G**) is the part
-that is looked up rather than read and that ages on someone else's schedule:
-the survey of mechanisms — runtime in-process versus server-in-the-host
-versus reusing the host's own automation channel — and a decision table.
-Lead the appendix with the host's existing channel, because "the host may
-already have solved this" is the shortest path that works and belongs before
-the custom ones.
+the reader owns and is meant to extend. The appendix (the next free letter,
+**G** today — provisional for the same reason no chapter number is
+pre-assigned) is the part that is looked up rather than read and that ages
+on someone else's schedule: the survey of mechanisms — runtime in-process
+versus server-in-the-host versus reusing the host's own automation channel —
+and a decision table. Lead the appendix with the host's existing channel,
+because "the host may already have solved this" is the shortest path that
+works and belongs before the custom ones.
 
 **The lab is what makes this landable stdlib-only**, and the insight is that
 the transport is the part that does not need teaching: threads are a
@@ -809,11 +810,14 @@ broken listings live in `TASK.md` and the chapter, where they exist to fail.
 
 Third-party stacks may be named in prose, as Chapters 16 and 27 name libusb
 and libcurl, but no listing may use one and none may reach `solutions/` —
-invariant 5 is not bent for this. Where the lab's own reference solution
-lives is a separate question, settled by *Where chapter code lives*: the
-threadlab step whose TSan bargain this one reuses keeps its worked solution
-at `solutions/device_threaded_solution.cpp`, and that is the file that
-section builds.
+invariant 5 is not bent for this. Where the lab's own files live is a
+separate question, and *Where chapter code lives* settles it: the committed
+fixed state goes in `exercises/bridgelab/`, as in every other ticket lab,
+and both `build_all.sh` steps build it there. Do not read the threadlab
+precedent as pointing the other way — its worked solution sits at
+`solutions/device_threaded_solution.cpp` and that is the file the TSan
+section builds today, so reusing that section's bargain means teaching it a
+second source, not adding a file to `solutions/`.
 
 **Its relationship to item 9, since they look like one item and are not.**
 Item 9 is the in-process round trip for code you own: P/Invoke, marshalling,

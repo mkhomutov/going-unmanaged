@@ -349,10 +349,10 @@ stay on the list marked DONE so item numbers never shift. Short version:
   reader's design vocabulary, un-fused from the .NET machinery; a
   gather-and-translate chapter like item 8), and the bridge out (item 16 —
   serving a foreign client from inside the host; a new Part VI chapter + a
-  stdlib-only `exercises/bridgelab/` for the main-thread queue, plus
-  Appendix G for the survey of mechanisms, which is lookup material and
-  ages. Sequenced after item 9 and independent of it — so no chapter number
-  is pre-assigned to either: whichever lands first takes Chapter 38).
+  stdlib-only `exercises/bridgelab/` for the main-thread queue, plus the
+  next free appendix letter — G today — for the survey of mechanisms, which
+  is lookup material and ages. Sequenced after item 9 and independent of it;
+  neither a chapter number nor a letter is pre-assigned to it).
   The glossary was item 10 and is now Appendix E (letters run A–F with no
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
