@@ -712,6 +712,85 @@ has no HTTP client and no sockets at all. JSON/XML *parsing* remains
 third-party territory; the practical JSON coverage is an item 11 candidate
 ticket — a hand-rolled mini-parser, stdlib-only.
 
+### 16. The bridge out — serving a foreign client from inside the host
+
+**Missing:** what happens when the interesting half of the plug-in — the UI,
+the business logic, the automation surface — is not going to be written in
+C++, and the host's contract is *"C++, in my process, on my thread"*.
+
+**Evidence:** the book promises this twice and stops both times. Chapter 29's
+*In the wild* names the mechanism in a subordinate clause — "the SDK's own
+dispatch-to-main mechanism if it has one, or a queue your main-thread code
+drains. This is C#'s synchronization context, except nothing does it for
+you" — and never builds one. The bullet under it names reentrancy and the
+deadlock it causes, and never shows either. Meanwhile the threadlab *Try it*
+already has the reader build a mutex-guarded job queue drained by the
+polling thread, so the machinery is in their hands with no page saying what
+it generalizes to. Chapter 16's Shape 1 *is* this host — a desktop
+application plug-in SDK, error codes, one thread — and Chapter 30 authors a
+binary boundary inside the process without ever asking what changes when the
+boundary moves out of it.
+
+The cost of hitting this unprepared is a specific wrong turn, and it is the
+one a C# developer takes first: load a runtime into the host and write the UI
+there. That answer fails for reasons the reader cannot see from the managed
+side — one runtime per process, so whichever plug-in loads first wins; a
+shared crash domain, so an unhandled managed exception takes the user's
+unsaved document with it; and windows the host does not know about, which do
+not dock, do not save with the layout, and do not go modal when the host
+does. By the time those show up the UI is written.
+
+**A contribution looks like:** a chapter appended at the end of Part VI, plus
+a lab — and, separately, an appendix. The split is the entry's one real
+design decision, and it follows question 2. The chapter is the part that can
+be taught and verified: thread affinity as the single invariant every bridge
+obeys, the main-thread queue and its waker, reentrancy and self-deadlock,
+refusing work rather than queueing it silently, a domain model owned by the
+bridge rather than the vendor's structs on the wire, and an `IHostAdapter`
+seam with a fake behind it — Chapter 28's principle, third instance after
+FakeSDK and FakeDevice. The appendix (**G**) is the part that is looked up
+rather than read and that ages on someone else's schedule: the survey of
+mechanisms — runtime in-process versus server-in-the-host versus reusing the
+host's own automation channel — and a decision table. Lead the appendix with
+the host's existing channel, because "the host may already have solved this"
+is the shortest path that works and belongs before the custom ones.
+
+**The lab is what makes this landable stdlib-only**, and the insight is that
+the transport is the part that does not need teaching: threads are a
+transport. `exercises/bridgelab/` needs no socket and no third-party
+dependency — a fake event loop on the main thread, client threads posting
+commands, a `FakeHostAdapter` that asserts the calling thread id and can go
+modal — built twice by `build_all.sh` under the canonical flags and then
+under `-fsanitize=thread`, reusing the probe and `--require-tsan` bargain the
+threadlab step already established. Three broken-vs-fixed pairs are available
+without inventing any, and each fails in a different way: a `drain()` that
+skips a job while the host is modal and never completes its future (the
+client spins forever, and every unit test is green because nothing is modal
+in a test); an `invoke()` called from the main thread, which blocks on a
+future only the main thread can complete — a hang, with no sanitizer to name
+it, that appears the day someone moves a client in-process; and a handler
+registry read from a transport thread while another registers, which
+ThreadSanitizer names outright. Third-party stacks may be named in prose, as
+Chapters 16 and 27 name libusb and libcurl, but no listing may use one and
+nothing lands in `solutions/` — invariant 5 is not bent for this.
+
+**Its relationship to item 9, since they look like one item and are not.**
+Item 9 is the in-process round trip for code you own: P/Invoke, marshalling,
+string ownership, the lifetime of a delegate handed to native code. Item 16
+is the out-of-process bridge to a host you do *not* own, and its whole thesis
+is that the shim has no runtime in it at all. They are independent — nothing
+here needs P/Invoke — but item 9 goes first: it is the more universal need,
+and the deep review already promoted it to the next major chapter.
+
+**Two honest notes for whoever writes it.** The moment of need (question 1)
+is month six and the design review, not week one — which is the right end of
+Part VI for it and an argument for keeping the survey out of the reading
+path, but it should be said on the page rather than left for the reader to
+discover. And there is a ticket hiding in here for item 11, which stays open
+to new tickets by PR: *the client shows a spinner forever* — attached
+evidence, a queue that waits politely while a modal dialog is open, and a
+fix that is a distinct error code rather than a longer timeout.
+
 ---
 
 ## Known gaps carried over

@@ -347,7 +347,11 @@ stay on the list marked DONE so item numbers never shift. Short version:
 - Tier 3: C++/C# interop (item 9, P/Invoke — re-sequenced as the next
   major chapter, see Tier 2), SOLID without the runtime (item 13 — the
   reader's design vocabulary, un-fused from the .NET machinery; a
-  gather-and-translate chapter like item 8). The glossary was item 10 and
+  gather-and-translate chapter like item 8), and the bridge out (item 16 —
+  serving a foreign client from inside the host; Chapter 38 + a stdlib-only
+  `exercises/bridgelab/` for the main-thread queue, plus Appendix G for the
+  survey of mechanisms, which is lookup material and ages. Sequenced after
+  item 9, and independent of it). The glossary was item 10 and
   is now Appendix E (letters run A–F with no gap). The Rosetta
   Cookbook was item 12 and is now Appendix F — Recipes 1–8, then 9–13
   (files, paths, async), then 14–16 (events, logging, timers), then 17
