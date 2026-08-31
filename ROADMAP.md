@@ -16,7 +16,7 @@ chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
 **Everything on this list appends.** New chapters go at the end (Chapter 39
-onward, in whatever order they land); new appendices continue from G. No item
+onward, in whatever order they land); new appendices continue from H. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
 first — see the numbering rules in [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -721,7 +721,7 @@ has no HTTP client and no sockets at all. JSON/XML *parsing* remains
 third-party territory; the practical JSON coverage is an item 11 candidate
 ticket — a hand-rolled mini-parser, stdlib-only.
 
-### 16. The bridge out — serving a foreign client from inside the host
+### 16. The bridge out — serving a foreign client from inside the host — DONE (Chapter 38 + Appendix G)
 
 **Missing:** what happens when the interesting half of the plug-in — the UI,
 the business logic, the automation surface — is not going to be written in
@@ -853,8 +853,21 @@ second half (the job deferred by a nested `Drain` must run one turn later:
 kept, not dropped). Three key principles landed in Appendix B under
 *Bridging a host*; the glossary gained *thread affinity*; Chapter 31's
 symptom index gained the spinner row; Chapter 29's two IOU bullets now
-point here. The appendix half — the survey and its decision table, at the
-next free letter — is still open, so the item stays open.
+point here.
+
+**Delivered (2026-09-01): the appendix half, closing the item.** Appendix
+G — *The Bridge Catalogue* — in the sketched order: the host's own channel
+leads, because "the host may already have solved this" belongs before the
+custom options; Family A follows with its shared costs priced once (and
+Chapter 35 carrying the COM depth rather than this page repeating it);
+Family B in the Bestiary's entry format with one topology diagram; then
+the decision table and the questions that collapse it to a row. One shape
+decision worth recording: the appendix contains **no code fences at all** —
+it is lookup material, every listing the subject needs already lives in
+Chapter 38 and its lab, and a page with nothing to compile is a page
+`build_all.sh` owes nothing to. The chapter now points at the appendix
+from its families section and its transport-menu bullet, so the reading
+path and the lookup path meet where they should.
 
 ---
 

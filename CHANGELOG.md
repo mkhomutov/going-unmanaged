@@ -12,8 +12,17 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **New: Appendix G — The Bridge Catalogue** (MINOR — an appended
+  appendix; closes ROADMAP item 16 together with Chapter 38). The lookup
+  half of the bridge material: the survey of mechanisms led by the
+  host's own automation channel, Family A priced against its shared
+  in-process costs (Chapter 35 carries the COM depth), Family B in the
+  Bestiary's entry format with a topology diagram, the decision table,
+  and the questions that collapse it to a row. Deliberately no code
+  fences — every listing the subject needs lives in Chapter 38 and
+  `exercises/bridgelab/`. Appendix letters now run A–G with no gap.
 - **New: Chapter 38 — The Bridge Out** (MINOR — an appended chapter; the
-  chapter half of ROADMAP item 16, the appendix half stays open). Pays
+  chapter half of ROADMAP item 16). Pays
   Chapter 29's nine-chapter IOU — "a queue your main-thread code drains" —
   in full: thread affinity as the one invariant, a queue that completes
   every job it accepts (refusal is a result, HOST_BUSY, never silence),
