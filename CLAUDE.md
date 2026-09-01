@@ -6,10 +6,12 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 38 chapters, appendices A–F), indexed by `book/README.md`. The
+(6 parts, 38 chapters, appendices A–G), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
-artifact produced by `scripts/build_book.sh`. Appendices run A–F with no
-gap — E is the glossary (ROADMAP item 10, DONE).
+artifact produced by `scripts/build_book.sh`. Appendices run A–G with no
+gap — E is the glossary (item 10), G the bridge catalogue (item 16's
+lookup half: the mechanism survey and decision table; no C++ listings —
+check_verbatim.sh enforces that no cpp fence lands there).
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
 concurrency, authoring an ABI boundary, reading tool output. Chapter 29
@@ -37,7 +39,9 @@ inlined out of the stack; the acceptance is a two-configuration matrix.
 Chapter 38 (item 16's chapter half) is the bridge-out chapter — the
 main-thread queue Ch 29 promised, a frozen command registry, and the
 StubHostAdapter seam; two of its three breaks are hangs no sanitizer
-names, so bridgelab's judge is a bounded wait on every invoke.
+names, so bridgelab's judge is a bounded wait on every invoke. Appendix
+G is that chapter's lookup half — the survey of bridge mechanisms, led
+by the host's own channel, and the decision table.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -49,7 +53,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–38, `A-`…`F-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–38, `A-`…`G-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -344,7 +348,7 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 39+, Appendix G+) — no item requires renumbering. Delivered items
+(Chapter 39+, Appendix H+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
@@ -363,12 +367,11 @@ stay on the list marked DONE so item numbers never shift. Short version:
 - Tier 3: C++/C# interop (item 9, P/Invoke — re-sequenced as the next
   major chapter, see Tier 2), SOLID without the runtime (item 13 — the
   reader's design vocabulary, un-fused from the .NET machinery; a
-  gather-and-translate chapter like item 8), and the bridge out (item 16 —
-  chapter half DONE: Chapter 38 + stdlib-only `exercises/bridgelab/`, the
-  main-thread queue under a bounded-wait judge; the appendix half — the
-  survey of mechanisms at the next free letter, lookup material that
-  ages — stays open, so the item stays open).
-  The glossary was item 10 and is now Appendix E (letters run A–F with no
+  gather-and-translate chapter like item 8), and the bridge out was item 16
+  and is now DONE — Chapter 38 + stdlib-only `exercises/bridgelab/` (the
+  main-thread queue under a bounded-wait judge), plus Appendix G, the
+  survey of mechanisms and its decision table.
+  The glossary was item 10 and is now Appendix E (letters run A–G with no
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
   timers), then 17 (UTF-8↔UTF-16); it grows by PR like the Findings log
