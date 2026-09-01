@@ -652,5 +652,5 @@ Needs `<string>`, `<string_view>`.
 > **Trap:** none of the three `size()`s counts characters — "Grüße" is five characters, seven UTF-8 bytes and five UTF-16 units, while one 𝄞 is one, four and two. A length check that "worked for years" on ASCII is an encoding bug with a long fuse.
 
 <!-- nav:begin -->
-[← Appendix E — Glossary](E-glossary.md) · [Contents](README.md)
+[← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
 <!-- nav:end -->

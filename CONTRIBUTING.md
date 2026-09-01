@@ -211,9 +211,9 @@ appendix section should have an answer to each; where the honest answer is
 ## Where the book lives
 
 The book is one file per chapter under [book/](book/README.md):
-`01-ownership-and-raii.md` … `37-no-repro-dump-attached.md`, then
-`A-`…`F-<slug>.md` for the appendices (A–F, no gap — E is the
-glossary), with `book/README.md` carrying the
+`01-ownership-and-raii.md` … `38-the-bridge-out.md`, then
+`A-`…`G-<slug>.md` for the appendices (A–G, no gap — E is the
+glossary, G the bridge catalogue), with `book/README.md` carrying the
 front matter and the Contents. Concretely, for a contributor:
 
 - **Editing a chapter** — edit that one file. Nothing else moves.

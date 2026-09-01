@@ -28,8 +28,9 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-# Reading order: chapters 01-NN, then appendices A-D. Digits sort before
-# letters in the C locale, so the glob order IS the reading order.
+# Reading order: chapters 01-NN, then the appendices in letter order.
+# Digits sort before letters in the C locale, so the glob order IS the
+# reading order.
 export LC_ALL=C
 FILES=("$BOOK"/[0-9][0-9]-*.md "$BOOK"/[A-Z]-*.md)
 [ -e "${FILES[0]}" ] || { echo "build_book.sh: no chapter files in $BOOK/" >&2; exit 1; }
