@@ -47,6 +47,22 @@ toolchains move. The full list lives in
 it against the same list. The chapters that closed items 1–6 are worked
 examples of those questions answered; steal their moves.
 
+**A second evidence source (2026-09-02): the reader study.** Items 18-20
+below were not found by reading the book against the job — they were found
+by reading it *as* eighteen different readers, each given the repository
+cold, sent wherever their own problem took them rather than down the
+Contents page, and required to cite a file for every claim. Where an item
+below cites "the reader study", the evidence is that several readers
+reached the same conclusion independently, and the count is stated. Two
+cautions for anyone mining it further. First, the personas were
+constructed, so a *single* persona's complaint is a hypothesis and only
+convergence is evidence — every item here has at least two. Second, the
+study's larger yield was corrections and cross-references, not new
+chapters; those move no numbers, need no entry here, and are tracked as
+issues under the `correction` label. Only the three gaps that need writing
+became items — a fourth, the managed-runtime-owns-the-process topology, is
+recorded as a scope note on item 9 rather than an item of its own.
+
 ---
 
 ## Tier 1 — the load-bearing gaps
@@ -767,6 +783,76 @@ in both directions: forward, every cpp fence on the page is in
 the page whole — the reverse that bridgelab gets from its TASK card, which
 a directory with no card had to get another way.
 
+### 18. The framework shape — Bestiary Shape 5, taught
+
+**Missing:** the fifth SDK shape is named and never taught.
+
+**Evidence:** Chapter 16 gives Shapes 1-4 a training chapter and an exercise
+each (17, 18), and Shape 3 eventually earned a whole ticket chapter and lab
+of its own (35, `exercises/comlab/`). Shape 5 — a C++-native framework that
+brings its own object model, such as Qt's parent-child ownership or Unreal's
+GC for UObjects — gets four sentences and the advice that it is a rite of
+passage best skipped. There is no lab to skip it *via*. The cost is not the
+missing pages, it is a direct contradiction the reader has to resolve alone:
+a parent-owned raw pointer or a GC-tracked handle overrides the Rule of Five
+that Chapters 6 and 15 spend two chapters drilling in, and no page says so —
+so the reader applies a `unique_ptr` reflex to an object the framework
+already owns and double-frees it. In the 2026-09 reader study this paragraph
+was the single most-cited bounce point: two readers, arriving from Unreal
+and from Qt respectively, independently named it as the moment they stopped,
+both having come to the book *because* of that stack. One grepped and
+confirmed the book carries no mapping at all for the vocabulary they use
+daily.
+
+**A contribution looks like:** Chapter 35's move, applied to Shape 5 — a
+generic parented-ownership framework in the `Fake*` house style (invariant 4
+bars product-specific SDK material; naming Qt and Unreal as *study material*
+is fine, and Chapter 16 already does), where the reader's smart-pointer
+reflex compiles, runs, and double-frees at teardown. The judge is the same
+shape as comlab's: the framework's own live-object counter must reach zero,
+and the sanitizers catch the release too many. The habit to leave behind is a
+question, not a rule — *before you wrap it, ask what already owns it.*
+
+**Or close it as out of scope**, which is a legitimate outcome for this one:
+per-framework object models are arguably each vendor's own documentation.
+If that is the decision, it still costs one sentence in Chapter 16 saying so
+plainly, because "named and then dropped" reads worse to that reader than
+silence would.
+
+### 19. Below the mutex — the deadline path's other half
+
+**Missing:** what to do instead, once the book has said what not to do.
+
+**Evidence:** Chapter 29 teaches threads, mutexes, atomics as counters, and
+the callback-lifetime pattern; Chapter 36 teaches that on a deadline thread
+you must not allocate and must not lock. Between them the reader is told the
+prohibition and never the alternative. A grep across all 38 chapters and 8
+appendices finds no `memory_order` beyond the default, no false sharing, no
+`alignas`, and no bounded single-producer/single-consumer structure; Chapter
+29's `std::atomic<int> counter{0}` with `++counter` never mentions that this
+is `seq_cst` by default. Two readers in the 2026-09 study — one on a
+real-time audio path, one moving a hot path off the CLR — hit this
+independently and disengaged within a few lines of each other, where the
+chapter turns from a threading model into device-callback lifetime.
+
+The sharper half of the same evidence is a contradiction the book already
+carries: Chapter 29's trampoline takes a `lock_guard` and calls `push_back`
+on a foreign SDK thread, which is correct for a device callback and
+disqualified the moment that thread has a deadline. Neither chapter mentions
+the other. That cross-reference is a correction and should not wait for this
+item.
+
+**A contribution looks like:** the hand-off, not a survey — a bounded SPSC
+queue between a worker or UI thread and a deadline thread, and what
+`memory_order` actually buys over the default, measured the way Appendix H
+and Chapter 36 measure rather than asserted. The allocation-counting harness
+in `exercises/perflab/` is the judge that already exists.
+
+**Scope gate.** General lock-free data-structure design is *not* ours and
+belongs in the out-of-scope list; the deadline path inside a plug-in the
+reader ships is, because this book already teaches that path and currently
+stops one step short of usable.
+
 ---
 
 ## Tier 3 — distinctive to this handbook
@@ -788,6 +874,29 @@ and 29 have a direct and harder-biting analogue when the callee is a
 garbage-collected delegate; and no competitor covers the round trip from
 the native side. Item numbers never shift, so it stays filed here — the
 number is its address, not its priority.
+
+**Confirmed by the reader study (2026-09-02), and now the clearest content
+mandate on this list.** Four of eighteen simulated readers rated the absence
+a *blocker* rather than a gap, independently and for four different reasons:
+the returning C++ developer modernising a native layer he will have to
+expose again; the .NET engineer who owns an existing P/Invoke layer and two
+live bugs in it; the Java/JNI engineer, for whom this chapter's boundary
+material is the nearest thing the book has to hers; and the corporate
+trainer whose client will ask for that module first. `DllImport`,
+`MarshalAs`, `CharSet`, `SafeHandle` and `LibraryImport` return zero hits
+across the whole book. The interop reader's own summary is the entry this
+item should have opened with: *for a book that opens with "the scary word in
+the P/Invoke docs", the round trip home isn't written yet.*
+
+**One scope addition from the same study.** The Java/JNI reader reached this
+material by a route nobody planned for: a managed runtime that already owns
+the process and has loaded her native code — the mirror image of item 16's
+topology, and a shape neither that item nor Chapter 16's five covers. The
+bindings author (pybind11, N-API) arrived at the same missing shape from a
+different language. That is not this chapter's subject and should not
+enlarge it, but a short "the other direction" section here, or a fourth
+family in Appendix G, would serve two reader segments for a page — and both
+of them found the book before they found its gap.
 
 **Evidence:** one passing mention of P/Invoke, nothing on marshalling. A
 developer with 17 years of C# behind them, now working against a native SDK,
@@ -1077,6 +1186,36 @@ compile is a page `build_all.sh` owes nothing to (`check_verbatim.sh`
 pins the shape: a cpp fence landing in Appendix G fails the book job). The chapter now points at the appendix
 from its families section and its transport-menu bullet, so the reading
 path and the lookup path meet where they should.
+
+### 20. The retrofit — modernising code you may not rewrite
+
+**Missing:** every exercise in the book starts from an empty file.
+
+**Evidence:** each lab begins at a blank scaffold or a task card, and the
+word "legacy" appears twice in the entire book, both times in passing. But
+the arrival path this handbook is written for frequently *is* the retrofit:
+the C# veteran is handed the native layer precisely because it is old, and
+the ticket says modernise it without breaking the callers. The 2026-09
+reader study's returning-C++ persona — C++03 until 2007, seventeen years of
+C#, now holding a "modernise the native layer" mandate — reported exactly
+this, and the Qt lead's month-three worry is its team-scale version. The
+book teaches the Rule of Five by having you write a class from nothing
+(Chapter 15); it never has you introduce ownership into a class that already
+works, has callers, and must keep them.
+
+**A contribution looks like:** a ticket-shaped chapter in the 32-37 format
+whose starting point is a working raw-pointer class the reader is *not
+allowed* to rewrite — one seam at a time, each step green under the
+sanitizers, callers untouched. The acceptance test is unusually clean for
+this book and is the reason the chapter is worth writing: the caller's
+translation unit is byte-identical before and after, so the harness compiles
+the original caller against the modernised implementation. That is a claim a
+build can check, which is the standing bar for anything here. It also
+connects directly to item 6's material — the retrofit stops at the ABI
+boundary, and Chapter 30 already says why.
+
+**Sequencing:** after item 9. The same reader wants both, and P/Invoke has
+four independent votes to this one's two.
 
 ---
 

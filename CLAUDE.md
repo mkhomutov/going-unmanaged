@@ -375,9 +375,17 @@ stay on the list marked DONE so item numbers never shift. Short version:
   Chapter 26; dependency management was item 2 and is now Chapter 27;
   testing was item 3 and is now Chapter 28; concurrency was item 4 and is
   now Chapter 29
-- Tier 2: consolidated const-correctness (item 8) is all that remains,
-  and it sequences after item 9 (P/Invoke), which the 2026 deep review
-  promoted to the next major chapter. It also builds on item 17 —
+- Tier 2: three items open — consolidated const-correctness (item 8), the
+  framework shape (item 18: Bestiary Shape 5 is named in Chapter 16 and
+  taught nowhere, the most-cited bounce point of the 2026-09 reader study,
+  and a legitimate candidate for out-of-scope-with-a-sentence), and below
+  the mutex (item 19: Chapter 29 and Chapter 36 between them state the
+  deadline path's prohibition and never its alternative — and their two
+  defaults for a foreign thread currently contradict each other
+  uncross-referenced). All three sequence after item 9 (P/Invoke), which
+  the 2026 deep review promoted to the next major chapter and which the
+  reader study then confirmed as the clearest content mandate on the list
+  (four of eighteen readers rated its absence a blocker). It also builds on item 17 —
   *Choosing* — which is now DONE as Appendix H plus the copy/move-counting
   `exercises/choosing/`: `const&` is one branch of that appendix's
   parameter procedure, so item 8 points at the procedure rather than
@@ -391,7 +399,11 @@ stay on the list marked DONE so item numbers never shift. Short version:
 - Tier 3: C++/C# interop (item 9, P/Invoke — re-sequenced as the next
   major chapter, see Tier 2), SOLID without the runtime (item 13 — the
   reader's design vocabulary, un-fused from the .NET machinery; a
-  gather-and-translate chapter like item 8), and the bridge out was item 16
+  gather-and-translate chapter like item 8), the retrofit (item 20 —
+  every lab in the book starts from an empty file; the reader who is
+  handed the native layer *because* it is old has no chapter, and the
+  acceptance test is that the caller's TU is byte-identical before and
+  after), and the bridge out was item 16
   and is now DONE — Chapter 38 + stdlib-only `exercises/bridgelab/` (the
   main-thread queue under a bounded-wait judge), plus Appendix G, the
   survey of mechanisms and its decision table.
