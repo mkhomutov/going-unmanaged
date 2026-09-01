@@ -3,8 +3,10 @@
 //
 // Quoted IN FULL in Chapter 38 ("The registry"). Changing it means updating
 // that listing in the same commit - the same discipline the Fake* vendor
-// code is held to. Construct it on the main thread: it learns the thread id
-// it must never wait on from where it is built.
+// code is held to - and the chapter's TSan report cites this file by line
+// number (:34 and :49 today), so an edit that shifts lines re-checks both.
+// Construct it on the main thread: it learns the thread id it must never
+// wait on from where it is built.
 #pragma once
 #include <cassert>
 #include <functional>

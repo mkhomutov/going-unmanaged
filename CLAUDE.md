@@ -163,8 +163,10 @@ Chapter 25's Finding 10.
   files, solution folds), banner-stripped containment for testlab/abilab
   (the convention: a committed lab file may open with a `//` provenance
   banner the chapter listing omits; the verbatim contract covers everything
-  below it), every Appendix F cpp fence in a cookbook TU, and the six
-  ticket TASK cards' broken listings in their chapters. Run it after
+  below it), every Appendix F cpp fence in a cookbook TU, and the seven
+  ticket/lab TASK cards' broken listings in their chapters — plus, for
+  bridgelab only, the reverse direction: every cpp fence in Chapter 38
+  must live in `exercises/bridgelab/`. Run it after
   touching any quoted listing; adding a new quoted pairing means adding it
   to this script in the same commit. CI runs it in the book job
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
@@ -342,7 +344,7 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 38+, Appendix G+) — no item requires renumbering. Delivered items
+(Chapter 39+, Appendix G+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now

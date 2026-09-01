@@ -2,7 +2,7 @@
 
 Somewhere around month six the request arrives, and it is not about C++. The plug-in works; the pilot users want more of it; and the people who will build the next piece — the dashboard, the batch tool, the QA scripts — write C#, or Python, or TypeScript. Someone asks the reasonable question: *can the plug-in expose what it does, so the rest of us can drive it?* This chapter is for that meeting. It is the latest moment of need in this book — a design chapter for month six, not a survival chapter for week one — and it is the meeting where you are the person expected to already know.
 
-The host's contract has three clauses, and you have been living under all of them since [Chapter 17](17-exercise-the-fakesdk.md#chapter-17--exercise-the-fakesdk): *C++, in my process, on my thread*. Notice that you learned the clauses in that order, and the last one late. [Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary)'s Shape 1 described this host's API surface — error codes, out-parameters, owned payloads — and named no calling thread, because API descriptions never do; the thread arrived as [Chapter 29](29-concurrency.md#chapter-29--concurrency)'s bullet: hosts frequently require that their API be called only from the main thread, and what you need is "a queue your main-thread code drains — C#'s synchronization context, except nothing does it for you." That sentence has been an IOU for nine chapters. This one pays it, because the moment foreign code wants to drive the host, that queue stops being a bullet point and becomes the load-bearing wall.
+The host's contract has three clauses, and you have been living under all of them since [Chapter 17](17-exercise-the-fakesdk.md#chapter-17--exercise-the-fakesdk): *C++, in my process, on my thread*. Notice that you learned the clauses in that order, and the last one late. [Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary)'s Shape 1 described this host's API surface — error codes, out-parameters, owned payloads — and named no calling thread, because API descriptions never do; the thread arrived as [Chapter 29](29-concurrency.md#chapter-29--concurrency)'s bullet: hosts frequently require that their API be called only from the main thread, and what you need is "a queue your main-thread code drains" — C#'s synchronization context, except nothing does it for you. That sentence has been an IOU for nine chapters. This one pays it, because the moment foreign code wants to drive the host, that queue stops being a bullet point and becomes the load-bearing wall.
 
 ### What you expect, and what the host gives you
 
@@ -185,10 +185,10 @@ One thread writing a `std::map`, four threads reading it, no lock — [Chapter 2
 WARNING: ThreadSanitizer: data race
   Read of size 8 by thread T2:
     #2 std::map<std::string, BridgeCore::Handler>::find(...)
-    #3 BridgeCore::Invoke(...) bridge_core.h:47
+    #3 BridgeCore::Invoke(...) bridge_core.h:49
   Previous write of size 8 by thread T1:
     #0 std::__tree_right_rotate(...) __tree:260
-    #5 BridgeCore::RegisterCommand(...) bridge_core.h:32
+    #5 BridgeCore::RegisterCommand(...) bridge_core.h:34
 SUMMARY: ThreadSanitizer: data race in std::__tree<...>::__root()
 ```
 
@@ -253,7 +253,10 @@ public:
 
     // Harness controls: the stub can do to you what a real host does.
     void SetModal(bool modal) { AssertMainThread(); modal_ = modal; }
-    const std::vector<std::string>& UndoSteps() const { return undo_; }
+    const std::vector<std::string>& UndoSteps() const {
+        AssertMainThread();             // "every method" means every method
+        return undo_;
+    }
 
 private:
     void AssertMainThread() const {

@@ -65,9 +65,10 @@ int main() {
     const std::chrono::milliseconds kDeadline(10000);
 
     std::atomic<int> ok{0}, busy{0}, renames{0};
+    std::atomic<int> finished{0};      // how the drain loop knows when to stop
     std::vector<std::thread> clients;
     for (int c = 0; c < kClients; ++c) {
-        clients.emplace_back([&core, &ok, &busy, &renames, kDeadline, c] {
+        clients.emplace_back([&core, &ok, &busy, &renames, &finished, kDeadline, c] {
             for (int i = 0; i < kCalls; ++i) {
                 const bool mutate = i % 2 == 0;
                 const CommandResult r = InvokeChecked(core,
@@ -81,21 +82,17 @@ int main() {
                     ++busy;
                 }
             }
+            ++finished;                // last statement: every future above resolved
         });
     }
 
-    std::atomic<bool> clients_done{false};
-    std::thread waiter([&clients, &clients_done] {
-        for (auto& c : clients) c.join();
-        clients_done = true;
-    });
     int spin = 0;
-    while (!clients_done) {
+    while (finished < kClients) {
         host.SetModal(++spin % 4 == 0);
         if (queue.Drain() == 0)
             std::this_thread::sleep_for(std::chrono::microseconds(200));
     }
-    waiter.join();
+    for (auto& c : clients) c.join();
     host.SetModal(false);
 
     EXPECT(ok + busy == kClients * kCalls);

@@ -60,7 +60,10 @@ public:
 
     // Harness controls: the stub can do to you what a real host does.
     void SetModal(bool modal) { AssertMainThread(); modal_ = modal; }
-    const std::vector<std::string>& UndoSteps() const { return undo_; }
+    const std::vector<std::string>& UndoSteps() const {
+        AssertMainThread();             // "every method" means every method
+        return undo_;
+    }
 
 private:
     void AssertMainThread() const {
