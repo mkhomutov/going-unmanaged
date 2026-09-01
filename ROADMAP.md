@@ -16,7 +16,7 @@ chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
 **Everything on this list appends.** New chapters go at the end (Chapter 39
-onward, in whatever order they land); new appendices continue from H. No item
+onward, in whatever order they land); new appendices continue from I. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
 first — see the numbering rules in [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -568,7 +568,7 @@ the bug's exact line in that configuration, which is the chapter's
 coverage lesson. Two new Appendix B principles under Debugging, mirrored
 in the same commit.
 
-### 17. Choosing — signatures, containers, and what goes inside them
+### 17. Choosing — signatures, containers, and what goes inside them — DONE (Appendix H)
 
 **Missing:** the decision procedure for the highest-frequency choice in the
 language. Which container; how to take a parameter; what to return; and
@@ -727,6 +727,25 @@ belongs to. If this item lands first, item 8 can point at the procedure
 rather than re-deriving it — which is an argument for taking this one first,
 and a second re-sequencing of item 8, whose note already defers to item 9.
 Whoever picks up either should read both entries before starting.
+
+**Delivered (2026-09-01) as Appendix H — *Choosing: Signatures, Containers,
+and Storage*** — four procedures in the sketched shape (LR trunks, leaves in
+tables, the C# reflex named per branch), with `exercises/choosing/` turning
+the advice into asserted numbers and `check_verbatim.sh` holding the page to
+the code in both directions. **One correction the measuring forced, and it
+is the entry's own claim that was wrong.** The sketch said a sink costs "one
+move"; the harness says that is true only for a temporary. Passing
+`std::move(x)` costs **two** — one move constructs the parameter, one moves
+it into the member — and for an lvalue the caller keeps using, the sink
+costs a copy *and* a move where plain `const&` costs the copy alone. So the
+appendix states the cost as a three-row table per caller kind rather than a
+slogan, and the honest rule is that the sink wins on temporaries and buys
+its generality with one extra move on lvalues. The NRVO constraint recorded
+here survived intact: the harness asserts zero copies and zero moves for a
+returned temporary, and zero copies with `moves <= 1` for a named local.
+Three key principles landed in Appendix B under *Choosing signatures and
+storage*; Chapters 2, 6, 11 and Appendix A.5 gained pointers, keeping their
+fragments as this entry required.
 
 ---
 

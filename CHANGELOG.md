@@ -12,6 +12,23 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **New: Appendix H — Choosing: Signatures, Containers, and Storage**
+  (MINOR — an appended appendix; closes ROADMAP item 17). The four
+  decisions in every signature — which container, how to take a
+  parameter, what to return, and whether collection elements go in by
+  value or behind a pointer — as procedures rather than translation
+  tables, on the observation that all four are one question at three
+  scopes (who owns this, how long does it live, who may see it). It
+  separates the three independent reasons the book had been giving for
+  the same `vector<unique_ptr<T>>` recommendation — slicing (Ch 2, 20),
+  address stability (Ch 33), and move cost — which no page had ever
+  told apart. `exercises/choosing/` asserts the costs it quotes, and the
+  measuring corrected the advice: a sink costs one move only from a
+  temporary, two from `std::move(x)`, and a copy *plus* a move from an
+  lvalue the caller keeps — so the page states a table per caller kind
+  instead of a slogan. Three key principles join Appendix B; Chapters 2,
+  6, 11 and Appendix A.5 gain pointers and keep their fragments.
+
 - **New: Appendix G — The Bridge Catalogue** (MINOR — an appended
   appendix; closes ROADMAP item 16 together with Chapter 38). The lookup
   half of the bridge material: the survey of mechanisms led by the

@@ -15,6 +15,8 @@
 > [!WARNING]
 > **Gotcha:** plain `std::map` is the TREE (sorted, O(log n)); the Dictionary equivalent is `unordered_map`. "I'd use unordered_map for lookups unless I need sorted order."
 
+That table maps the names. *Choosing* between them — including the column it does not have, whether an element keeps its address when the container grows — is [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage), which turns this chapter's mechanisms into a procedure.
+
 ### Why vector dominates — cache locality
 
 A vector is one contiguous memory block. Even where a list is theoretically better, vector usually wins because CPUs prefetch contiguous memory. `push_back` is amortized O(1): when capacity runs out, the vector **reallocates** (typically doubling) and moves everything to a new block — remember that reallocation, it matters below.

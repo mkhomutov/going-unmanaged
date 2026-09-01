@@ -99,7 +99,7 @@ public:
 };                         // only const methods callable via const Widget&
 ```
 
-`const char*` = pointer to characters I won't modify (data is const); `char* const` = the pointer itself is const. Read right-to-left. Write const by reflex — const-correctness is a visible marker of current, careful C++.
+Those three are the common cases, not the whole menu: sinks, views, and optional parameters have their own shapes, and [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage) is the procedure that picks between all of them. `const char*` = pointer to characters I won't modify (data is const); `char* const` = the pointer itself is const. Read right-to-left. Write const by reflex — const-correctness is a visible marker of current, careful C++.
 
 ### A.6 What is a .lib file?
 

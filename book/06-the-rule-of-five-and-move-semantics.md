@@ -144,6 +144,7 @@ std::vector<Buffer> buffers;
 buffers.push_back(std::move(myBuffer));  // move into container, no copy
 
 widget.SetName(std::move(longString));   // sink params take by value + move
+                                         // (what that costs: Appendix H)
 
 std::unique_ptr<Shape> s = std::make_unique<Circle>();
 shapes.push_back(std::move(s));          // unique_ptr can ONLY move - this

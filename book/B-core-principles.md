@@ -83,6 +83,12 @@ One line each. If you can say these fluently and back them with code, the concep
 
 - "On a deadline thread I treat the allocator as I/O: the hot path allocates nothing, locks nothing, and blocks on nothing — and I prove it with a counter, because a profiler's mean flatters while a deadline punishes the worst case."
 
+**Choosing signatures and storage**
+
+- "I return by value and let elision do its job — including whole containers; an out-parameter is a C# habit that costs the caller a declaration and the reader a mystery."
+- "A collection holds objects by value until something forces otherwise — slicing, an address that must hold still, or a move too expensive to pay — and when I box the elements I write down which of the three it was."
+- "The question that picks a parameter's shape is whether the function keeps a copy: if it does, take it by value and move; if it doesn't, borrow it with const&."
+
 **Bridging a host**
 
 - "Foreign code never calls the SDK — it posts a job to the main thread's queue and waits, with a deadline, for the answer; and on the main thread itself I run the job inline, because the one thread that drains the queue cannot also wait on it."

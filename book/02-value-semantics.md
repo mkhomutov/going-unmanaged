@@ -27,6 +27,8 @@ Widget* p = &a;  // pointer - same object, can be null / reseated
 auto s = std::make_shared<Widget>();  // shared ownership, closest to C# feel
 ```
 
+Which of those four to reach for, in a parameter, a return, or a container element, is the subject of [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage) — this chapter supplies the semantics, that page supplies the choice.
+
 ### Trap 1 — accidental copies in loops
 
 ```cpp

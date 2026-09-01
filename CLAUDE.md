@@ -6,12 +6,16 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 38 chapters, appendices A–G), indexed by `book/README.md`. The
+(6 parts, 38 chapters, appendices A–H), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
-artifact produced by `scripts/build_book.sh`. Appendices run A–G with no
+artifact produced by `scripts/build_book.sh`. Appendices run A–H with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
 lookup half: the mechanism survey and decision table; no C++ listings —
-check_verbatim.sh enforces that no cpp fence lands there).
+check_verbatim.sh enforces that no cpp fence lands there), H the choosing
+procedures (item 17: which container, how to take a parameter, what to
+return, value-or-pointer inside a collection — the opposite contract to
+G, its every cpp fence pinned to `exercises/choosing/`, which asserts the
+costs the page quotes).
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
 concurrency, authoring an ABI boundary, reading tool output. Chapter 29
@@ -53,7 +57,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–38, `A-`…`G-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–38, `A-`…`H-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -348,25 +352,20 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 39+, Appendix H+) — no item requires renumbering. Delivered items
+(Chapter 39+, Appendix I+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
   Chapter 26; dependency management was item 2 and is now Chapter 27;
   testing was item 3 and is now Chapter 28; concurrency was item 4 and is
   now Chapter 29
-- Tier 2: two open items, and they are neighbours. Consolidated
-  const-correctness (item 8) sequences after item 9 (P/Invoke), which the
-  2026 deep review promoted to the next major chapter. The other is item
-  17 — *Choosing* — the decision procedures for signatures, containers
-  and element storage (which container, how to take a parameter, what to
-  return, value-or-pointer inside the collection), proposed as an
-  appendix at the next free letter plus a copy/move-counting
-  `exercises/choosing/`. `const&` is one branch of item 17's parameter
-  procedure, so the two are planned together rather than sequenced by
-  accident: read both entries before starting either, and note that
-  taking 17 first lets 8 point at the procedure instead of re-deriving
-  it. Scenario chapters were item 11 and are DONE — Chapters 32–35, then
+- Tier 2: consolidated const-correctness (item 8) is all that remains,
+  and it sequences after item 9 (P/Invoke), which the 2026 deep review
+  promoted to the next major chapter. It also builds on item 17 —
+  *Choosing* — which is now DONE as Appendix H plus the copy/move-counting
+  `exercises/choosing/`: `const&` is one branch of that appendix's
+  parameter procedure, so item 8 points at the procedure rather than
+  re-deriving it. Scenario chapters were item 11 and are DONE — Chapters 32–35, then
   items 14 and 15 appended the performance ticket (Chapter 36 + perflab)
   and the crash-dump ticket (Chapter 37 + dumplab) in the same format,
   which stays open to new tickets by PR. Byte-level protocol work was

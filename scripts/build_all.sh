@@ -123,6 +123,12 @@ run "dumplab"     $CXX $FLAGS   exercises/dumplab/session.cpp exercises/dumplab/
 # a stopped CI run. Built AGAIN under -fsanitize=thread further down: the
 # breaks split across the two builds, and each build alone checks half.
 run "bridgelab"   $CXX $FLAGS   exercises/bridgelab/main.cpp            -o $OUT/bridgelab
+# Appendix H's measurements. Not an exercise - these are the numbers the
+# appendix quotes (what a sink costs against const&, what vector growth
+# does to element addresses), asserted so the advice cannot rot into
+# folklore when a toolchain changes how it elides.
+run "ch_passing"  $CXX $FLAGS   exercises/choosing/passing.cpp          -o $OUT/ch_passing
+run "ch_storing"  $CXX $FLAGS   exercises/choosing/storing.cpp          -o $OUT/ch_storing
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -190,6 +196,10 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/dumplab 0 > /dev/null
 # sanitizers around it. Modal drains happen mid-run, so the HOST_BUSY
 # refusal path is genuinely exercised, not just compiled.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/bridgelab > /dev/null
+# Appendix H: these assert copy/move counts and element addresses, so a
+# UBSan finding that printed and exited 0 would leave the section green.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/ch_passing > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/ch_storing > /dev/null
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from
