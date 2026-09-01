@@ -1235,8 +1235,56 @@ Already recorded in [CONTRIBUTING.md](CONTRIBUTING.md) and still open:
 
 ## Deliberately out of scope
 
-Nothing yet. Items closed as out of scope move here with the reasoning, so
-the same suggestion does not arrive twice.
+Items closed as out of scope live here with the reasoning, so the same
+suggestion does not arrive twice. Closing a *numbered item* this way is a
+decision that belongs in an issue first; an entry that was never an item —
+like the one below — is recorded here directly, because the work of the
+section is to answer a recurring suggestion, not to bury a promise.
+
+### Classroom scaffolding — slides, rubrics, lecture timings, a separated answer key
+
+**Asked for by two readers in the 2026-09 study, and both were right that it
+is missing:** a corporate trainer building a five-day course for thirty .NET
+engineers, and a university instructor evaluating the book for a second-year
+systems module. Between them they wanted a synchronous day-by-day timetable,
+per-chapter lecture minutes, comprehension checks for the twenty-three
+chapters that carry no exercise, a marking rubric for the half `check.sh`
+cannot score — the predictions and the sabotage write-ups, which is where the
+learning actually happens — and a placement diagnostic. A filename search for
+slides, quizzes, assessments or an instructor guide returns nothing, correctly.
+
+**Out of scope because it is a different product, not a missing chapter.**
+This handbook's pedagogy is deliberately solo, spaced and on-the-job: Chapter
+24 schedules retrieval at Day 14 and again around Day 30, against a real
+codebase, for one reader with a job. The instructor's own summary of why it
+did not fit — a month of spaced solo retrieval versus thirty people who go
+back to their desks on Friday — is exactly right, and it is a property of the
+design rather than a gap in it. The same reasoning already sits in
+[CONTRIBUTING.md](CONTRIBUTING.md#the-questions-every-piece-of-material-answers)'s
+first question: material earns its place because the SDK-work transition
+presents the problem in the first months. A lecture timetable does not fail
+that test, it is not taking it.
+
+**And the licence exists precisely so someone else can build it.** The prose
+is CC-BY 4.0 and every code sample is MIT, so a trainer can lift a chapter
+into a deck, or an instructor into a lab sheet, with one line of attribution
+and no permission. That is not a consolation — it is the intended division of
+labour, and the trainer who scored the book 6/10 as course material still
+answered yes to building on it. What she took was already here: the exercise
+index with its time estimates, Chapter 1's ownership flowchart, Chapter 28's
+suite where every assertion passes and the code still double-frees, and the
+ticket-lab format in which the harness *is* the rubric.
+
+**One neighbouring request is refused for a different reason, and should not
+be granted by accident.** The instructor also wanted the reference solutions
+separated from the task chapters, because `book/15-exercise-the-buffer.md`
+carries its full answer two scrolls below the question. That is not
+scaffolding, it is the book's own structure, and the `<details>` spoiler fold
+is a deliberate convention: this book's reader is working alone, with no
+demonstrator to ask, and needs the answer *available and deferred*. A marker
+needs it absent. Those are different readers, and this book serves the first
+one. If a course wants a clean question sheet, `exercises/*/TASK.md` is
+already that file.
 
 ---
 
