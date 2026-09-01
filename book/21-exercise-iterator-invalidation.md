@@ -56,7 +56,7 @@ int main() {
 
 **Task 3** — references into a vector are exactly as fragile as iterators. `int& first = v[0];` is a pointer in disguise; after a reallocating `push_back` it dangles. ASan reports `heap-use-after-free` with the free stack inside vector's internals — your first encounter with a report whose "freed by" stack contains no code of yours. Reading it correctly ("the *container* freed the old block during growth") is the skill; the fix is re-acquiring after mutation, or reserving.
 
-**The rule to leave with:** after any potentially-reallocating operation, treat every iterator, pointer, and reference into that vector as dead. The invalidation table in Chapter 11 says which containers are gentler — and why `map`'s stable iterators are sometimes worth its slower lookups.
+**The rule to leave with:** after any potentially-reallocating operation, treat every iterator, pointer, and reference into that vector as dead. Chapter 11's invalidation rules say which containers are gentler, and [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage) turns them into a column you can choose from — including why `map`'s stable iterators are sometimes worth its slower lookups.
 
 </details>
 

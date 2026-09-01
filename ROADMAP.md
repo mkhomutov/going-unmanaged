@@ -740,12 +740,32 @@ it into the member — and for an lvalue the caller keeps using, the sink
 costs a copy *and* a move where plain `const&` costs the copy alone. So the
 appendix states the cost as a three-row table per caller kind rather than a
 slogan, and the honest rule is that the sink wins on temporaries and buys
-its generality with one extra move on lvalues. The NRVO constraint recorded
-here survived intact: the harness asserts zero copies and zero moves for a
-returned temporary, and zero copies with `moves <= 1` for a named local.
-Three key principles landed in Appendix B under *Choosing signatures and
-storage*; Chapters 2, 6, 11 and Appendix A.5 gained pointers, keeping their
-fragments as this entry required.
+its generality with one extra move on lvalues. **A second correction, from
+a review of the first draft, went deeper than the table.** Counting only
+copies and moves hides the cost that actually decides a setter: a by-value
+sink allocates a fresh buffer on every call, while `const&` copy-assignment
+reuses the member's — measured at 100 allocations against 0 over 100 calls.
+So the harness gained a replaced `operator new` (item 14's instrument), and
+the page states the narrower, honest rule: the sink wins on temporaries and
+on rare calls, and `const&` wins on a hot path. The NRVO constraint recorded
+here survived intact — zero copies and zero moves for a returned temporary,
+zero copies with `moves <= 1` for a named local — but with NRVO on, both
+shapes measure zero and the distinction is never exercised, so
+`build_all.sh` builds `passing.cpp` a second time under
+`-fno-elide-constructors`. The same review found the first draft's
+parameter procedure asking the sink question before polymorphism, which
+routes a stored base-class argument into a by-value parameter and slices
+it — exactly what this entry warned about above; the delivered trunk asks
+polymorphism **first**. Four key principles landed in Appendix B under
+*Choosing signatures and storage*, including the organising one this entry
+specified; Chapters 2, 6, 10, 11 and Appendix A.5 gained pointers, keeping
+their fragments as this entry required, and Chapters 21 and 33 had their
+phantom "Chapter 11 invalidation table" citations retargeted at the column
+this appendix now supplies. `check_verbatim.sh` holds the page to the code
+in both directions: forward, every cpp fence on the page is in
+`exercises/choosing/`; backward, every unit the lab's banners name is on
+the page whole — the reverse that bridgelab gets from its TASK card, which
+a directory with no card had to get another way.
 
 ---
 

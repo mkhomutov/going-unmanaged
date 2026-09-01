@@ -93,6 +93,19 @@ Chapter 25's Finding 10.
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
   same commit (the mains are scaffolding and appear in no listing)
+- `exercises/choosing/` — Appendix H's measurements, the other non-exercise
+  appendix directory: `counted.h` (a copy/move-counting type plus the
+  `CHECK` judge), `passing.cpp` (procedures 2–3) and `storing.cpp`
+  (procedures 1 and 4), no TASK.md. Its banners name exactly which units
+  Appendix H quotes, and check_verbatim.sh holds the pairing BOTH ways —
+  editing a named unit means editing `book/H-choosing.md` in the same
+  commit. Two rules are load-bearing and easy to undo by accident: the
+  judge is `CHECK` (counts failures, sets the exit code), never `assert`,
+  which a Release build compiles away; and build_all.sh builds
+  `passing.cpp` a SECOND time under `-fno-elide-constructors`, because
+  with NRVO on a returned temporary and a returned named local both
+  measure zero and the page's guaranteed-vs-permitted distinction is
+  never exercised
 - `exercises/exitlab/` — Chapter 32's ticket lab. TASK.md carries the broken
   2.4.1 listings (book-only, they exist to fail); the committed files are
   the FIXED state, quoted verbatim in the chapter's fix section, and
@@ -172,9 +185,12 @@ Chapter 25's Finding 10.
   (the convention: a committed lab file may open with a `//` provenance
   banner the chapter listing omits; the verbatim contract covers everything
   below it), every Appendix F cpp fence in a cookbook TU, and the seven
-  ticket/lab TASK cards' broken listings in their chapters — plus, for
-  bridgelab only, the reverse direction: every cpp fence in Chapter 38
-  must live in `exercises/bridgelab/`. Run it after
+  ticket/lab TASK cards' broken listings in their chapters — plus two
+  reverse directions: every cpp fence in Chapter 38 must live in
+  `exercises/bridgelab/`, and Appendix H is held to `exercises/choosing/`
+  both ways (every fence on the page is in that directory, and every unit
+  the lab's banners name is on the page whole — that lab has no TASK card
+  to carry the reverse the way bridgelab's does). Run it after
   touching any quoted listing; adding a new quoted pairing means adding it
   to this script in the same commit. CI runs it in the book job
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
@@ -379,7 +395,7 @@ stay on the list marked DONE so item numbers never shift. Short version:
   and is now DONE — Chapter 38 + stdlib-only `exercises/bridgelab/` (the
   main-thread queue under a bounded-wait judge), plus Appendix G, the
   survey of mechanisms and its decision table.
-  The glossary was item 10 and is now Appendix E (letters run A–G with no
+  The glossary was item 10 and is now Appendix E (letters run A–H with no
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
   timers), then 17 (UTF-8↔UTF-16); it grows by PR like the Findings log

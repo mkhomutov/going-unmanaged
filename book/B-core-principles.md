@@ -85,9 +85,10 @@ One line each. If you can say these fluently and back them with code, the concep
 
 **Choosing signatures and storage**
 
+- "Before I write a signature I ask who owns this, how long it lives, and who may see it — one question, and the four answers are the container, the parameter, the return, and what goes in the collection."
+- "The question that picks a parameter's shape is whether it is a polymorphic base, and then whether the function keeps a copy: if it keeps one, take it by value and move; if it only borrows, take it by const& — and count the allocations before I put a sink on a hot path."
 - "I return by value and let elision do its job — including whole containers; an out-parameter is a C# habit that costs the caller a declaration and the reader a mystery."
 - "A collection holds objects by value until something forces otherwise — slicing, an address that must hold still, or a move too expensive to pay — and when I box the elements I write down which of the three it was."
-- "The question that picks a parameter's shape is whether the function keeps a copy: if it does, take it by value and move; if it doesn't, borrow it with const&."
 
 **Bridging a host**
 

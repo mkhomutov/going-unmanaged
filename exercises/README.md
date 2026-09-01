@@ -39,10 +39,10 @@ thread in front of it — and the ABI lab assumes both SDK labs, since it asks y
 to publish the shapes those two taught you to consume.
 
 `cookbook/` and `choosing/` are the odd ones out: not exercises at all, but
-appendix listings compiled and asserted by `build_all.sh` so those pages
+appendix listings compiled and checked by `build_all.sh` so those pages
 cannot rot — Appendix F's recipes and Appendix H's cost measurements
-respectively (each README has the sync rule). Nothing in either to attempt
-cold.
+respectively (each README has the sync rule, and `choosing/`'s is enforced
+in both directions). Nothing in either to attempt cold.
 
 Ten directories hold their reference in the open, rather than behind a
 fold. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and
