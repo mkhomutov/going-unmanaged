@@ -127,8 +127,8 @@ run "bridgelab"   $CXX $FLAGS   exercises/bridgelab/main.cpp            -o $OUT/
 # appendix quotes (what a sink costs against const&, what vector growth
 # does to element addresses, and what the copy/move tally cannot see: the
 # allocation a by-value sink makes and a const& assignment reuses).
-run "ch_passing"  $CXX $FLAGS   exercises/choosing/passing.cpp          -o $OUT/ch_passing
-run "ch_storing"  $CXX $FLAGS   exercises/choosing/storing.cpp          -o $OUT/ch_storing
+run "cho_passing"  $CXX $FLAGS   exercises/choosing/passing.cpp          -o $OUT/cho_passing
+run "cho_storing"  $CXX $FLAGS   exercises/choosing/storing.cpp          -o $OUT/cho_storing
 # passing.cpp a SECOND time with elision switched off. The appendix asserts
 # a returned temporary at zero moves and a returned named local at "one at
 # most", and says the difference is that only the first is guaranteed - but
@@ -136,7 +136,7 @@ run "ch_storing"  $CXX $FLAGS   exercises/choosing/storing.cpp          -o $OUT/
 # never exercised. -fno-elide-constructors leaves mandatory C++17 elision
 # alone and removes NRVO, so the two return shapes finally cost different
 # things. Same idiom as exitlab's two link orders: one build checks half.
-run "ch_noelide"  $CXX $FLAGS -fno-elide-constructors exercises/choosing/passing.cpp -o $OUT/ch_noelide
+run "cho_noelide"  $CXX $FLAGS -fno-elide-constructors exercises/choosing/passing.cpp -o $OUT/cho_noelide
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -209,9 +209,9 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/bridgelab > /dev/null
 # section green. Their judge is a counting CHECK macro rather than assert,
 # so a -DNDEBUG build would still verify - but these runs are the canonical
 # ones. The third is the same source with NRVO switched off.
-UBSAN_OPTIONS=halt_on_error=1 $OUT/ch_passing > /dev/null
-UBSAN_OPTIONS=halt_on_error=1 $OUT/ch_storing > /dev/null
-UBSAN_OPTIONS=halt_on_error=1 $OUT/ch_noelide > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_passing > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_storing > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_noelide > /dev/null
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from

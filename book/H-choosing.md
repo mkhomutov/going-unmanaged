@@ -35,21 +35,23 @@ flowchart LR
     F -- yes --> D["deque"]
 ```
 
-One case sits outside that trunk because it is a different question: if the size is a compile-time constant, the answer is `std::array<T, N>`, which stores its elements inline and asks for no heap block at all. Everything else starts at the top. `vector` is the answer far more often than a C# developer expects, because contiguity beats theoretical complexity at every size that fits in cache ([Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)) — reach past it only when this table's right-hand column names something you actually need:
+One case sits outside that trunk because it is a different question: if the size is a compile-time constant, the answer is `std::array<T, N>`, which stores its elements inline and asks for no heap block at all. Everything else starts at the top. `vector` is the answer far more often than a C# developer expects, because contiguity beats theoretical complexity at every size that fits in cache ([Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)) — reach past it only when this table names something you actually need.
 
-| Container | The C# you are reaching for | Take it when | Elements stay put? |
-|---|---|---|---|
-| `std::vector<T>` | `List<T>` | the default — indexing, iteration, growth at the end | **no** — growth moves everything |
-| `std::deque<T>` | `Queue<T>` used at both ends | you push and pop at *both* ends | references survive end-insertion |
-| `std::unordered_map<K,V>` | `Dictionary<K,V>` | keyed lookup, no ordering needed | **references yes**, iterators no (rehash) |
-| `std::map<K,V>` | `SortedDictionary<K,V>` | sorted iteration, or "nearest key" queries | **yes** |
-| `std::list<T>` | `LinkedList<T>` | splicing whole ranges; almost never otherwise | **yes** |
-| `std::array<T,N>` | `T[]` with N known at compile time | fixed size, no heap block at all | **yes** — it never grows |
+Which C# collection each one answers to is [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)'s container map, and it stays there — including the sets and adapters this procedure never has to route to. What follows is only what decides between them:
+
+| Container | Take it when | Elements stay put? |
+|---|---|---|
+| `std::vector<T>` | the default — indexing, iteration, growth at the end | **no** — growth moves everything |
+| `std::deque<T>` | you push and pop at *both* ends — the C# `Queue<T>` used from either side | references survive end-insertion |
+| `std::unordered_map<K,V>` | keyed lookup, no ordering needed | **references yes**, iterators no (rehash) |
+| `std::map<K,V>` | sorted iteration, or "nearest key" queries | **yes** |
+| `std::list<T>` | splicing whole ranges; almost never otherwise | **yes** |
+| `std::array<T,N>` | fixed size, no heap block at all | **yes** — it never grows |
 
 The last column is the one no C# habit prepares you for, and procedure 4 spends it. In C# every collection holds references, so "does the element move?" is a question without meaning — the object never moves, only the reference to it is copied. Here a `std::vector<T>` holds the objects *themselves*, and growing it relocates every one. The fuller invalidation rules — which operations kill iterators as well as references — are [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)'s to state; this column is only the part that decides a container.
 
 > [!WARNING]
-> **Trap:** `std::map` is the *tree* — sorted, O(log n). The `Dictionary<K,V>` equivalent is `unordered_map`. Reaching for `map` by name-recognition is the single most common container mistake a C# developer makes, and it costs an order of growth on every lookup.
+> **Trap:** the first branch above is the one a C# developer answers from memory and gets wrong — reaching for `map` because it sounds like `Dictionary`, when `unordered_map` is the equivalent and `map` is the tree. [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) states the gotcha and what it costs; here it is simply the branch to slow down on.
 
 ### Procedure 2 — how to take a parameter
 

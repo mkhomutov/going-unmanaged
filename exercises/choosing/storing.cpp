@@ -23,12 +23,14 @@
 
 #include "counted.h"
 
-// A polymorphic pair, for the branch slicing decides (Chapter 20's lab
-// proves the slicing; here it only has to dispatch).
+// A polymorphic pair, for the branch slicing decides. The base answers for
+// itself rather than being abstract, because that is what makes the loss
+// visible: a sliced Triangle does not fail to compile, it quietly answers
+// Shape's number.
 class Shape {
 public:
     virtual ~Shape() = default;
-    virtual int Sides() const = 0;
+    virtual int Sides() const { return 0; }
 };
 class Triangle : public Shape {
 public:
@@ -144,12 +146,24 @@ void ReferencesSurviveWhereIteratorsDoNot() {
     CHECK(first->Payload() == payload);         // and reading it is not a use-after-free
 }
 
-void ThePolymorphicBranchDispatches() {
-    std::vector<std::unique_ptr<Shape>> shapes;
-    shapes.push_back(std::make_unique<Triangle>());
-    shapes.push_back(std::make_unique<Square>());
+// Reason 1 of procedure 4, measured as the contrast it actually is. The
+// other two reasons are priced above; this one is a correctness loss, so
+// what it costs is the derived answer. Chapter 20's lab is where slicing is
+// taught - here it only has to show that the branch is worth taking.
+void StoringByValueSlicesAPolymorphicBase() {
+    Triangle t;
+    CHECK(t.Sides() == 3);
+
+    std::vector<Shape> by_value;
+    by_value.push_back(t);                      // copies the Shape part, drops the rest
+    CHECK(by_value[0].Sides() == 0);            // Shape's answer, not Triangle's
+    CHECK(t.Sides() == 3);                      // the original is untouched: it was copied
+
+    std::vector<std::unique_ptr<Shape>> boxed;
+    boxed.push_back(std::make_unique<Triangle>());
+    boxed.push_back(std::make_unique<Square>());
     int total = 0;
-    for (const auto& s : shapes) total += s->Sides();
+    for (const auto& s : boxed) total += s->Sides();
     CHECK(total == 7);                          // 3 + 4: each kept its own identity
 }
 
@@ -159,7 +173,7 @@ int main() {
     ReserveHoldsAddressesStill();
     NodeBasedContainersNeverMoveAnElement();
     ReferencesSurviveWhereIteratorsDoNot();
-    ThePolymorphicBranchDispatches();
+    StoringByValueSlicesAPolymorphicBase();
 
     if (Failures() != 0) {
         std::printf("choosing/storing: %d FAILED check(s)\n", Failures());
