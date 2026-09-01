@@ -357,20 +357,22 @@ stay on the list marked DONE so item numbers never shift. Short version:
   now Chapter 29
 - Tier 2: two open items, and they are neighbours. Consolidated
   const-correctness (item 8) sequences after item 9 (P/Invoke), which the
-  2026 deep review promoted to the next major chapter, and now also after
-  item 17 — *Choosing* — the decision procedures for signatures,
-  containers and element storage (which container, how to take a
-  parameter, what to return, value-or-pointer inside the collection),
-  proposed as an appendix at the next free letter plus a
-  copy/move-counting `exercises/choosing/`. `const&` is one branch of
-  item 17's parameter procedure, so read both entries before starting
-  either. Scenario chapters were item
-  11 and are DONE — Chapters 32–35, then items 14 and 15 appended the
-  performance ticket (Chapter 36 + perflab) and the crash-dump ticket
-  (Chapter 37 + dumplab) in the same format, which stays open to new
-  tickets by PR. Byte-level protocol work was item 7 and is now Chapter
-  34; authoring an ABI boundary was item 6 and is now Chapter 30; the
-  debugging chapter was item 5 and is now Chapter 31
+  2026 deep review promoted to the next major chapter. The other is item
+  17 — *Choosing* — the decision procedures for signatures, containers
+  and element storage (which container, how to take a parameter, what to
+  return, value-or-pointer inside the collection), proposed as an
+  appendix at the next free letter plus a copy/move-counting
+  `exercises/choosing/`. `const&` is one branch of item 17's parameter
+  procedure, so the two are planned together rather than sequenced by
+  accident: read both entries before starting either, and note that
+  taking 17 first lets 8 point at the procedure instead of re-deriving
+  it. Scenario chapters were item 11 and are DONE — Chapters 32–35, then
+  items 14 and 15 appended the performance ticket (Chapter 36 + perflab)
+  and the crash-dump ticket (Chapter 37 + dumplab) in the same format,
+  which stays open to new tickets by PR. Byte-level protocol work was
+  item 7 and is now Chapter 34; authoring an ABI boundary was item 6 and
+  is now Chapter 30; the debugging chapter was item 5 and is now
+  Chapter 31
 - Tier 3: C++/C# interop (item 9, P/Invoke — re-sequenced as the next
   major chapter, see Tier 2), SOLID without the runtime (item 13 — the
   reader's design vocabulary, un-fused from the .NET machinery; a

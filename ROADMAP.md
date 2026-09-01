@@ -573,25 +573,34 @@ in the same commit.
 **Missing:** the decision procedure for the highest-frequency choice in the
 language. Which container; how to take a parameter; what to return; and
 whether the elements go in by value or behind a pointer. Every function the
-reader writes asks all four, and no page answers any of them as a *choice*.
+reader writes asks all four, and exactly one sub-branch of one of them —
+what to hand back when the call can fail, Chapter 8 — is anywhere answered
+as a *choice*.
 
-**Evidence:** the fragments are everywhere, and every one of them is an
-*instance* rather than a decision. Chapter 11 has a C#-to-C++ container
-**translation table** — which container matches `Dictionary`, not which
-container to reach for. Appendix A.5 has the classic triad (`Widget`,
-`Widget&`, `const Widget&`) in three lines and stops; the other six shapes
-of a parameter are scattered or absent. Chapter 6 says "sink params take by
-value + move" in a single line of a code comment and never defines a sink.
-Chapter 10 gives `string_view` as the replacement for `const std::string&`
-and, separately, warns it can dangle — the two never meet as a rule.
-Chapters 2 and 20 establish `vector<unique_ptr<Shape>>` as *the* polymorphic
-container, on the strength of slicing alone, while Chapter 33 independently
-teaches that a `vector<std::unique_ptr<Sensor>>` holds its elements still
-across a reallocation — the same recommendation, a completely different
-reason, and no page that separates them. Returning is thinnest of all:
-Chapter 6 has the elision rules, Chapter 10 has `optional` for a fail-able
-lookup, Chapter 33 has the loan sentence for a returned pointer, and nothing
-assembles them into "what should this function hand back".
+**Evidence:** the fragments are everywhere, and almost every one of them is
+an *instance* rather than a decision. Chapter 11 has a C#-to-C++ container
+**translation table** — which container matches `Dictionary`; its Notes
+column ranks two rows ("your default, 95% of the time", "almost never the
+right choice") and leaves the others unranked, while the stability rules
+that would decide those sit two sections later as a paragraph of prose under
+"THE trap". Appendix A.5 has the classic triad (`Widget`, `Widget&`,
+`const Widget&`) in three lines and stops; the other six shapes of a
+parameter are scattered or absent. The sink is named twice and situated
+never: Chapter 6 as "sink params take by value + move" in one line of a code
+comment, Chapter 14 as a pitfall bullet on the Tracer's own constructor — a
+definition with no procedure around it. Chapter 10 gives `string_view` as
+the replacement for `const std::string&` and warns it can dangle in the very
+next sentence; the two sit adjacent as facts and never resolve into the rule
+that separates them — fine as a parameter, never as a member. Chapters 2 and
+20 establish `vector<unique_ptr<Shape>>` as *the* polymorphic container on
+the strength of slicing, while Chapter 33 independently teaches that a
+`vector<std::unique_ptr<Sensor>>` holds its elements still across a
+reallocation — the same recommendation, a completely different reason, and
+no page that separates them. Returning is the most scattered: Chapter 8 owns
+the fail-able branch outright — the bug/value/event decision, with ten
+scenarios to run on paper — while Chapter 6 has the elision rules and
+Chapter 33 the loan sentence for a returned pointer, and nothing assembles
+the three into "what should this function hand back".
 
 The cost is that the C# reflex has exactly **one** answer to all four
 questions — pass the reference, return the reference, put objects in the
@@ -610,6 +619,13 @@ container's lifetime, **plus a promise about address stability**. Chapter 33
 already coined the vocabulary for the middle case ("the loan sentence is
 everywhere once you look for it"); this item generalizes it to the other two
 and gives the reader one question to ask instead of four unrelated habits.
+That question is also the habit the page has to leave behind, and the key
+principle Appendix B mirrors in the same commit — speakable, in the
+handbook's own first person: "Before I write a signature I ask who owns
+this, how long it lives, and who may see it." A lookup page trains the
+instance and not the habit unless one sentence survives being looked up
+(question 8), and four decision procedures are exactly the shape most at
+risk of failing it.
 
 **A contribution looks like:** an appendix at the next free letter (**H**
 today, provisional for the reason no chapter number is pre-assigned), built
@@ -618,46 +634,81 @@ of the branches naming the C# reflex each one confronts, a use case and a
 sentence of *why* per branch cross-referencing the chapter that owns the
 mechanism, and one trap. The four: **which container** (lookup by key →
 ordered → must addresses hold still), which absorbs Chapter 11's table by
-reference and adds the stability column that chapter never states; **how to
-take a parameter** (does the function keep a copy → sink, by value and
-`std::move`; polymorphic → `const Base&`; read-only contiguous → `span` or
-`string_view`; possibly absent → `const T*`; modifies the caller's object →
-`T&`; cheap to copy → by value; otherwise `const T&`); **what to return**
-(fail-able → `optional`/`expected`; polymorphic → `unique_ptr<Base>`; a view
-into something you own → write the loan's term in the header; otherwise by
-value); and **what goes in the container** (polymorphic → `unique_ptr<Base>`;
-addresses must survive growth → `unique_ptr<T>` or a node-based container;
-huge or immovable → `unique_ptr<T>`; genuinely co-owned → `shared_ptr`, and
-justify it; otherwise `T` by value) — three independent reasons for the same
-shape, which is precisely what the book currently never separates.
+reference and promotes that chapter's prose invalidation rules into the
+stability column the table never had — and, while there, repairs the two
+chapters that already cite a Chapter 11 "invalidation table" (Chapter 21)
+and "gentler column" (Chapter 33) which do not exist; **how to take a
+parameter**, whose **first** test is polymorphism, because asking the sink
+question first routes a stored polymorphic argument into a by-value
+parameter and slices it — the bug Chapters 2 and 20 exist to teach
+(polymorphic and the function keeps it → `unique_ptr<Base>` by value;
+polymorphic and it does not → `const Base&`; the function keeps a copy →
+sink, by value and `std::move`; read-only contiguous → `span`, C++20, or
+`string_view`; possibly absent → `const T*`, or `T*` where it is written
+through; modifies the caller's object → `T&`; cheap to copy → by value;
+otherwise `const T&`); **what to return** (fail-able → `optional`, or
+`expected` where the codebase is C++23 — the branch Chapter 8 already owns,
+so the page routes to it rather than restating it; polymorphic →
+`unique_ptr<Base>`; a view into something you own → write the loan's term in
+the header; otherwise by value); and **what goes in the container**
+(polymorphic → `unique_ptr<Base>`; addresses must survive growth →
+`unique_ptr<T>` or a node-based container; huge or immovable →
+`unique_ptr<T>`; genuinely co-owned → `shared_ptr`, and justify it;
+otherwise `T` by value) — three independent reasons for the same shape,
+which is precisely what the book currently never separates.
 
 **Why an appendix rather than a chapter**, since the subject is Part I–III
 material. Two reasons, and the second decides it. The moment of need
 (question 1) is the keyboard: this is consulted while writing a signature,
 not read once in order — which is question 2 answered, and it is why the
-diagrams are the deliverable rather than an illustration. And numbering is
-load-bearing, so a chapter would have to append as 39, landing
-value-semantics material after six ticket chapters and a bridge design
-chapter; an appendix carries no positional claim. The fragments **stay where
+page is built as procedures rather than narrative. The diagrams stay
+**additive**, as CLAUDE.md requires: each trunk illustrates a procedure
+already complete in its table, because mermaid does not render in the
+release single file and the reader who downloads that file must still get
+the whole page. And numbering is load-bearing, so a chapter would have to
+append as 39, landing value-semantics material after six ticket chapters
+and a bridge design chapter; an appendix carries no positional claim. The fragments **stay where
 they are**, as in item 8: the page gathers and cross-references, and the
 owning chapters gain a pointer to it so the reader in Chapter 11 wondering
 which container to use is told the procedure exists.
 
 **What re-verifies it:** `exercises/choosing/`, stdlib-only, wired into
-`build_all.sh` under Appendix F's discipline (listings quoted verbatim, so
-editing one means editing the appendix in the same commit). The
-recommendations become asserted numbers, using Chapter 14's own instrument —
-a type that counts its copies and moves: a sink taking by value and moving
-is **one move and zero copies** where `const&`-plus-assign is **one copy**;
-an `auto` loop copies N times where `const auto&` copies none; and
+`build_all.sh`, with its pairing added to `check_verbatim.sh` in the same
+commit — Appendix F's discipline, and that script is what enforces it
+(listings quoted verbatim, so editing one means editing the appendix in the
+same commit).
+
+The recommendations become asserted numbers, and that needs one thing the
+book does not yet have. Chapter 14's Tracer is the right *shape* and the
+wrong instrument: it **logs** every copy and move to stdout, and its two
+statics count objects rather than operations — `counter_` is incremented
+identically by the copy constructor and the move constructor, so nothing in
+it can tell one from the other. The lab needs a counting variant —
+`copies_` and `moves_` behind an accessor — living in `exercises/choosing/`
+and quoted into the appendix, **not** an edit to Chapter 14 or
+`solutions/tracer.cpp`.
+
+Then the numbers, with the caveat that is the lesson. A sink taking by value
+and moving is **one move and zero copies** *when the argument is a
+temporary*; hand it an lvalue and it is one copy **and** one move — worse
+than the `const&`-plus-assign it is measured against, at one copy — and hand
+it a named rvalue (`std::move(x)`, which is how Chapter 6 spells its own
+sink call) and it is **two** moves. The lab asserts all three rows, because
+"by value and move" is a win on temporaries and a tie or a loss elsewhere,
+and a single asserted row would teach the reflex the page exists to replace.
+An `auto` loop copies N times where `const auto&` copies none. And
 `vector<T>` element addresses **change** across a forced reallocation while
 `vector<unique_ptr<T>>` pointee addresses **do not** — that last one is the
-whole justification for procedure four, made checkable. One honesty
-constraint the writing must respect: returning a *temporary* can be asserted
-at zero copies and zero moves (mandatory elision, C++17), but returning a
-**named** local may only be asserted at zero *copies* — NRVO is permitted,
-not guaranteed, which is why Chapter 6 already splits the two and why the
-MSVC job tests `/Zc:nrvo`. An appendix claiming NRVO would contradict both.
+whole justification for procedure four, made checkable.
+
+The other honesty constraint is at the return end: returning a *temporary*
+can be asserted at zero copies and zero moves (mandatory elision, C++17),
+but returning a **named** local may only be asserted at zero *copies* —
+NRVO is permitted, not guaranteed, which is why Chapter 6 already splits the
+two and why the MSVC job tests `/Zc:nrvo`. An appendix claiming NRVO would
+contradict both. And the `span` and `expected` branches are the two the lab
+cannot judge at all — C++20 and C++23 against a C++17 build — so they carry
+their standard on the page, the way Chapters 10 and 8 already do.
 
 **Two notes for whoever writes it.** The `&&` parameter is a route the
 procedure sends the reader *away* from: in application code the sink idiom
