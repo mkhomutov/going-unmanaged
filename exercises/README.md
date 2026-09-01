@@ -38,9 +38,11 @@ have already done the Device SDK lab cold — it is that lab again with a driver
 thread in front of it — and the ABI lab assumes both SDK labs, since it asks you
 to publish the shapes those two taught you to consume.
 
-`cookbook/` is the odd one out: not an exercise at all, but Appendix F's
-recipe listings, compiled and asserted by `build_all.sh` so the cookbook
-cannot rot (its README has the sync rule). Nothing there to attempt cold.
+`cookbook/` and `choosing/` are the odd ones out: not exercises at all, but
+appendix listings compiled and checked by `build_all.sh` so those pages
+cannot rot — Appendix F's recipes and Appendix H's cost measurements
+respectively (each README has the sync rule, and `choosing/`'s is enforced
+in both directions). Nothing in either to attempt cold.
 
 Ten directories hold their reference in the open, rather than behind a
 fold. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and

@@ -6,12 +6,16 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 38 chapters, appendices A–G), indexed by `book/README.md`. The
+(6 parts, 38 chapters, appendices A–H), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
-artifact produced by `scripts/build_book.sh`. Appendices run A–G with no
+artifact produced by `scripts/build_book.sh`. Appendices run A–H with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
 lookup half: the mechanism survey and decision table; no C++ listings —
-check_verbatim.sh enforces that no cpp fence lands there).
+check_verbatim.sh enforces that no cpp fence lands there), H the choosing
+procedures (item 17: which container, how to take a parameter, what to
+return, value-or-pointer inside a collection — the opposite contract to
+G, its every cpp fence pinned to `exercises/choosing/`, which asserts the
+costs the page quotes).
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
 concurrency, authoring an ABI boundary, reading tool output. Chapter 29
@@ -53,7 +57,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–38, `A-`…`G-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–38, `A-`…`H-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -89,6 +93,19 @@ Chapter 25's Finding 10.
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
   same commit (the mains are scaffolding and appear in no listing)
+- `exercises/choosing/` — Appendix H's measurements, the other non-exercise
+  appendix directory: `counted.h` (a copy/move-counting type plus the
+  `CHECK` judge), `passing.cpp` (procedures 2–3) and `storing.cpp`
+  (procedures 1 and 4), no TASK.md. Its banners name exactly which units
+  Appendix H quotes, and check_verbatim.sh holds the pairing BOTH ways —
+  editing a named unit means editing `book/H-choosing.md` in the same
+  commit. Two rules are load-bearing and easy to undo by accident: the
+  judge is `CHECK` (counts failures, sets the exit code), never `assert`,
+  which a Release build compiles away; and build_all.sh builds
+  `passing.cpp` a SECOND time under `-fno-elide-constructors`, because
+  with NRVO on a returned temporary and a returned named local both
+  measure zero and the page's guaranteed-vs-permitted distinction is
+  never exercised
 - `exercises/exitlab/` — Chapter 32's ticket lab. TASK.md carries the broken
   2.4.1 listings (book-only, they exist to fail); the committed files are
   the FIXED state, quoted verbatim in the chapter's fix section, and
@@ -168,9 +185,12 @@ Chapter 25's Finding 10.
   (the convention: a committed lab file may open with a `//` provenance
   banner the chapter listing omits; the verbatim contract covers everything
   below it), every Appendix F cpp fence in a cookbook TU, and the seven
-  ticket/lab TASK cards' broken listings in their chapters — plus, for
-  bridgelab only, the reverse direction: every cpp fence in Chapter 38
-  must live in `exercises/bridgelab/`. Run it after
+  ticket/lab TASK cards' broken listings in their chapters — plus two
+  reverse directions: every cpp fence in Chapter 38 must live in
+  `exercises/bridgelab/`, and Appendix H is held to `exercises/choosing/`
+  both ways (every fence on the page is in that directory, and every unit
+  the lab's banners name is on the page whole — that lab has no TASK card
+  to carry the reverse the way bridgelab's does). Run it after
   touching any quoted listing; adding a new quoted pairing means adding it
   to this script in the same commit. CI runs it in the book job
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
@@ -348,25 +368,20 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 39+, Appendix H+) — no item requires renumbering. Delivered items
+(Chapter 39+, Appendix I+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
   Chapter 26; dependency management was item 2 and is now Chapter 27;
   testing was item 3 and is now Chapter 28; concurrency was item 4 and is
   now Chapter 29
-- Tier 2: two open items, and they are neighbours. Consolidated
-  const-correctness (item 8) sequences after item 9 (P/Invoke), which the
-  2026 deep review promoted to the next major chapter. The other is item
-  17 — *Choosing* — the decision procedures for signatures, containers
-  and element storage (which container, how to take a parameter, what to
-  return, value-or-pointer inside the collection), proposed as an
-  appendix at the next free letter plus a copy/move-counting
-  `exercises/choosing/`. `const&` is one branch of item 17's parameter
-  procedure, so the two are planned together rather than sequenced by
-  accident: read both entries before starting either, and note that
-  taking 17 first lets 8 point at the procedure instead of re-deriving
-  it. Scenario chapters were item 11 and are DONE — Chapters 32–35, then
+- Tier 2: consolidated const-correctness (item 8) is all that remains,
+  and it sequences after item 9 (P/Invoke), which the 2026 deep review
+  promoted to the next major chapter. It also builds on item 17 —
+  *Choosing* — which is now DONE as Appendix H plus the copy/move-counting
+  `exercises/choosing/`: `const&` is one branch of that appendix's
+  parameter procedure, so item 8 points at the procedure rather than
+  re-deriving it. Scenario chapters were item 11 and are DONE — Chapters 32–35, then
   items 14 and 15 appended the performance ticket (Chapter 36 + perflab)
   and the crash-dump ticket (Chapter 37 + dumplab) in the same format,
   which stays open to new tickets by PR. Byte-level protocol work was
@@ -380,7 +395,7 @@ stay on the list marked DONE so item numbers never shift. Short version:
   and is now DONE — Chapter 38 + stdlib-only `exercises/bridgelab/` (the
   main-thread queue under a bounded-wait judge), plus Appendix G, the
   survey of mechanisms and its decision table.
-  The glossary was item 10 and is now Appendix E (letters run A–G with no
+  The glossary was item 10 and is now Appendix E (letters run A–H with no
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
   timers), then 17 (UTF-8↔UTF-16); it grows by PR like the Findings log

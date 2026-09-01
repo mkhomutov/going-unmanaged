@@ -77,7 +77,7 @@ A pointer + length, like C#'s `ReadOnlySpan<char>`. Replaces `const std::string&
 
 **Try it (30 seconds).** Return a `string_view` of a local `std::string` from a function and read it at the call site under ASan. clang already objects at compile time (`-Wreturn-stack-address`), and the run is a textbook heap-use-after-free — Chapter 31 teaches you to read that report; here it is enough to watch the trap fire.
 
-And string_view is the string-shaped case of an idea your C# already names in general: `Span<T>`/`ReadOnlySpan<T>` over *any* contiguous buffer is **`std::span<T>`** — C++20, so this book's C++17 exercises spell the same thing as the pointer-plus-length pair you will meet in every C API of Chapter 16. When your codebase has span, use it; until then you are writing span by hand and should feel no shame.
+And string_view is the string-shaped case of an idea your C# already names in general: `Span<T>`/`ReadOnlySpan<T>` over *any* contiguous buffer is **`std::span<T>`** — C++20, so this book's C++17 exercises spell the same thing as the pointer-plus-length pair you will meet in every C API of Chapter 16. When your codebase has span, use it; until then you are writing span by hand and should feel no shame. *When* a view is the right parameter shape at all — against `const&`, a sink, or a plain pointer — is [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s parameter procedure, which routes here for the mechanism and adds only the choice.
 
 ### Structured bindings (C# 7 deconstruction)
 

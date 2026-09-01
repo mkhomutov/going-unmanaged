@@ -16,7 +16,7 @@ chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
 **Everything on this list appends.** New chapters go at the end (Chapter 39
-onward, in whatever order they land); new appendices continue from H. No item
+onward, in whatever order they land); new appendices continue from I. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
 first — see the numbering rules in [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -568,7 +568,7 @@ the bug's exact line in that configuration, which is the chapter's
 coverage lesson. Two new Appendix B principles under Debugging, mirrored
 in the same commit.
 
-### 17. Choosing — signatures, containers, and what goes inside them
+### 17. Choosing — signatures, containers, and what goes inside them — DONE (Appendix H)
 
 **Missing:** the decision procedure for the highest-frequency choice in the
 language. Which container; how to take a parameter; what to return; and
@@ -727,6 +727,45 @@ belongs to. If this item lands first, item 8 can point at the procedure
 rather than re-deriving it — which is an argument for taking this one first,
 and a second re-sequencing of item 8, whose note already defers to item 9.
 Whoever picks up either should read both entries before starting.
+
+**Delivered (2026-09-01) as Appendix H — *Choosing: Signatures, Containers,
+and Storage*** — four procedures in the sketched shape (LR trunks, leaves in
+tables, the C# reflex named per branch), with `exercises/choosing/` turning
+the advice into asserted numbers and `check_verbatim.sh` holding the page to
+the code in both directions. **One correction the measuring forced, and it
+is the entry's own claim that was wrong.** The sketch said a sink costs "one
+move"; the harness says that is true only for a temporary. Passing
+`std::move(x)` costs **two** — one move constructs the parameter, one moves
+it into the member — and for an lvalue the caller keeps using, the sink
+costs a copy *and* a move where plain `const&` costs the copy alone. So the
+appendix states the cost as a three-row table per caller kind rather than a
+slogan, and the honest rule is that the sink wins on temporaries and buys
+its generality with one extra move on lvalues. **A second correction, from
+a review of the first draft, went deeper than the table.** Counting only
+copies and moves hides the cost that actually decides a setter: a by-value
+sink allocates a fresh buffer on every call, while `const&` copy-assignment
+reuses the member's — measured at 100 allocations against 0 over 100 calls.
+So the harness gained a replaced `operator new` (item 14's instrument), and
+the page states the narrower, honest rule: the sink wins on temporaries and
+on rare calls, and `const&` wins on a hot path. The NRVO constraint recorded
+here survived intact — zero copies and zero moves for a returned temporary,
+zero copies with `moves <= 1` for a named local — but with NRVO on, both
+shapes measure zero and the distinction is never exercised, so
+`build_all.sh` builds `passing.cpp` a second time under
+`-fno-elide-constructors`. The same review found the first draft's
+parameter procedure asking the sink question before polymorphism, which
+routes a stored base-class argument into a by-value parameter and slices
+it — exactly what this entry warned about above; the delivered trunk asks
+polymorphism **first**. Four key principles landed in Appendix B under
+*Choosing signatures and storage*, including the organising one this entry
+specified; Chapters 2, 6, 10, 11 and Appendix A.5 gained pointers, keeping
+their fragments as this entry required, and Chapters 21 and 33 had their
+phantom "Chapter 11 invalidation table" citations retargeted at the column
+this appendix now supplies. `check_verbatim.sh` holds the page to the code
+in both directions: forward, every cpp fence on the page is in
+`exercises/choosing/`; backward, every unit the lab's banners name is on
+the page whole — the reverse that bridgelab gets from its TASK card, which
+a directory with no card had to get another way.
 
 ---
 

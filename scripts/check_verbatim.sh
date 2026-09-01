@@ -20,7 +20,13 @@
 #                    fence in Chapter 38 must live in exercises/bridgelab/
 #                    (committed code or the card's broken listings), since
 #                    the chapter quotes the lab by excerpt rather than by
-#                    whole file; and Appendix G must hold NO cpp fence at
+#                    whole file; Appendix H takes that same both-directions
+#                    rule against exercises/choosing/, which exists to
+#                    assert the costs that appendix quotes - forward, every
+#                    cpp fence on the page is in that directory; backward,
+#                    each unit its banners name is on the page WHOLE, since
+#                    that lab has no TASK card to carry the reverse the way
+#                    bridgelab's does; and Appendix G must hold NO cpp fence at
 #                    all - its recorded shape is lookup material with no
 #                    C++ listings (ROADMAP item 16's delivered note)
 #
@@ -139,6 +145,56 @@ for i, block in enumerate(ch38_fences, 1):
         first = block.strip().split('\n')[0]
         failures.append(f"book/38-the-bridge-out.md cpp fence #{i} ({first!r}) is in no exercises/bridgelab/ file")
 
+# Appendix H quotes exercises/choosing/ by excerpt, so it takes the same
+# both-directions rule as Chapter 38. Forward: every cpp fence on the page
+# must be byte-identical to something the build actually compiles.
+choosing = ''.join(open(p).read() for p in sorted(glob.glob('exercises/choosing/*.h')
+                                                  + glob.glob('exercises/choosing/*.cpp')))
+h_fences = cpp_fences('book/H-choosing.md')
+for i, block in enumerate(h_fences, 1):
+    if block.rstrip('\n') not in choosing:
+        first = block.strip().split('\n')[0]
+        failures.append(f"book/H-choosing.md cpp fence #{i} ({first!r}) is in no exercises/choosing/ file")
+
+# Reverse: each unit the lab's banners promise is quoted must actually be on
+# the page, WHOLE. Chapter 38's reverse direction is carried by its TASK
+# card; exercises/choosing/ has no card (it is not an exercise), so the
+# named units are the contract instead - which is what stops a lab function
+# from growing a branch the appendix never shows.
+def whole_unit(path, opening):
+    """The text from the line starting with `opening` to where its braces close."""
+    lines = open(path).read().split('\n')
+    for i, line in enumerate(lines):
+        if line.startswith(opening):
+            depth, out, seen = 0, [], False
+            for body in lines[i:]:
+                out.append(body)
+                depth += body.count('{') - body.count('}')
+                seen = seen or '{' in body
+                if seen and depth <= 0:
+                    return '\n'.join(out)
+            break
+    return None
+
+H_UNITS = [
+    ('exercises/choosing/counted.h',    'struct Counts {'),
+    ('exercises/choosing/counted.h',    'inline Counts& Tally() {'),
+    ('exercises/choosing/passing.cpp',  'class Widget {'),
+    ('exercises/choosing/passing.cpp',  'Counted MakeTemporary()'),
+    ('exercises/choosing/passing.cpp',  'Counted MakeNamed()'),
+    ('exercises/choosing/passing.cpp',  'void TheSinkAllocatesWhereTheBorrowDoesNot()'),
+    ('exercises/choosing/passing.cpp',  'void ReturningCostsNoCopy()'),
+    ('exercises/choosing/storing.cpp',  'void GrowthRelocatesAndMovesEveryElement()'),
+    ('exercises/choosing/storing.cpp',  'void BoxedElementsStandStillWhenTheVectorGrows()'),
+]
+h_page = open('book/H-choosing.md').read()
+for path, opening in H_UNITS:
+    unit = whole_unit(path, opening)
+    if unit is None:
+        failures.append(f"{path}: no unit starting {opening!r} (check_verbatim's own list is stale)")
+    elif unit not in h_page:
+        failures.append(f"{path}: {opening!r} is not quoted whole in book/H-choosing.md")
+
 # Appendix G holds the opposite contract: no cpp fence at all (ROADMAP item
 # 16's shape decision - a page with nothing to compile owes build_all.sh
 # nothing). The day one lands it becomes the book's only unverified listing.
@@ -154,5 +210,6 @@ if failures:
     sys.exit(1)
 print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
       f"{len(f_blocks)} cookbook fences, {len(TICKETS)} cards, "
-      f"{len(ch38_fences)} ch38 fences, G cpp-free)")
+      f"{len(ch38_fences)} ch38 fences, {len(h_fences)} appH fences + "
+      f"{len(H_UNITS)} appH units, G cpp-free)")
 PYEOF

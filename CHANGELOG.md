@@ -12,6 +12,36 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **New: Appendix H — Choosing: Signatures, Containers, and Storage**
+  (MINOR — an appended appendix; closes ROADMAP item 17). The four
+  decisions in every signature — which container, how to take a
+  parameter, what to return, and whether collection elements go in by
+  value or behind a pointer — as procedures rather than translation
+  tables, on the observation that all four are one question at three
+  scopes (who owns this, how long does it live, who may see it). It
+  separates the three independent reasons the book had been giving for
+  the same `vector<unique_ptr<T>>` recommendation — slicing (Ch 2, 20),
+  address stability (Ch 33), and move cost — which no page had ever
+  told apart. `exercises/choosing/` checks the costs it quotes, and the
+  measuring corrected the advice twice. In copies and moves: a sink costs
+  one move only from a temporary, two from `std::move(x)`, and a copy
+  *plus* a move from an lvalue the caller keeps — so the page states a
+  table per caller kind instead of a slogan. In allocations, which that
+  tally cannot see: a by-value sink allocates on every call where `const&`
+  reuses the member's buffer (100 against 0 over 100 calls), so the page
+  sends hot paths to `const&` and the harness gained a replaced
+  `operator new`. The parameter procedure asks about polymorphism
+  **first**, because asking the sink question first routes a stored
+  base-class argument into a by-value parameter and slices it. Judged by a
+  counting `CHECK` rather than `assert` (which a Release build compiles
+  away), and `passing.cpp` is built a second time under
+  `-fno-elide-constructors`, since with NRVO on the page's
+  guaranteed-vs-permitted return distinction measures zero either way.
+  Four key principles join Appendix B; Chapters 2, 6, 10, 11 and Appendix
+  A.5 gain pointers and keep their fragments, and Chapters 21 and 33 have
+  their phantom "Chapter 11 invalidation table" citations retargeted at
+  the stability column this appendix supplies.
+
 - **New: Appendix G — The Bridge Catalogue** (MINOR — an appended
   appendix; closes ROADMAP item 16 together with Chapter 38). The lookup
   half of the bridge material: the survey of mechanisms led by the

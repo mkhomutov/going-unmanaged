@@ -123,6 +123,20 @@ run "dumplab"     $CXX $FLAGS   exercises/dumplab/session.cpp exercises/dumplab/
 # a stopped CI run. Built AGAIN under -fsanitize=thread further down: the
 # breaks split across the two builds, and each build alone checks half.
 run "bridgelab"   $CXX $FLAGS   exercises/bridgelab/main.cpp            -o $OUT/bridgelab
+# Appendix H's measurements. Not an exercise - these are the numbers the
+# appendix quotes (what a sink costs against const&, what vector growth
+# does to element addresses, and what the copy/move tally cannot see: the
+# allocation a by-value sink makes and a const& assignment reuses).
+run "cho_passing"  $CXX $FLAGS   exercises/choosing/passing.cpp          -o $OUT/cho_passing
+run "cho_storing"  $CXX $FLAGS   exercises/choosing/storing.cpp          -o $OUT/cho_storing
+# passing.cpp a SECOND time with elision switched off. The appendix asserts
+# a returned temporary at zero moves and a returned named local at "one at
+# most", and says the difference is that only the first is guaranteed - but
+# with NRVO on, both measure zero and the page's central distinction is
+# never exercised. -fno-elide-constructors leaves mandatory C++17 elision
+# alone and removes NRVO, so the two return shapes finally cost different
+# things. Same idiom as exitlab's two link orders: one build checks half.
+run "cho_noelide"  $CXX $FLAGS -fno-elide-constructors exercises/choosing/passing.cpp -o $OUT/cho_noelide
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -190,6 +204,14 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/dumplab 0 > /dev/null
 # sanitizers around it. Modal drains happen mid-run, so the HOST_BUSY
 # refusal path is genuinely exercised, not just compiled.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/bridgelab > /dev/null
+# Appendix H: these check copy/move counts, heap allocations and element
+# addresses, so a UBSan finding that printed and exited 0 would leave the
+# section green. Their judge is a counting CHECK macro rather than assert,
+# so a -DNDEBUG build would still verify - but these runs are the canonical
+# ones. The third is the same source with NRVO switched off.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_passing > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_storing > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_noelide > /dev/null
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from
