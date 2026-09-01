@@ -355,9 +355,16 @@ stay on the list marked DONE so item numbers never shift. Short version:
   Chapter 26; dependency management was item 2 and is now Chapter 27;
   testing was item 3 and is now Chapter 28; concurrency was item 4 and is
   now Chapter 29
-- Tier 2: consolidated const-correctness (item 8) is all that remains —
-  and it now sequences AFTER item 9 (P/Invoke), which the 2026 deep
-  review promoted to the next major chapter. Scenario chapters were item
+- Tier 2: two open items, and they are neighbours. Consolidated
+  const-correctness (item 8) sequences after item 9 (P/Invoke), which the
+  2026 deep review promoted to the next major chapter, and now also after
+  item 17 — *Choosing* — the decision procedures for signatures,
+  containers and element storage (which container, how to take a
+  parameter, what to return, value-or-pointer inside the collection),
+  proposed as an appendix at the next free letter plus a
+  copy/move-counting `exercises/choosing/`. `const&` is one branch of
+  item 17's parameter procedure, so read both entries before starting
+  either. Scenario chapters were item
   11 and are DONE — Chapters 32–35, then items 14 and 15 appended the
   performance ticket (Chapter 36 + perflab) and the crash-dump ticket
   (Chapter 37 + dumplab) in the same format, which stays open to new
