@@ -15,7 +15,7 @@ Delivered items stay where they are, marked **DONE** with a pointer to the
 chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
-**Everything on this list appends.** New chapters go at the end (Chapter 38
+**Everything on this list appends.** New chapters go at the end (Chapter 39
 onward, in whatever order they land); new appendices continue from G. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
@@ -835,6 +835,26 @@ discover. And there is a ticket hiding in here for item 11, which stays open
 to new tickets by PR: *the client shows a spinner forever* — attached
 evidence, a queue that waits politely while a modal dialog is open, and a
 fix that is a distinct error code rather than a longer timeout.
+
+**Delivered so far (2026-08-31): the chapter half.** Chapter 38 — *The
+Bridge Out* — plus `exercises/bridgelab/`, in the shape this entry
+committed to: the three breaks quoted in TASK.md and the chapter (the
+polite drain, the main-thread self-wait, the registry race), the committed
+fixed state built by `build_all.sh` under the canonical flags AND as a
+second source in the probe-gated TSan section, `StubHostAdapter` under the
+name argued for above, and the bounded-wait judge — every harness invoke
+carries a deadline, and the harness's checks convert both hang-shaped
+breaks into a failed line. Two things the writing added to the sketch: the
+*dropping* variant of the broken drain turned out not to hang at all — a
+destroyed `packaged_task` stores `broken_promise`, so the client gets a
+`std::future_error` on a transport thread with no handler, which is its own
+lesson and is in the chapter — and the reentrancy guard gained an asserted
+second half (the job deferred by a nested `Drain` must run one turn later:
+kept, not dropped). Three key principles landed in Appendix B under
+*Bridging a host*; the glossary gained *thread affinity*; Chapter 31's
+symptom index gained the spinner row; Chapter 29's two IOU bullets now
+point here. The appendix half — the survey and its decision table, at the
+next free letter — is still open, so the item stays open.
 
 ---
 

@@ -115,6 +115,14 @@ run "perflab"     $CXX $FLAGS   exercises/perflab/meter.cpp exercises/perflab/ma
 # corpse). Run twice below, once per device configuration: the crash
 # lived only in the configuration the test matrix never had.
 run "dumplab"     $CXX $FLAGS   exercises/dumplab/session.cpp exercises/dumplab/main.cpp -o $OUT/dumplab
+# Chapter 38's lab. The committed files are the FIXED state (the three
+# broken shapes live in the lab's TASK.md and the chapter - they exist to
+# fail). Only one of the three breaks has a sanitizer; the other two are
+# hangs, so the harness's judge is a bounded wait - every invoke carries a
+# deadline, and a timeout is a failed check with a line number instead of
+# a stopped CI run. Built AGAIN under -fsanitize=thread further down: the
+# breaks split across the two builds, and each build alone checks half.
+run "bridgelab"   $CXX $FLAGS   exercises/bridgelab/main.cpp            -o $OUT/bridgelab
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -178,6 +186,10 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/perflab 1000 > /dev/null
 # second, and one configuration cannot prove a claim about both.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/dumplab 1 > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/dumplab 0 > /dev/null
+# The Chapter 38 lab: the bounded-wait judge inside the binary, the
+# sanitizers around it. Modal drains happen mid-run, so the HOST_BUSY
+# refusal path is genuinely exercised, not just compiled.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/bridgelab > /dev/null
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from
@@ -283,6 +295,12 @@ if $CXX $TFLAGS "$OUT/tsan_probe.cpp" -o "$OUT/tsan_probe" > /dev/null 2>&1 \
     # under whatever the program goes on to report.
     TSAN_OPTIONS=halt_on_error=1 "$OUT/threaded_tsan" > /dev/null
     echo "  ok   solutions/device_threaded_solution.cpp under -fsanitize=thread"
+    # Chapter 38's lab under the same probe - a second source for this
+    # section, not a second section: its registry-race break is TSan-only,
+    # so without this build that break has no judge at all.
+    $CXX $TFLAGS exercises/bridgelab/main.cpp -o "$OUT/bridgelab_tsan"
+    TSAN_OPTIONS=halt_on_error=1 "$OUT/bridgelab_tsan" > /dev/null
+    echo "  ok   exercises/bridgelab/main.cpp under -fsanitize=thread"
 elif [ "$REQUIRE_TSAN" = 1 ]; then
     echo "build_all.sh: ThreadSanitizer cannot build and run a trivial program" >&2
     echo "  with $CXX, and --require-tsan was given. Re-run the probe by hand to" >&2

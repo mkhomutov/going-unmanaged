@@ -241,8 +241,8 @@ Note what the two smart pointers are doing here, because this is the one place t
 
 ### In the wild
 
-- **Thread affinity is common and under-documented.** Host applications frequently require that their API be called only from the main or UI thread. Your callback arrives on a driver thread, computes, and then must *marshal* the result back — the SDK's own dispatch-to-main mechanism if it has one, or a queue your main-thread code drains. This is C#'s synchronization context, except nothing does it for you.
-- **Ask the four questions from Chapter 16, plus one.** Who allocates, who releases, what is the failure contract, what thread calls me back — and now: *may I call back into the SDK from inside its own callback?* Reentrancy is a real restriction, and violating it deadlocks.
+- **Thread affinity is common and under-documented.** Host applications frequently require that their API be called only from the main or UI thread. Your callback arrives on a driver thread, computes, and then must *marshal* the result back — the SDK's own dispatch-to-main mechanism if it has one, or a queue your main-thread code drains. This is C#'s synchronization context, except nothing does it for you — until [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out), which builds that queue and makes it the spine of a bridge.
+- **Ask the four questions from Chapter 16, plus one.** Who allocates, who releases, what is the failure contract, what thread calls me back — and now: *may I call back into the SDK from inside its own callback?* Reentrancy is a real restriction, and violating it deadlocks — [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out) shows both the deadlock and the guard.
 - **Prefer no shared state to well-synchronized shared state.** A callback that pushes into a queue and returns is easier to get right than one that computes. Move the work to your own thread; keep the callback short.
 
 ### Pitfalls

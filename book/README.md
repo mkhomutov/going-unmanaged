@@ -66,6 +66,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 35. [Still Live at Unload](35-still-live-at-unload.md#chapter-35--still-live-at-unload) — the fourth ticket: the vendor's 2.0 is refcounted, and the host says objects are still live at unload
 36. [The Host Stutters](36-the-host-stutters.md#chapter-36--the-host-stutters) — the fifth ticket: dropouts with your plug-in loaded, and an attached profile that says you are innocent
 37. [No Repro, Dump Attached](37-no-repro-dump-attached.md#chapter-37--no-repro-dump-attached) — the sixth ticket: a crash report from a machine you will never see, and every bench rig is green
+38. [The Bridge Out](38-the-bridge-out.md#chapter-38--the-bridge-out) — serving C#, Python, and the rest from inside the host: one queue, one seam, and a deadline on every wait
 
 **[Appendices](A-fundamentals-refresher.md#appendices)**
 

@@ -12,9 +12,15 @@
 #                    provenance banner (testlab/abilab convention: the banner
 #                    names the sync rule and is not part of the quoted listing)
 #   3. cookbook/tasks - every ```cpp fence in Appendix F appears in some
-#                    exercises/cookbook/ TU, and every ```cpp fence in the
-#                    four ticket TASK cards appears in its chapter (the broken
-#                    listings are book-and-card, identical by rule)
+#                    exercises/cookbook/ TU, and every ```cpp fence in a
+#                    ticket TASK card appears in its chapter (the broken
+#                    listings are book-and-card, identical by rule);
+#                    bridgelab's card holds the same rule, and its chapter
+#                    is additionally checked the other way - every cpp
+#                    fence in Chapter 38 must live in exercises/bridgelab/
+#                    (committed code or the card's broken listings), since
+#                    the chapter quotes the lab by excerpt rather than by
+#                    whole file
 #
 # Deliberately NOT checked: exercises/buildlab/CMakeLists.txt (assembled from
 # snippets, comments added - its own banner says so), solutions/Buffer.h and
@@ -30,6 +36,11 @@ python3 - <<'PYEOF'
 import glob, re, sys
 
 failures = []
+
+# The one fence shape every containment check below extracts. One definition,
+# because a tweak applied to two of three copies is a check gone silently lax.
+def cpp_fences(path):
+    return re.findall(r'```cpp\n(.*?)```', open(path).read(), re.S)
 
 def strip_banner(text):
     lines = text.split('\n')
@@ -88,7 +99,7 @@ for ch, f in BANNER:
 
 # Appendix F: every cpp fence is a recipe listing and must live in a cookbook TU.
 cookbook = ''.join(open(p).read() for p in sorted(glob.glob('exercises/cookbook/*.cpp')))
-f_blocks = re.findall(r'```cpp\n(.*?)```', open('book/F-rosetta-cookbook.md').read(), re.S)
+f_blocks = cpp_fences('book/F-rosetta-cookbook.md')
 for i, block in enumerate(f_blocks, 1):
     if block.rstrip('\n') not in cookbook:
         first = block.strip().split('\n')[0]
@@ -100,13 +111,31 @@ TICKETS = [('exitlab', '32-it-crashes-on-exit'),
            ('capturelab', '34-parse-this-capture'),
            ('comlab', '35-still-live-at-unload'),
            ('perflab', '36-the-host-stutters'),
-           ('dumplab', '37-no-repro-dump-attached')]
+           ('dumplab', '37-no-repro-dump-attached'),
+           # A lab card rather than a ticket card, but the same rule: the
+           # broken listings are quoted in both places, identically.
+           ('bridgelab', '38-the-bridge-out')]
 for lab, ch in TICKETS:
     chapter = open(f'book/{ch}.md').read()
-    task = open(f'exercises/{lab}/TASK.md').read()
-    for i, block in enumerate(re.findall(r'```cpp\n(.*?)```', task, re.S), 1):
+    for i, block in enumerate(cpp_fences(f'exercises/{lab}/TASK.md'), 1):
         if block.rstrip('\n') not in chapter:
             failures.append(f"exercises/{lab}/TASK.md cpp fence #{i} is not in book/{ch}.md")
+
+# Chapter 38's fences run the other direction too: every cpp fence in the
+# chapter must live in exercises/bridgelab/ - as committed code (the lab is
+# quoted by excerpt, so full-file containment does not apply) or as one of
+# the TASK card's broken listings, which the loop above pinned to the
+# chapter. Nothing in the chapter is quoted from nowhere.
+# Text sources only: a learner's stray a.out (or a scratch subdirectory)
+# in the lab must not crash the check with a decode error instead of a verdict.
+bridge = ''.join(open(p).read() for p in sorted(glob.glob('exercises/bridgelab/*.h')
+                                                + glob.glob('exercises/bridgelab/*.cpp')
+                                                + glob.glob('exercises/bridgelab/*.md')))
+ch38_fences = cpp_fences('book/38-the-bridge-out.md')
+for i, block in enumerate(ch38_fences, 1):
+    if block.rstrip('\n') not in bridge:
+        first = block.strip().split('\n')[0]
+        failures.append(f"book/38-the-bridge-out.md cpp fence #{i} ({first!r}) is in no exercises/bridgelab/ file")
 
 if failures:
     print("check_verbatim.sh: DRIFT", file=sys.stderr)
@@ -114,5 +143,6 @@ if failures:
         print(f"  {f}", file=sys.stderr)
     sys.exit(1)
 print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
-      f"{len(f_blocks)} cookbook fences, {len(TICKETS)} ticket cards)")
+      f"{len(f_blocks)} cookbook fences, {len(TICKETS)} cards, "
+      f"{len(ch38_fences)} ch38 fences)")
 PYEOF
