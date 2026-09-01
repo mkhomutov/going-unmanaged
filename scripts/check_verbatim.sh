@@ -20,7 +20,9 @@
 #                    fence in Chapter 38 must live in exercises/bridgelab/
 #                    (committed code or the card's broken listings), since
 #                    the chapter quotes the lab by excerpt rather than by
-#                    whole file
+#                    whole file; and Appendix G must hold NO cpp fence at
+#                    all - its recorded shape is lookup material with no
+#                    C++ listings (ROADMAP item 16's delivered note)
 #
 # Deliberately NOT checked: exercises/buildlab/CMakeLists.txt (assembled from
 # snippets, comments added - its own banner says so), solutions/Buffer.h and
@@ -137,6 +139,14 @@ for i, block in enumerate(ch38_fences, 1):
         first = block.strip().split('\n')[0]
         failures.append(f"book/38-the-bridge-out.md cpp fence #{i} ({first!r}) is in no exercises/bridgelab/ file")
 
+# Appendix G holds the opposite contract: no cpp fence at all (ROADMAP item
+# 16's shape decision - a page with nothing to compile owes build_all.sh
+# nothing). The day one lands it becomes the book's only unverified listing.
+g_fences = cpp_fences('book/G-the-bridge-catalogue.md')
+if g_fences:
+    failures.append(f"book/G-the-bridge-catalogue.md holds {len(g_fences)} cpp fence(s); "
+                    "its contract is no C++ listings (ROADMAP item 16's delivered note)")
+
 if failures:
     print("check_verbatim.sh: DRIFT", file=sys.stderr)
     for f in failures:
@@ -144,5 +154,5 @@ if failures:
     sys.exit(1)
 print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
       f"{len(f_blocks)} cookbook fences, {len(TICKETS)} cards, "
-      f"{len(ch38_fences)} ch38 fences)")
+      f"{len(ch38_fences)} ch38 fences, G cpp-free)")
 PYEOF

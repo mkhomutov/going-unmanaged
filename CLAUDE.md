@@ -10,7 +10,8 @@ the per-chapter files under `book/` — one file per chapter and appendix
 single-file `going-unmanaged.md` is no longer checked in: it is a build
 artifact produced by `scripts/build_book.sh`. Appendices run A–G with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
-lookup half: the mechanism survey and decision table, no code fences).
+lookup half: the mechanism survey and decision table; no C++ listings —
+check_verbatim.sh enforces that no cpp fence lands there).
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
 concurrency, authoring an ABI boundary, reading tool output. Chapter 29

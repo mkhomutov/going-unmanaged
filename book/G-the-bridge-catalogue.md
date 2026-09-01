@@ -1,6 +1,6 @@
 ## Appendix G — The Bridge Catalogue
 
-[Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out) builds the part of a bridge that never changes — the queue, the seam, the registry, the bounded wait. This appendix is the part that does: the catalogue of mechanisms for connecting a foreign client to a native host, for the meeting where one must be chosen. It is lookup material, deliberately — each entry is a mechanism, its price, and the situation it wins in, and there is not a line of code on this page, because every listing the subject needs already lives in the chapter and its lab.
+[Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out) builds the part of a bridge that never changes — the queue, the seam, the registry, the bounded wait. This appendix is the part that does: the catalogue of mechanisms for connecting a foreign client to a native host, for the meeting where one must be chosen. It is lookup material, deliberately — each entry is a mechanism, its price, and the situation it wins in, and there is not a line of C++ on this page — one topology diagram and one JSON record are its only listings, because every compilable listing the subject needs already lives in the chapter and its lab.
 
 Two standing notes before the list. Every mechanism here still obeys the chapter's one invariant — SDK calls on the main thread, at a point the host calls safe; the families differ only in *where the foreign code waits* while that happens. And this page ages on other people's schedules: runtimes, browser controls and RPC stacks version faster than books, so treat the shapes and the questions as durable, and re-verify any specific name the week you decide.
 
@@ -43,7 +43,7 @@ flowchart LR
     end
 ```
 
-What every entry below buys, once: **isolation** — a client crashes in private, and when the host crashes the client shows "reconnecting" instead of dying with it; **any runtime, any version** — .NET 8 in one client, Python in another, nothing loaded into the host; **cross-platform by construction** — a shim that speaks a socket builds wherever the host runs; and **testability** — a stub server lets client teams work with no host installed, exactly as the chapter's stub adapter frees the shim. The standing costs, once: loopback round trips are real (design coarse, batchable calls, not five hundred per grid paint), and two processes means **two lifecycles** — the discovery record and its liveness check are Chapter 38's *In the wild* bullet, and the client-side bounded wait is its pitfall:
+What every entry below buys, once: **isolation** — a client crashes in private, and when the host crashes the client shows "reconnecting" instead of dying with it; **any runtime, any version** — .NET 8 in one client, Python in another, nothing loaded into the host; **cross-platform by construction** — a shim that speaks a socket builds wherever the host runs; and **testability** — a stub server lets client teams work with no host installed, exactly as the chapter's stub adapter frees the shim. The standing costs, once: loopback round trips are real (design coarse, batchable calls, not five hundred per grid paint), and two processes means **two lifecycles** — the discovery record and its liveness check are Chapter 38's *In the wild* bullet — extended here with the two version fields a client checks before speaking — and the client-side bounded wait is its pitfall:
 
 ```json
 { "pid": 41288, "port": 51723, "hostVersion": "29.1",
@@ -55,7 +55,7 @@ A loopback-only bind plus that per-instance token is the right security posture 
 
 **HTTP + JSON.** An embedded HTTP server, one route per command. Every language is a client, and so is `curl`, which makes it the most debuggable option on the page. **Price:** no typed contract unless you add a schema on top; events bolt on badly (polling, or server-sent events and a second idiom); a round trip costs milliseconds, not microseconds. **When:** request/response is genuinely all there is. The default when nothing argues otherwise.
 
-**WebSocket + JSON-RPC.** One persistent connection per client, and JSON-RPC 2.0 framing gives request/response *and* server-initiated notifications on the same socket, with per-connection ordering. Browsers connect natively, so one server can feed a palette UI (Family A's browser entry) and external tools alike. **Price:** no code generation — the schema discipline is yours to keep. **When:** events matter and the dependency budget is one small library. The sweet spot for most desktop bridges, and the row the chapter's own menu names first.
+**WebSocket + JSON-RPC.** One persistent connection per client, and JSON-RPC 2.0 framing gives request/response *and* server-initiated notifications on the same socket, with per-connection ordering. Browsers connect natively, so one server can feed a palette UI (Family A's browser entry) and external tools alike. **Price:** no code generation — the schema discipline is yours to keep. **When:** events matter and the dependency budget is one small library. The sweet spot for most desktop bridges, and Chapter 38's own first recommendation.
 
 **gRPC.** The contract *is* a `.proto` file — reviewable, semver-able, and it generates the C# and Python clients you would otherwise hand-write; calls carry deadlines that propagate, so a client's deadline arriving at the queue is Chapter 38's bounded wait running end to end; streaming is first-class for events. **Price:** a heavy C++ dependency tree with long builds, which must be static-linked with symbols hidden or it will collide with the host's own copies — [Chapter 27](27-dependency-management.md#chapter-27--dependency-management)'s diamond, at plug-in scale; browsers need a proxy. **When:** several clients you own, in several languages, with events and deadlines as first-class requirements.
 
@@ -79,7 +79,7 @@ A loopback-only bind plus that per-instance token is the right security posture 
 | Several owned clients, typed contract, events | gRPC | HTTP alone |
 | Events plus a web UI, minimal dependencies | WebSocket + JSON-RPC | gRPC's weight |
 | End-user scripting | an embedded Lua/JS interpreter over the command registry | embedding CPython |
-| Huge binary payloads | a zero-copy format, plus the shared-memory lane | JSON anywhere near it |
+| Huge binary payloads, profiling in hand | a zero-copy format, plus the shared-memory lane | JSON anywhere near it |
 | Zero third-party dependencies | named pipes / Unix-domain sockets | — |
 | Legacy Windows automation compatibility | out-of-process COM | — |
 

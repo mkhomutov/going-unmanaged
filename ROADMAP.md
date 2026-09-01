@@ -860,12 +860,14 @@ G — *The Bridge Catalogue* — in the sketched order: the host's own channel
 leads, because "the host may already have solved this" belongs before the
 custom options; Family A follows with its shared costs priced once (and
 Chapter 35 carrying the COM depth rather than this page repeating it);
-Family B in the Bestiary's entry format with one topology diagram; then
-the decision table and the questions that collapse it to a row. One shape
-decision worth recording: the appendix contains **no code fences at all** —
-it is lookup material, every listing the subject needs already lives in
-Chapter 38 and its lab, and a page with nothing to compile is a page
-`build_all.sh` owes nothing to. The chapter now points at the appendix
+Family B as catalogue entries — mechanism, price, when it wins — with one
+topology diagram; then the decision table and the questions that collapse
+it to a row. One shape decision worth recording: the appendix contains
+**no C++ listings at all** — its only fences are the topology diagram and
+one JSON discovery record; every compilable listing the subject needs
+already lives in Chapter 38 and its lab, and a page with nothing to
+compile is a page `build_all.sh` owes nothing to (`check_verbatim.sh`
+pins the shape: a cpp fence landing in Appendix G fails the book job). The chapter now points at the appendix
 from its families section and its transport-menu bullet, so the reading
 path and the lookup path meet where they should.
 
