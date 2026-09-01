@@ -10,8 +10,46 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
-## [Unreleased]
+## [0.7.0] — 2026-09-01
 
+The bridge out of the process, and the four decisions before it. Chapter 38
+closes a promise Chapter 29 made and left standing for nine chapters — the
+main-thread queue a foreign client needs to drive a host — and Appendix G
+is its lookup half, the survey of every mechanism for connecting the two.
+Appendix H is a different kind of debt: the book had taught the pieces of
+every signature in six places and the *choice* in none, so the four
+questions every function asks — which container, how to take a parameter,
+what to return, what goes inside the collection — now have procedures, and
+`exercises/choosing/` holds their costs to counted numbers. Two labs, two
+new verbatim contracts that are exact opposites of each other, and a
+release in which the measuring changed the advice more than once. MINOR:
+one chapter, two appendices and two labs appended; no existing chapter,
+Finding, Recipe or appendix letter changed meaning.
+
+- **New: Chapter 38 — The Bridge Out** (MINOR — an appended chapter; the
+  chapter half of ROADMAP item 16). Pays
+  Chapter 29's nine-chapter IOU — "a queue your main-thread code drains" —
+  in full: thread affinity as the one invariant, a queue that completes
+  every job it accepts (refusal is a result, HOST_BUSY, never silence),
+  the inline path for the caller that must never wait on itself, and a
+  registry frozen before the first transport thread. `exercises/bridgelab/`
+  holds the fixed state under both sanitizer builds; two of its three
+  breaks are hangs, so the judge is a bounded wait — every harness invoke
+  carries a deadline, and a timeout fails with a line number instead of
+  stopping CI. Three key principles join Appendix B (*Bridging a host*),
+  the glossary gains *thread affinity*, Chapter 31's symptom index gains
+  the spinner row, and Chapter 29's two IOU bullets now point forward.
+- **New: Appendix G — The Bridge Catalogue** (MINOR — an appended
+  appendix; closes ROADMAP item 16 together with Chapter 38). The lookup
+  half of the bridge material: the survey of mechanisms led by the
+  host's own automation channel, Family A priced against its shared
+  in-process costs (Chapter 35 carries the COM depth), Family B as
+  mechanism/price/when entries with a topology diagram, the decision
+  table, and the questions that collapse it to a row. Deliberately no
+  C++ listings — only the diagram and a JSON discovery record; every
+  compilable listing the subject needs lives in Chapter 38 and
+  `exercises/bridgelab/`, and `check_verbatim.sh` enforces the
+  no-cpp-fence shape. Appendix letters now run A–G with no gap.
 - **New: Appendix H — Choosing: Signatures, Containers, and Storage**
   (MINOR — an appended appendix; closes ROADMAP item 17). The four
   decisions in every signature — which container, how to take a
@@ -41,31 +79,15 @@ numbers may still move.
   A.5 gain pointers and keep their fragments, and Chapters 21 and 33 have
   their phantom "Chapter 11 invalidation table" citations retargeted at
   the stability column this appendix supplies.
-
-- **New: Appendix G — The Bridge Catalogue** (MINOR — an appended
-  appendix; closes ROADMAP item 16 together with Chapter 38). The lookup
-  half of the bridge material: the survey of mechanisms led by the
-  host's own automation channel, Family A priced against its shared
-  in-process costs (Chapter 35 carries the COM depth), Family B as
-  mechanism/price/when entries with a topology diagram, the decision
-  table, and the questions that collapse it to a row. Deliberately no
-  C++ listings — only the diagram and a JSON discovery record; every
-  compilable listing the subject needs lives in Chapter 38 and
-  `exercises/bridgelab/`, and `check_verbatim.sh` enforces the
-  no-cpp-fence shape. Appendix letters now run A–G with no gap.
-- **New: Chapter 38 — The Bridge Out** (MINOR — an appended chapter; the
-  chapter half of ROADMAP item 16). Pays
-  Chapter 29's nine-chapter IOU — "a queue your main-thread code drains" —
-  in full: thread affinity as the one invariant, a queue that completes
-  every job it accepts (refusal is a result, HOST_BUSY, never silence),
-  the inline path for the caller that must never wait on itself, and a
-  registry frozen before the first transport thread. `exercises/bridgelab/`
-  holds the fixed state under both sanitizer builds; two of its three
-  breaks are hangs, so the judge is a bounded wait — every harness invoke
-  carries a deadline, and a timeout fails with a line number instead of
-  stopping CI. Three key principles join Appendix B (*Bridging a host*),
-  the glossary gains *thread affinity*, Chapter 31's symptom index gains
-  the spinner row, and Chapter 29's two IOU bullets now point forward.
+- **Tooling: two opposite verbatim contracts, and a second sanitizer
+  source.** `check_verbatim.sh` now pins Appendix G to hold **no** cpp
+  fence at all (its shape is a recorded decision, so a listing landing
+  there fails the book job) and Appendix H to hold **only** fences that
+  `exercises/choosing/` compiles — the same both-directions rule Chapter
+  38 takes against `exercises/bridgelab/`. `build_all.sh` gained the two
+  labs, and the probe-gated ThreadSanitizer section gained a second
+  source rather than a second section, because bridgelab's registry-race
+  break has no judge without it.
 
 ## [0.6.0] — 2026-08-05
 
