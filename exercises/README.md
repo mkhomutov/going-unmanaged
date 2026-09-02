@@ -31,6 +31,7 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [The Host Stutters](perflab/TASK.md) | 36 | a ticket with the profile attached: cost evidence, read without being lied to by an average | ~60 min | the files themselves: the fixed [meter.cpp](perflab/meter.cpp) + the counting [main.cpp](perflab/main.cpp), zero allocations at two session lengths |
 | [No Repro, Dump Attached](dumplab/TASK.md) | 37 | a ticket with the crash report attached: post-mortem from the paperwork alone | ~60 min | the files themselves: the fixed [session.cpp](dumplab/session.cpp) + [main.cpp](dumplab/main.cpp), green under both device configurations |
 | [The Bridge Lab](bridgelab/TASK.md) | 38 | serving a foreign client: the main-thread queue, refusing work, the bounded wait | ~2 h | the files themselves: [main_thread_queue.h](bridgelab/main_thread_queue.h), [host.h](bridgelab/host.h), [bridge_core.h](bridgelab/bridge_core.h) + the judging [main.cpp](bridgelab/main.cpp), green under both sanitizer builds |
+| [The Interop Lab](interoplab/TASK.md) | 39 | publishing a C surface a managed caller binds by hand | ~2 h | the files themselves: [plugin.h](interoplab/plugin.h) + [plugin.cpp](interoplab/plugin.cpp), judged by [main.cpp](interoplab/main.cpp) through the boundary header alone |
 
 Chapter 24 (the practice plan) sequences everything above the dependency lab —
 the nine Part V exercises plus the Bestiary reading — into a one-week schedule;
@@ -45,7 +46,7 @@ cannot rot — Appendix F's recipes and Appendix H's cost measurements
 respectively (each README has the sync rule, and `choosing/`'s is enforced
 in both directions). Nothing in either to attempt cold.
 
-Eleven directories hold their reference in the open, rather than behind a
+Twelve directories hold their reference in the open, rather than behind a
 fold. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and
 `dumplab/` are
 the ticket-shaped ones: each TASK.md carries the broken code to work from
@@ -70,7 +71,10 @@ lab's judge: no wait in it is unbounded, because two of the breaks are
 hangs and a hang cannot fail a script, only stop it.
 `buildlab/` does double duty: it is Chapter 23's lab, and Chapter 26 builds that
 same trio with CMake, so the reference
-[`CMakeLists.txt`](buildlab/CMakeLists.txt) lives there. `deplab/` is Chapter
+[`CMakeLists.txt`](buildlab/CMakeLists.txt) lives there. `interoplab/` is Chapter 39's, and the
+only one whose caller is imaginary: `main.cpp` plays the marshaller, because
+every mistake that chapter is about is observable from the native side and no
+CLR is needed to see it. `deplab/` is Chapter
 27's, and the only lab whose subject is entirely build description: one
 `app/main.cpp` consumed three ways — vendored, fetched, and found as an
 installed config package — so the three `consume-*/CMakeLists.txt` are the

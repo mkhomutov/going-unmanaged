@@ -96,6 +96,12 @@ One line each. If you can say these fluently and back them with code, the concep
 - "A bridge completes every job it accepts and bounds every wait — HOST_BUSY is an answer the client can act on, silence is a hang, and a deadline turns a hang into a line number."
 - "The vendor's types never appear on my wire — my bridge speaks a domain model it owns, the shim translates, and a host release rebuilds the shim and nothing else."
 
+**Publishing to a managed caller**
+
+- "The managed declaration of my function is written by hand and checked by nothing — so I publish only blittable types, put a size field in front of every struct, and validate it on entry."
+- "Nothing I allocate crosses the boundary — the caller hands me a buffer and I tell them how big it needs to be, so which heap frees it is never asked."
+- "I write the callback's lifetime window into the header, because it is the only thing that tells a managed author how long to keep their delegate rooted."
+
 **Modern C++**
 
 - "Capture by copy when a lambda outlives its scope; by reference dangles."

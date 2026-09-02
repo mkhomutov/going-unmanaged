@@ -215,6 +215,8 @@ Take something you have already written — the Chapter 15 Buffer is ideal, sinc
 4. **Wrap it in C.** An opaque `BufferHandle`, create/at/size/destroy functions, error codes, and a `catch (...)` in every one. Then compare your header side by side with `exercises/fakedevice/FakeDevice.h` and see how close you landed to it without trying.
 5. **Version it.** Add an options struct with a leading size field, then add a field in "version two" and make the library handle both callers correctly at runtime.
 
+**If the consumer of that boundary will be C#, it is not finished either.** The surface above is right, and a runtime on the other side adds four requirements a C++ caller never imposed — layout it may reorder, strings it must convert, a heap it cannot free from, and a callback its collector may take away. [Chapter 39](39-the-round-trip-home.md#chapter-39--the-round-trip-home) is that half.
+
 ---
 
 
