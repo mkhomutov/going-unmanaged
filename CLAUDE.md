@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 38 chapters, appendices A–H), indexed by `book/README.md`. The
+(6 parts, 39 chapters, appendices A–H), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
 artifact produced by `scripts/build_book.sh`. Appendices run A–H with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
@@ -45,7 +45,11 @@ main-thread queue Ch 29 promised, a frozen command registry, and the
 StubHostAdapter seam; two of its three breaks are hangs no sanitizer
 names, so bridgelab's judge is a bounded wait on every invoke. Appendix
 G is that chapter's lookup half — the survey of bridge mechanisms, led
-by the host's own channel, and the decision table.
+by the host's own channel, and the decision table. Chapter 39 (item 9) is
+the publishing half of P/Invoke — one signature written twice in two
+languages and compared by nothing; interoplab judges it with no .NET
+anywhere, because marshal.h stands in for the marshaller the way FakeSDK
+stands in for a vendor.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -57,7 +61,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–38, `A-`…`H-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–39, `A-`…`H-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -184,6 +188,17 @@ Chapter 25's Finding 10.
   split across the two builds. The harness allows no unbounded wait:
   every invoke takes a deadline, the lab's judge, since a hang would
   stop CI rather than fail it
+- `exercises/interoplab/` — Chapter 39's lab, and the only one whose caller
+  is imaginary: `plugin.h`/`plugin.cpp` are the published boundary and
+  `main.cpp` plays the .NET marshaller through that header alone (two TUs,
+  like abilab — a caller that can see the implementation is not a
+  boundary). `marshal.h` models what the marshaller does to a struct, a
+  string and a delegate; it deliberately does NOT model the collector,
+  because a collected delegate is a use-after-free and broken programs
+  stay book-only — the sink carries an `alive` flag so the header's
+  documented callback window is asserted instead. The struct-misdeclaration
+  judge is the load-bearing one: delete the size-field check and it is an
+  ASan stack-buffer-overflow, not a wrong value
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
@@ -421,7 +436,7 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 39+, Appendix I+) — no item requires renumbering. Delivered items
+(Chapter 40+, Appendix I+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
@@ -438,12 +453,9 @@ stay on the list marked DONE so item numbers never shift. Short version:
   the mutex (item 19: Chapter 29 and Chapter 36 between them state the
   deadline path's prohibition and never its alternative — their two opposite
   defaults for a foreign thread now cross-reference each other, which is all
-  of the item that is done). All three sequence after item 9 (P/Invoke), which
-  the 2026 deep review promoted to the next major chapter and which the
-  reader study then confirmed as the clearest content mandate on the list
-  (four of eighteen readers rated its absence a blocker; three of those
-  votes are for the chapter as scoped, the fourth for the managed-runtime
-  topology recorded as item 9's scope note). It also builds on item 17 —
+  of the item that is done). All three were sequenced after item 9 (P/Invoke),
+  which is **DONE as of 2026-09-02** — Chapter 39 — so all three are now
+  unblocked and item 8 is the next in this tier. It also builds on item 17 —
   *Choosing* — which is now DONE as Appendix H plus the copy/move-counting
   `exercises/choosing/`: `const&` is one branch of that appendix's
   parameter procedure, so item 8 points at the procedure rather than
@@ -454,8 +466,13 @@ stay on the list marked DONE so item numbers never shift. Short version:
   item 7 and is now Chapter 34; authoring an ABI boundary was item 6 and
   is now Chapter 30; the debugging chapter was item 5 and is now
   Chapter 31
-- Tier 3: C++/C# interop (item 9, P/Invoke — re-sequenced as the next
-  major chapter, see Tier 2), SOLID without the runtime (item 13 — the
+- Tier 3: C++/C# interop was item 9 and is now Chapter 39 + `exercises/
+  interoplab/` — the publishing half of P/Invoke, judged with no .NET
+  anywhere because `marshal.h` stands in for the marshaller the way
+  FakeSDK stands in for a vendor. Item 9's scope note stays OPEN: a full
+  treatment of being loaded BY a runtime (JNI, a Python extension, a Node
+  addon) is the shape two readers actually wanted, and Chapter 39 only
+  names it. SOLID without the runtime (item 13 — the
   reader's design vocabulary, un-fused from the .NET machinery; a
   gather-and-translate chapter like item 8), the retrofit (item 20, also
   after item 9 — no lab modernises working code whose callers must keep

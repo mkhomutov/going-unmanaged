@@ -395,8 +395,8 @@ functions, `mutable`, and why const-correctness is retrofitted with pain but
 free if it is there from the start. Cross-reference rather than duplicate;
 the fragments stay where they are.
 
-**Sequencing note (2026-08):** still worth doing and still open — but item 9
-(P/Invoke) now comes first; see the note there for why the deep review
+**Sequencing note (2026-08):** still worth doing and still open — item 9
+(P/Invoke) went first and is now Chapter 39; see the note there for why the deep review
 re-ordered them.
 
 **And read item 17 before starting this one (2026-09).** They are
@@ -880,7 +880,35 @@ cross-reference landed as a correction (issue #54).
 Material no general C++ book would carry, which is precisely why it belongs
 here.
 
-### 9. Going back the other way — C++/C# interop
+### 9. Going back the other way — C++/C# interop — DONE (Chapter 39)
+
+**Delivered (2026-09-02).** Chapter 39, *The Round Trip Home*, plus
+`exercises/interoplab/`. The chapter is the publishing half: the declaration
+written twice in two languages and compared by nothing, blittable as the
+palette, the size field doing a second job as the only runtime check that two
+hand-written declarations agree, three string lengths and the header sentence
+that picks one, caller-allocates as the shape that deletes the which-heap
+question, `SafeHandle` as the managed counterpart to Chapter 1's guard, and
+the delegate a collector may take while native code still holds its thunk.
+
+The lab's design decision worth knowing before touching it: **`marshal.h` is
+a stand-in for the marshaller, not a CLR**, on the same principle as FakeSDK
+and FakeDevice — every mistake this chapter is about is observable from the
+native side, so the boundary can be judged under the canonical flags with no
+.NET anywhere. It deliberately does not model the collector, because a
+collected delegate is a use-after-free and this repository does not commit
+programs whose bug is the point; the sink carries an `alive` flag so the
+documented window is *asserted* instead. Two of the five judges were
+negative-tested: removing the size-field check produces an ASan
+stack-buffer-overflow rather than a wrong value (the misdeclared struct is
+four bytes short), and a `Plugin_ClearSink` that stops clearing fails the
+window assertion.
+
+**Still open beside it:** the scope note below. The chapter carries a short
+*other direction* section naming the mirror topology and what changes in it,
+which was the cheap half; a full treatment of being loaded BY a runtime is
+not written and is the shape both the JNI and the pybind11/N-API readers
+actually wanted.
 
 **Missing:** P/Invoke, marshalling, and the round trip home.
 

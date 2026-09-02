@@ -12,6 +12,26 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **New: Chapter 39 — The Round Trip Home** (MINOR — an appended chapter;
+  closes ROADMAP item 9 and issue #23). The publishing half of P/Invoke,
+  written from the side this book is about: a signature declared twice in
+  two languages and compared by nothing, which is Chapter 27's ODR diamond
+  with the linker removed. Blittable as the palette; the leading size field
+  doing a second job as the only runtime check that two hand-written
+  declarations agree; three string lengths and the header sentence that
+  picks one; caller-allocates as the shape that deletes the which-heap
+  question rather than answering it; `SafeHandle` as the managed
+  counterpart to Chapter 1's guard; and the delegate a collector may take
+  while native code still holds its thunk — Chapter 22's lesson with no
+  evidence on the managed side. `exercises/interoplab/` judges all of it
+  under the canonical flags with no .NET involved: `marshal.h` stands in
+  for the marshaller the way FakeSDK stands in for a vendor, because every
+  mistake in the chapter is observable from the native side. Three key
+  principles join Appendix B, the glossary gains *P/Invoke*, *blittable*
+  and *marshalling*, Chapter 31's symptom index gains the mojibake and
+  managed-caller-crash rows, and Chapter 30 now points forward to this
+  chapter when the consumer of its boundary is C#.
+
 - **New: `exercises/deplab`** (MINOR — an appended exercise; closes issue
   #10). Chapter 27's *Try it* was the last Part VI exercise outside the
   `exercises/` convention, and steps 1–4 now have a finished form: one

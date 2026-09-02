@@ -60,6 +60,10 @@ run "deplab"      $CXX $FLAGS   exercises/deplab/mathlib/src/mathlib.cpp \
                                 exercises/deplab/app/main.cpp \
                                 -I exercises/deplab/mathlib/include \
                                 -DMATHLIB_VERSION='"flags-only"' -o $OUT/deplab
+# Chapter 39's boundary, and the harness that plays the marshaller. Two
+# translation units on purpose: main.cpp sees only plugin.h, which is the
+# subject - a caller that can see the implementation is not a boundary.
+run "interoplab" $CXX $FLAGS   exercises/interoplab/plugin.cpp exercises/interoplab/main.cpp -o $OUT/interoplab
 # Chapter 28's harness and suite, verbatim from the chapter. -I solutions because
 # the class under test is the Chapter 15 solution, extracted into solutions/Buffer.h
 # so a demo with main() and a test binary with its own can both include it — the
@@ -223,6 +227,9 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/dumplab 0 > /dev/null
 # sanitizers around it. Modal drains happen mid-run, so the HOST_BUSY
 # refusal path is genuinely exercised, not just compiled.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/bridgelab > /dev/null
+# The Chapter 39 lab: five value assertions across the boundary, so a UBSan
+# finding that printed and exited 0 would leave the section green.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/interoplab > /dev/null
 # Appendix H: these check copy/move counts, heap allocations and element
 # addresses, so a UBSan finding that printed and exited 0 would leave the
 # section green. Their judge is a counting CHECK macro rather than assert,
