@@ -29,8 +29,6 @@ Every call into the SDK executes on the host's main thread, at a moment the host
 > [!NOTE]
 > **Surprise for C# devs:** you have called this dispatcher a thousand times — `Dispatcher.Invoke`, `SynchronizationContext.Post`, `Control.BeginInvoke` — and never once written one. There is no dispatcher here until you build it: the host's event loop predates your plug-in and owes it nothing.
 
-**One shape of thread affinity, and not the only one.** *Main thread* is what a native host means: one thread owns the event loop and the SDK, and everything else posts to it. A runtime on the far side of your bridge can mean something else by the same words — CPython's global interpreter lock is a lock *any* thread may acquire rather than a thread anything is pinned to, so code holding it is single-threaded without being one-threaded. That changes nothing above, which is a statement about the host's SDK. It changes what you are posting *into* at the other end: if the client is Python or Node, the analogue of the queue built below already exists and is named — `call_soon_threadsafe`, `napi_threadsafe_function` — and foreign code reaches their loop through it exactly as it reaches yours through this one.
-
 ```mermaid
 sequenceDiagram
     participant C as Client thread — any transport
@@ -45,6 +43,8 @@ sequenceDiagram
     end
     M-->>C: the future completes — an answer either way, never silence
 ```
+
+**Thread affinity at the other end, too.** *Main thread* is what a native host means: one thread owns the event loop and the SDK, and everything else posts to it. None of that changes with the client's language — it is a statement about the host's SDK — but the far end usually has an affinity of its own, and it is not the one a C# developer expects. An asyncio loop belongs to the thread running it and a V8 isolate to the thread that entered it, so each ships exactly one call you may make from outside: `loop.call_soon_threadsafe`, `napi_call_threadsafe_function`. CPython's global interpreter lock — still there in the default build — is *not* that door: it is a lock any thread may take, which serialises bytecode without pinning it anywhere, so code holding it is single-threaded without being one-threaded and no closer to the loop's thread than you are.
 
 ### The queue
 

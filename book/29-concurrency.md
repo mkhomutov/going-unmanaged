@@ -68,9 +68,9 @@ counter = 400000  (expected 400000)
 counter = 400000  (expected 400000)
 ```
 
-That transcript is clang at `-O2` on this book's macOS/arm64 machine, and whether *your* compiler collapses *this* loop is neither promised nor the point — the point is that a compiler may, and that nothing in the output tells you when it did.
-
 The right answer, every time. The optimizer collapsed each thread's loop into a single addition, the windows for interleaving all but vanished, and a textbook data race became invisible. **You cannot find this bug by running the program.** It will pass your tests, pass code review if nobody is looking for it, and ship. Then someone changes an optimization level, or a loop body, or runs it on a machine with a different core count, and the collapse no longer happens.
+
+One caveat, since that transcript is a measurement and not a theorem: it is clang at `-O2` on this book's macOS/arm64 machine, and running the same binary a few hundred times does eventually turn up a wrong count — undefined behavior promises nothing, consistency included. When one appears it is a whole multiple of 100000, an entire thread's single addition lost: the collapse's fingerprint, not a counter-example to it. What no number of runs will hand you is the verdict, and that is the next section's job.
 
 This is why Chapter 28's lesson escalates rather than repeats. There, the sanitizer caught what assertions could not. Here, there is nothing to assert *and* nothing to observe.
 
