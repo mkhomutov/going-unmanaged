@@ -93,18 +93,24 @@ EOF
 # Chapter 27's ODR diamond, verbatim in structure: one struct name, two
 # definitions, one program. GetTimeout is inline, so it lands in both object
 # files as a mergeable symbol and the linker keeps whichever it sees first.
-cat > "$OUT/odr_v1.h" <<'EOF'
+#
+# The filenames are the chapter's own transcript (`c++ libpart.o main.o -o
+# demo`), and NOT odr_*.cpp - deliberately. Section 5 proves the linker stayed
+# quiet by grepping its output for the word "odr", and a linker names the
+# object files in the diagnostics it does print, so an odr_*.o here would make
+# any unrelated warning read as an ODR report. Do not rename these back.
+cat > "$OUT/v1.h" <<'EOF'
 struct Config { int timeout; };
 inline int GetTimeout(const Config& c) { return c.timeout; }
 EOF
 
-cat > "$OUT/odr_v2.h" <<'EOF'
+cat > "$OUT/v2.h" <<'EOF'
 struct Config { int retries; int timeout; };                 // new field FIRST
 inline int GetTimeout(const Config& c) { return c.timeout; } // byte-identical
 EOF
 
-cat > "$OUT/odr_lib.cpp" <<'EOF'
-#include "odr_v1.h"
+cat > "$OUT/libpart.cpp" <<'EOF'
+#include "v1.h"
 #include <cstdio>
 void LibReport() {
     Config c;                 // v1: ONE int, four bytes
@@ -113,8 +119,8 @@ void LibReport() {
 }
 EOF
 
-cat > "$OUT/odr_main.cpp" <<'EOF'
-#include "odr_v2.h"
+cat > "$OUT/main.cpp" <<'EOF'
+#include "v2.h"
 #include <cstdio>
 void LibReport();
 int main() {
@@ -268,21 +274,24 @@ fi
 # below are initialized ones, so a difference is real and not luck.
 echo "== odr link order =="
 # One pair of object files; only the order they are handed to the linker
-# changes below. -O0 matters: at -O2 the compiler may inline both copies and
-# hide the whole thing, which Chapter 27 says in as many words.
+# changes below. -O0 matters, and is pinned on every build in this section
+# rather than left to the driver's default: at -O2 the compiler may inline both
+# copies and hide the whole thing, which Chapter 27 says in as many words. A
+# CXX carrying an optimization flag would otherwise stop the demonstration
+# demonstrating, and (c) would report it as the chapter being wrong.
 ODR_OK=1
-$CXX -std=c++17 -g -O0 -c "$OUT/odr_lib.cpp"  -o "$OUT/odr_lib.o"  2>/dev/null || ODR_OK=0
-$CXX -std=c++17 -g -O0 -c "$OUT/odr_main.cpp" -o "$OUT/odr_main.o" 2>/dev/null || ODR_OK=0
+$CXX -std=c++17 -g -O0 -c "$OUT/libpart.cpp" -o "$OUT/libpart.o" 2>/dev/null || ODR_OK=0
+$CXX -std=c++17 -g -O0 -c "$OUT/main.cpp"    -o "$OUT/main.o"    2>/dev/null || ODR_OK=0
 if [ "$ODR_OK" = 0 ]; then
     skip "cannot compile the ODR demonstration with $CXX"
 else
     # (a) both orders link with no diagnostic - ill-formed, no diagnostic required
     LINK_QUIET=1
-    ( cd "$OUT" && $CXX odr_lib.o odr_main.o -o demo_libfirst ) > "$OUT/odr_link1.log" 2>&1 || LINK_QUIET=0
-    ( cd "$OUT" && $CXX odr_main.o odr_lib.o -o demo_mainfirst ) > "$OUT/odr_link2.log" 2>&1 || LINK_QUIET=0
+    ( cd "$OUT" && $CXX libpart.o main.o -o demo_libfirst ) > "$OUT/link_libfirst.log" 2>&1 || LINK_QUIET=0
+    ( cd "$OUT" && $CXX main.o libpart.o -o demo_mainfirst ) > "$OUT/link_mainfirst.log" 2>&1 || LINK_QUIET=0
     if [ "$LINK_QUIET" = 0 ]; then
         fail "a link order failed to link at all   [Ch 27]"
-    elif grep -qiE "odr|duplicate symbol|multiple definition" "$OUT/odr_link1.log" "$OUT/odr_link2.log"; then
+    elif grep -qiE "odr|duplicate symbol|multiple definition" "$OUT/link_libfirst.log" "$OUT/link_mainfirst.log"; then
         fail "the linker diagnosed it; Ch 27 says it says nothing at all   [Ch 27]"
     else
         pass "both link orders linked silently, exit 0   [Ch 27]"
@@ -292,9 +301,18 @@ else
     # in one order and 30 in the other, both initialized. The v1 lib line is the
     # overread, so it is never compared.
     if [ -x "$OUT/demo_libfirst" ] && [ -x "$OUT/demo_mainfirst" ]; then
-        A=$("$OUT/demo_libfirst"  2>/dev/null | sed -n 's/^v2 caller sees: //p')
-        B=$("$OUT/demo_mainfirst" 2>/dev/null | sed -n 's/^v2 caller sees: //p')
-        if [ -z "$A" ] || [ -z "$B" ]; then
+        # Through run_rc, never $( ): these two are the UNSANITIZED demo and one
+        # order overreads a stack object, so a nonzero exit is a thing that can
+        # happen here. Inside a command substitution that would take set -e with
+        # it and kill the script mid-run - no verdict for this check, none for
+        # (c), and no closing line either way.
+        RC_LIB=$(run_rc "$OUT/demo_libfirst"  "$OUT/run_libfirst.log")
+        RC_MAIN=$(run_rc "$OUT/demo_mainfirst" "$OUT/run_mainfirst.log")
+        A=$(sed -n 's/^v2 caller sees: //p' "$OUT/run_libfirst.log")
+        B=$(sed -n 's/^v2 caller sees: //p' "$OUT/run_mainfirst.log")
+        if [ "$RC_LIB" != 0 ] || [ "$RC_MAIN" != 0 ]; then
+            fail "a demo exited nonzero without the sanitizers ($RC_LIB and $RC_MAIN); Ch 27 says both produce a working-looking program   [Ch 27]"
+        elif [ -z "$A" ] || [ -z "$B" ]; then
             skip "the demonstration printed nothing to compare"
         elif [ "$A" != "$B" ]; then
             pass "the orders disagree: caller saw $A then $B, same source   [Ch 27]"
@@ -304,22 +322,22 @@ else
     fi
 
     # (c) under the canonical flags, exactly one order is caught
-    if $CXX -std=c++17 -g -fsanitize=address,undefined "$OUT/odr_lib.cpp" "$OUT/odr_main.cpp" \
-            -o "$OUT/odr_san_libfirst" 2>/dev/null \
-       && $CXX -std=c++17 -g -fsanitize=address,undefined "$OUT/odr_main.cpp" "$OUT/odr_lib.cpp" \
-            -o "$OUT/odr_san_mainfirst" 2>/dev/null; then
-        RC_A=$(run_rc "$OUT/odr_san_libfirst"  "$OUT/odr_san_a.log")
-        RC_B=$(run_rc "$OUT/odr_san_mainfirst" "$OUT/odr_san_b.log")
-        if [ "$RC_A" = 0 ] && [ "$RC_B" != 0 ]; then
-            if grep -q "stack-buffer-overflow" "$OUT/odr_san_b.log"; then
-                pass "exactly one order caught (exit $RC_B, stack-buffer-overflow); the quiet one exited 0   [Ch 27]"
+    if $CXX -std=c++17 -g -O0 -fsanitize=address,undefined "$OUT/libpart.cpp" "$OUT/main.cpp" \
+            -o "$OUT/san_libfirst" 2>/dev/null \
+       && $CXX -std=c++17 -g -O0 -fsanitize=address,undefined "$OUT/main.cpp" "$OUT/libpart.cpp" \
+            -o "$OUT/san_mainfirst" 2>/dev/null; then
+        RC_SAN_LIB=$(run_rc "$OUT/san_libfirst"  "$OUT/san_libfirst.log")
+        RC_SAN_MAIN=$(run_rc "$OUT/san_mainfirst" "$OUT/san_mainfirst.log")
+        if [ "$RC_SAN_LIB" = 0 ] && [ "$RC_SAN_MAIN" != 0 ]; then
+            if grep -q "stack-buffer-overflow" "$OUT/san_mainfirst.log"; then
+                pass "exactly one order caught (exit $RC_SAN_MAIN, stack-buffer-overflow); the quiet one exited 0   [Ch 27]"
             else
                 fail "the caught order did not report stack-buffer-overflow   [Ch 27]"
             fi
-        elif [ "$RC_A" = 0 ] && [ "$RC_B" = 0 ]; then
+        elif [ "$RC_SAN_LIB" = 0 ] && [ "$RC_SAN_MAIN" = 0 ]; then
             fail "neither order was caught; Ch 27 says the sanitizer catches exactly one   [Ch 27]"
         else
-            fail "expected the quiet order to exit 0 and the loud one to abort, got $RC_A and $RC_B   [Ch 27]"
+            fail "expected the quiet order to exit 0 and the loud one to abort, got $RC_SAN_LIB and $RC_SAN_MAIN   [Ch 27]"
         fi
     else
         skip "sanitizers cannot build the ODR demonstration with $CXX"
