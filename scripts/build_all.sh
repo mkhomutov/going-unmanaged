@@ -176,7 +176,6 @@ $OUT/invalid > /dev/null
 $OUT/lambdas > /dev/null
 $OUT/buildlab > /dev/null
 $OUT/deplab > /dev/null
-$OUT/interoplab > /dev/null
 # Not silenced: the tally is the only line in this script that says how MUCH was
 # checked, and a non-zero exit is the whole contract between a test binary and
 # CI. But green and red want different amounts of output, so the run is captured
@@ -228,6 +227,9 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/dumplab 0 > /dev/null
 # sanitizers around it. Modal drains happen mid-run, so the HOST_BUSY
 # refusal path is genuinely exercised, not just compiled.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/bridgelab > /dev/null
+# The Chapter 39 lab: five value assertions across the boundary, so a UBSan
+# finding that printed and exited 0 would leave the section green.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/interoplab > /dev/null
 # Appendix H: these check copy/move counts, heap allocations and element
 # addresses, so a UBSan finding that printed and exited 0 would leave the
 # section green. Their judge is a counting CHECK macro rather than assert,

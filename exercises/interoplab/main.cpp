@@ -4,7 +4,6 @@
 #include "marshal.h"
 #include "plugin.h"
 
-#include <cstring>
 #include <string>
 
 // A managed caller re-declares your struct BY HAND, in another language.
@@ -23,6 +22,10 @@ int main() {
     // so Plugin_Create refuses rather than reading two fields that were
     // never written. Without the field this call would "succeed" with a
     // gain nobody set.
+    //
+    // The overlay cast below is the one Chapter 34 calls illegal even on the
+    // days it works, and it is deliberate here: it stands in for a caller
+    // that is not C++ at all and never had our struct to begin with.
     PluginOptionsAsMisdeclared wrong{7, 2};
     PluginHandle stale = nullptr;
     PluginResult rc = Plugin_Create(
@@ -43,7 +46,7 @@ int main() {
     // ---- 3. caller-allocates: nothing we own ever crosses ----------------
     size_t needed = 0;
     CHECK(Plugin_GetName(h, nullptr, 0, &needed) == PLUGIN_OK);  // sizing call
-    CHECK(needed == 11);                    // 10 UTF-8 bytes + terminator
+    CHECK(needed == 15);                    // 14 UTF-8 bytes + terminator
 
     char small[4];
     size_t ignored = 0;
@@ -53,15 +56,18 @@ int main() {
     std::string name(needed, '\0');
     CHECK(Plugin_GetName(h, &name[0], name.size(), &needed) == PLUGIN_OK);
     name.resize(needed - 1);                // drop the terminator
-    CHECK(name == "Z\xC3\xA4hler-\xC2\xB5");
+    CHECK(name == "Z\xC3\xA4hler-\xC2\xB5\xF0\x9D\x84\x9E");
 
     // ---- 4. three different "lengths", which is why the header names one --
-    // The managed side sees 8 UTF-16 units; the boundary carries 10 bytes; a
-    // human counts 8 characters. A buffer sized from the wrong one of those
-    // is the bug, and "the platform's char" names none of them.
-    CHECK(name.size() == 10);                            // UTF-8 bytes
-    CHECK(marshal::Utf16FromUtf8(name).size() == 8);     // UTF-16 units
-    CHECK(marshal::CodePoints(name) == 8);               // characters
+    // The managed side sees 10 UTF-16 units; the boundary carries 14 bytes; a
+    // human counts 9 characters. Three different numbers, on purpose: the last
+    // character is past the BMP, so it costs a surrogate PAIR - which is why
+    // string.Length answers the third number while looking like the first. A
+    // buffer sized from the wrong one is the bug, and "the platform's char"
+    // names none of them.
+    CHECK(name.size() == 14);                            // UTF-8 bytes
+    CHECK(marshal::Utf16FromUtf8(name).size() == 10);    // UTF-16 units
+    CHECK(marshal::CodePoints(name) == 9);               // characters
 
     // ---- 5. the callback window the header promises ----------------------
     marshal::SinkTarget target;
@@ -79,6 +85,15 @@ int main() {
     CHECK(Plugin_Pump(h, 5) == PLUGIN_OK);               // still a valid call
     CHECK(target.calls_after_death == 0);                // and it reached nobody
     CHECK(target.received.size() == 1);                  // unchanged
+
+    // ---- 6. nothing escapes an exported function -------------------------
+    // The sink is the CALLER'S code running inside our entry point, so a sink
+    // that throws is the one exception path we cannot talk anyone out of. It
+    // must come back as a result code, not as an unwind through a frame that
+    // may not be C++ at all.
+    CHECK(Plugin_SetSink(h, &marshal::ThrowingSink, nullptr) == PLUGIN_OK);
+    CHECK(Plugin_Pump(h, 5) == PLUGIN_FAILED);
+    CHECK(Plugin_ClearSink(h) == PLUGIN_OK);
 
     CHECK(Plugin_Destroy(h) == PLUGIN_OK);
     CHECK(Plugin_Destroy(nullptr) == PLUGIN_OK);         // tolerates null

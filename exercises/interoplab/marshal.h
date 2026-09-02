@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -38,7 +39,14 @@ namespace marshal {
 // What `CharSet`/`StringMarshalling` actually decides. A managed string is
 // UTF-16; the boundary here is UTF-8; somebody has to convert, and the only
 // question is whether both sides agree on who and to what. Recipe 17 of
-// Appendix F is the same conversion written for its own sake.
+// Appendix F is the same conversion written for its own sake, and written
+// more carefully: it maps invalid input to U+FFFD, where this one assumes
+// well-formed UTF-8 because that is what the boundary contract promises.
+// A sink that throws, standing in for managed code that raises. The native
+// side cannot let this unwind past the boundary, so plugin.cpp turns it into
+// a result code - and this is what proves it does.
+inline void ThrowingSink(int32_t, void*) { throw std::runtime_error("sink threw"); }
+
 inline std::vector<uint16_t> Utf16FromUtf8(const std::string& s) {
     std::vector<uint16_t> out;
     for (size_t i = 0; i < s.size();) {

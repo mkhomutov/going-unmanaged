@@ -43,7 +43,7 @@ Write a C surface a managed caller could bind, and make each of these true.
 
 ## The judge
 
-`scripts/build_all.sh` builds and runs it. Two of its five assertions are
+`scripts/build_all.sh` builds and runs it. Three of its assertions are
 worth stealing:
 
 - **A deliberately misdeclared struct is passed in**, exactly as a caller who
@@ -51,11 +51,15 @@ worth stealing:
   `PLUGIN_VERSION_MISMATCH` rather than a plausible wrong answer.
 - **The sink must not be called after `Plugin_ClearSink` returns**, which is
   the header's promise asserted rather than trusted.
+- **A sink that throws comes back as a result code**, not as an unwind
+  through the boundary. The sink is the caller's code running inside your
+  entry point, so it is the one exception path you cannot talk anyone out
+  of — and the frame above yours may not be C++ at all.
 
 Run your own attempt with:
 
 ```bash
-scripts/check.sh plugin.cpp main.cpp
+../../scripts/check.sh plugin.cpp main.cpp
 ```
 
 ## Try this before reading the fix

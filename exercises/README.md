@@ -87,7 +87,7 @@ twice proves the *pin* chose the version, and asking merely that the two
 outputs differ would let through a pin that chose the wrong commit. `testlab/`
 holds Chapter 28's harness and suite, which the chapter prints in full anyway,
 and `abilab/` holds Chapter 30's three worked boundaries for the same reason.
-All four are kept green by `scripts/build_all.sh`. Write your own first — in a
+All five are kept green by `scripts/build_all.sh`. Write your own first — in a
 directory of your own, without reading these.
 
 ## Building your attempt

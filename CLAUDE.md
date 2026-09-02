@@ -45,7 +45,11 @@ main-thread queue Ch 29 promised, a frozen command registry, and the
 StubHostAdapter seam; two of its three breaks are hangs no sanitizer
 names, so bridgelab's judge is a bounded wait on every invoke. Appendix
 G is that chapter's lookup half — the survey of bridge mechanisms, led
-by the host's own channel, and the decision table.
+by the host's own channel, and the decision table. Chapter 39 (item 9) is
+the publishing half of P/Invoke — one signature written twice in two
+languages and compared by nothing; interoplab judges it with no .NET
+anywhere, because marshal.h stands in for the marshaller the way FakeSDK
+stands in for a vendor.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -174,6 +178,16 @@ Chapter 25's Finding 10.
   the FIXED state, quoted verbatim in the chapter, and build_all.sh runs
   both device configurations — the crash lived only in the one the bench
   never had
+- `exercises/bridgelab/` — Chapter 38's lab. TASK.md carries the three
+  broken shapes (book-and-card, identical by rule — they exist to fail);
+  the committed headers + main.cpp are the FIXED state, quoted in the
+  chapter BY EXCERPT (check_verbatim runs both directions for this lab:
+  card fences must be in the chapter, chapter fences must be in the lab),
+  and build_all.sh builds it twice — canonical flags, then a second
+  source in the probe-gated TSan section — because the three breaks
+  split across the two builds. The harness allows no unbounded wait:
+  every invoke takes a deadline, the lab's judge, since a hang would
+  stop CI rather than fail it
 - `exercises/interoplab/` — Chapter 39's lab, and the only one whose caller
   is imaginary: `plugin.h`/`plugin.cpp` are the published boundary and
   `main.cpp` plays the .NET marshaller through that header alone (two TUs,
@@ -185,16 +199,6 @@ Chapter 25's Finding 10.
   documented callback window is asserted instead. The struct-misdeclaration
   judge is the load-bearing one: delete the size-field check and it is an
   ASan stack-buffer-overflow, not a wrong value
-- `exercises/bridgelab/` — Chapter 38's lab. TASK.md carries the three
-  broken shapes (book-and-card, identical by rule — they exist to fail);
-  the committed headers + main.cpp are the FIXED state, quoted in the
-  chapter BY EXCERPT (check_verbatim runs both directions for this lab:
-  card fences must be in the chapter, chapter fences must be in the lab),
-  and build_all.sh builds it twice — canonical flags, then a second
-  source in the probe-gated TSan section — because the three breaks
-  split across the two builds. The harness allows no unbounded wait:
-  every invoke takes a deadline, the lab's judge, since a hang would
-  stop CI rather than fail it
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)

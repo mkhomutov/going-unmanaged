@@ -395,8 +395,8 @@ functions, `mutable`, and why const-correctness is retrofitted with pain but
 free if it is there from the start. Cross-reference rather than duplicate;
 the fragments stay where they are.
 
-**Sequencing note (2026-08):** still worth doing and still open — but item 9
-(P/Invoke) now comes first; see the note there for why the deep review
+**Sequencing note (2026-08):** still worth doing and still open — item 9
+(P/Invoke) went first and is now Chapter 39; see the note there for why the deep review
 re-ordered them.
 
 **And read item 17 before starting this one (2026-09).** They are
@@ -910,7 +910,7 @@ which was the cheap half; a full treatment of being loaded BY a runtime is
 not written and is the shape both the JNI and the pybind11/N-API readers
 actually wanted.
 
-**Missing (as filed):** P/Invoke, marshalling, and the round trip home.
+**Missing:** P/Invoke, marshalling, and the round trip home.
 
 **Sequenced first (2026-08).** The tier said "distinctive"; the 2026 deep
 review's competitive pass said "underpriced" and re-sequenced it: this is

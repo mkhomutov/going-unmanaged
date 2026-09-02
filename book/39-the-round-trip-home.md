@@ -21,7 +21,7 @@ Which sets the whole job. You cannot make the managed declaration correct from h
 
 ### Blittable is the word that matters
 
-A **blittable** type has the same representation in managed and native memory. The marshaller pins it and passes its address: no copy, no conversion, nothing to get wrong. The list is short and worth memorising, because it is the whole of your palette.
+A **blittable** type has the same representation in managed and native memory, so the marshaller has nothing to translate: the bytes cross as they are, and where the value travels by address — an array, a `ref` or `out` struct — the managed object is pinned and you get a pointer straight into it. No copy, no conversion, nothing to get wrong. The list is short and worth memorizing, because it is the whole of your palette.
 
 | Blittable | Not blittable |
 |---|---|
@@ -32,7 +32,7 @@ A **blittable** type has the same representation in managed and native memory. T
 
 The reason this matters more to you than to them: a blittable struct is passed by address, so an out-parameter you write into is the caller's own memory. A **non-blittable struct is copied into a temporary**, your function fills in the temporary, and whether the values make it back depends on marshalling attributes the C# author has to get right. One `bool` in an options struct is enough to move you from the first case to the second.
 
-So: fixed-width integers only, from `<stdint.h>`. `int32_t`, never `int`; `int32_t` for a flag, never `bool`. It looks pedantic in a header a C++ caller would also use, and it is the difference between a struct that cannot be misdeclared and one that can.
+So: fixed-width integers only, from `<stdint.h>`. `int32_t`, never `int`; `int32_t` for a flag, never `bool`. It looks pedantic in a header a C++ caller would also use, and it is the difference between a struct that cannot be misdeclared and one that can. The one type that earns an exception is `size_t`, because a buffer length genuinely is pointer-sized and the managed side has a pointer-sized integer to match it — `nuint`, or `UIntPtr` before C# 9. Name that spelling in the header comment, because the transcriber's reflex is `int`, and on 64-bit `int` is half a pointer.
 
 ### The size field stops being politeness
 
@@ -46,14 +46,19 @@ typedef struct {
 } PluginOptions;
 ```
 
-The managed side declares that again by hand, and must say `[StructLayout(LayoutKind.Sequential)]` when it does — without it the runtime is free to order the fields as it pleases, which for a managed type is a legitimate optimisation and for this one is a bug. Sequential layout, matching pack, matching field order, matching field *widths*. Four things to transcribe, and the compiler on neither side is watching.
+The managed side declares that again by hand — and the one thing you might have feared is the one thing that is safe: a C# `struct` is laid out sequentially already, because that is what the compiler emits for a value type, and a type whose layout is `Auto` cannot be marshalled at all — the marshaller refuses to compute offsets for it rather than inventing them. Nobody silently reorders your fields. Writing `[StructLayout(LayoutKind.Sequential)]` is still worth the line, because it says out loud what the declaration depends on and `Pack` lives on the same attribute — but it is not what protects you. Nothing does. Matching field order, matching field *widths*, matching pack: three things transcribed by hand, and the compiler on neither side is watching.
 
 Here is what one missed field costs, from `exercises/interoplab/`. A caller that read an older header declares the struct without `size`, so it hands over eight bytes where the surface expects twelve:
 
 ```text
-ERROR: AddressSanitizer: stack-buffer-overflow
-READ of size 4 at 0x00016d1a2188
-    #0 Plugin_Create plugin.cpp
+==72117==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x00016d1b6068
+READ of size 4 at 0x00016d1b6068 thread T0
+    #0 in Plugin_Create plugin.cpp:26
+    #1 in main main.cpp:31
+
+Address 0x00016d1b6068 is located in stack of thread T0 at offset 40 in frame
+    #0 in main main.cpp:18
+    [32, 40) 'wrong' (line 29) <== Memory access at offset 40 overflows this variable
 ```
 
 Not a wrong `gain`. A read four bytes past the end of the caller's object, in the caller's frame — and across a real boundary the caller's frame belongs to a managed process where nobody is running a sanitizer at all. The check that turns that into a returned error code is one line:
@@ -66,9 +71,9 @@ That is the field paying for itself twice: once for the version-two conversation
 
 ### Strings: three lengths and one contract
 
-This is where the tickets come from, and the symptom is specific enough to recognise: text is fine for most customers and mojibake for the German and Russian ones.
+This is where the tickets come from, and the symptom is specific enough to recognize: on Windows, text is fine for most customers and mojibake for the German and Russian ones.
 
-The mechanism is [Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)'s, arriving at a boundary. A managed string is UTF-16. Your `char*` is bytes. Somebody converts, and the only question is whether both sides agree about to *what*. The historical default for `[DllImport]` is `CharSet.Ansi`, and "Ansi" there does not mean ASCII or UTF-8 — it means the system's active code page, which is why the bug sorts customers by language. Modern .NET spells the choice explicitly, `StringMarshalling.Utf8`, and the older `CharSet.Unicode` means UTF-16.
+The mechanism is [Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)'s, arriving at a boundary. A managed string is UTF-16. Your `char*` is bytes. Somebody converts, and the only question is whether both sides agree about to *what*. The historical default for `[DllImport]` is `CharSet.Ansi`, and "Ansi" there is not a synonym for ASCII or UTF-8: on Windows it means the system's active code page, which is why the bug sorts customers by language — and on Linux and macOS .NET marshals the same declaration as UTF-8. One attribute, two encodings, chosen by the machine it runs on. Modern .NET spells the choice explicitly, `StringMarshalling.Utf8`, and the older `CharSet.Unicode` means UTF-16.
 
 None of which is yours to fix. Yours is to remove the ambiguity, in the header, where the person transcribing will read it:
 
@@ -77,16 +82,16 @@ None of which is yours to fix. Yours is to remove the ambiguity, in the header, 
 And then to notice that a string has three different lengths, all of them correct:
 
 ```text
-"Zähler-µ"   →   8 characters
-                 10 bytes in UTF-8      ← what your buffer must hold
-                 8 UTF-16 units         ← what the managed side counts
+"Zähler-µ𝄞"  →   9 characters
+                 14 bytes in UTF-8      ← what your buffer must hold
+                 10 UTF-16 units        ← what `string.Length` counts
 ```
 
-A buffer sized from the wrong one of those three is the second-most-common interop bug after the layout mismatch. It is why the surface reports the size it needs rather than trusting anyone to compute it.
+A buffer sized from the wrong one of those three is, in my experience, second only to the layout mismatch as a source of interop tickets. It is why the surface reports the size it needs rather than trusting anyone to compute it.
 
 ### Who frees it — and the answer that deletes the question
 
-Chapter 30's rule was *whoever allocates must free*. On this boundary it has a sharper edge, because the managed side has several plausible-looking ways to free your memory and none of them is your allocator. `Marshal.FreeHGlobal` and `Marshal.FreeCoTaskMem` release from particular heaps; your `free()` releases from your C runtime's. Hand back a `malloc`'d string and the C# author will free it with something, confidently, and be wrong — with the corruption surfacing later, in an unrelated allocation, which is [Chapter 25](25-findings-from-practice.md#chapter-25--findings-from-practice-a-living-log)'s Finding 10 shape all over again.
+Chapter 30's rule was *whoever allocates must free*. On this boundary it has a sharper edge, because the managed side has several plausible-looking ways to free your memory and none of them is your allocator. `Marshal.FreeHGlobal` and `Marshal.FreeCoTaskMem` release from particular heaps; your `free()` releases from your C runtime's. Hand back a `malloc`'d string and the C# author will free it with something, confidently — and whether that is right depends on the platform and on which C runtime your DLL linked against, which is not a contract anyone can publish. When it is wrong the corruption surfaces later, in an unrelated allocation, which is [Chapter 25](25-findings-from-practice.md#chapter-25--findings-from-practice-a-living-log)'s Finding 10 shape all over again.
 
 Two shapes are safe. The second is better because it does not require anyone to be careful:
 
@@ -104,12 +109,12 @@ Nothing you own ever crosses, so *which heap frees this* is not answered — it 
 
 The opaque handle you have been publishing since Chapter 30 is exactly right here, and it has a counterpart on the managed side worth knowing about, because it changes what you should document.
 
-`SafeHandle` is .NET's RAII for a native handle: a finalizable wrapper that closes the thing even if the process is shutting down, and — the part that matters to you — holds a reference count so the handle cannot be recycled while a call is still using it. It is the guard type of [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii), written by somebody else, for your handle.
+`SafeHandle` is .NET's RAII for a native handle: a wrapper that calls your release function exactly once, however many times a `Dispose` or a finalizer asks it to, and — the part that matters to you — one the marshaller reference-counts across a call, so the handle cannot be closed underneath a call that is still inside your library. It is the guard type of [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii), written by somebody else, for your handle. What it is not is a promise that anything runs at process exit: modern .NET does not run finalizers then at all, which is why `Dispose` is the path that actually closes things.
 
 Your job is to make it possible to use:
 
 - **The handle is opaque and pointer-sized.** `IntPtr` on their side, and nothing they can dereference.
-- **`Destroy` tolerates null and is idempotent.** A finaliser may run in circumstances you cannot predict, including twice if somebody is careless.
+- **`Destroy` tolerates null, and is called exactly once.** You cannot make a raw handle idempotent — after the first `delete` there is nothing left to ask — so say so, and point at the type that enforces it for them: a `SafeHandle` releases exactly once, however the release is triggered.
 - **Say whether it is thread-safe**, because a `SafeHandle` protects the *handle*, not the object behind it. Chapter 16's fourth question, now asked of you.
 
 ### The delegate that was collected
@@ -131,27 +136,28 @@ That is the entire contract, and it is what tells a managed author how long thei
 
 ### In the wild: the other direction
 
-Everything above assumes you own the process and the runtime is a guest you invited. The mirror image exists and arrives by a completely different route: a managed or interpreted runtime that already owns the process and has loaded *you* — a JNI library under a JVM, an extension module inside a Python interpreter, an addon in a Node process.
+Everything above assumes the traffic is one-way: managed code calls your function, the marshaller does the translating, and your library never touches the runtime's own API. The mirror image exists and arrives by a completely different route — a JNI library under a JVM, an extension module inside a Python interpreter, an addon in a Node process — and what separates it is not who started the process (a C# tool loading your DLL is a managed process too) but that you are handed the runtime itself: a `JNIEnv*`, a `PyObject*`, an N-API scope. You are calling *into* the collector's world now, and it has rules.
 
 The material transfers almost intact. Layout, encoding, ownership and callback windows are the same four problems with the same four answers, because they are properties of the boundary rather than of who started the process. Two things do change, and they are worth naming so you know to go looking. **You do not choose the thread**, and the runtime may have rules about which of its APIs may be touched from where — a C++ exception reaching a JNI entry point takes the whole VM down, which is Chapter 30's nothing-escapes rule with the stakes raised again. And **you do not choose when you are unloaded**, so the static-teardown material in [Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit) applies to a shutdown you did not schedule.
 
-[Appendix G](G-the-bridge-catalogue.md#appendix-g--the-bridge-catalogue) prices the in-process family this belongs to, and [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out) builds the queue for the case where the foreign side must reach a host you do not own.
+[Appendix G](G-the-bridge-catalogue.md#appendix-g--the-bridge-catalogue) prices in-process co-residence from the other side — its Family A is you loading a runtime into a process you own rather than the other way round, and the costs are the same room — and [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out) builds the queue for the case where the foreign side must reach a host you do not own.
 
 ### Choosing what to publish
 
 | Instead of | Publish | Because |
 |---|---|---|
 | `bool` | `int32_t` | the marshaller's default width for `bool` is not one byte |
-| `int`, `long` | `int32_t`, `int64_t` | `long` is a different size on two of the three platforms you ship to |
+| `int`, `long` | `int32_t`, `int64_t` | C++ `long` is 64-bit on Linux and macOS, 32-bit on Windows — and C# `long` is always 64-bit |
 | a returned `char*` | a caller-filled buffer plus a `needed` out-parameter | it deletes the which-heap question rather than answering it |
 | an enum | `int32_t` plus documented constants | enum underlying type is a compiler decision |
 | a struct by value with anything non-blittable in it | a blittable struct by pointer | one copy versus zero, and a marshalling attribute they must get right |
+| a function-pointer type with no convention stated | the calling convention, written down | `[DllImport]`'s Windows default is `StdCall` and your C function is `Cdecl`; on x86 the stack pays for the difference |
 | "we call you back sometimes" | a written lifetime window | it is the only thing that lets them root the delegate correctly |
 
 ### Pitfalls
 
 - **A `bool` in an exported struct.** It is one byte to you and, by default, four to the marshaller. Every field after it is then at the wrong offset, and the struct still compiles on both sides.
-- **Omitting `[StructLayout(LayoutKind.Sequential)]` on the managed side.** You cannot enforce it, so put a `size` field in front and check it — the runtime's freedom to reorder is a fact about their type system, not a mistake you can forbid.
+- **Assuming `[StructLayout(LayoutKind.Sequential)]` is what keeps the struct honest.** A C# `struct` has sequential layout with or without it, and a type that did not could not be marshalled at all. What nothing checks is the transcription — field order, field widths, pack — so put a `size` field in front and validate it on entry, because that is the only check anywhere in the system.
 - **Returning a pointer to a `static` or a member buffer** to dodge the ownership question. It works until two threads call you, or until the second call overwrites what the first returned before the caller finished marshalling it.
 - **Assuming a "string" is a length.** Three numbers, and interop bugs live in the gap between them.
 - **Letting an exception reach an exported function.** Chapter 30 said this already; it is worse here, because the frame above yours is a runtime that will translate an unknown foreign failure into something unrecognisable, if it survives at all.
