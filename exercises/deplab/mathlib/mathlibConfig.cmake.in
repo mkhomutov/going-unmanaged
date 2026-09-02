@@ -1,0 +1,7 @@
+# The file find_package(mathlib CONFIG) actually loads, generated from this
+# template by configure_package_config_file().
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/mathlibTargets.cmake")
+
+check_required_components(mathlib)

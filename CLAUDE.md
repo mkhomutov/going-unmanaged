@@ -70,6 +70,31 @@ Chapter 25's Finding 10.
   `CMakeLists.txt`, Chapter 26's reference build description assembled from
   that chapter's snippets — build_all.sh configures/builds/runs it twice
   (default, then Debug + `-DGREETER_SANITIZE=ON`)
+- `exercises/deplab/` — Chapter 27's lab (its *Try it*, steps 1–4), and the
+  only one whose subject is entirely build description: `mathlib/` is the
+  dependency, and one `app/main.cpp` is consumed three ways — vendored
+  (`add_subdirectory`), fetched (`FetchContent` + a `file://` URL) and found
+  (`find_package(mathlib CONFIG)` against an installed prefix) — so the three
+  `consume-*/CMakeLists.txt` are the whole lesson and the app cannot tell
+  them apart. Nothing here is quoted in the chapter, so check_verbatim.sh has
+  no pairing to hold. Four rules are load-bearing and easy to undo by
+  accident. (1) mathlib's install/export half is wrapped in a top-level
+  guard: paths 1 and 2 reach it through `add_subdirectory`, which would
+  otherwise make those the *consumer's* install rules and publish a private
+  vendored dependency's config package out of the app's prefix. (2) The
+  exported include directory is
+  `$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>`, never a literal
+  `include` — the two must agree, or an install-dir override splits them
+  and the consumer dies at the `#include`, past configure.
+  (3) The fetched path builds at BOTH tags and each run must report the
+  version its own tag carries: building once proves only that the mechanism
+  runs, and asking merely that the two outputs *differ* passes a pin that
+  chose the wrong commit. (4) `MATHLIB_TAG` is a cache variable, so the
+  chapter's "re-point GIT_TAG" means `-DMATHLIB_TAG=`, not editing the
+  default — the file says so, because a reader who edits it in place sees
+  nothing change. Its git use needs a git that can clone `file://`, which is
+  `--require-git`; the two `.cpp` files are also built and run under the
+  canonical flags in the flat section, since the CMake paths apply none
 - `exercises/testlab/` — Chapter 28's `tiny_test.h` and `buffer_test.cpp`,
   verbatim from the chapter's listings (same discipline as the Fake* vendor
   code: editing one means editing the chapter in the same commit), plus a
@@ -163,18 +188,27 @@ Chapter 25's Finding 10.
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
-  Its last two sections may skip: one configures, builds and runs
-  `exercises/buildlab/`'s CMakeLists, the other rebuilds
-  `solutions/device_threaded_solution.cpp` under `-fsanitize=thread` (a second
-  build, because TSan and ASan do not combine). Without cmake on PATH, or
-  without a ThreadSanitizer that can compile *and start* a trivial program,
-  each prints SKIPPED and stays green; `--require-cmake` and `--require-tsan`
-  (CI passes both) refuse to skip
+  Its last three sections may skip: one builds `exercises/deplab/` three ways
+  (Chapter 27), one configures, builds and runs `exercises/buildlab/`'s
+  CMakeLists, the last rebuilds `solutions/device_threaded_solution.cpp` under
+  `-fsanitize=thread` (a second build, because TSan and ASan do not combine).
+  Without cmake on PATH, without a git that can clone a `file://` repository
+  (deplab's FetchContent path only), or without a ThreadSanitizer that can
+  compile *and start* a trivial program, each prints SKIPPED and stays green;
+  `--require-cmake`, `--require-git` and `--require-tsan` (CI passes all three)
+  refuse to skip
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
   flags: one or more .cpp files, compiled in the order written (= link order,
   which Chapter 32's two-order test turns on), then an optional vendor
   argument (fakesdk/fakedevice/comlab), then run args; `SAN=thread` switches
-  the sanitizer for the threadlab's second build
+  the sanitizer for the threadlab's second build, `SAN=none` removes it
+  entirely and `OPT` (default 0) sets `-O`. Those last two are for the
+  exercises whose subject is what the tools do NOT catch — Chapter 27's ODR
+  diamond, whose step 5 cannot be shown by a build that warns — and the
+  script drops its "sanitizers quiet" claim under `SAN=none`, because an
+  exit 0 from an uninstrumented build is not evidence. An EMPTY `SAN` still
+  gets the default: turning the sanitizers off is a thing you say, not a
+  thing that happens to you
 - `scripts/check.ps1` — check.sh's Windows/MSVC mirror (`cl /std:c++17 /W4
   /EHsc /fsanitize=address`, same source-list/vendor/run-args shapes; MSVC
   has no UBSan and no TSan, and the script says so). Smoke-tested by the

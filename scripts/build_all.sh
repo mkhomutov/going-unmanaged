@@ -2,8 +2,11 @@
 # Build and run every reference solution under strict flags + sanitizers.
 # This is the repo's core invariant; CI runs the same script.
 #
-#   scripts/build_all.sh                   -> everything; cmake and TSan may SKIP
+#   scripts/build_all.sh                   -> everything; cmake, git and TSan
+#                                             may SKIP
 #   scripts/build_all.sh --require-cmake   -> also fail if cmake is missing (CI)
+#   scripts/build_all.sh --require-git     -> also fail if git cannot build and
+#                                             clone a file:// repository (CI)
 #   scripts/build_all.sh --require-tsan    -> also fail if ThreadSanitizer is
 #                                             unusable here (CI)
 set -euo pipefail
@@ -11,10 +14,12 @@ cd "$(dirname "$0")/.."
 
 REQUIRE_CMAKE=0
 REQUIRE_TSAN=0
+REQUIRE_GIT=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --require-cmake) REQUIRE_CMAKE=1; shift ;;
         --require-tsan)  REQUIRE_TSAN=1;  shift ;;
+        --require-git)   REQUIRE_GIT=1;   shift ;;
         *) echo "build_all.sh: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -42,6 +47,19 @@ run "invalid"     $CXX $FLAGS20 solutions/invalid.cpp                   -o $OUT/
 run "lambdas"     $CXX $FLAGS   solutions/lambdas.cpp                   -o $OUT/lambdas
 # buildlab is exercise scaffolding, not a solution — but its starting point must stay green
 run "buildlab"    $CXX $FLAGS   exercises/buildlab/Greeter.cpp exercises/buildlab/main.cpp -o $OUT/buildlab
+# Chapter 27's lab, for the same reason and one more. The three cmake paths far
+# below do compile these two files, but with whatever the consumer projects ask
+# for — mathlib's -Wall -Wextra are PRIVATE and no consume-*/CMakeLists.txt sets
+# a warning or sanitizer flag — so the canonical flags never reach them, and on
+# a machine without cmake they are not compiled at all. CONTRIBUTING.md's first
+# ground rule is about every contributed .cpp, not every solution.
+# MATHLIB_VERSION reaches the library from project(VERSION) via CMake; this
+# build is about the flags, so it gets a placeholder that cannot drift from
+# anything and cannot be mistaken for a version the lab claims.
+run "deplab"      $CXX $FLAGS   exercises/deplab/mathlib/src/mathlib.cpp \
+                                exercises/deplab/app/main.cpp \
+                                -I exercises/deplab/mathlib/include \
+                                -DMATHLIB_VERSION='"flags-only"' -o $OUT/deplab
 # Chapter 28's harness and suite, verbatim from the chapter. -I solutions because
 # the class under test is the Chapter 15 solution, extracted into solutions/Buffer.h
 # so a demo with main() and a test binary with its own can both include it — the
@@ -153,6 +171,7 @@ $OUT/shapes > /dev/null
 $OUT/invalid > /dev/null
 $OUT/lambdas > /dev/null
 $OUT/buildlab > /dev/null
+$OUT/deplab > /dev/null
 # Not silenced: the tally is the only line in this script that says how MUCH was
 # checked, and a non-zero exit is the whole contract between a test binary and
 # CI. But green and red want different amounts of output, so the run is captured
@@ -223,6 +242,227 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_noelide > /dev/null
 # cmake is not part of the toolchain the rest of this script needs, so a
 # laptop without it stays green and says so rather than pretending. CI passes
 # --require-cmake, which refuses to skip - same bargain as check_mermaid.sh.
+# Chapter 27's Try it, steps 1-4: one library consumed three ways, and a
+# version pin proved rather than demonstrated. Shares the buildlab section's cmake bargain below -
+# both live under the same probe, and --require-cmake covers both.
+echo "== deplab cmake =="
+if command -v cmake > /dev/null 2>&1; then
+    DL=build/deplab                    # under build/, which is gitignored
+    rm -rf "$DL"; mkdir -p "$DL"
+
+    dep_app() {                        # multi-config generators add a subdir
+        local dir=$1 candidate
+        for candidate in "$dir/app" "$dir/app.exe" \
+                         "$dir/Debug/app" "$dir/Debug/app.exe"; do
+            if [ -x "$candidate" ]; then echo "$candidate"; return 0; fi
+        done
+        echo "build_all.sh: built $dir but found no app executable in it" >&2
+        return 1
+    }
+
+    # --- path 1: vendored, via add_subdirectory ---
+    cmake -S exercises/deplab/consume-vendored -B "$DL/vendored" > /dev/null
+    cmake --build "$DL/vendored" --config Debug > /dev/null
+    APP=$(dep_app "$DL/vendored")
+    "$APP" > /dev/null
+    echo "  ok   vendored: add_subdirectory -> $("$APP")"
+
+    # The chapter's step 2 asks the reader to CONFIRM the app names no header
+    # path. "It built" cannot see the difference between PUBLIC working and a
+    # belt-and-braces include_directories() making it redundant, so grep for
+    # the thing that must not be there.
+    #
+    # Comments stripped first: that file EXPLAINS that it names no include
+    # path, so a naive grep matches the sentence saying so - which is exactly
+    # what happened the first time this check ran.
+    # All THREE consumers, not just the vendored one: the lab's headline claim
+    # is that the app cannot tell the three apart, and a judge reading one file
+    # cannot say that.
+    #
+    # Two patterns, because two different things are being spelled. CMake
+    # command names are case-insensitive, so INCLUDE_DIRECTORIES is the same
+    # call as include_directories and a case-sensitive grep walks straight past
+    # it - hence -i on that one. A compiler flag is not case-insensitive, so
+    # -I is matched exactly, anchored to the characters a flag can follow so
+    # that `add_compile_options(-I...)` and a path smuggled into CMAKE_CXX_FLAGS
+    # are caught too. A raw -I is what a C# dev reaching for the compiler writes.
+    for DEP_C in vendored fetched installed; do
+        DEP_TXT=$(sed 's/#.*//' "exercises/deplab/consume-$DEP_C/CMakeLists.txt")
+        if printf '%s\n' "$DEP_TXT" | grep -qiE 'include_directories' \
+           || printf '%s\n' "$DEP_TXT" | grep -qE '(^|[[:space:]"(;])-I'; then
+            echo "build_all.sh: the $DEP_C app names an include path; Ch 27 step 2" >&2
+            echo "  says PUBLIC on the library is what carries it, and the lab says" >&2
+            echo "  all three consumers are identical. Remove the line." >&2
+            exit 1
+        fi
+    done
+    echo "  ok   no consumer names an include path - PUBLIC carried it   [Ch 27]"
+
+    # And the other half of that claim: the app and the link line are the same
+    # in all three, so only the acquisition differs. Stated in TASK.md, in
+    # exercises/README.md and in two of the three files' own comments, and
+    # asserted nowhere until now - link one consumer against the un-namespaced
+    # `mathlib` target and everything still builds, runs and prints green.
+    # Two distinct lines across three files is the whole assertion.
+    DEP_LINK=$(sed 's/#.*//' exercises/deplab/consume-*/CMakeLists.txt \
+        | grep -E 'add_executable|target_link_libraries' \
+        | tr -s ' ' | sed 's/[[:space:]]*$//' | sort -u)
+    if [ "$(printf '%s\n' "$DEP_LINK" | wc -l | tr -d ' ')" != 2 ]; then
+        echo "build_all.sh: the three deplab consumers do not share one app and" >&2
+        echo "  one link line. Ch 27's lab says only the acquisition differs." >&2
+        echo "  Distinct lines found:" >&2
+        printf '%s\n' "$DEP_LINK" | sed 's/^/    /' >&2
+        exit 1
+    fi
+    echo "  ok   all three consumers share one app and one link line   [Ch 27]"
+
+    # --- path 2: fetched, and the tag is the pin ---
+    # A throwaway repository outside the worktree: FetchContent needs a real
+    # git remote, and a git repo nested in this one would make git status a
+    # minefield for the next person. file:// is a real remote to git, so the
+    # mechanism is identical to a https:// one.
+    #
+    # Probe by doing the thing rather than looking for the tool - the repo's
+    # rule, and it earns its keep here rather than being ceremony. git can be
+    # on PATH and still refuse the clone FetchContent is about to make:
+    # protocol.file.allow is a documented hardening (CVE-2022-39253) that a
+    # site can set to `never` globally, and then file:// is dead while
+    # `command -v git` still says yes. So make a one-commit repository and
+    # clone it exactly the way FetchContent will. That is the whole question.
+    git_can_fetch() {
+        local p rc=0
+        p=$(mktemp -d) || return 1
+        mkdir -p "$p/src"
+        git -C "$p/src" init -q > /dev/null 2>&1 \
+            && : > "$p/src/probe" \
+            && git -C "$p/src" -c user.email=probe@example.invalid \
+                   -c user.name=probe -c commit.gpgsign=false \
+                   add -A > /dev/null 2>&1 \
+            && git -C "$p/src" -c user.email=probe@example.invalid \
+                   -c user.name=probe -c commit.gpgsign=false \
+                   commit -qm probe > /dev/null 2>&1 \
+            && git clone -q "file://$p/src" "$p/dst" > /dev/null 2>&1 || rc=1
+        rm -rf "$p"
+        return $rc
+    }
+
+    if git_can_fetch; then
+        DEPREPO=$(mktemp -d)
+        # Cleaned on the way out whatever happens, the way every other mktemp -d
+        # in scripts/ is (check.sh, check_platform_claims.sh, check_mermaid.sh).
+        # This block runs under set -e with a guarded exit, two cmake configures,
+        # two builds and a binary lookup between here and the cleanup, so a
+        # single `rm` at the end covered only the path where nothing went wrong -
+        # every failure leaked a populated git repository into TMPDIR, one per
+        # attempt, exactly when someone was iterating on this section. The trap
+        # is released at the end of the block rather than left armed, so it
+        # cannot fire for a later section's failure and blame this fixture.
+        trap 'rm -rf "$DEPREPO"' EXIT
+        # A function rather than a string, and every git call in this block goes
+        # through it. Two reasons beyond tidiness. An unquoted string expansion
+        # splits on whitespace, so a TMPDIR containing a space would tear the
+        # -C argument in half and fail three lines later complaining about HEAD.
+        # And a fresh repo inherits the developer's GLOBAL git config: with
+        # commit.gpgsign set - which plenty of contributors have - git tries to
+        # sign as the fake identity below, finds no key for it, and takes the
+        # whole script down; tag.gpgsign turns the bare tags into annotated ones
+        # and stops in an editor waiting for a message that never comes.
+        depgit() {
+            git -C "$DEPREPO" \
+                -c user.email=lab@example.invalid -c user.name=deplab \
+                -c commit.gpgsign=false -c tag.gpgsign=false "$@"
+        }
+        cp -R exercises/deplab/mathlib/. "$DEPREPO/"
+        depgit init -q
+        # Separate statements, not `add && commit`: as the left operand of &&,
+        # a failing add is exempt from set -e and the error surfaces later,
+        # attached to the wrong command.
+        depgit add -A
+        depgit commit -q -m "mathlib 1.0.0"
+        depgit tag v1.0.0
+        # A second version, so there is something for the pin to select. The
+        # grep first: if the version line ever stops matching, this sed becomes
+        # a no-op, the commit below has nothing to commit, and the whole test
+        # would fail confusingly instead of saying why.
+        grep -q 'VERSION 1\.0\.0' "$DEPREPO/CMakeLists.txt" || {
+            echo "build_all.sh: deplab mathlib no longer declares VERSION 1.0.0," >&2
+            echo "  so the FetchContent tag test cannot make a second version." >&2
+            exit 1
+        }
+        sed -i.bak 's/VERSION 1\.0\.0/VERSION 1.1.0/' "$DEPREPO/CMakeLists.txt"
+        rm -f "$DEPREPO/CMakeLists.txt.bak"
+        depgit commit -q -am "mathlib 1.1.0"
+        depgit tag v1.1.0
+
+        DEP_OUT=""
+        for TAG in v1.0.0 v1.1.0; do
+            cmake -S exercises/deplab/consume-fetched -B "$DL/fetched-$TAG" \
+                -DMATHLIB_REPO="file://$DEPREPO" -DMATHLIB_TAG="$TAG" > /dev/null
+            cmake --build "$DL/fetched-$TAG" --config Debug > /dev/null
+            APP=$(dep_app "$DL/fetched-$TAG")
+            DEP_OUT="$DEP_OUT$("$APP")|"
+        done
+
+        # The fixture stays alive through the assertions below. Deleting it
+        # here, which is what this line used to do, threw away the evidence for
+        # the one claim this block exists to make before the claim was checked.
+        #
+        # Building once proves the mechanism runs. Only building twice proves
+        # the TAG is what selected the version - which is the chapter's claim,
+        # and the whole reason to pin to a tag rather than a branch.
+        #
+        # But "the two runs differ" is too weak to be that proof: a pin that
+        # resolved to the WRONG commit - a tag off by one, the two commits
+        # reordered, a Version() that grew a timestamp - differs too, and would
+        # sail through. Each run has to name the version its own tag carries.
+        # That subsumes the difference check, since 1.0.0 and 1.1.0 cannot both
+        # match one string.
+        DEP_A=${DEP_OUT%%|*}; DEP_B=${DEP_OUT#*|}; DEP_B=${DEP_B%%|*}
+        for PAIR in "v1.0.0:$DEP_A" "v1.1.0:$DEP_B"; do
+            TAG=${PAIR%%:*}; GOT=${PAIR#*:}
+            case "$GOT" in
+                *"${TAG#v}"*) ;;
+                *)  echo "build_all.sh: built at GIT_TAG $TAG, but the app reported" >&2
+                    echo "  \"$GOT\", which does not name ${TAG#v}. Ch 27 step 3 says the" >&2
+                    echo "  tag selects the version; here it selected something else." >&2
+                    exit 1 ;;
+            esac
+        done
+        echo "  ok   fetched: v1.0.0 and v1.1.0 each report their own tag   [Ch 27]"
+        rm -rf "$DEPREPO"; trap - EXIT
+    elif [ "$REQUIRE_GIT" = 1 ]; then
+        echo "build_all.sh: git cannot build and clone a file:// repository here," >&2
+        echo "  and --require-git was given. The FetchContent path needs both, and" >&2
+        echo "  it is the only check that proves the TAG selects the version." >&2
+        echo "  Re-run the probe by hand: git init a directory, commit, then" >&2
+        echo "  git clone file://<that directory>. If the clone is what fails," >&2
+        echo "  look at protocol.file.allow (git config --get protocol.file.allow)." >&2
+        exit 1
+    else
+        echo "  SKIPPED - no git that can clone file://, so the FetchContent"
+        echo "            path cannot run (CI runs this for real)"
+    fi
+
+    # --- path 3: installed, found as a config package ---
+    # The producing half of find_package: install(EXPORT) plus a generated
+    # mathlibConfig.cmake. Nothing in the consuming project names a path -
+    # CMAKE_PREFIX_PATH is how a consumer points at an SDK.
+    cmake -S exercises/deplab/mathlib -B "$DL/mathlib-build" \
+        -DCMAKE_INSTALL_PREFIX="$PWD/$DL/prefix" > /dev/null
+    cmake --build "$DL/mathlib-build" --config Debug --target install > /dev/null
+    cmake -S exercises/deplab/consume-installed -B "$DL/installed" \
+        -DCMAKE_PREFIX_PATH="$PWD/$DL/prefix" > /dev/null
+    cmake --build "$DL/installed" --config Debug > /dev/null
+    APP=$(dep_app "$DL/installed")
+    "$APP" > /dev/null
+    echo "  ok   installed: find_package(mathlib CONFIG) -> $("$APP")"
+elif [ "$REQUIRE_CMAKE" = 1 ]; then
+    echo "build_all.sh: --require-cmake was given but cmake is not on PATH" >&2
+    exit 1
+else
+    echo "  SKIPPED - cmake not installed (CI runs this for real)"
+fi
+
 echo "== buildlab cmake =="
 if command -v cmake > /dev/null 2>&1; then
     CM=build/buildlab-cmake            # under build/, which is gitignored
