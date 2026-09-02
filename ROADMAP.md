@@ -16,7 +16,7 @@ chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
 **Everything on this list appends.** New chapters go at the end (Chapter 39
-onward, in whatever order they land); new appendices continue from I. No item
+onward, in whatever order they land); new appendices continue from J. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
 first — see the numbering rules in [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -378,9 +378,38 @@ broken overlay parser is book-only), asserted by `build_all.sh` against
 the hand-decoded values, with the capture's second frame deliberately
 unaligned. See item 11's delivered notes for the ticket-format details.
 
-### 8. Consolidated const-correctness
+### 8. Consolidated const-correctness — DONE (Appendix I)
 
-**Missing:** const as one coherent subject.
+**Delivered (2026-09-02) as an appendix, not a chapter, and the deviation is
+deliberate.** This entry sketched "a chapter"; Part VI's own opening
+paragraph is the argument against it — *"what a codebase has that an
+exercise does not ... it is everything **around** the C++"* — and const is
+squarely *about* the C++. Chapters only append, so a chapter would have
+landed in Part VI and read wrong there. It sits with A, B and H instead,
+which is also where its neighbour lives: this entry's own 2026-09
+sequencing note said to read item 17 first and point at Appendix H's
+parameter procedure rather than re-derive it, and Appendix I does exactly
+that.
+
+The division of labour with the fragments, per this entry's instruction to
+cross-reference rather than duplicate: **A.5 keeps the syntax** (three
+parameter forms, trailing const, `const char*` versus `char* const`) and
+now points forward; **Appendix I owns the model** — const as a property of
+the *path* rather than the object, the interface splitting in two, bitwise
+versus logical const and what `mutable` is narrowly for, the overload pair,
+transitivity as the whole cost of retrofitting, the three places const does
+nothing, `const_cast`'s one honest direction, and const-is-not-constexpr.
+It carries a five-step procedure for making an existing class const-correct.
+
+`exercises/constlab/` is judged in a way nothing else here is, and the
+reason is the subject: **a const violation never reaches a binary**, so a
+harness that only compiles things cannot check the one thing this appendix
+is about. Five violations sit behind `-D` guards and `build_all.sh`
+requires each to be *refused*, with the diagnostic naming const or
+read-only — the grep seeing the message only, since the directory is
+called `constlab` and any path left in the string matches `const` by itself.
+
+**Missing (as filed):** const as one coherent subject.
 
 **Evidence:** it is taught in fragments — const members in Chapter 4, trailing
 const and `const char*` versus `char* const` in Appendix A and B, `const auto&`
@@ -395,9 +424,9 @@ functions, `mutable`, and why const-correctness is retrofitted with pain but
 free if it is there from the start. Cross-reference rather than duplicate;
 the fragments stay where they are.
 
-**Sequencing note (2026-08):** still worth doing and still open — item 9
-(P/Invoke) went first and is now Chapter 39; see the note there for why the deep review
-re-ordered them.
+**Still open from this item:** nothing. The 2026-08 sequencing note that put
+this behind item 9 (P/Invoke) is discharged — item 9 landed as Chapter 39,
+and this one followed it.
 
 **And read item 17 before starting this one (2026-09).** They are
 neighbours: `const&` is one branch of item 17's parameter procedure, and

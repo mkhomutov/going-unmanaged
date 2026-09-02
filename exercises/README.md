@@ -32,10 +32,11 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [No Repro, Dump Attached](dumplab/TASK.md) | 37 | a ticket with the crash report attached: post-mortem from the paperwork alone | ~60 min | the files themselves: the fixed [session.cpp](dumplab/session.cpp) + [main.cpp](dumplab/main.cpp), green under both device configurations |
 | [The Bridge Lab](bridgelab/TASK.md) | 38 | serving a foreign client: the main-thread queue, refusing work, the bounded wait | ~2 h | the files themselves: [main_thread_queue.h](bridgelab/main_thread_queue.h), [host.h](bridgelab/host.h), [bridge_core.h](bridgelab/bridge_core.h) + the judging [main.cpp](bridgelab/main.cpp), green under both sanitizer builds |
 | [The Interop Lab](interoplab/TASK.md) | 39 | publishing a C surface a managed caller binds by hand | ~2 h | the files themselves: [plugin.h](interoplab/plugin.h) + [plugin.cpp](interoplab/plugin.cpp), judged by [main.cpp](interoplab/main.cpp) through the boundary header alone |
+| [The Const Lab](constlab/TASK.md) | Appendix I | const as one subject, judged by five builds that must fail | ~45 min | the files themselves: [counter.h](constlab/counter.h) + [main.cpp](constlab/main.cpp), plus five builds that must be refused |
 
 Chapter 24 (the practice plan) sequences everything above the dependency lab —
 the nine Part V exercises plus the Bestiary reading — into a one-week schedule;
-that row and the ones below it belong to Part VI and come later. The threaded
+that row and the chapter rows below it belong to Part VI and come later, and the const lab sits last because its home is an appendix and nothing sequences it. The threaded
 callback assumes you have already done the Device SDK lab cold — it is that lab
 again with a driver thread in front of it — and the ABI lab assumes both SDK
 labs, since it asks you to publish the shapes those two taught you to consume.
@@ -69,6 +70,11 @@ discipline as the tickets — the three broken shapes are quoted in its
 TASK.md and the chapter, identically — and its harness doubles as the
 lab's judge: no wait in it is unbounded, because two of the breaks are
 hangs and a hang cannot fail a script, only stop it.
+`constlab/` is Appendix I's, and the only lab whose judge asserts a build
+*fails*: `counter.h` and `main.cpp` build and run clean, and five const
+violations behind `-D` guards must each be refused with a diagnostic that
+names const — a const mistake never reaches a binary, so a harness that only
+ever compiles things could not check the one thing that appendix is about.
 `buildlab/` does double duty: it is Chapter 23's lab, and Chapter 26 builds that
 same trio with CMake, so the reference
 [`CMakeLists.txt`](buildlab/CMakeLists.txt) lives there. `interoplab/` is Chapter 39's, and the

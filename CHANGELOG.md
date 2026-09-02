@@ -31,6 +31,23 @@ numbers may still move.
   and *marshalling*, Chapter 31's symptom index gains the mojibake and
   managed-caller-crash rows, and Chapter 30 now points forward to this
   chapter when the consumer of its boundary is C#.
+- **New: Appendix I — Const-Correctness** (MINOR — an appended appendix;
+  closes ROADMAP item 8 and issue #21). const gathered into one subject
+  from the five places that taught pieces of it. The organising idea is
+  that **const describes a path, not an object** — the same object is
+  writable to its owner and read-only to everyone it was lent to, which C#
+  cannot express and which is why `IReadOnlyList<T>` is a separate
+  interface. From there: the interface splitting in two for free, bitwise
+  versus logical const and `mutable`'s narrow job, the overload pair and
+  why the const one returns a const reference, transitivity as the entire
+  cost of retrofitting, the three places the reflex misfires, `const_cast`'s
+  one honest direction, and const-is-not-constexpr. Appendix A.5 keeps the
+  syntax and points forward; the parameter decision stays Appendix H's.
+  `exercises/constlab/` judges it by **five compilations that must fail** —
+  the first check in this repository to assert a build is refused, because
+  a const violation never reaches a binary. Appendix letters now run A–I
+  with no gap; three key principles join Appendix B, and the glossary gains
+  *const-correctness* and *mutable*.
 
 - **New: `exercises/deplab`** (MINOR — an appended exercise; closes issue
   #10). Chapter 27's *Try it* was the last Part VI exercise outside the

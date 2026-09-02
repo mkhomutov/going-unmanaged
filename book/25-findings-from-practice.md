@@ -180,7 +180,7 @@ C# contrast worth noting: `new int[5]` in C# is always zeroed — the runtime gu
 
 **The theory.** Returning by value hands out a copy; `buf.At(2) = 7` does not compile at all — assignment needs a modifiable lvalue, and a returned `int` is a prvalue. Containers hand out **references** to their elements — and because a single `const` reference-returning accessor would hand out a mutable reference from a const object, the idiom is the pair.
 
-Do not expect the compiler to stop you writing that single accessor, either. `const` on a member function is **shallow**: through a raw `int* data_` it makes the pointer `int* const`, not `const int*`, so `int& At(size_t i) const { return data_[i]; }` compiles happily and lets a caller mutate a const `Buffer`. (Swap in a `std::vector` member and it *does* become a compile error — which is one more argument for the container.) The pair below is a design rule you enforce, not one the language enforces for you.
+Do not expect the compiler to stop you writing that single accessor, either. `const` on a member function is **shallow**: through a raw `int* data_` it makes the pointer `int* const`, not `const int*`, so `int& At(size_t i) const { return data_[i]; }` compiles happily and lets a caller mutate a const `Buffer`. (Swap in a `std::vector` member and it *does* become a compile error — which is one more argument for the container.) The pair below is a design rule you enforce, not one the language enforces for you. ([Appendix I](I-const.md#appendix-i--const-correctness) is that rule as a subject: what const promises, where it stops, and the procedure for retrofitting it.)
 
 ```cpp
 int&       At(size_t i)       { assert(i < size_); return data_[i]; }

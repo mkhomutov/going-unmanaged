@@ -101,6 +101,11 @@ One line each. If you can say these fluently and back them with code, the concep
 - "The managed declaration of my function is written by hand and checked by nothing — so I publish only blittable types, put a size field in front of every struct, and validate it on entry."
 - "Nothing I allocate crosses the boundary — the caller hands me a buffer and I tell them how big it needs to be, so which heap frees it is never asked."
 - "I write the callback's lifetime window into the header, because it is the only thing that tells a managed author how long to keep their delegate rooted."
+**Const-correctness**
+
+- "const describes a path, not an object — so I mark the member functions that do not change observable state, and the read interface appears for free."
+- "A const violation is a compile error, never a runtime one — so const-correctness costs nothing at the start of a class and twenty errors in year three, and I pay it at the start."
+- "`mutable` is for members that are not part of the value — a cache, a memo, a mutex — and never for anything a caller can observe."
 
 **Modern C++**
 

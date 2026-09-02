@@ -6,16 +6,17 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 39 chapters, appendices A–H), indexed by `book/README.md`. The
+(6 parts, 39 chapters, appendices A–I), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
-artifact produced by `scripts/build_book.sh`. Appendices run A–H with no
+artifact produced by `scripts/build_book.sh`. Appendices run A–I with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
 lookup half: the mechanism survey and decision table; no C++ listings —
 check_verbatim.sh enforces that no cpp fence lands there), H the choosing
 procedures (item 17: which container, how to take a parameter, what to
 return, value-or-pointer inside a collection — the opposite contract to
 G, its every cpp fence pinned to `exercises/choosing/`, which asserts the
-costs the page quotes).
+costs the page quotes), and I const-correctness (item 8), whose lab asserts
+refusals rather than results.
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
 concurrency, authoring an ABI boundary, reading tool output. Chapter 29
@@ -61,7 +62,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–39, `A-`…`H-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–39, `A-`…`I-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -122,6 +123,15 @@ Chapter 25's Finding 10.
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
   same commit (the mains are scaffolding and appear in no listing)
+- `exercises/constlab/` — Appendix I's lab, and the only one in the repo whose
+  judge asserts a build FAILS. `counter.h` + `main.cpp` compile and run
+  clean; five const violations behind `-DCONSTLAB_VIOLATION_1..5` must each
+  be REFUSED, and the diagnostic must name const or read-only. Two rules keep
+  that from being vacuous and are easy to undo: the clean build must succeed
+  (so an unrelated typo fails there, not silently here), and the grep sees the
+  diagnostic's MESSAGE only, everything up to `error:` cut away first — the
+  directory is called `constlab`, so any path left in the string matches
+  `const` on its own
 - `exercises/choosing/` — Appendix H's measurements, the other non-exercise
   appendix directory: `counted.h` (a copy/move-counting type plus the
   `CHECK` judge), `passing.cpp` (procedures 2–3) and `storing.cpp`
@@ -436,15 +446,14 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 40+, Appendix I+) — no item requires renumbering. Delivered items
+(Chapter 40+, Appendix J+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
   Chapter 26; dependency management was item 2 and is now Chapter 27;
   testing was item 3 and is now Chapter 28; concurrency was item 4 and is
   now Chapter 29
-- Tier 2: three items open — consolidated const-correctness (item 8), the
-  framework shape (item 18: Bestiary Shape 5 is named in Chapter 16 and
+- Tier 2: two items open — the framework shape (item 18: Bestiary Shape 5 is named in Chapter 16 and
   taught nowhere — two readers of the 2026-09 study stopped there, and
   Shape 4 has no lab either — though only its interrupt-context half is
   genuinely untaught, which is item 21 — so this item is about the shape
@@ -453,13 +462,13 @@ stay on the list marked DONE so item numbers never shift. Short version:
   the mutex (item 19: Chapter 29 and Chapter 36 between them state the
   deadline path's prohibition and never its alternative — their two opposite
   defaults for a foreign thread now cross-reference each other, which is all
-  of the item that is done). All three were sequenced after item 9 (P/Invoke),
-  which is **DONE as of 2026-09-02** — Chapter 39 — so all three are now
-  unblocked and item 8 is the next in this tier. It also builds on item 17 —
-  *Choosing* — which is now DONE as Appendix H plus the copy/move-counting
-  `exercises/choosing/`: `const&` is one branch of that appendix's
-  parameter procedure, so item 8 points at the procedure rather than
-  re-deriving it. Scenario chapters were item 11 and are DONE — Chapters 32–35, then
+  of the item that is done). Both were sequenced after item 9 (P/Invoke),
+  which is **DONE as of 2026-09-02** — Chapter 39 — so both are now
+  unblocked. Consolidated const-correctness was item 8 and is now Appendix I
+  plus `exercises/constlab/`, the one lab whose judge asserts a build FAILS;
+  it builds on item 17 — *Choosing*, now DONE as Appendix H plus the
+  copy/move-counting `exercises/choosing/` — and points at that appendix's
+  parameter procedure rather than re-deriving `const&`. Scenario chapters were item 11 and are DONE — Chapters 32–35, then
   items 14 and 15 appended the performance ticket (Chapter 36 + perflab)
   and the crash-dump ticket (Chapter 37 + dumplab) in the same format,
   which stays open to new tickets by PR. Byte-level protocol work was
@@ -490,7 +499,7 @@ stay on the list marked DONE so item numbers never shift. Short version:
   `exercises/bridgelab/` (the main-thread queue under a bounded-wait
   judge), plus Appendix G, the survey of mechanisms and its decision
   table.
-  The glossary was item 10 and is now Appendix E (letters run A–H with no
+  The glossary was item 10 and is now Appendix E (letters run A–I with no
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
   timers), then 17 (UTF-8↔UTF-16); it grows by PR like the Findings log
