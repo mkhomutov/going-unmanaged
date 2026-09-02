@@ -30,6 +30,8 @@ Derived* d2 = static_cast<Derived*>(s);   // UNchecked downcast: fast, but if
 
 C# strings are immutable UTF-16 objects. **std::string is a mutable byte buffer with no encoding awareness** — it stores bytes; whether they're ASCII, UTF-8, or garbage is your problem. The modern convention: keep std::string as UTF-8 everywhere.
 
+**Where the bytes actually live.** A `std::string` owns a heap buffer — except when it does not. Every mainstream implementation stores short strings inside the string object itself, the *small-string optimisation*, so copying a short one allocates nothing and copying a longer one allocates every time. The threshold is around fifteen to twenty-two bytes depending on the library, it is not standardised, and nothing in the type tells you which side of it a given string is on. That matters wherever the cost of a copy decides a design: [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage) measures parameter shapes against a string built deliberately past the threshold, precisely so the cost being measured is one that exists.
+
 **Try it (30 seconds).** Predict `std::string("Grüße").size()` — five characters — then run it, source file saved as UTF-8. The answer is this whole section in one number.
 
 ```cpp

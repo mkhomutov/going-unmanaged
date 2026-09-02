@@ -69,6 +69,8 @@ That last line is the one to keep: a function's result is a temporary, so it sel
 
 Returning containers by value is cheap for a *separate* reason, and the two are worth holding apart because they are routinely conflated. Since C++17, a function that returns a temporary outright — `return Buffer(n);` — gets **mandatory** elision: the object is built directly in the caller's storage, and no copy or move constructor is called or even required to exist. Return a *named* local instead and you are back to the optional flavour, NRVO, with an implicit move as the fallback (Chapter 14 watches both happen).
 
+**One `&&` that is not this one.** Everything above is `&&` on a *concrete* type, and it means what it says: this binds only to things you may steal from. Inside a template the same characters are a different feature. `template <class T> void f(T&& x)` is a **forwarding reference**: it binds to lvalues and rvalues alike, `T` is deduced differently for each, and the way you pass it onward is `std::forward<T>(x)`, not `std::move(x)` — which is how `std::make_unique` and `emplace_back` hand your arguments through untouched. You will meet it long before you have reason to write it. The thing to carry out of this chapter is only that the two are spelled identically and are not the same thing, so a rule you learned about `Buffer&&` does not automatically hold for `T&&`; cppreference's *forwarding references* page is the short version on the day you need it.
+
 ### The canonical exercise: Rule of Five for a raw buffer
 
 Learn this shape cold:
