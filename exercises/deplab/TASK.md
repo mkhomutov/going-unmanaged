@@ -1,7 +1,7 @@
 # Exercise: The Dependency Lab
 
 Consuming a dependency three ways, and watching a version pin actually pin:
-**Chapter 27** of the book, the *Try it*, steps 1–3. ~90 min.
+**Chapter 27** of the book, the *Try it*, steps 1–4. ~90 min.
 
 You need **no network and no third-party code**. You write the dependency
 yourself; the only thing that makes it a dependency is that it is a separate
@@ -28,12 +28,11 @@ the same way `buildlab/CMakeLists.txt` is Chapter 26's answer.
    is a simulation. Then make a second tag, re-point `GIT_TAG`, and watch the
    build follow it.
 
-Then one more, which the chapter names in a snippet and never asks you to do:
-
-4. **Install it and find it.** `install()` + `install(EXPORT)` +
-   `configure_package_config_file` so the library ships a config package, then
-   consume it from a third app with `find_package(mathlib CONFIG REQUIRED)` and
-   `-DCMAKE_PREFIX_PATH`. This is the producing half of Chapter 27's
+4. **Install it, and find it.** `install(TARGETS ... EXPORT)` +
+   `install(EXPORT)` + `configure_package_config_file`, so the library ships a
+   config package; then consume it from a third app with
+   `find_package(mathlib CONFIG REQUIRED)` and `-DCMAKE_PREFIX_PATH`. This is
+   the producing half of the chapter's
    `find_package(VendorSDK REQUIRED)  # a config package, if it ships one` —
    the half you only meet when it is your library someone else consumes.
 
@@ -61,9 +60,9 @@ CI passes `--require-cmake`, which refuses to skip.
 
 ## Not here, on purpose
 
-Chapter 27's *Try it* steps 4 and 5 — the ODR diamond, the two link orders, and
+Chapter 27's *Try it* steps 5 and 6 — the ODR diamond, the two link orders, and
 predicting which one AddressSanitizer catches. Those stay a hand exercise,
-because **the prediction in step 5 is the entire exercise** and a committed
+because **the prediction in step 6 is the entire exercise** and a committed
 answer would spoil it in the time it takes to read a filename. Do them by hand
 with `scripts/check.sh`.
 

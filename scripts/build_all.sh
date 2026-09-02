@@ -223,9 +223,8 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_noelide > /dev/null
 # cmake is not part of the toolchain the rest of this script needs, so a
 # laptop without it stays green and says so rather than pretending. CI passes
 # --require-cmake, which refuses to skip - same bargain as check_mermaid.sh.
-# Chapter 27's Try it, steps 1-3 plus the config package its find_package
-# snippet implies: one library consumed three ways, and a version pin proved
-# rather than demonstrated. Shares the buildlab section's cmake bargain below -
+# Chapter 27's Try it, steps 1-4: one library consumed three ways, and a
+# version pin proved rather than demonstrated. Shares the buildlab section's cmake bargain below -
 # both live under the same probe, and --require-cmake covers both.
 echo "== deplab cmake =="
 if command -v cmake > /dev/null 2>&1; then
