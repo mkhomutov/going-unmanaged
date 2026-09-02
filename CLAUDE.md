@@ -377,15 +377,19 @@ stay on the list marked DONE so item numbers never shift. Short version:
   now Chapter 29
 - Tier 2: three items open — consolidated const-correctness (item 8), the
   framework shape (item 18: Bestiary Shape 5 is named in Chapter 16 and
-  taught nowhere, the most-cited bounce point of the 2026-09 reader study,
-  and a legitimate candidate for out-of-scope-with-a-sentence), and below
+  taught nowhere — two readers of the 2026-09 study stopped there, and
+  Shape 4 has no lab either, so the item is about the shape with no
+  treatment at all rather than the last shape without a lab; still a
+  legitimate candidate for out-of-scope-with-a-sentence), and below
   the mutex (item 19: Chapter 29 and Chapter 36 between them state the
   deadline path's prohibition and never its alternative — and their two
   defaults for a foreign thread currently contradict each other
   uncross-referenced). All three sequence after item 9 (P/Invoke), which
   the 2026 deep review promoted to the next major chapter and which the
   reader study then confirmed as the clearest content mandate on the list
-  (four of eighteen readers rated its absence a blocker). It also builds on item 17 —
+  (four of eighteen readers rated its absence a blocker; three of those
+  votes are for the chapter as scoped, the fourth for the managed-runtime
+  topology recorded as item 9's scope note). It also builds on item 17 —
   *Choosing* — which is now DONE as Appendix H plus the copy/move-counting
   `exercises/choosing/`: `const&` is one branch of that appendix's
   parameter procedure, so item 8 points at the procedure rather than
@@ -399,14 +403,16 @@ stay on the list marked DONE so item numbers never shift. Short version:
 - Tier 3: C++/C# interop (item 9, P/Invoke — re-sequenced as the next
   major chapter, see Tier 2), SOLID without the runtime (item 13 — the
   reader's design vocabulary, un-fused from the .NET machinery; a
-  gather-and-translate chapter like item 8), the retrofit (item 20 —
-  every lab in the book starts from an empty file; the reader who is
-  handed the native layer *because* it is old has no chapter, and the
-  acceptance test is that the caller's TU is byte-identical before and
-  after), and the bridge out was item 16
-  and is now DONE — Chapter 38 + stdlib-only `exercises/bridgelab/` (the
-  main-thread queue under a bounded-wait judge), plus Appendix G, the
-  survey of mechanisms and its decision table.
+  gather-and-translate chapter like item 8), the retrofit (item 20, also
+  after item 9 — no lab modernises working code whose callers must keep
+  compiling: they start blank, or from buildlab's working trio, or from a
+  ticket lab's already-broken code. The reader who is handed the native
+  layer *because* it is old has no chapter, and the acceptance test is that
+  the caller's TU is byte-identical before and after), and the bridge out
+  was item 16 and is now DONE — Chapter 38 + stdlib-only
+  `exercises/bridgelab/` (the main-thread queue under a bounded-wait
+  judge), plus Appendix G, the survey of mechanisms and its decision
+  table.
   The glossary was item 10 and is now Appendix E (letters run A–H with no
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
@@ -416,6 +422,14 @@ stay on the list marked DONE so item numbers never shift. Short version:
   Shape 3's missing lab) is Chapter 35 + `exercises/comlab/`; the
   threaded-callback lab is `exercises/threadlab/` plus
   `solutions/device_threaded_solution.cpp` under a TSan CI gate
+- Deliberately out of scope (the section exists so the same suggestion does
+  not arrive twice — read it before filing anything): **classroom
+  scaffolding** — slides, rubrics, per-chapter lecture timings, a separated
+  answer key — because it is a different product, not a missing chapter, and
+  the CC-BY/MIT split already lets a trainer build it; and **general
+  lock-free data-structure design**, the half of item 19 that is not ours.
+  Closing a *numbered* item this way is a decision that belongs in an issue
+  first; an entry that was never an item is recorded there directly
 - Structural item: splitting the book per-chapter under `book/` with a build
   script that concatenates — DONE, see the ROADMAP entry
 
