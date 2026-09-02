@@ -74,9 +74,10 @@ same trio with CMake, so the reference
 27's, and the only lab whose subject is entirely build description: one
 `app/main.cpp` consumed three ways — vendored, fetched, and found as an
 installed config package — so the three `consume-*/CMakeLists.txt` are the
-whole lesson and the app cannot tell them apart. Its two judges are worth
-knowing before you read it: the vendored app is grepped for an include path
-it must not name, and the fetched one is built at two tags, each of which must
+whole lesson and the app cannot tell them apart. Its judges are worth knowing
+before you read it: every consumer is grepped for an include path it must not
+name, the three must share one `add_executable` and one `target_link_libraries`
+between them, and the fetched one is built at two tags, each of which must
 report its own version — building once proves the mechanism runs, only building
 twice proves the *pin* chose the version, and asking merely that the two
 outputs differ would let through a pin that chose the wrong commit. `testlab/`

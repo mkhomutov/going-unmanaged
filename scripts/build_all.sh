@@ -47,6 +47,19 @@ run "invalid"     $CXX $FLAGS20 solutions/invalid.cpp                   -o $OUT/
 run "lambdas"     $CXX $FLAGS   solutions/lambdas.cpp                   -o $OUT/lambdas
 # buildlab is exercise scaffolding, not a solution — but its starting point must stay green
 run "buildlab"    $CXX $FLAGS   exercises/buildlab/Greeter.cpp exercises/buildlab/main.cpp -o $OUT/buildlab
+# Chapter 27's lab, for the same reason and one more. The three cmake paths far
+# below do compile these two files, but with whatever the consumer projects ask
+# for — mathlib's -Wall -Wextra are PRIVATE and no consume-*/CMakeLists.txt sets
+# a warning or sanitizer flag — so the canonical flags never reach them, and on
+# a machine without cmake they are not compiled at all. CONTRIBUTING.md's first
+# ground rule is about every contributed .cpp, not every solution.
+# MATHLIB_VERSION reaches the library from project(VERSION) via CMake; this
+# build is about the flags, so it gets a placeholder that cannot drift from
+# anything and cannot be mistaken for a version the lab claims.
+run "deplab"      $CXX $FLAGS   exercises/deplab/mathlib/src/mathlib.cpp \
+                                exercises/deplab/app/main.cpp \
+                                -I exercises/deplab/mathlib/include \
+                                -DMATHLIB_VERSION='"flags-only"' -o $OUT/deplab
 # Chapter 28's harness and suite, verbatim from the chapter. -I solutions because
 # the class under test is the Chapter 15 solution, extracted into solutions/Buffer.h
 # so a demo with main() and a test binary with its own can both include it — the
@@ -158,6 +171,7 @@ $OUT/shapes > /dev/null
 $OUT/invalid > /dev/null
 $OUT/lambdas > /dev/null
 $OUT/buildlab > /dev/null
+$OUT/deplab > /dev/null
 # Not silenced: the tally is the only line in this script that says how MUCH was
 # checked, and a non-zero exit is the whole contract between a test binary and
 # CI. But green and red want different amounts of output, so the run is captured
@@ -261,13 +275,46 @@ if command -v cmake > /dev/null 2>&1; then
     # Comments stripped first: that file EXPLAINS that it names no include
     # path, so a naive grep matches the sentence saying so - which is exactly
     # what happened the first time this check ran.
-    if sed 's/#.*//' exercises/deplab/consume-vendored/CMakeLists.txt \
-            | grep -qE 'include_directories'; then
-        echo "build_all.sh: the vendored app names an include path; Ch 27 step 2" >&2
-        echo "  says PUBLIC on the library is what carries it. Remove the line." >&2
+    # All THREE consumers, not just the vendored one: the lab's headline claim
+    # is that the app cannot tell the three apart, and a judge reading one file
+    # cannot say that.
+    #
+    # Two patterns, because two different things are being spelled. CMake
+    # command names are case-insensitive, so INCLUDE_DIRECTORIES is the same
+    # call as include_directories and a case-sensitive grep walks straight past
+    # it - hence -i on that one. A compiler flag is not case-insensitive, so
+    # -I is matched exactly, anchored to the characters a flag can follow so
+    # that `add_compile_options(-I...)` and a path smuggled into CMAKE_CXX_FLAGS
+    # are caught too. A raw -I is what a C# dev reaching for the compiler writes.
+    for DEP_C in vendored fetched installed; do
+        DEP_TXT=$(sed 's/#.*//' "exercises/deplab/consume-$DEP_C/CMakeLists.txt")
+        if printf '%s\n' "$DEP_TXT" | grep -qiE 'include_directories' \
+           || printf '%s\n' "$DEP_TXT" | grep -qE '(^|[[:space:]"(;])-I'; then
+            echo "build_all.sh: the $DEP_C app names an include path; Ch 27 step 2" >&2
+            echo "  says PUBLIC on the library is what carries it, and the lab says" >&2
+            echo "  all three consumers are identical. Remove the line." >&2
+            exit 1
+        fi
+    done
+    echo "  ok   no consumer names an include path - PUBLIC carried it   [Ch 27]"
+
+    # And the other half of that claim: the app and the link line are the same
+    # in all three, so only the acquisition differs. Stated in TASK.md, in
+    # exercises/README.md and in two of the three files' own comments, and
+    # asserted nowhere until now - link one consumer against the un-namespaced
+    # `mathlib` target and everything still builds, runs and prints green.
+    # Two distinct lines across three files is the whole assertion.
+    DEP_LINK=$(sed 's/#.*//' exercises/deplab/consume-*/CMakeLists.txt \
+        | grep -E 'add_executable|target_link_libraries' \
+        | tr -s ' ' | sed 's/[[:space:]]*$//' | sort -u)
+    if [ "$(printf '%s\n' "$DEP_LINK" | wc -l | tr -d ' ')" != 2 ]; then
+        echo "build_all.sh: the three deplab consumers do not share one app and" >&2
+        echo "  one link line. Ch 27's lab says only the acquisition differs." >&2
+        echo "  Distinct lines found:" >&2
+        printf '%s\n' "$DEP_LINK" | sed 's/^/    /' >&2
         exit 1
     fi
-    echo "  ok   vendored app names no include path - PUBLIC carried it   [Ch 27]"
+    echo "  ok   all three consumers share one app and one link line   [Ch 27]"
 
     # --- path 2: fetched, and the tag is the pin ---
     # A throwaway repository outside the worktree: FetchContent needs a real

@@ -45,12 +45,23 @@ from, and the three `consume-*/CMakeLists.txt` differ only in how they get the
 
 ## The judge
 
-`scripts/build_all.sh` builds all three paths and runs each. Two of its checks
-are the ones worth stealing for your own attempt:
+`scripts/build_all.sh` builds all three paths and runs each — and builds the
+two `.cpp` files once more on their own, under the handbook's canonical
+warning and sanitizer flags, which the CMake paths never apply to them. Three
+of its checks are the ones worth stealing for your own attempt:
 
-- **The vendored app's CMakeLists is grepped** for an include path naming
-  mathlib. Finding one fails the build — "it works" would not have caught a
-  belt-and-braces `include_directories()` that quietly makes PUBLIC redundant.
+- **Every consumer's CMakeLists is grepped** for an include path. Finding one
+  fails the build — "it works" would not have caught a belt-and-braces
+  `include_directories()` that quietly makes PUBLIC redundant. Two details
+  cost more than they look: the grep is case-**in**sensitive, because CMake
+  command names are, so `INCLUDE_DIRECTORIES(...)` is the same call and a
+  plain grep sails past it; and it also matches a bare `-I`, which is where
+  a C# developer reaching for the compiler puts a path.
+- **The three consumers must share one `add_executable` and one
+  `target_link_libraries`.** That is the lab's whole claim, and it is the one
+  a passing build cannot make: link a consumer against the un-namespaced
+  `mathlib` target instead of `mathlib::mathlib` and everything still
+  compiles, runs and prints.
 - **The fetched app is built at both tags, and each run must report the
   version its own tag carries.** Building once proves the mechanism runs; only
   building twice proves the *pin* is what selected the version. Note what the
