@@ -793,7 +793,9 @@ an exercise — Shape 1 is marked *Trained in Chapter 17* on the page, Shape 2
 lab of its own (35, `exercises/comlab/`). Shape 4 has no lab either, but it
 is not stranded: the Bestiary calls it "Shape 1 wearing work boots", and
 Chapter 8 sets its status enums beside Shape 1's error codes in the same
-sentence, so its discipline is taught even where its lab is not. Shape 5 is
+sentence, so its discipline is taught even where its lab is not — the one
+piece of it that is genuinely untaught is item 21, which is a section of
+item 19 rather than a shape of its own. Shape 5 is
 the one shape with no treatment anywhere past its own four sentences — a
 C++-native framework that brings its own object model, such as Qt's
 parent-child ownership or Unreal's GC for UObjects, closing on the advice
@@ -864,9 +866,11 @@ filed below under [Deliberately out of scope](#deliberately-out-of-scope);
 the deadline path inside a plug-in the reader ships is ours, because this
 book already teaches that path and currently stops one step short of usable.
 
-**Sequencing:** after item 9, alongside items 8 and 18. The sharper half does
-not wait for any of them — the Chapter 29 ↔ Chapter 36 cross-reference is a
-correction, and is issue #54.
+**Sequencing:** after item 9, alongside items 8 and 18. Item 21 rides on
+this one: Shape 4's interrupt-context callback is this prohibition under a
+harder deadline, and a queue section written here may close it outright. The
+sharper half waits for none of them — the Chapter 29 ↔ Chapter 36
+cross-reference is a correction, and is issue #54.
 
 ---
 
@@ -1241,6 +1245,58 @@ boundary, and Chapter 30 already says why.
 **Sequencing:** after item 9. The same reader wants both, and P/Invoke has
 three independent votes for the chapter as scoped to this one's two.
 
+### 21. The interrupt-context callback — Bestiary Shape 4's other addition
+
+**Missing:** one of Shape 4's two additions to Shape 1, and only one.
+
+**Evidence:** Chapter 16 never claims Shape 4 is a new discipline — it says
+the shape "is Shape 1 wearing work boots: the same discipline applies, with
+two additions". Check both and they come out differently.
+
+The first — "RAII must respect that some resources are singletons whose
+'ownership' is initialization order" — is covered, and covered well.
+Chapter 32 is an entire ticket chapter on the static initialization order
+fiasco, and it closes by naming this shape: the vendors' `X_Init`/`X_DeInit`
+pairs *are* that chapter's lesson, shipped as API. Chapter 30 carries the
+cross-module version, Chapter 28's registry the construct-on-first-use fix,
+Appendix E the glossary entry. The rest of Shape 4's surface is taught too,
+just not under its own name: Chapter 8 sets its status enums beside Shape
+1's error codes in one sentence, and the zero-and-fill config struct is
+Chapter 3's habit and Chapter 2's classification, drilled in Chapter 17.
+
+The second — "callbacks may run in interrupt context (minimal work, no
+allocation, no blocking)" — is not covered anywhere. Across all 38 chapters
+and 8 appendices "interrupt context" appears exactly once, in the Bestiary
+sentence that names it, and the only other mention of an interrupt handler
+is Chapter 8's aside on why exceptions are compiled out on such targets. So
+a reader who takes the Bestiary at its word, applies Shape 1's discipline as
+instructed, and puts a `std::string` or a `push_back` in an ISR has followed
+this book correctly into a fault. That is the cost, and it is the only part
+of Shape 4 that carries one.
+
+**A contribution looks like:** almost certainly not a chapter. The
+prohibition — minimal work, no allocation, no blocking — is item 19's
+deadline path under a different name and a harder deadline, so the honest
+close is a section inside item 19's material: what an ISR cannot do that a
+deadline thread merely should not (it cannot block even on the slow path,
+and every byte it touches must exist before `main` runs), plus the hand-off
+*out* of interrupt context, which is the same bounded SPSC queue item 19
+already pivots on. Two pages and one lab, if item 19 is written first.
+
+**Sequencing: after item 19, and possibly inside it.** This is the smallest
+item on the list and the only one filed without reader evidence — it came
+out of a review of this file's own claims, not the 2026-09 study. If item 19
+lands and its queue section answers the ISR case, close this one as
+delivered rather than writing it twice.
+
+**Scope gate.** Whether the microcontroller reader is ours is a fair
+question, and the answer is narrow: the book names STM32 HAL and ESP-IDF as
+study material, no lab targets a microcontroller, and none should —
+`build_all.sh` is a host toolchain and staying that way is a feature. What
+is ours is the sentence the Bestiary already wrote and did not pay, because
+this shape reaches the desktop too: a CAN stack or a Modbus library calls
+back from a driver context under the same three prohibitions.
+
 ---
 
 ## Known gaps carried over
@@ -1248,10 +1304,10 @@ three independent votes for the chapter as scoped to this one's two.
 Already recorded in [CONTRIBUTING.md](CONTRIBUTING.md) and still open:
 
 - **A COM-style refcounting lab — DONE.** Bestiary Shape 3 had no exercise
-  (nor, still, do Shapes 4 and 5 — see item 18); it is now Chapter 35 and
-  `exercises/comlab/`, delivered inside item 11's ticket framing exactly as
-  the candidate line predicted — *"the vendor upgraded the SDK, and the new
-  API is refcounted."* See item 11's delivered notes.
+  (nor, still, do Shapes 4 and 5 — see items 18 and 21); it is now
+  Chapter 35 and `exercises/comlab/`, delivered inside item 11's ticket
+  framing exactly as the candidate line predicted — *"the vendor upgraded
+  the SDK, and the new API is refcounted."* See item 11's delivered notes.
 - **A threaded-callback lab** — **DONE.** It was a FakeDevice stretch goal, then
   Chapter 29's *Try it*; it is now `exercises/threadlab/` with
   `solutions/device_threaded_solution.cpp` and a ThreadSanitizer step in CI.
@@ -1272,8 +1328,9 @@ is missing:** a corporate trainer building a five-day course for thirty .NET
 engineers, and a university instructor evaluating the book for a second-year
 systems module. Between them they wanted a synchronous day-by-day timetable,
 per-chapter lecture minutes, comprehension checks for the nineteen chapters
-that carry no exercise (`exercises/README.md` indexes the other nineteen), a marking rubric for the half `check.sh`
-cannot score — the predictions and the sabotage write-ups, which is where the
+that carry no exercise (`exercises/README.md` indexes the other nineteen), a
+marking rubric for the half `check.sh` cannot score — the predictions and
+the sabotage write-ups, which is where the
 learning actually happens — and a placement diagnostic. A filename search for
 slides, quizzes, assessments or an instructor guide returns nothing, correctly.
 

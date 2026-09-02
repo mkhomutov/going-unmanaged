@@ -22,7 +22,8 @@ writing it down properly.
    [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/), they win;
    a PR aligning the book with them is always welcome.
 4. **New exercises** — especially new SDK shapes. Known gap: Bestiary Shapes
-   4 and 5 have no lab (ROADMAP item 18); Shape 3's landed as Chapter 35 and
+   4 and 5 have no lab — Shape 5 is ROADMAP item 18, and Shape 4's one
+   untaught half is item 21; Shape 3's landed as Chapter 35 and
    `exercises/comlab/`.
 5. **Missing chapters** — subjects the book does not cover yet.
    [ROADMAP.md](ROADMAP.md) is the standing list, ranked by what they cost a

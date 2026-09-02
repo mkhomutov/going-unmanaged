@@ -378,9 +378,10 @@ stay on the list marked DONE so item numbers never shift. Short version:
 - Tier 2: three items open — consolidated const-correctness (item 8), the
   framework shape (item 18: Bestiary Shape 5 is named in Chapter 16 and
   taught nowhere — two readers of the 2026-09 study stopped there, and
-  Shape 4 has no lab either, so the item is about the shape with no
-  treatment at all rather than the last shape without a lab; still a
-  legitimate candidate for out-of-scope-with-a-sentence), and below
+  Shape 4 has no lab either — though only its interrupt-context half is
+  genuinely untaught, which is item 21 — so this item is about the shape
+  with no treatment at all rather than the last shape without a lab; still
+  a legitimate candidate for out-of-scope-with-a-sentence), and below
   the mutex (item 19: Chapter 29 and Chapter 36 between them state the
   deadline path's prohibition and never its alternative — and their two
   defaults for a foreign thread currently contradict each other
@@ -408,7 +409,13 @@ stay on the list marked DONE so item numbers never shift. Short version:
   compiling: they start blank, or from buildlab's working trio, or from a
   ticket lab's already-broken code. The reader who is handed the native
   layer *because* it is old has no chapter, and the acceptance test is that
-  the caller's TU is byte-identical before and after), and the bridge out
+  the caller's TU is byte-identical before and after), the interrupt-context
+  callback (item 21 — Bestiary Shape 4's second addition to Shape 1; its
+  first, initialization order, is Chapter 32's whole subject and is done.
+  The smallest item on the list, the only one filed with no reader
+  evidence, and probably a section of item 19 rather than its own material:
+  an ISR is item 19's deadline path with a harder deadline. Sequenced after
+  19, and closable by it), and the bridge out
   was item 16 and is now DONE — Chapter 38 + stdlib-only
   `exercises/bridgelab/` (the main-thread queue under a bounded-wait
   judge), plus Appendix G, the survey of mechanisms and its decision
