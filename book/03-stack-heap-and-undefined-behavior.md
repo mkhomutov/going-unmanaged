@@ -75,8 +75,6 @@ The habit is three lines long. Initialize at the point of declaration, so there 
 
 ---
 
----
-
 
 <!-- nav:begin -->
 [← Chapter 2 — Value Semantics](02-value-semantics.md) · [Contents](README.md) · [Chapter 4 — Classes, Inheritance, Interfaces →](04-classes-inheritance-interfaces.md)

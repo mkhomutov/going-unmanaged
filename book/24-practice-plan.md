@@ -33,8 +33,6 @@ If the job has already started, the schedule compresses honestly: real tickets r
 
 ---
 
----
-
 
 <!-- nav:begin -->
 [← Chapter 23 — Exercise: The Build-Model Lab](23-exercise-the-build-model-lab.md) · [Contents](README.md) · [Chapter 25 — Findings from Practice: a Living Log →](25-findings-from-practice.md)

@@ -163,8 +163,6 @@ C++-side SDK layers use these patterns heavily: vendor base classes, interface-s
 
 ---
 
----
-
 
 <!-- nav:begin -->
 [← Chapter 3 — Stack, Heap, and Undefined Behavior](03-stack-heap-and-undefined-behavior.md) · [Contents](README.md) · [Chapter 5 — Virtual Dispatch and the Virtual Destructor →](05-virtual-dispatch-and-the-virtual-destructor.md)

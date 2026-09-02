@@ -233,8 +233,12 @@ Chapter 25's Finding 10.
   quoted pairing means adding it to this script in the same commit. CI runs
   it in the book job
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
-  below over `book/` and the built single file; run by CI, and worth running
-  locally after touching either. Structure only, never mermaid grammar
+  below over `book/` and the built single file, plus one typographic rule:
+  no two `---` rules with only blank lines between them, which GitHub draws
+  as two dividers with a gap rather than the single separator the source
+  looks like, and which seventeen files had acquired invisibly. Run by CI,
+  and worth running locally after touching either. Structure only, never
+  mermaid grammar
 - `scripts/check_mermaid.sh` — the other half: hands every chapter with a
   diagram to mermaid-cli and fails if one does not draw. Needs `mmdc`
   (`npm install -g @mermaid-js/mermaid-cli`); without it a local run says
@@ -347,6 +351,11 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
   part's H1 (with its intro prose) lives at the top of that part's FIRST
   chapter file, and the `# Appendices` H1 at the top of
   `A-fundamentals-refresher.md`.
+- One `---` between sections, never two. A second thematic break with only
+  blank lines before it draws as a second divider with a gap, not a heavier
+  one — legible enough that seventeen files carried one unnoticed.
+  `check_markup.sh` enforces it; only `---` is checked, since that is the
+  only spelling the book uses.
 - Adding a chapter = a new `NN-<slug>.md` file plus its entry in
   `book/README.md`'s Contents. Links between files keep the GitHub anchor as
   a suffix — `](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)`
