@@ -851,9 +851,10 @@ chapter turns from a threading model into device-callback lifetime.
 The sharper half of the same evidence is a contradiction the book already
 carries: Chapter 29's trampoline takes a `lock_guard` and calls `push_back`
 on a foreign SDK thread, which is correct for a device callback and
-disqualified the moment that thread has a deadline. Neither chapter mentions
-the other. That cross-reference is a correction and should not wait for this
-item.
+disqualified the moment that thread has a deadline. That cross-reference is
+now made — both chapters carry it in their Pitfalls sections (issue #54) —
+which routes the prohibition and leaves the alternative above still
+missing. This item stays open.
 
 **A contribution looks like:** the hand-off, not a survey — a bounded SPSC
 queue between a worker or UI thread and a deadline thread, and what
@@ -869,8 +870,8 @@ book already teaches that path and currently stops one step short of usable.
 **Sequencing:** after item 9, alongside items 8 and 18. Item 21 rides on
 this one: Shape 4's interrupt-context callback is this prohibition under a
 harder deadline, and a queue section written here may close it outright. The
-sharper half waits for none of them — the Chapter 29 ↔ Chapter 36
-cross-reference is a correction, and is issue #54.
+sharper half waited for none of them — the Chapter 29 ↔ Chapter 36
+cross-reference landed as a correction (issue #54).
 
 ---
 

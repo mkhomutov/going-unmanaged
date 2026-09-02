@@ -199,6 +199,8 @@ int main() {
 
 Add the `try/catch(...)` guard to the trampoline with a `LastError()` accessor. Add an idempotent public `Close()`. Store several sessions in a `std::vector<DeviceSession>` and verify callbacks survive the vector's reallocation (they will — because your move operations rebind; remove `Rebind()` and watch ASan report the `heap-use-after-free` — the SDK's stored context still points into the vector's freed old block — or, in an unsanitized build, watch the callbacks silently die instead; then explain the mechanism). Hardest: simulate the threaded case — call `Device_Poll` from a `std::thread` and make the sample collection race-free with a mutex, then explain why the destructor now needs more than it has.
 
+**The wrapper you just wrote is not finished.** If your SDK calls back from a driver thread — most do — the missing part is not a mutex. [Chapter 29](29-concurrency.md#chapter-29--concurrency) works that case in full: why unregistering does not stop a callback already in flight, the weak reference and the alive flag that make a late one harmless, and why no ordering you can write makes freeing the context safe. `exercises/threadlab/` is this lab again with a driver thread in front of it. Stop here and read that chapter before shipping this shape against a real device — the synchronous version above is correct only because `FakeDevice` promised to be.
+
 ---
 
 
