@@ -101,6 +101,8 @@ public:
 
 Those three are the common cases, not the whole menu: sinks, views, and optional parameters have their own shapes, and [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage) is the procedure that picks between all of them. `const char*` = pointer to characters I won't modify (data is const); `char* const` = the pointer itself is const. Read right-to-left. Write const by reflex — const-correctness is a visible marker of current, careful C++.
 
+That is the syntax. [Appendix I](I-const.md#appendix-i--const-correctness) is the model underneath it — why the same object can be writable through one reference and not another, what `mutable` is narrowly for, and the procedure for adding const to a class that has gone without it for three years.
+
 ### A.6 What is a .lib file?
 
 A **static library** is just an archive of .obj files with a symbol index (Linux: .a). At link time the library's code is **copied into your binary** — after linking you don't need the .lib anymore.

@@ -297,5 +297,5 @@ If a future toolchain makes one of these claims false, the build fails rather th
 - **Element:** by value, unless slicing, address stability, or move cost makes you box it — and then say which.
 
 <!-- nav:begin -->
-[← Appendix G — The Bridge Catalogue](G-the-bridge-catalogue.md) · [Contents](README.md)
+[← Appendix G — The Bridge Catalogue](G-the-bridge-catalogue.md) · [Contents](README.md) · [Appendix I — Const-Correctness →](I-const.md)
 <!-- nav:end -->

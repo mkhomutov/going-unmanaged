@@ -47,6 +47,9 @@ run "invalid"     $CXX $FLAGS20 solutions/invalid.cpp                   -o $OUT/
 run "lambdas"     $CXX $FLAGS   solutions/lambdas.cpp                   -o $OUT/lambdas
 # buildlab is exercise scaffolding, not a solution — but its starting point must stay green
 run "buildlab"    $CXX $FLAGS   exercises/buildlab/Greeter.cpp exercises/buildlab/main.cpp -o $OUT/buildlab
+# Appendix I's lab. This is the half that must COMPILE; the five that must
+# not are a section of their own further down.
+run "constlab"    $CXX $FLAGS   exercises/constlab/main.cpp -o $OUT/constlab
 # Chapter 27's lab, for the same reason and one more. The three cmake paths far
 # below do compile these two files, but with whatever the consumer projects ask
 # for — mathlib's -Wall -Wextra are PRIVATE and no consume-*/CMakeLists.txt sets
@@ -175,6 +178,9 @@ $OUT/shapes > /dev/null
 $OUT/invalid > /dev/null
 $OUT/lambdas > /dev/null
 $OUT/buildlab > /dev/null
+# halt_on_error: this one asserts values through a CHECK macro, so a UBSan
+# finding that printed and exited 0 would leave the section green.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/constlab > /dev/null
 $OUT/deplab > /dev/null
 # Not silenced: the tally is the only line in this script that says how MUCH was
 # checked, and a non-zero exit is the whole contract between a test binary and
@@ -238,6 +244,36 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/interoplab > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_passing > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_storing > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_noelide > /dev/null
+
+# Appendix I's other judge, and the only place in this script that asserts a
+# build FAILS. const's whole subject is mistakes that never reach a binary, so
+# a harness which only ever compiles things cannot check the one thing that
+# appendix is about. Five violations, each behind its own -D.
+#
+# Two things stop it being vacuous. The clean build far above must SUCCEED, so
+# a typo that breaks the file for an unrelated reason turns this script red
+# there rather than passing silently here. And the grep sees the MESSAGE only -
+# everything up to and including "error:" is cut away first, because the file
+# lives in constlab/ and any path left in the string matches "const" by itself.
+# What stays unchecked: that violation N is refused for violation N's reason
+# rather than some other const-flavoured one. Pinning each to its compiler's
+# exact wording would pin this script to a compiler, which is the worse trade.
+echo "== constlab refusals =="
+for V in 1 2 3 4 5; do
+    MSG=$($CXX -std=c++17 -Wall -Wextra -DCONSTLAB_VIOLATION_$V \
+              -c exercises/constlab/main.cpp -o /dev/null 2>&1 \
+          | grep -m1 "error:" | sed 's|^.*error:|error:|' || true)
+    if [ -z "$MSG" ]; then
+        echo "build_all.sh: constlab violation $V COMPILED; it must not." >&2
+        exit 1
+    fi
+    if ! printf '%s' "$MSG" | grep -qiE 'const|read-only'; then
+        echo "build_all.sh: constlab violation $V was refused, but not for a" >&2
+        echo "  const reason: $MSG" >&2
+        exit 1
+    fi
+done
+echo "  ok   five const violations refused, each naming const   [App I]"
 
 # Chapter 26's CMakeLists, configured, built and run both ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from

@@ -41,8 +41,11 @@
 # solutions/buffer.cpp (Chapter 15 quotes the Buffer as ONE merged listing and
 # narrates the header/TU split; the demo's -Wself-move pragma block is
 # likewise acknowledged prose-side, not quoted), abilab engine.cpp (excerpted,
-# not quoted in full), and solutions/device_threaded_solution.cpp (pointed at,
-# never quoted). Needs python3, same as CI.
+# not quoted in full), solutions/device_threaded_solution.cpp (pointed at,
+# never quoted), and book/I-const.md (its five fences are teaching sketches,
+# not quotations of exercises/constlab/ - the lab's own claim, that five
+# violations are refused, is asserted by build_all.sh instead). Needs python3,
+# same as CI.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
