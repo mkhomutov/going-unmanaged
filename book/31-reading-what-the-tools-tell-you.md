@@ -217,6 +217,8 @@ Real problems do not arrive labelled with the chapter that owns them; they arriv
 | A crash report full of raw addresses, or a fault address just past null | [Chapter 37](37-no-repro-dump-attached.md#chapter-37--no-repro-dump-attached) |
 | A client of your plug-in shows a spinner forever — or the host freezes with one thread parked in a wait | [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out) |
 
+**When more than one row fits, and you have no stack yet.** *It crashes at shutdown or unload* is the common case: it matches the first row, the still-live-at-shutdown row and the callback row equally well, and the ticket that brought it rarely says which. Two questions settle the order, and both are answerable from your own source without reproducing anything. **Does a global or function-local static own something on the failing path?** If so start at [Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit) — teardown order follows construction order, which you can read off the code. **Does anything the host owns still hold a pointer to you — a registered callback, an observer, a refcount?** Then [Chapter 29](29-concurrency.md#chapter-29--concurrency) for the threaded case, [Chapter 35](35-still-live-at-unload.md#chapter-35--still-live-at-unload) for the refcounted one. If both are true, rule out the static first: it is the cheaper of the two, because it needs no repro to investigate.
+
 ---
 
 

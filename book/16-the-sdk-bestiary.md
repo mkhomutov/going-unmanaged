@@ -28,6 +28,8 @@ Some SDKs are genuinely C++: **Qt**, **Unreal**, **JUCE**, many game and media e
 
 For every SDK function you meet, answer four questions before calling it: **Who allocates?** (me, via a struct I fill; or the SDK, via a payload I must release). **Who releases, and with which exact function?** (free/dispose/close/Release are not interchangeable). **What is the failure contract?** (code returned? struct touched or untouched on failure? — Chapter 17's documentation trap). **What threads can this be called on, and what thread calls me back?** Wrap the answers in a guard type, and the rest of your code never thinks about them again. That habit — one small RAII type per SDK resource — is the single highest-leverage practice in native SDK work, and it is what Chapters 17 and 18 drill.
 
+Three of those four questions are answered by the labs that follow. The fourth is not: when *what thread calls me back?* turns out to be a thread that is not yours, the guard type those chapters teach is necessary and no longer sufficient, and [Chapter 29](29-concurrency.md#chapter-29--concurrency) is where the rest of it lives. Read it before you ship a wrapper around a callback you did not schedule.
+
 ---
 
 
