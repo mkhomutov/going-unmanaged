@@ -57,7 +57,8 @@ GetSelected().name = "new";  // edits a temporary that dies instantly. No-op.
 ### Trap 3 — object slicing (the nastiest)
 
 ```cpp
-class Shape  { public: virtual void Draw(); int x, y; };
+class Shape  { public: virtual void Draw(); int x, y;
+               virtual ~Shape() = default; };   // Chapter 5: always on a base
 class Circle : public Shape { public: void Draw() override; int radius; };
 
 Circle c;
@@ -78,6 +79,12 @@ std::vector<std::unique_ptr<Shape>> shapes;   // correct polymorphic container
 shapes.push_back(std::make_unique<Circle>());
 shapes[0]->Draw();    // Circle::Draw
 ```
+
+That `virtual ~Shape() = default;` in the declaration is load-bearing, not
+boilerplate: each `unique_ptr<Shape>` deletes through a `Shape*`, and without
+it `~Circle` never runs. [Chapter 5](05-virtual-dispatch-and-the-virtual-destructor.md#chapter-5--virtual-dispatch-and-the-virtual-destructor)
+gives that rule its own page — it appears here already because the container
+above would be undefined behavior without it.
 
 Rule: **value types for data, pointers/references for polymorphism.** In C# every class object lives behind a reference automatically, so slicing cannot happen; in C++ you must ask for reference behavior.
 
