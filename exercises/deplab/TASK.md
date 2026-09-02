@@ -79,8 +79,26 @@ repository — which git can refuse while still being installed. CI passes
 Chapter 27's *Try it* steps 5 and 6 — the ODR diamond, the two link orders, and
 predicting which one AddressSanitizer catches. Those stay a hand exercise,
 because **the prediction in step 6 is the entire exercise** and a committed
-answer would spoil it in the time it takes to read a filename. Do them by hand
-with `scripts/check.sh`.
+answer would spoil it in the time it takes to read a filename.
+
+Do them by hand, in this order. Step 5's whole point is that **nothing warns
+you**, which a build with the sanitizers in it cannot show — so it needs
+`SAN=none`, and the `-O2` rebuild that makes the symptom change needs `OPT=2`:
+
+```bash
+SAN=none ../../scripts/check.sh app.cpp lib.cpp          # then swap the two
+SAN=none OPT=2 ../../scripts/check.sh app.cpp lib.cpp    # watch it change
+```
+
+Both link orders print a wrong answer, each a *different* wrong answer, and
+both exit 0. Only then step 6 — the same two orders with the sanitizers back
+on, which is the default and needs no knob at all:
+
+```bash
+../../scripts/check.sh app.cpp lib.cpp                   # then swap the two
+```
+
+Make your prediction about which order ASan catches **before** you run that.
 
 (The chapter's *claim* about them is checked, so it cannot rot:
 `scripts/check_platform_claims.sh` builds both link orders and asserts they

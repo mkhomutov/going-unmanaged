@@ -9,6 +9,8 @@
 #   scripts/check.sh registry.cpp main.cpp 100                  # several TUs + run args
 #   STD=c++20 scripts/check.sh attempt.cpp words_sample.txt     # C++20 + run args
 #   SAN=thread scripts/check.sh attempt.cpp fakedevice          # ThreadSanitizer
+#   SAN=none scripts/check.sh a.cpp b.cpp                       # no sanitizer at all
+#   SAN=none OPT=2 scripts/check.sh a.cpp b.cpp                 # ...and optimised
 #
 # Every leading argument ending in .cpp is a source file; they are compiled
 # together IN THE ORDER GIVEN, which is also the link order - Chapter 32's
@@ -17,10 +19,27 @@
 # Works from any directory: your files and run args resolve relative to where
 # you run it (from an exercise directory: ../../scripts/check.sh your.cpp);
 # the vendor code is found relative to this script.
+#
 # Env overrides: CXX (default g++), STD (default c++17),
 # SAN (default address,undefined - the sanitizers, spelled as -fsanitize= takes
-# them). Threaded work (Chapter 29) needs SAN=thread as a SECOND run: TSan and
-# ASan cannot be combined, and they answer different questions.
+# them) and OPT (default 0, spelled as -O takes it).
+#
+# Threaded work (Chapter 29) needs SAN=thread as a SECOND run: TSan and ASan
+# cannot be combined, and they answer different questions.
+#
+# SAN=none is the odd one, because the sanitizers are the point of this script
+# everywhere else. It exists for the exercises whose whole subject is what the
+# tools DO NOT catch - Chapter 27's ODR diamond is the case that forced it:
+# step 5 says to link two definitions of one class and note that "nothing
+# warned you at any point", which cannot be shown by a build that warns, and
+# then to rebuild at -O2 and watch the symptom change. Step 6 turns the
+# sanitizers back on and asks you to predict which link order ASan catches -
+# so a script that could only build one way handed over that answer before the
+# prediction was made. SAN=none plus OPT=2 is that pair of steps.
+#
+# An EMPTY SAN still gets the default rather than no sanitizer: silently
+# dropping them because a variable did not expand is the wrong way round.
+# Turning them off is a thing you say, not a thing that happens to you.
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
@@ -32,7 +51,14 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 CXX=${CXX:-g++}
 STD=${STD:-c++17}
 SAN=${SAN:-address,undefined}
-FLAGS="-std=$STD -Wall -Wextra -fsanitize=$SAN -g"
+OPT=${OPT:-0}
+# -O is always spelled out, including the -O0 that used to be implicit: it is
+# what makes OPT=2 a visible switch in the "built clean" line below rather than
+# a silent difference between two runs.
+FLAGS="-std=$STD -Wall -Wextra -O$OPT -g"
+if [[ $SAN != none ]]; then
+    FLAGS="$FLAGS -fsanitize=$SAN"
+fi
 
 srcs=("$1")
 shift
@@ -60,4 +86,11 @@ echo "== built clean: $FLAGS"
 # flag only stops it at the first race instead of the last. Each variable is
 # ignored when that sanitizer is not in the binary, so both can be set always.
 UBSAN_OPTIONS=halt_on_error=1 TSAN_OPTIONS=halt_on_error=1 "$out" "$@"
-echo "== ran clean (exit 0, sanitizers quiet)"
+if [[ $SAN == none ]]; then
+    # Not "sanitizers quiet": there were none. Saying it anyway would hand the
+    # reader the false reassurance that Chapter 27's step 5 exists to remove -
+    # an exit 0 from an uninstrumented build is not evidence of anything.
+    echo "== ran (exit 0) - NO sanitizer was built in, so this says nothing about UB"
+else
+    echo "== ran clean (exit 0, sanitizers quiet)"
+fi

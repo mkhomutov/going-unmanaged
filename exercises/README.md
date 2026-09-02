@@ -102,11 +102,22 @@ scripts/check.sh your.cpp comlab                  # links the FakeSDK 2.0 vendor
 scripts/check.sh registry.cpp main.cpp 100        # several TUs (ticket labs) + a run arg
 STD=c++20 scripts/check.sh your.cpp file.txt      # C++20 + args passed to the run
 SAN=thread scripts/check.sh your.cpp fakedevice   # ThreadSanitizer instead
+SAN=none scripts/check.sh a.cpp b.cpp             # no sanitizer at all
+SAN=none OPT=2 scripts/check.sh a.cpp b.cpp       # ...and optimised
 ```
 
-That last one is for the threaded lab, and it is a *second* run rather than a
+`SAN=thread` is for the threaded lab, and it is a *second* run rather than a
 replacement: ThreadSanitizer cannot be combined with AddressSanitizer, so
 threaded code needs both builds to be checked at all (Chapter 29).
+
+`SAN=none` is the one that looks like cheating and is not. A handful of
+exercises are about what the tools *do not* catch — Chapter 27's ODR diamond
+is the clearest — and their first step is to watch a wrong program run to
+completion with nothing warning you at any point, which a build carrying the
+sanitizers cannot show. `OPT` (default `0`) goes with it for the rebuilds that
+ask you to watch a symptom change under optimisation. The script says so in
+its own output: with `SAN=none` a clean exit is reported as proving nothing,
+because it does not.
 
 Several `.cpp` files build as one binary, in the order written — which is also
 the link order, the thing Chapter 32's two-order test turns on. The first

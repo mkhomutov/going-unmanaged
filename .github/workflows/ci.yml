@@ -161,6 +161,27 @@ jobs:
           ./scripts/check.ps1 solutions/fakesdk_solution.cpp fakesdk
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           ./scripts/check.ps1 exercises/reportlab/registry.cpp exercises/reportlab/main.cpp 100
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          # The SAN/OPT knobs, which Chapter 27's steps 5 and 6 need. Untested
+          # they are worse than absent: a reader following the card would get a
+          # build that quietly still had the sanitizer in it, and step 6's
+          # answer with it. Assert the flags rather than just the exit code -
+          # "it built" cannot tell /Od from /O2, or ASan present from absent.
+          $env:SAN = 'none'; $env:OPT = '2'
+          # 6>&1: check.ps1 reports through Write-Host, which is the information
+          # stream, and a plain assignment would capture none of it - the
+          # assertions below would then "pass" against an empty string.
+          $out = ./scripts/check.ps1 smoke.cpp 6>&1 | Out-String
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if ($out -match 'fsanitize') { throw "SAN=none still passed /fsanitize: $out" }
+          if ($out -notmatch '/O2')    { throw "OPT=2 did not reach the flags: $out" }
+          if ($out -notmatch 'NO sanitizer was built in') { throw "SAN=none kept the ASan-quiet claim: $out" }
+          Remove-Item Env:\SAN, Env:\OPT
+          # ...and that the default is unchanged by all of the above.
+          $out = ./scripts/check.ps1 smoke.cpp 6>&1 | Out-String
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if ($out -notmatch 'fsanitize=address') { throw "default lost the sanitizer: $out" }
+          if ($out -notmatch '/Od') { throw "default lost /Od: $out" }
 
   book:
     runs-on: ubuntu-latest

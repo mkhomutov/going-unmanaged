@@ -201,7 +201,14 @@ Chapter 25's Finding 10.
   flags: one or more .cpp files, compiled in the order written (= link order,
   which Chapter 32's two-order test turns on), then an optional vendor
   argument (fakesdk/fakedevice/comlab), then run args; `SAN=thread` switches
-  the sanitizer for the threadlab's second build
+  the sanitizer for the threadlab's second build, `SAN=none` removes it
+  entirely and `OPT` (default 0) sets `-O`. Those last two are for the
+  exercises whose subject is what the tools do NOT catch — Chapter 27's ODR
+  diamond, whose step 5 cannot be shown by a build that warns — and the
+  script drops its "sanitizers quiet" claim under `SAN=none`, because an
+  exit 0 from an uninstrumented build is not evidence. An EMPTY `SAN` still
+  gets the default: turning the sanitizers off is a thing you say, not a
+  thing that happens to you
 - `scripts/check.ps1` — check.sh's Windows/MSVC mirror (`cl /std:c++17 /W4
   /EHsc /fsanitize=address`, same source-list/vendor/run-args shapes; MSVC
   has no UBSan and no TSan, and the script says so). Smoke-tested by the
