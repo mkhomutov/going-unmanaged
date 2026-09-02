@@ -12,6 +12,8 @@ You have spent years in managed code — the runtime tracked your objects, the G
 
 This is not a book anyone sat down and wrote — it is a working handbook I *built*, with an AI assistant (Anthropic's Claude), during my own transition back to C++ after ~17 years in C#. The AI drafted the material; I drove the process, worked through the exercises, made the real mistakes that became the Findings log (Chapter 25), and every solution in this repository is verified under a compiler with `-Wall -Wextra` and the sanitizers — Address and UndefinedBehavior for everything, ThreadSanitizer for the threaded lab.
 
+**Do not take that on trust — it is the part you can check.** [`scripts/check_verbatim.sh`](scripts/check_verbatim.sh) holds every listing quoted in a chapter byte-identical to the file CI compiles, so a chapter cannot drift from the code it prints; [`scripts/check_platform_claims.sh`](scripts/check_platform_claims.sh) runs the sanitizer demonstrations and asserts what the chapters promise *per platform*, on Linux and macOS both, because a claim true on one is not a rule; and [`.github/workflows/ci.yml`](.github/workflows/ci.yml) is where all of it runs on every push. The honest limit of that: it checks the code, and the claims a program can make. The prose is checked by re-deriving it against a compiler and the vendor docs — the same way you would fact-check a chat window — and [CHANGELOG.md](CHANGELOG.md) records the rounds where that found something, including a correction that was itself wrong twice before it was right. [Appendix C](book/C-working-without-ai.md) is that method written down, for your assistant as much as for this one.
+
 Think of it less as an authored book and more as a curated, battle-tested collection of hands-on material — the kind of thing scattered across the internet, gathered into one coherent path for one specific journey: **managed developer goes native**.
 
 Where this text disagrees with [cppreference](https://cppreference.com) or the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/), trust them. Where you catch it being wrong — fix it (see [Contributing](#contributing)).
@@ -68,7 +70,7 @@ If you manage or mentor an experienced C# (or Java) developer moving onto a C++ 
 
 **What maps to your codebase in week one.** Ownership and RAII ([1](book/01-ownership-and-raii.md)), value semantics ([2](book/02-value-semantics.md)), the compilation model ([12](book/12-the-compilation-model.md)) and your build system ([26](book/26-build-systems-and-cmake.md)) cover most of what a first real change touches; if your product is a plug-in or device SDK, add the Bestiary ([16](book/16-the-sdk-bestiary.md)) — it teaches reading a vendor header the way your senior people already do.
 
-**How to verify the labs actually happened.** The exercises grade themselves: `./scripts/build_all.sh` printing `ALL GREEN` proves their toolchain and sanitizers work, and `scripts/check.sh` (or `check.ps1` on Windows) is the one-line judge for their own attempts — a clean run under `-fsanitize=address,undefined` is not fakeable by copy-pasting harder. Ask to see a check.sh run of their cold Buffer rewrite ([Chapter 15](book/15-exercise-the-buffer.md)); it takes them ten minutes and tells you more than an hour of interview questions.
+**How to verify the labs actually happened.** The exercises grade themselves: `./scripts/build_all.sh` printing `ALL GREEN` proves their toolchain and sanitizers work, and `scripts/check.sh` (or `check.ps1` on Windows) is the one-line judge for their own attempts — a clean run under `-fsanitize=address,undefined` is not fakeable by copy-pasting harder. Ask to see a check.sh run of their cold Buffer rewrite ([Chapter 15](book/15-exercise-the-buffer.md)): about ninety minutes of their time, ten of yours to read, and it tells you more than an hour of interview questions.
 
 **How to pair with them.** Review, don't rescue. The handbook's own rule for AI assistants ([Appendix C](book/C-working-without-ai.md)) works as well for humans: critique their attempt against the chapter's pitfalls instead of writing the solution — the mistakes are the curriculum, and [Chapter 25](book/25-findings-from-practice.md) exists because they were allowed to happen. Their C# instincts are assets with two exceptions worth watching in early reviews: "hold a reference to it" ([Chapter 33](book/33-here-is-the-report.md)) and "the GC makes cleanup someone else's problem" ([Chapter 1](book/01-ownership-and-raii.md)).
 
@@ -80,7 +82,7 @@ Most-wanted contributions, in order:
 
 1. **Findings** — you did an exercise, hit something instructive, and can write it up in the Chapter 25 shape (*found in / theory / broken vs fixed / habit*). This is the heart of the project.
 2. **Corrections** — anywhere the text is wrong, outdated, or misleading.
-3. **New exercises** — especially new SDK shapes (a COM-style refcounting lab and a threaded-callback lab are known gaps).
+3. **New exercises** — especially new SDK shapes. The two longest-standing gaps are now closed (COM-style refcounting is Chapter 35 and `exercises/comlab/`; the threaded callback is `exercises/threadlab/`), which leaves the frameworks that bring their own object model — [ROADMAP item 18](ROADMAP.md) — as the shape with no lab.
 4. **Missing chapters** — subjects the book does not cover yet. [ROADMAP.md](ROADMAP.md) is the standing list, ranked by what they cost a reader who hits them unprepared: Tier 1 is closed (Chapters 26-29), and the ticket arc has grown to six (Chapters 32-37, with the performance and crash-dump tickets the latest — the format stays open to new tickets by PR). The next major chapter is P/Invoke (item 9, re-sequenced ahead of const-correctness); the glossary landed as Appendix E. Open an issue before starting a large one.
 5. **Translations and tooling** — build scripts, per-platform notes, anything that lowers friction.
 
@@ -91,6 +93,8 @@ All contributed code must compile clean under the flags above; CI enforces it. T
 - **Maksim Khomutov** — maintainer and curator; the mistakes in Chapter 25 were made personally.
 
 Accepted contributors are added here — see [CONTRIBUTING.md](CONTRIBUTING.md#attribution).
+
+That list being one name long is the current state of this project, not a claim about it. Everything here has had exactly one human reviewer, working with an AI — which is the argument *for* the invitation above rather than against it, and the reason the mechanical checks exist to catch what one pair of eyes will not. A [Finding](book/25-findings-from-practice.md) from your own practice is the shortest path onto that list, and the contribution this project wants most.
 
 ## License
 
