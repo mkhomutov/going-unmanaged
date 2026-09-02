@@ -348,6 +348,16 @@ if command -v cmake > /dev/null 2>&1; then
 
     if git_can_fetch; then
         DEPREPO=$(mktemp -d)
+        # Cleaned on the way out whatever happens, the way every other mktemp -d
+        # in scripts/ is (check.sh, check_platform_claims.sh, check_mermaid.sh).
+        # This block runs under set -e with a guarded exit, two cmake configures,
+        # two builds and a binary lookup between here and the cleanup, so a
+        # single `rm` at the end covered only the path where nothing went wrong -
+        # every failure leaked a populated git repository into TMPDIR, one per
+        # attempt, exactly when someone was iterating on this section. The trap
+        # is released at the end of the block rather than left armed, so it
+        # cannot fire for a later section's failure and blame this fixture.
+        trap 'rm -rf "$DEPREPO"' EXIT
         # A function rather than a string, and every git call in this block goes
         # through it. Two reasons beyond tidiness. An unquoted string expansion
         # splits on whitespace, so a TMPDIR containing a space would tear the
@@ -392,8 +402,11 @@ if command -v cmake > /dev/null 2>&1; then
             APP=$(dep_app "$DL/fetched-$TAG")
             DEP_OUT="$DEP_OUT$("$APP")|"
         done
-        rm -rf "$DEPREPO"
 
+        # The fixture stays alive through the assertions below. Deleting it
+        # here, which is what this line used to do, threw away the evidence for
+        # the one claim this block exists to make before the claim was checked.
+        #
         # Building once proves the mechanism runs. Only building twice proves
         # the TAG is what selected the version - which is the chapter's claim,
         # and the whole reason to pin to a tag rather than a branch.
@@ -416,6 +429,7 @@ if command -v cmake > /dev/null 2>&1; then
             esac
         done
         echo "  ok   fetched: v1.0.0 and v1.1.0 each report their own tag   [Ch 27]"
+        rm -rf "$DEPREPO"; trap - EXIT
     elif [ "$REQUIRE_GIT" = 1 ]; then
         echo "build_all.sh: git cannot build and clone a file:// repository here," >&2
         echo "  and --require-git was given. The FetchContent path needs both, and" >&2
