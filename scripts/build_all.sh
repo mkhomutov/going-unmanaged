@@ -271,11 +271,28 @@ if command -v cmake > /dev/null 2>&1; then
     # mechanism is identical to a https:// one.
     if command -v git > /dev/null 2>&1; then
         DEPREPO=$(mktemp -d)
-        GITQ="git -C $DEPREPO -c user.email=lab@example.invalid -c user.name=deplab"
+        # A function rather than a string, and every git call in this block goes
+        # through it. Two reasons beyond tidiness. An unquoted string expansion
+        # splits on whitespace, so a TMPDIR containing a space would tear the
+        # -C argument in half and fail three lines later complaining about HEAD.
+        # And a fresh repo inherits the developer's GLOBAL git config: with
+        # commit.gpgsign set - which plenty of contributors have - git tries to
+        # sign as the fake identity below, finds no key for it, and takes the
+        # whole script down; tag.gpgsign turns the bare tags into annotated ones
+        # and stops in an editor waiting for a message that never comes.
+        depgit() {
+            git -C "$DEPREPO" \
+                -c user.email=lab@example.invalid -c user.name=deplab \
+                -c commit.gpgsign=false -c tag.gpgsign=false "$@"
+        }
         cp -R exercises/deplab/mathlib/. "$DEPREPO/"
-        git -C "$DEPREPO" init -q
-        $GITQ add -A && $GITQ commit -q -m "mathlib 1.0.0"
-        git -C "$DEPREPO" tag v1.0.0
+        depgit init -q
+        # Separate statements, not `add && commit`: as the left operand of &&,
+        # a failing add is exempt from set -e and the error surfaces later,
+        # attached to the wrong command.
+        depgit add -A
+        depgit commit -q -m "mathlib 1.0.0"
+        depgit tag v1.0.0
         # A second version, so there is something for the pin to select. The
         # grep first: if the version line ever stops matching, this sed becomes
         # a no-op, the commit below has nothing to commit, and the whole test
@@ -287,8 +304,8 @@ if command -v cmake > /dev/null 2>&1; then
         }
         sed -i.bak 's/VERSION 1\.0\.0/VERSION 1.1.0/' "$DEPREPO/CMakeLists.txt"
         rm -f "$DEPREPO/CMakeLists.txt.bak"
-        $GITQ commit -q -am "mathlib 1.1.0"
-        git -C "$DEPREPO" tag v1.1.0
+        depgit commit -q -am "mathlib 1.1.0"
+        depgit tag v1.1.0
 
         DEP_OUT=""
         for TAG in v1.0.0 v1.1.0; do
@@ -303,13 +320,25 @@ if command -v cmake > /dev/null 2>&1; then
         # Building once proves the mechanism runs. Only building twice proves
         # the TAG is what selected the version - which is the chapter's claim,
         # and the whole reason to pin to a tag rather than a branch.
+        #
+        # But "the two runs differ" is too weak to be that proof: a pin that
+        # resolved to the WRONG commit - a tag off by one, the two commits
+        # reordered, a Version() that grew a timestamp - differs too, and would
+        # sail through. Each run has to name the version its own tag carries.
+        # That subsumes the difference check, since 1.0.0 and 1.1.0 cannot both
+        # match one string.
         DEP_A=${DEP_OUT%%|*}; DEP_B=${DEP_OUT#*|}; DEP_B=${DEP_B%%|*}
-        if [ "$DEP_A" = "$DEP_B" ]; then
-            echo "build_all.sh: both FetchContent tags produced \"$DEP_A\"." >&2
-            echo "  Ch 27 step 3 says the build follows GIT_TAG; it did not." >&2
-            exit 1
-        fi
-        echo "  ok   fetched: v1.0.0 and v1.1.0 differ, the tag is the pin   [Ch 27]"
+        for PAIR in "v1.0.0:$DEP_A" "v1.1.0:$DEP_B"; do
+            TAG=${PAIR%%:*}; GOT=${PAIR#*:}
+            case "$GOT" in
+                *"${TAG#v}"*) ;;
+                *)  echo "build_all.sh: built at GIT_TAG $TAG, but the app reported" >&2
+                    echo "  \"$GOT\", which does not name ${TAG#v}. Ch 27 step 3 says the" >&2
+                    echo "  tag selects the version; here it selected something else." >&2
+                    exit 1 ;;
+            esac
+        done
+        echo "  ok   fetched: v1.0.0 and v1.1.0 each report their own tag   [Ch 27]"
     else
         echo "  SKIPPED - no git, so the FetchContent path cannot run"
     fi

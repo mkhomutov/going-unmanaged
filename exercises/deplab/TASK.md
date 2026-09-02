@@ -51,9 +51,12 @@ are the ones worth stealing for your own attempt:
 - **The vendored app's CMakeLists is grepped** for an include path naming
   mathlib. Finding one fails the build — "it works" would not have caught a
   belt-and-braces `include_directories()` that quietly makes PUBLIC redundant.
-- **The fetched app is built at both tags and the two outputs must differ.**
-  Building once proves the mechanism runs; only building twice proves the
-  *pin* is what selected the version.
+- **The fetched app is built at both tags, and each run must report the
+  version its own tag carries.** Building once proves the mechanism runs; only
+  building twice proves the *pin* is what selected the version. Note what the
+  check does *not* settle for: that the two runs merely differ. A pin that
+  resolved to the wrong commit differs too, so "they came out different" would
+  pass while `GIT_TAG` was selecting the wrong thing.
 
 Without `cmake` on your PATH the whole section prints SKIPPED and stays green;
 CI passes `--require-cmake`, which refuses to skip.
