@@ -163,13 +163,15 @@ Chapter 25's Finding 10.
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
-  Its last two sections may skip: one configures, builds and runs
-  `exercises/buildlab/`'s CMakeLists, the other rebuilds
-  `solutions/device_threaded_solution.cpp` under `-fsanitize=thread` (a second
-  build, because TSan and ASan do not combine). Without cmake on PATH, or
-  without a ThreadSanitizer that can compile *and start* a trivial program,
-  each prints SKIPPED and stays green; `--require-cmake` and `--require-tsan`
-  (CI passes both) refuse to skip
+  Its last three sections may skip: one builds `exercises/deplab/` three ways
+  (Chapter 27), one configures, builds and runs `exercises/buildlab/`'s
+  CMakeLists, the last rebuilds `solutions/device_threaded_solution.cpp` under
+  `-fsanitize=thread` (a second build, because TSan and ASan do not combine).
+  Without cmake on PATH, without a git that can clone a `file://` repository
+  (deplab's FetchContent path only), or without a ThreadSanitizer that can
+  compile *and start* a trivial program, each prints SKIPPED and stays green;
+  `--require-cmake`, `--require-git` and `--require-tsan` (CI passes all three)
+  refuse to skip
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
   flags: one or more .cpp files, compiled in the order written (= link order,
   which Chapter 32's two-order test turns on), then an optional vendor

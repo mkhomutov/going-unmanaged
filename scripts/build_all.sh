@@ -2,8 +2,11 @@
 # Build and run every reference solution under strict flags + sanitizers.
 # This is the repo's core invariant; CI runs the same script.
 #
-#   scripts/build_all.sh                   -> everything; cmake and TSan may SKIP
+#   scripts/build_all.sh                   -> everything; cmake, git and TSan
+#                                             may SKIP
 #   scripts/build_all.sh --require-cmake   -> also fail if cmake is missing (CI)
+#   scripts/build_all.sh --require-git     -> also fail if git cannot build and
+#                                             clone a file:// repository (CI)
 #   scripts/build_all.sh --require-tsan    -> also fail if ThreadSanitizer is
 #                                             unusable here (CI)
 set -euo pipefail
@@ -11,10 +14,12 @@ cd "$(dirname "$0")/.."
 
 REQUIRE_CMAKE=0
 REQUIRE_TSAN=0
+REQUIRE_GIT=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --require-cmake) REQUIRE_CMAKE=1; shift ;;
         --require-tsan)  REQUIRE_TSAN=1;  shift ;;
+        --require-git)   REQUIRE_GIT=1;   shift ;;
         *) echo "build_all.sh: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -269,7 +274,32 @@ if command -v cmake > /dev/null 2>&1; then
     # git remote, and a git repo nested in this one would make git status a
     # minefield for the next person. file:// is a real remote to git, so the
     # mechanism is identical to a https:// one.
-    if command -v git > /dev/null 2>&1; then
+    #
+    # Probe by doing the thing rather than looking for the tool - the repo's
+    # rule, and it earns its keep here rather than being ceremony. git can be
+    # on PATH and still refuse the clone FetchContent is about to make:
+    # protocol.file.allow is a documented hardening (CVE-2022-39253) that a
+    # site can set to `never` globally, and then file:// is dead while
+    # `command -v git` still says yes. So make a one-commit repository and
+    # clone it exactly the way FetchContent will. That is the whole question.
+    git_can_fetch() {
+        local p rc=0
+        p=$(mktemp -d) || return 1
+        mkdir -p "$p/src"
+        git -C "$p/src" init -q > /dev/null 2>&1 \
+            && : > "$p/src/probe" \
+            && git -C "$p/src" -c user.email=probe@example.invalid \
+                   -c user.name=probe -c commit.gpgsign=false \
+                   add -A > /dev/null 2>&1 \
+            && git -C "$p/src" -c user.email=probe@example.invalid \
+                   -c user.name=probe -c commit.gpgsign=false \
+                   commit -qm probe > /dev/null 2>&1 \
+            && git clone -q "file://$p/src" "$p/dst" > /dev/null 2>&1 || rc=1
+        rm -rf "$p"
+        return $rc
+    }
+
+    if git_can_fetch; then
         DEPREPO=$(mktemp -d)
         # A function rather than a string, and every git call in this block goes
         # through it. Two reasons beyond tidiness. An unquoted string expansion
@@ -339,8 +369,17 @@ if command -v cmake > /dev/null 2>&1; then
             esac
         done
         echo "  ok   fetched: v1.0.0 and v1.1.0 each report their own tag   [Ch 27]"
+    elif [ "$REQUIRE_GIT" = 1 ]; then
+        echo "build_all.sh: git cannot build and clone a file:// repository here," >&2
+        echo "  and --require-git was given. The FetchContent path needs both, and" >&2
+        echo "  it is the only check that proves the TAG selects the version." >&2
+        echo "  Re-run the probe by hand: git init a directory, commit, then" >&2
+        echo "  git clone file://<that directory>. If the clone is what fails," >&2
+        echo "  look at protocol.file.allow (git config --get protocol.file.allow)." >&2
+        exit 1
     else
-        echo "  SKIPPED - no git, so the FetchContent path cannot run"
+        echo "  SKIPPED - no git that can clone file://, so the FetchContent"
+        echo "            path cannot run (CI runs this for real)"
     fi
 
     # --- path 3: installed, found as a config package ---

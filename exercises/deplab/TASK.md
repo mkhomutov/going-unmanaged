@@ -58,8 +58,10 @@ are the ones worth stealing for your own attempt:
   resolved to the wrong commit differs too, so "they came out different" would
   pass while `GIT_TAG` was selecting the wrong thing.
 
-Without `cmake` on your PATH the whole section prints SKIPPED and stays green;
-CI passes `--require-cmake`, which refuses to skip.
+Without `cmake` on your PATH the whole section prints SKIPPED and stays green,
+and the fetched path skips on its own if git cannot clone a `file://`
+repository — which git can refuse while still being installed. CI passes
+`--require-cmake` and `--require-git`, which refuse to skip.
 
 ## Not here, on purpose
 
