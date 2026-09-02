@@ -94,19 +94,26 @@ EOF
 # definitions, one program. GetTimeout is inline, so it lands in both object
 # files as a mergeable symbol and the linker keeps whichever it sees first.
 #
-# The filenames are the chapter's own transcript (`c++ libpart.o main.o -o
-# demo`), and NOT odr_*.cpp - deliberately. Section 5 proves the linker stayed
-# quiet by grepping its output for the word "odr", and a linker names the
-# object files in the diagnostics it does print, so an odr_*.o here would make
-# any unrelated warning read as an ODR report. Do not rename these back.
+# The two headers below are Chapter 27's own listings, byte for byte, banner
+# comment and all - check_verbatim.sh holds them to the page, so editing either
+# side alone fails the book job. The .cpp that include them are this script's
+# own; the chapter names them in its transcript but never lists them.
+#
+# The filenames are that transcript's (`c++ libpart.o main.o -o demo`), and NOT
+# odr_*.cpp - deliberately. Section 5 proves the linker stayed quiet by grepping
+# its output for the word "odr", and a linker names the object files in the
+# diagnostics it does print, so an odr_*.o here would make any unrelated warning
+# read as an ODR report. Do not rename these back.
 cat > "$OUT/v1.h" <<'EOF'
+// v1.h
 struct Config { int timeout; };
 inline int GetTimeout(const Config& c) { return c.timeout; }
 EOF
 
 cat > "$OUT/v2.h" <<'EOF'
-struct Config { int retries; int timeout; };                 // new field FIRST
-inline int GetTimeout(const Config& c) { return c.timeout; } // byte-identical
+// v2.h
+struct Config { int retries; int timeout; };   // the new field went FIRST
+inline int GetTimeout(const Config& c) { return c.timeout; }   // byte-identical to v1's
 EOF
 
 cat > "$OUT/libpart.cpp" <<'EOF'
@@ -260,6 +267,12 @@ else
 fi
 
 # --- 5. Chapter 27's ODR diamond: link order decides, silently ---------------
+# SPOILER, if you are working through Chapter 27. Its "Try it" asks you to
+# predict which of the two link orders AddressSanitizer catches, and says that
+# working out why the asymmetry falls that way is the whole exercise. What
+# follows is that answer, in assertion form. Go and predict first - this file
+# will still be here.
+#
 # Three claims, and the first two are about the LINKER rather than compiler-rt,
 # which is why this section prints what it observed either way. Chapter 27:
 # "The linker says nothing at all - it exits 0 with no diagnostic"; "Which one

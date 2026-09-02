@@ -190,9 +190,14 @@ Chapter 25's Finding 10.
   `exercises/bridgelab/`, and Appendix H is held to `exercises/choosing/`
   both ways (every fence on the page is in that directory, and every unit
   the lab's banners name is on the page whole — that lab has no TASK card
-  to carry the reverse the way bridgelab's does). Run it after
-  touching any quoted listing; adding a new quoted pairing means adding it
-  to this script in the same commit. CI runs it in the book job
+  to carry the reverse the way bridgelab's does) — plus one pairing whose
+  code half is not a file under `exercises/` at all: Chapter 27's two ODR
+  headers are an ill-formed program that no harness may commit, so
+  `check_platform_claims.sh` generates them into a temp directory and
+  asserts the chapter's claims about them, and the page is held to that
+  script's heredocs. Run it after touching any quoted listing; adding a new
+  quoted pairing means adding it to this script in the same commit. CI runs
+  it in the book job
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
   below over `book/` and the built single file; run by CI, and worth running
   locally after touching either. Structure only, never mermaid grammar
