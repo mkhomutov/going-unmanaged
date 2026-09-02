@@ -427,9 +427,9 @@ stay on the list marked DONE so item numbers never shift. Short version:
   with no treatment at all rather than the last shape without a lab; still
   a legitimate candidate for out-of-scope-with-a-sentence), and below
   the mutex (item 19: Chapter 29 and Chapter 36 between them state the
-  deadline path's prohibition and never its alternative — and their two
-  defaults for a foreign thread currently contradict each other
-  uncross-referenced). All three sequence after item 9 (P/Invoke), which
+  deadline path's prohibition and never its alternative — their two opposite
+  defaults for a foreign thread now cross-reference each other, which is all
+  of the item that is done). All three sequence after item 9 (P/Invoke), which
   the 2026 deep review promoted to the next major chapter and which the
   reader study then confirmed as the clearest content mandate on the list
   (four of eighteen readers rated its absence a blocker; three of those
