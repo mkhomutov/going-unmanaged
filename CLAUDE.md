@@ -70,6 +70,31 @@ Chapter 25's Finding 10.
   `CMakeLists.txt`, Chapter 26's reference build description assembled from
   that chapter's snippets — build_all.sh configures/builds/runs it twice
   (default, then Debug + `-DGREETER_SANITIZE=ON`)
+- `exercises/deplab/` — Chapter 27's lab (its *Try it*, steps 1–4), and the
+  only one whose subject is entirely build description: `mathlib/` is the
+  dependency, and one `app/main.cpp` is consumed three ways — vendored
+  (`add_subdirectory`), fetched (`FetchContent` + a `file://` URL) and found
+  (`find_package(mathlib CONFIG)` against an installed prefix) — so the three
+  `consume-*/CMakeLists.txt` are the whole lesson and the app cannot tell
+  them apart. Nothing here is quoted in the chapter, so check_verbatim.sh has
+  no pairing to hold. Four rules are load-bearing and easy to undo by
+  accident. (1) mathlib's install/export half is wrapped in a top-level
+  guard: paths 1 and 2 reach it through `add_subdirectory`, which would
+  otherwise make those the *consumer's* install rules and publish a private
+  vendored dependency's config package out of the app's prefix. (2) The
+  exported include directory is
+  `$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>`, never a literal
+  `include` — the two must agree, or an install-dir override splits them
+  and the consumer dies at the `#include`, past configure.
+  (3) The fetched path builds at BOTH tags and each run must report the
+  version its own tag carries: building once proves only that the mechanism
+  runs, and asking merely that the two outputs *differ* passes a pin that
+  chose the wrong commit. (4) `MATHLIB_TAG` is a cache variable, so the
+  chapter's "re-point GIT_TAG" means `-DMATHLIB_TAG=`, not editing the
+  default — the file says so, because a reader who edits it in place sees
+  nothing change. Its git use needs a git that can clone `file://`, which is
+  `--require-git`; the two `.cpp` files are also built and run under the
+  canonical flags in the flat section, since the CMake paths apply none
 - `exercises/testlab/` — Chapter 28's `tiny_test.h` and `buffer_test.cpp`,
   verbatim from the chapter's listings (same discipline as the Fake* vendor
   code: editing one means editing the chapter in the same commit), plus a

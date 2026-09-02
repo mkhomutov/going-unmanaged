@@ -10,6 +10,29 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [Unreleased]
+
+- **New: `exercises/deplab`** (MINOR — an appended exercise; closes issue
+  #10). Chapter 27's *Try it* was the last Part VI exercise outside the
+  `exercises/` convention, and steps 1–4 now have a finished form: one
+  `mathlib` dependency and one `app/main.cpp` consumed three ways —
+  vendored via `add_subdirectory`, fetched via `FetchContent` and a
+  `file://` URL, and found via `find_package(mathlib CONFIG)` against an
+  installed prefix. The app source never says where the library came from
+  and the three `consume-*/CMakeLists.txt` are the whole difference, so
+  the lab's subject is build description and nothing else. The third path
+  is not in the chapter's Try it: it is the *producing* half of the
+  `find_package(VendorSDK REQUIRED)  # a config package, if it ships one`
+  line the chapter shows and never asks anyone to make, and nothing in the
+  repo exercised it. The chapter's Try it gains that step, so it now reads
+  "three ways, then break it on purpose"; its ODR-diamond and
+  which-order-does-ASan-catch steps renumber 4→5 and 5→6 and stay a hand
+  exercise, because the prediction is the entire exercise and a committed
+  answer would spoil it in the time it takes to read a filename.
+  build_all.sh grows a `--require-git`, since the fetched path needs a git
+  that can clone a `file://` repository and can be refused one while still
+  being installed.
+
 ## [0.7.0] — 2026-09-01
 
 The bridge out of the process, and the four decisions before it. Chapter 38
