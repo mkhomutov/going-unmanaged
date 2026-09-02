@@ -304,6 +304,15 @@ else
     ( cd "$OUT" && $CXX main.o libpart.o -o demo_mainfirst ) > "$OUT/link_mainfirst.log" 2>&1 || LINK_QUIET=0
     if [ "$LINK_QUIET" = 0 ]; then
         fail "a link order failed to link at all   [Ch 27]"
+        # The EXIT trap takes $OUT with it, so the linker's own words reach the
+        # log here or nowhere. A failure naming no cause is a failure someone
+        # has to reproduce before they can read it.
+        for order in libfirst mainfirst; do
+            if [ -s "$OUT/link_$order.log" ]; then
+                echo "       ($order)"
+                sed 's/^/       /' "$OUT/link_$order.log"
+            fi
+        done
     elif grep -qiE "odr|duplicate symbol|multiple definition" "$OUT/link_libfirst.log" "$OUT/link_mainfirst.log"; then
         fail "the linker diagnosed it; Ch 27 says it says nothing at all   [Ch 27]"
     else
@@ -332,6 +341,11 @@ else
         else
             fail "both orders printed $A; this linker does not pick by order, so Ch 27's transcript is toolchain-specific and should say so   [Ch 27]"
         fi
+    else
+        # Reachable only when (a) already failed - but silence here would be a
+        # check absent from the run rather than one recorded as not run, and a
+        # skip read as a pass is how the wrong claims survived the first time.
+        skip "the link produced no binaries, so the two orders cannot be compared"
     fi
 
     # (c) under the canonical flags, exactly one order is caught
@@ -346,6 +360,21 @@ else
                 pass "exactly one order caught (exit $RC_SAN_MAIN, stack-buffer-overflow); the quiet one exited 0   [Ch 27]"
             else
                 fail "the caught order did not report stack-buffer-overflow   [Ch 27]"
+            fi
+            # Chapter 27 claims two things about this report, and the second is
+            # the one a reader acts on: "ASan aborts with a clear report naming
+            # the function", "a stack overread naming GetTimeout". A report that
+            # says stack-buffer-overflow and names no function of theirs sends
+            # them looking in the wrong file. An UNSYMBOLIZED report is a fact
+            # about this machine rather than a counter-example, so it skips
+            # rather than fails - the same distinction section 2 draws for
+            # llvm-symbolizer.
+            if grep -q "GetTimeout" "$OUT/san_mainfirst.log"; then
+                pass "the report names GetTimeout, not just the overread   [Ch 27]"
+            elif ! grep -qE '\.(cpp|h):[0-9]+' "$OUT/san_mainfirst.log"; then
+                skip "the ASan report is unsymbolized, so the naming claim is untestable here"
+            else
+                fail "the report is symbolized but does not name GetTimeout; Ch 27 says it names the function   [Ch 27]"
             fi
         elif [ "$RC_SAN_LIB" = 0 ] && [ "$RC_SAN_MAIN" = 0 ]; then
             fail "neither order was caught; Ch 27 says the sanitizer catches exactly one   [Ch 27]"

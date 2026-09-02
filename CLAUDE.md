@@ -209,7 +209,12 @@ Chapter 25's Finding 10.
   asserts what the chapters promise *per platform*: ASan's exit code (134 on
   macOS, 1 on Linux), TSan's (134 / 66), whether LeakSanitizer reports at all
   (no on macOS/arm64), and whether a frame carries a column number (Ch 31's
-  atos-vs-llvm-symbolizer point). CI runs it on ubuntu AND macos with
+  atos-vs-llvm-symbolizer point). It also holds Chapter 27's ODR diamond —
+  both link orders link silently, the two orders disagree, and exactly one
+  is caught, naming `GetTimeout` — the one section whose first two claims
+  are about the linker rather than a compiler-rt runtime and so hold on
+  every platform alike; its two headers are the chapter's own listings,
+  pinned to the page by check_verbatim.sh. CI runs it on ubuntu AND macos with
   `--required`, because the platform overclaims it exists to catch are exactly
   what a one-platform check cannot see. The broken programs are generated into
   a temp dir, never committed — `solutions/` stays clean
