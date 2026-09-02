@@ -300,8 +300,8 @@ if [ "$ODR_OK" = 0 ]; then
 else
     # (a) both orders link with no diagnostic - ill-formed, no diagnostic required
     LINK_QUIET=1
-    ( cd "$OUT" && $CXX libpart.o main.o -o demo_libfirst ) > "$OUT/link_libfirst.log" 2>&1 || LINK_QUIET=0
-    ( cd "$OUT" && $CXX main.o libpart.o -o demo_mainfirst ) > "$OUT/link_mainfirst.log" 2>&1 || LINK_QUIET=0
+    $CXX "$OUT/libpart.o" "$OUT/main.o" -o "$OUT/demo_libfirst"  > "$OUT/link_libfirst.log"  2>&1 || LINK_QUIET=0
+    $CXX "$OUT/main.o" "$OUT/libpart.o" -o "$OUT/demo_mainfirst" > "$OUT/link_mainfirst.log" 2>&1 || LINK_QUIET=0
     if [ "$LINK_QUIET" = 0 ]; then
         fail "a link order failed to link at all   [Ch 27]"
         # The EXIT trap takes $OUT with it, so the linker's own words reach the
@@ -348,11 +348,19 @@ else
         skip "the link produced no binaries, so the two orders cannot be compared"
     fi
 
-    # (c) under the canonical flags, exactly one order is caught
-    if $CXX -std=c++17 -g -O0 -fsanitize=address,undefined "$OUT/libpart.cpp" "$OUT/main.cpp" \
-            -o "$OUT/san_libfirst" 2>/dev/null \
-       && $CXX -std=c++17 -g -O0 -fsanitize=address,undefined "$OUT/main.cpp" "$OUT/libpart.cpp" \
-            -o "$OUT/san_mainfirst" 2>/dev/null; then
+    # (c) under the canonical flags, exactly one order is caught. Same shape as
+    # (a) - one pair of objects, linked twice - rather than handing the driver
+    # both sources per order, which compiled each file twice and left a reader
+    # room to wonder whether the COMPILE order mattered too. It does not: below,
+    # only the link line differs between the two.
+    if $CXX -std=c++17 -g -O0 -fsanitize=address,undefined \
+            -c "$OUT/libpart.cpp" -o "$OUT/san_libpart.o" 2>/dev/null \
+       && $CXX -std=c++17 -g -O0 -fsanitize=address,undefined \
+            -c "$OUT/main.cpp" -o "$OUT/san_main.o" 2>/dev/null \
+       && $CXX -fsanitize=address,undefined \
+            "$OUT/san_libpart.o" "$OUT/san_main.o" -o "$OUT/san_libfirst" 2>/dev/null \
+       && $CXX -fsanitize=address,undefined \
+            "$OUT/san_main.o" "$OUT/san_libpart.o" -o "$OUT/san_mainfirst" 2>/dev/null; then
         RC_SAN_LIB=$(run_rc "$OUT/san_libfirst"  "$OUT/san_libfirst.log")
         RC_SAN_MAIN=$(run_rc "$OUT/san_mainfirst" "$OUT/san_mainfirst.log")
         if [ "$RC_SAN_LIB" = 0 ] && [ "$RC_SAN_MAIN" != 0 ]; then
@@ -390,8 +398,11 @@ echo
 if [ "$FAILED" = 0 ]; then
     echo "platform claims OK ($OS/$ARCH)"
 else
-    echo "check_platform_claims.sh: a claim in the book does not hold on $OS/$ARCH." >&2
-    echo "  Fix the chapter, not this script - the whole point is that the book" >&2
-    echo "  states one platform's behavior as the rule when it is not." >&2
+    echo "check_platform_claims.sh: a claim in the book does not hold on" >&2
+    echo "  $OS/$ARCH with $CXX. Fix the chapter, not this script - each FAIL" >&2
+    echo "  above names the claim. Sections 1-4 are per-platform, where the" >&2
+    echo "  mistake is one platform's behavior written down as the rule;" >&2
+    echo "  section 5's linker claims hold everywhere alike, so a failure" >&2
+    echo "  there means this toolchain differs from the chapter's transcript." >&2
     exit 1
 fi
