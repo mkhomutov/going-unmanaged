@@ -223,6 +223,118 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_noelide > /dev/null
 # cmake is not part of the toolchain the rest of this script needs, so a
 # laptop without it stays green and says so rather than pretending. CI passes
 # --require-cmake, which refuses to skip - same bargain as check_mermaid.sh.
+# Chapter 27's Try it, steps 1-3 plus the config package its find_package
+# snippet implies: one library consumed three ways, and a version pin proved
+# rather than demonstrated. Shares the buildlab section's cmake bargain below -
+# both live under the same probe, and --require-cmake covers both.
+echo "== deplab cmake =="
+if command -v cmake > /dev/null 2>&1; then
+    DL=build/deplab                    # under build/, which is gitignored
+    rm -rf "$DL"; mkdir -p "$DL"
+
+    dep_app() {                        # multi-config generators add a subdir
+        local dir=$1 candidate
+        for candidate in "$dir/app" "$dir/app.exe" \
+                         "$dir/Debug/app" "$dir/Debug/app.exe"; do
+            if [ -x "$candidate" ]; then echo "$candidate"; return 0; fi
+        done
+        echo "build_all.sh: built $dir but found no app executable in it" >&2
+        return 1
+    }
+
+    # --- path 1: vendored, via add_subdirectory ---
+    cmake -S exercises/deplab/consume-vendored -B "$DL/vendored" > /dev/null
+    cmake --build "$DL/vendored" --config Debug > /dev/null
+    APP=$(dep_app "$DL/vendored")
+    "$APP" > /dev/null
+    echo "  ok   vendored: add_subdirectory -> $("$APP")"
+
+    # The chapter's step 2 asks the reader to CONFIRM the app names no header
+    # path. "It built" cannot see the difference between PUBLIC working and a
+    # belt-and-braces include_directories() making it redundant, so grep for
+    # the thing that must not be there.
+    #
+    # Comments stripped first: that file EXPLAINS that it names no include
+    # path, so a naive grep matches the sentence saying so - which is exactly
+    # what happened the first time this check ran.
+    if sed 's/#.*//' exercises/deplab/consume-vendored/CMakeLists.txt \
+            | grep -qE 'include_directories'; then
+        echo "build_all.sh: the vendored app names an include path; Ch 27 step 2" >&2
+        echo "  says PUBLIC on the library is what carries it. Remove the line." >&2
+        exit 1
+    fi
+    echo "  ok   vendored app names no include path - PUBLIC carried it   [Ch 27]"
+
+    # --- path 2: fetched, and the tag is the pin ---
+    # A throwaway repository outside the worktree: FetchContent needs a real
+    # git remote, and a git repo nested in this one would make git status a
+    # minefield for the next person. file:// is a real remote to git, so the
+    # mechanism is identical to a https:// one.
+    if command -v git > /dev/null 2>&1; then
+        DEPREPO=$(mktemp -d)
+        GITQ="git -C $DEPREPO -c user.email=lab@example.invalid -c user.name=deplab"
+        cp -R exercises/deplab/mathlib/. "$DEPREPO/"
+        git -C "$DEPREPO" init -q
+        $GITQ add -A && $GITQ commit -q -m "mathlib 1.0.0"
+        git -C "$DEPREPO" tag v1.0.0
+        # A second version, so there is something for the pin to select. The
+        # grep first: if the version line ever stops matching, this sed becomes
+        # a no-op, the commit below has nothing to commit, and the whole test
+        # would fail confusingly instead of saying why.
+        grep -q 'VERSION 1\.0\.0' "$DEPREPO/CMakeLists.txt" || {
+            echo "build_all.sh: deplab mathlib no longer declares VERSION 1.0.0," >&2
+            echo "  so the FetchContent tag test cannot make a second version." >&2
+            exit 1
+        }
+        sed -i.bak 's/VERSION 1\.0\.0/VERSION 1.1.0/' "$DEPREPO/CMakeLists.txt"
+        rm -f "$DEPREPO/CMakeLists.txt.bak"
+        $GITQ commit -q -am "mathlib 1.1.0"
+        git -C "$DEPREPO" tag v1.1.0
+
+        DEP_OUT=""
+        for TAG in v1.0.0 v1.1.0; do
+            cmake -S exercises/deplab/consume-fetched -B "$DL/fetched-$TAG" \
+                -DMATHLIB_REPO="file://$DEPREPO" -DMATHLIB_TAG="$TAG" > /dev/null
+            cmake --build "$DL/fetched-$TAG" --config Debug > /dev/null
+            APP=$(dep_app "$DL/fetched-$TAG")
+            DEP_OUT="$DEP_OUT$("$APP")|"
+        done
+        rm -rf "$DEPREPO"
+
+        # Building once proves the mechanism runs. Only building twice proves
+        # the TAG is what selected the version - which is the chapter's claim,
+        # and the whole reason to pin to a tag rather than a branch.
+        DEP_A=${DEP_OUT%%|*}; DEP_B=${DEP_OUT#*|}; DEP_B=${DEP_B%%|*}
+        if [ "$DEP_A" = "$DEP_B" ]; then
+            echo "build_all.sh: both FetchContent tags produced \"$DEP_A\"." >&2
+            echo "  Ch 27 step 3 says the build follows GIT_TAG; it did not." >&2
+            exit 1
+        fi
+        echo "  ok   fetched: v1.0.0 and v1.1.0 differ, the tag is the pin   [Ch 27]"
+    else
+        echo "  SKIPPED - no git, so the FetchContent path cannot run"
+    fi
+
+    # --- path 3: installed, found as a config package ---
+    # The producing half of find_package: install(EXPORT) plus a generated
+    # mathlibConfig.cmake. Nothing in the consuming project names a path -
+    # CMAKE_PREFIX_PATH is how a consumer points at an SDK.
+    cmake -S exercises/deplab/mathlib -B "$DL/mathlib-build" \
+        -DCMAKE_INSTALL_PREFIX="$PWD/$DL/prefix" > /dev/null
+    cmake --build "$DL/mathlib-build" --config Debug --target install > /dev/null
+    cmake -S exercises/deplab/consume-installed -B "$DL/installed" \
+        -DCMAKE_PREFIX_PATH="$PWD/$DL/prefix" > /dev/null
+    cmake --build "$DL/installed" --config Debug > /dev/null
+    APP=$(dep_app "$DL/installed")
+    "$APP" > /dev/null
+    echo "  ok   installed: find_package(mathlib CONFIG) -> $("$APP")"
+elif [ "$REQUIRE_CMAKE" = 1 ]; then
+    echo "build_all.sh: --require-cmake was given but cmake is not on PATH" >&2
+    exit 1
+else
+    echo "  SKIPPED - cmake not installed (CI runs this for real)"
+fi
+
 echo "== buildlab cmake =="
 if command -v cmake > /dev/null 2>&1; then
     CM=build/buildlab-cmake            # under build/, which is gitignored

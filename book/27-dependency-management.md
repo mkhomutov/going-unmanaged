@@ -155,6 +155,8 @@ Extend the Chapter 26 project. You need no network and no third-party code: writ
 4. **Reproduce the diamond.** Write the `v1.h` / `v2.h` `Config` above, compile one .cpp against each, link them, and run. Then swap the object file order on the link line and run again. Note the two different wrong answers, and that nothing warned you at any point. Then rebuild at `-O2` and watch the symptom change.
 5. **Now point the sanitizer at it.** Back at `-O0`, rebuild both link orders with `-fsanitize=address,undefined` and run each. Before you do: predict which one ASan catches. One aborts with a stack overread naming `GetTimeout`; the other prints its wrong answer and exits 0 with nothing to report at all. Working out *why* that asymmetry falls the way it does is the whole exercise — and it is the reason the pitfall here is structural rather than a tool you can add to CI. Steps 4 and 5 are the most valuable fifteen minutes in the chapter, and a strong candidate for your notes file.
 
+Steps 1–3 have a finished form in `exercises/deplab/`: one `main.cpp` consumed three ways — vendored, fetched, and found as an installed *config package*, which is the producing half of the `find_package(VendorSDK REQUIRED)` line above and the shape you only meet when the library is the one you ship. The repository's own CI builds all three so they cannot quietly rot, and holds the fetched one to both tags — because building once proves the mechanism runs, and only building twice proves the *pin* chose the version. Write yours in a directory of its own first, then read that one. Steps 4 and 5 are deliberately not in it: the prediction is the exercise, and a committed answer spoils it in the time it takes to read a filename.
+
 ---
 
 

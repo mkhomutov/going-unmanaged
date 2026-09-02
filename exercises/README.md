@@ -20,6 +20,7 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [Iterator Invalidation](invalidation/TASK.md) | 21 | the invalidation trap, under ASan | ~45 min | [invalid.cpp](../solutions/invalid.cpp) |
 | [Lambda Lifetimes](lambdas/TASK.md) | 22 | captures vs the missing GC | ~45 min | [lambdas.cpp](../solutions/lambdas.cpp) |
 | [The Build-Model Lab](buildlab/TASK.md) | 23 | error-stage triage: preprocessor / compile / link | ~45 min | none — your notes are the artifact |
+| [The Dependency Lab](deplab/TASK.md) | 27 | one library consumed three ways, and a version pin proved rather than demonstrated | ~90 min | the files themselves: [mathlib/CMakeLists.txt](deplab/mathlib/CMakeLists.txt) + the three `consume-*/CMakeLists.txt`, built at two tags |
 | [The Test Lab](testlab/TASK.md) | 28 | a test framework from scratch, and testing ownership | ~60 min | the files themselves: [tiny_test.h](testlab/tiny_test.h), [buffer_test.cpp](testlab/buffer_test.cpp) |
 | [The Threaded Callback](threadlab/TASK.md) | 29 | callback lifetime across a thread boundary, under TSan | ~2 h | [device_threaded_solution.cpp](../solutions/device_threaded_solution.cpp) |
 | [The ABI Lab](abilab/TASK.md) | 30 | publishing a boundary instead of consuming one | ~2 h | the files themselves: [Widget.h](abilab/Widget.h), [IScorer.h](abilab/IScorer.h), [engine.h](abilab/engine.h) + their implementations and callers |
@@ -44,7 +45,7 @@ cannot rot — Appendix F's recipes and Appendix H's cost measurements
 respectively (each README has the sync rule, and `choosing/`'s is enforced
 in both directions). Nothing in either to attempt cold.
 
-Ten directories hold their reference in the open, rather than behind a
+Eleven directories hold their reference in the open, rather than behind a
 fold. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and
 `dumplab/` are
 the ticket-shaped ones: each TASK.md carries the broken code to work from
@@ -69,7 +70,15 @@ lab's judge: no wait in it is unbounded, because two of the breaks are
 hangs and a hang cannot fail a script, only stop it.
 `buildlab/` does double duty: it is Chapter 23's lab, and Chapter 26 builds that
 same trio with CMake, so the reference
-[`CMakeLists.txt`](buildlab/CMakeLists.txt) lives there. `testlab/` holds
+[`CMakeLists.txt`](buildlab/CMakeLists.txt) lives there. `deplab/` is Chapter
+27's, and the only lab whose subject is entirely build description: one
+`app/main.cpp` consumed three ways — vendored, fetched, and found as an
+installed config package — so the three `consume-*/CMakeLists.txt` are the
+whole lesson and the app cannot tell them apart. Its two judges are worth
+knowing before you read it: the vendored app is grepped for an include path
+it must not name, and the fetched one is built at two tags whose outputs must
+differ, because building once proves the mechanism runs and only building
+twice proves the *pin* chose the version. `testlab/` holds
 Chapter 28's harness and suite, which the chapter prints in full anyway, and
 `abilab/` holds Chapter 30's three worked boundaries for the same reason. All
 three are kept green by `scripts/build_all.sh`. Write your own first — in a
