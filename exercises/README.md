@@ -32,12 +32,12 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [No Repro, Dump Attached](dumplab/TASK.md) | 37 | a ticket with the crash report attached: post-mortem from the paperwork alone | ~60 min | the files themselves: the fixed [session.cpp](dumplab/session.cpp) + [main.cpp](dumplab/main.cpp), green under both device configurations |
 | [The Bridge Lab](bridgelab/TASK.md) | 38 | serving a foreign client: the main-thread queue, refusing work, the bounded wait | ~2 h | the files themselves: [main_thread_queue.h](bridgelab/main_thread_queue.h), [host.h](bridgelab/host.h), [bridge_core.h](bridgelab/bridge_core.h) + the judging [main.cpp](bridgelab/main.cpp), green under both sanitizer builds |
 
-Chapter 24 (the practice plan) sequences everything above the test lab — the
-nine Part V exercises plus the Bestiary reading — into a one-week schedule; the
-rows below it belong to Part VI and come later. The threaded callback assumes you
-have already done the Device SDK lab cold — it is that lab again with a driver
-thread in front of it — and the ABI lab assumes both SDK labs, since it asks you
-to publish the shapes those two taught you to consume.
+Chapter 24 (the practice plan) sequences everything above the dependency lab —
+the nine Part V exercises plus the Bestiary reading — into a one-week schedule;
+that row and the ones below it belong to Part VI and come later. The threaded
+callback assumes you have already done the Device SDK lab cold — it is that lab
+again with a driver thread in front of it — and the ABI lab assumes both SDK
+labs, since it asks you to publish the shapes those two taught you to consume.
 
 `cookbook/` and `choosing/` are the odd ones out: not exercises at all, but
 appendix listings compiled and checked by `build_all.sh` so those pages
@@ -76,12 +76,13 @@ same trio with CMake, so the reference
 installed config package — so the three `consume-*/CMakeLists.txt` are the
 whole lesson and the app cannot tell them apart. Its two judges are worth
 knowing before you read it: the vendored app is grepped for an include path
-it must not name, and the fetched one is built at two tags whose outputs must
-differ, because building once proves the mechanism runs and only building
-twice proves the *pin* chose the version. `testlab/` holds
-Chapter 28's harness and suite, which the chapter prints in full anyway, and
-`abilab/` holds Chapter 30's three worked boundaries for the same reason. All
-three are kept green by `scripts/build_all.sh`. Write your own first — in a
+it must not name, and the fetched one is built at two tags, each of which must
+report its own version — building once proves the mechanism runs, only building
+twice proves the *pin* chose the version, and asking merely that the two
+outputs differ would let through a pin that chose the wrong commit. `testlab/`
+holds Chapter 28's harness and suite, which the chapter prints in full anyway,
+and `abilab/` holds Chapter 30's three worked boundaries for the same reason.
+All four are kept green by `scripts/build_all.sh`. Write your own first — in a
 directory of your own, without reading these.
 
 ## Building your attempt
