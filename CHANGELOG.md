@@ -10,7 +10,40 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
-## [Unreleased]
+## [0.8.0] — 2026-09-03
+
+The release the readers asked for. Every previous version was steered by the
+roadmap; this one began with eighteen constructed reader personas taking the
+repository cold, each sent wherever their own problem led rather than down the
+Contents page, and required to cite a file for every claim. Their verdict was
+not what the roadmap predicted: trust scored 7.6 out of 10 and relevance 6.4,
+which is one finding rather than two — nobody doubted the book, they doubted
+whether it was *for* them, and several readers it plainly is for could not
+find the chapter that would have saved them. So the corrections here are
+mostly roads between chapters that were each already correct.
+
+The same study settled what to write next, and both of its answers landed.
+**Chapter 39** is the round trip home: P/Invoke from the side this book is
+about, where a signature is declared twice in two languages and compared by
+nothing. **Appendix I** gathers const from the five places that taught pieces
+of it, on one sentence — const describes a path, not an object. Both were the
+oldest open content items on the list, and both were confirmed by readers
+before they were written.
+
+Three labs, and two of them judge in ways nothing here had judged before.
+`exercises/interoplab/` verifies a managed boundary with no .NET anywhere,
+because `marshal.h` stands in for the marshaller the way FakeSDK stands in
+for a vendor. `exercises/constlab/` asserts that **five compilations fail**,
+which the subject forced: a const violation never reaches a binary, so a
+harness that only ever compiles things cannot check the one thing that page
+is about. `exercises/deplab/` closes the last Part VI code gap, and holds a
+version pin to two tags because building once proves the mechanism runs and
+only building twice proves the pin chose the version.
+
+MINOR: one chapter, one appendix and three labs appended, plus corrections
+throughout; no existing chapter, Finding, Recipe or appendix letter changed
+meaning. Appendix letters now run A–I with no gap.
+
 
 - **New: Chapter 39 — The Round Trip Home** (MINOR — an appended chapter;
   closes ROADMAP item 9 and issue #23). The publishing half of P/Invoke,
@@ -69,6 +102,52 @@ numbers may still move.
   build_all.sh grows a `--require-git`, since the fetched path needs a git
   that can clone a `file://` repository and can be refused one while still
   being installed.
+- **Corrections from the eighteen-reader study** (PATCH — none moves a
+  number). The one technical defect the study found: Chapter 2 declared a
+  `Shape` with no virtual destructor and then used it as
+  `vector<unique_ptr<Shape>>` in a listing commented *"correct polymorphic
+  container"* — the undefined behaviour Chapter 5 exists to name, in prose
+  no CI check could see, and correct in the five other places the repo
+  declares that hierarchy. Beyond it the findings were structural.
+  **Routing:** Chapters 16 and 18 contained no reference to Chapter 29, so a
+  reader who stopped at 18 shipped a synchronous wrapper that is a
+  use-after-free the moment a driver thread calls back; Chapters 29 and 36
+  taught contradicting defaults for the same callback and did not mention
+  each other; Chapter 31's symptom index assumed you already had a stack.
+  All now carry terminal links and a triage step — *terminal*, because a
+  second reader reported the existing inline cross-references as noise once
+  he stopped reading linearly. **The landing page:** the AI-origin paragraph
+  arrived before any of its evidence, which was the study's single largest
+  bounce point at five readers of eighteen, so the verification links now
+  sit inside that paragraph along with an honest statement of what they do
+  not cover; two time estimates for the same exercise disagreed by 9×; and
+  the invitation to become a co-author now says first that the list is one
+  name long. **Five clarifications:** small-string optimisation named in
+  Appendix H and Chapter 9 (the measurement rig defeats it deliberately and
+  said so only in a code comment), ARMv6-M as the one family where Chapter
+  34's "nothing will warn you" is false, the GIL as the other shape of
+  thread affinity in Chapter 38, forwarding references in Chapter 6, and
+  Chapter 29's race transcript attributed to the toolchain that produced it.
+- **Tooling: two new classes of check** (PATCH). `check_platform_claims.sh`
+  now asserts Chapter 27's ODR link-order claim — that both orders link
+  silently, that they *disagree*, and that exactly one is caught — with no
+  hardcoded exit code, since the caught order aborts on macOS and exits 1 on
+  Linux. It lives there rather than in a lab because the demonstration is an
+  ill-formed program whose failure is the lesson, and `build_all.sh`'s
+  contract is that programs succeed. `check_markup.sh` gained a typographic
+  rule: no two horizontal rules with only blank lines between them, which
+  GitHub draws as one heavier divider and which seventeen files had acquired
+  invisibly. The check landed before the seventeen fixes on purpose.
+- **ROADMAP: items 18–21 and the first out-of-scope entry.** The framework
+  shape (Bestiary Shape 5, named in Chapter 16 and taught nowhere — the
+  study's most-cited bounce point, and filed with an explicit
+  out-of-scope option), below the mutex, the retrofit, and the
+  interrupt-context callback. Classroom scaffolding — slides, rubrics,
+  lecture timings — is recorded as deliberately out of scope with its
+  reasoning, together with the neighbouring request it should not be
+  confused with: separating reference solutions from task chapters, which
+  is refused for a different reason, because a reader working alone needs
+  the answer available and deferred where a marker needs it absent.
 
 ## [0.7.0] — 2026-09-01
 
