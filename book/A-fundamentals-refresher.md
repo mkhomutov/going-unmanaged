@@ -169,8 +169,6 @@ Know-they-exist, for when you meet them: C++20 adds `std::ssize(c)` — the same
 
 ---
 
----
-
 
 <!-- nav:begin -->
 [← Chapter 38 — The Bridge Out](38-the-bridge-out.md) · [Contents](README.md) · [Appendix B — Core Principles (Cheat Sheet) →](B-core-principles.md)

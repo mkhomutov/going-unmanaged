@@ -233,8 +233,11 @@ Chapter 25's Finding 10.
   quoted pairing means adding it to this script in the same commit. CI runs
   it in the book job
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
-  below over `book/` and the built single file; run by CI, and worth running
-  locally after touching either. Structure only, never mermaid grammar
+  below over `book/` and the built single file, plus one typographic rule:
+  no two horizontal rules with only blank lines between them, which GitHub
+  draws as a single heavier divider and which seventeen files had acquired
+  invisibly. Run by CI, and worth running locally after touching either.
+  Structure only, never mermaid grammar
 - `scripts/check_mermaid.sh` — the other half: hands every chapter with a
   diagram to mermaid-cli and fails if one does not draw. Needs `mmdc`
   (`npm install -g @mermaid-js/mermaid-cli`); without it a local run says

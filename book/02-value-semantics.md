@@ -101,8 +101,6 @@ SDK structs are typically plain value types — created on the stack, zeroed wit
 
 ---
 
----
-
 
 <!-- nav:begin -->
 [← Chapter 1 — Ownership and RAII](01-ownership-and-raii.md) · [Contents](README.md) · [Chapter 3 — Stack, Heap, and Undefined Behavior →](03-stack-heap-and-undefined-behavior.md)

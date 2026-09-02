@@ -150,8 +150,6 @@ One line each. If you can say these fluently and back them with code, the concep
 
 ---
 
----
-
 
 <!-- nav:begin -->
 [← Appendix A — Fundamentals Refresher](A-fundamentals-refresher.md) · [Contents](README.md) · [Appendix C — Learning With (and Without) AI Assistants →](C-working-without-ai.md)

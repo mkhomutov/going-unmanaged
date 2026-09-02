@@ -54,8 +54,6 @@ C++ practice transfers 100% either way (clang + ASan on Mac is first-class). Too
 
 ---
 
----
-
 
 <!-- nav:begin -->
 [← Chapter 12 — The Compilation Model](12-the-compilation-model.md) · [Contents](README.md) · [Chapter 14 — Exercise: The Lifetime Tracer →](14-exercise-the-lifetime-tracer.md)

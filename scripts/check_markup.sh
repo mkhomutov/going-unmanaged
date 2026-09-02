@@ -28,7 +28,7 @@ else
 fi
 
 awk '
-FNR == 1 { fence = ""; details = 0 }
+FNR == 1 { fence = ""; details = 0; rule_open = 0 }
 
 # Track fenced code blocks first: everything inside one is literal text, and
 # a book about markdown may well quote these very markers.
@@ -48,6 +48,24 @@ fence != "" && $0 !~ /^[ \t]*```mermaid[ \t]*$/ { next }
 
 /^[ \t]*<details/  { details++ }
 /^[ \t]*<\/details/ { details-- }
+
+# ---- doubled horizontal rules ---------------------------------------------
+# Two thematic breaks with nothing but blank lines between them draw as one
+# heavier divider on GitHub - legible, wrong, and invisible in a diff, which is
+# how seventeen files acquired one before anything looked. Only `---` is
+# checked because it is the only spelling this book uses; *** and ___ would be
+# a rule for a style that is not here.
+#
+# Placed above the rules that `next` so the flag below sees every line, and
+# below the fence guard so a rule quoted inside a code block is not counted.
+# The flag survives blank lines and nothing else, which is exactly the shape
+# being looked for - and a setext `---` under a paragraph cannot trip it,
+# because the paragraph clears the flag on its way past.
+/^---+[ \t]*$/ {
+    if (rule_open) bad("two horizontal rules with only blank lines between them")
+    rule_open = 1
+}
+$0 !~ /^[ \t]*$/ && $0 !~ /^---+[ \t]*$/ { rule_open = 0 }
 
 function bad(msg) { printf "%s:%d: %s\n", FILENAME, FNR, msg; rc = 1 }
 
