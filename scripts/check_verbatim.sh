@@ -29,6 +29,12 @@
 #                    bridgelab's does; and Appendix G must hold NO cpp fence at
 #                    all - its recorded shape is lookup material with no
 #                    C++ listings (ROADMAP item 16's delivered note)
+#   4. generated   - a listing the book quotes that no lab commits, because
+#                    the code half is a script that writes it to a temp
+#                    directory: Chapter 27's ODR headers, generated and
+#                    asserted by scripts/check_platform_claims.sh. Runs
+#                    chapter -> script, per listing, since that script also
+#                    generates code the chapter never shows
 #
 # Deliberately NOT checked: exercises/buildlab/CMakeLists.txt (assembled from
 # snippets, comments added - its own banner says so), solutions/Buffer.h and
@@ -195,6 +201,34 @@ for path, opening in H_UNITS:
     elif unit not in h_page:
         failures.append(f"{path}: {opening!r} is not quoted whole in book/H-choosing.md")
 
+# Chapter 27's ODR diamond has no lab file to point at. It is an ill-formed
+# program whose FAILURE is the lesson, so it is generated into a temp directory
+# by scripts/check_platform_claims.sh rather than committed to a harness whose
+# contract is that programs succeed - which makes that script the code half of
+# a book<->code pair, and the only one that is not a file under exercises/ or
+# solutions/. The direction is chapter -> script, per listing rather than per
+# file: the script generates more than the chapter shows (the two .cpp that
+# include these headers are its own), so whole-file containment the other way
+# could never hold. One direction still catches drift from either side, because
+# both halves are pinned to the same fixed pair of blocks.
+GENERATED = [
+    ('book/27-dependency-management.md', 'scripts/check_platform_claims.sh',
+     ('// v1.h', '// v2.h')),
+]
+gen_pairs = 0
+for chapter, script, openings in GENERATED:
+    generator = open(script).read()
+    by_first = {b.strip().split('\n')[0]: b for b in cpp_fences(chapter)}
+    for opening in openings:
+        gen_pairs += 1
+        block = by_first.get(opening)
+        if block is None:
+            failures.append(f"{chapter}: no cpp fence starting {opening!r} "
+                            "(check_verbatim's own list is stale)")
+        elif block.rstrip('\n') not in generator:
+            failures.append(f"{chapter}: the {opening!r} listing is not verbatim "
+                            f"in {script}, which generates and asserts it")
+
 # Appendix G holds the opposite contract: no cpp fence at all (ROADMAP item
 # 16's shape decision - a page with nothing to compile owes build_all.sh
 # nothing). The day one lands it becomes the book's only unverified listing.
@@ -211,5 +245,5 @@ if failures:
 print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
       f"{len(f_blocks)} cookbook fences, {len(TICKETS)} cards, "
       f"{len(ch38_fences)} ch38 fences, {len(h_fences)} appH fences + "
-      f"{len(H_UNITS)} appH units, G cpp-free)")
+      f"{len(H_UNITS)} appH units, {gen_pairs} generated, G cpp-free)")
 PYEOF

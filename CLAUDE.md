@@ -190,9 +190,14 @@ Chapter 25's Finding 10.
   `exercises/bridgelab/`, and Appendix H is held to `exercises/choosing/`
   both ways (every fence on the page is in that directory, and every unit
   the lab's banners name is on the page whole — that lab has no TASK card
-  to carry the reverse the way bridgelab's does). Run it after
-  touching any quoted listing; adding a new quoted pairing means adding it
-  to this script in the same commit. CI runs it in the book job
+  to carry the reverse the way bridgelab's does) — plus one pairing whose
+  code half is not a file under `exercises/` at all: Chapter 27's two ODR
+  headers are an ill-formed program that no harness may commit, so
+  `check_platform_claims.sh` generates them into a temp directory and
+  asserts the chapter's claims about them, and the page is held to that
+  script's heredocs. Run it after touching any quoted listing; adding a new
+  quoted pairing means adding it to this script in the same commit. CI runs
+  it in the book job
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
   below over `book/` and the built single file; run by CI, and worth running
   locally after touching either. Structure only, never mermaid grammar
@@ -204,7 +209,12 @@ Chapter 25's Finding 10.
   asserts what the chapters promise *per platform*: ASan's exit code (134 on
   macOS, 1 on Linux), TSan's (134 / 66), whether LeakSanitizer reports at all
   (no on macOS/arm64), and whether a frame carries a column number (Ch 31's
-  atos-vs-llvm-symbolizer point). CI runs it on ubuntu AND macos with
+  atos-vs-llvm-symbolizer point). It also holds Chapter 27's ODR diamond —
+  both link orders link silently, the two orders disagree, and exactly one
+  is caught, naming `GetTimeout` — the one section whose first two claims
+  are about the linker rather than a compiler-rt runtime and so hold on
+  every platform alike; its two headers are the chapter's own listings,
+  pinned to the page by check_verbatim.sh. CI runs it on ubuntu AND macos with
   `--required`, because the platform overclaims it exists to catch are exactly
   what a one-platform check cannot see. The broken programs are generated into
   a temp dir, never committed — `solutions/` stays clean

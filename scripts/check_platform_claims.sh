@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Check the book's per-platform sanitizer claims against the machine it runs on.
+# Check the book's per-platform sanitizer and toolchain claims against the
+# machine it runs on.
 #
 # The book states sanitizer behavior that DIFFERS between the maintainer's
 # macOS/arm64 machine and the Linux this repo's CI runs on: exit codes, leak
@@ -32,9 +33,11 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-# Prefer clang++: every claim below is about a compiler-rt runtime, and the
-# book's transcripts are clang's. Fall back to whatever c++ is, which is what a
-# reader following the chapters would have typed.
+# Prefer clang++: almost every claim below is about a compiler-rt runtime, and
+# the book's transcripts are clang's. (Section 5 is the exception - two of its
+# three claims are about the linker, and it reports what it observed either
+# way.) Fall back to whatever c++ is, which is what a reader following the
+# chapters would have typed.
 if [ -n "${CXX:-}" ]; then :
 elif command -v clang++ >/dev/null 2>&1; then CXX=clang++
 else CXX=c++
@@ -83,6 +86,56 @@ int main() {
     std::thread t([]{ for (int i = 0; i < 100000; ++i) g++; });
     for (int i = 0; i < 100000; ++i) g++;
     t.join();
+    return 0;
+}
+EOF
+
+# Chapter 27's ODR diamond, verbatim in structure: one struct name, two
+# definitions, one program. GetTimeout is inline, so it lands in both object
+# files as a mergeable symbol and the linker keeps whichever it sees first.
+#
+# The two headers below are Chapter 27's own listings, byte for byte, banner
+# comment and all - check_verbatim.sh holds them to the page, so editing either
+# side alone fails the book job. The .cpp that include them are this script's
+# own; the chapter names them in its transcript but never lists them.
+#
+# The filenames are that transcript's (`c++ libpart.o main.o -o demo`), and NOT
+# odr_*.cpp - deliberately. Section 5 proves the linker stayed quiet by grepping
+# its output for the word "odr", and a linker names the object files in the
+# diagnostics it does print, so an odr_*.o here would make any unrelated warning
+# read as an ODR report. Do not rename these back.
+cat > "$OUT/v1.h" <<'EOF'
+// v1.h
+struct Config { int timeout; };
+inline int GetTimeout(const Config& c) { return c.timeout; }
+EOF
+
+cat > "$OUT/v2.h" <<'EOF'
+// v2.h
+struct Config { int retries; int timeout; };   // the new field went FIRST
+inline int GetTimeout(const Config& c) { return c.timeout; }   // byte-identical to v1's
+EOF
+
+cat > "$OUT/libpart.cpp" <<'EOF'
+#include "v1.h"
+#include <cstdio>
+void LibReport() {
+    Config c;                 // v1: ONE int, four bytes
+    c.timeout = 30;
+    std::printf("v1 lib  sees: %d\n", GetTimeout(c));
+}
+EOF
+
+cat > "$OUT/main.cpp" <<'EOF'
+#include "v2.h"
+#include <cstdio>
+void LibReport();
+int main() {
+    Config c;                 // v2: TWO ints, eight bytes
+    c.retries = 999;
+    c.timeout = 30;
+    std::printf("v2 caller sees: %d\n", GetTimeout(c));
+    LibReport();
     return 0;
 }
 EOF
@@ -213,12 +266,143 @@ else
     skip "no usable ThreadSanitizer here"
 fi
 
+# --- 5. Chapter 27's ODR diamond: link order decides, silently ---------------
+# SPOILER, if you are working through Chapter 27. Its "Try it" asks you to
+# predict which of the two link orders AddressSanitizer catches, and says that
+# working out why the asymmetry falls that way is the whole exercise. What
+# follows is that answer, in assertion form. Go and predict first - this file
+# will still be here.
+#
+# Three claims, and the first two are about the LINKER rather than compiler-rt,
+# which is why this section prints what it observed either way. Chapter 27:
+# "The linker says nothing at all - it exits 0 with no diagnostic"; "Which one
+# survives depends on link order"; and, under this handbook's own flags, "the
+# sanitizer catches exactly one of them ... The loud direction gets caught; the
+# quiet one ships."
+#
+# Which definition survives is unspecified, not guaranteed - so the assertion
+# here is deliberately NOT the chapter's exact numbers (one of them is
+# uninitialized garbage that varies run to run). It is the structural claim: the
+# two orders DISAGREE, and exactly one of them is caught. Both values compared
+# below are initialized ones, so a difference is real and not luck.
+echo "== odr link order =="
+# One pair of object files; only the order they are handed to the linker
+# changes below. -O0 matters, and is pinned on every build in this section
+# rather than left to the driver's default: at -O2 the compiler may inline both
+# copies and hide the whole thing, which Chapter 27 says in as many words. A
+# CXX carrying an optimization flag would otherwise stop the demonstration
+# demonstrating, and (c) would report it as the chapter being wrong.
+ODR_OK=1
+$CXX -std=c++17 -g -O0 -c "$OUT/libpart.cpp" -o "$OUT/libpart.o" 2>/dev/null || ODR_OK=0
+$CXX -std=c++17 -g -O0 -c "$OUT/main.cpp"    -o "$OUT/main.o"    2>/dev/null || ODR_OK=0
+if [ "$ODR_OK" = 0 ]; then
+    skip "cannot compile the ODR demonstration with $CXX"
+else
+    # (a) both orders link with no diagnostic - ill-formed, no diagnostic required
+    LINK_QUIET=1
+    $CXX "$OUT/libpart.o" "$OUT/main.o" -o "$OUT/demo_libfirst"  > "$OUT/link_libfirst.log"  2>&1 || LINK_QUIET=0
+    $CXX "$OUT/main.o" "$OUT/libpart.o" -o "$OUT/demo_mainfirst" > "$OUT/link_mainfirst.log" 2>&1 || LINK_QUIET=0
+    if [ "$LINK_QUIET" = 0 ]; then
+        fail "a link order failed to link at all   [Ch 27]"
+        # The EXIT trap takes $OUT with it, so the linker's own words reach the
+        # log here or nowhere. A failure naming no cause is a failure someone
+        # has to reproduce before they can read it.
+        for order in libfirst mainfirst; do
+            if [ -s "$OUT/link_$order.log" ]; then
+                echo "       ($order)"
+                sed 's/^/       /' "$OUT/link_$order.log"
+            fi
+        done
+    elif grep -qiE "odr|duplicate symbol|multiple definition" "$OUT/link_libfirst.log" "$OUT/link_mainfirst.log"; then
+        fail "the linker diagnosed it; Ch 27 says it says nothing at all   [Ch 27]"
+    else
+        pass "both link orders linked silently, exit 0   [Ch 27]"
+    fi
+
+    # (b) the two orders disagree. Compare only the v2 caller's line: it is 999
+    # in one order and 30 in the other, both initialized. The v1 lib line is the
+    # overread, so it is never compared.
+    if [ -x "$OUT/demo_libfirst" ] && [ -x "$OUT/demo_mainfirst" ]; then
+        # Through run_rc, never $( ): these two are the UNSANITIZED demo and one
+        # order overreads a stack object, so a nonzero exit is a thing that can
+        # happen here. Inside a command substitution that would take set -e with
+        # it and kill the script mid-run - no verdict for this check, none for
+        # (c), and no closing line either way.
+        RC_LIB=$(run_rc "$OUT/demo_libfirst"  "$OUT/run_libfirst.log")
+        RC_MAIN=$(run_rc "$OUT/demo_mainfirst" "$OUT/run_mainfirst.log")
+        A=$(sed -n 's/^v2 caller sees: //p' "$OUT/run_libfirst.log")
+        B=$(sed -n 's/^v2 caller sees: //p' "$OUT/run_mainfirst.log")
+        if [ "$RC_LIB" != 0 ] || [ "$RC_MAIN" != 0 ]; then
+            fail "a demo exited nonzero without the sanitizers ($RC_LIB and $RC_MAIN); Ch 27 says both produce a working-looking program   [Ch 27]"
+        elif [ -z "$A" ] || [ -z "$B" ]; then
+            skip "the demonstration printed nothing to compare"
+        elif [ "$A" != "$B" ]; then
+            pass "the orders disagree: caller saw $A then $B, same source   [Ch 27]"
+        else
+            fail "both orders printed $A; this linker does not pick by order, so Ch 27's transcript is toolchain-specific and should say so   [Ch 27]"
+        fi
+    else
+        # Reachable only when (a) already failed - but silence here would be a
+        # check absent from the run rather than one recorded as not run, and a
+        # skip read as a pass is how the wrong claims survived the first time.
+        skip "the link produced no binaries, so the two orders cannot be compared"
+    fi
+
+    # (c) under the canonical flags, exactly one order is caught. Same shape as
+    # (a) - one pair of objects, linked twice - rather than handing the driver
+    # both sources per order, which compiled each file twice and left a reader
+    # room to wonder whether the COMPILE order mattered too. It does not: below,
+    # only the link line differs between the two.
+    if $CXX -std=c++17 -g -O0 -fsanitize=address,undefined \
+            -c "$OUT/libpart.cpp" -o "$OUT/san_libpart.o" 2>/dev/null \
+       && $CXX -std=c++17 -g -O0 -fsanitize=address,undefined \
+            -c "$OUT/main.cpp" -o "$OUT/san_main.o" 2>/dev/null \
+       && $CXX -fsanitize=address,undefined \
+            "$OUT/san_libpart.o" "$OUT/san_main.o" -o "$OUT/san_libfirst" 2>/dev/null \
+       && $CXX -fsanitize=address,undefined \
+            "$OUT/san_main.o" "$OUT/san_libpart.o" -o "$OUT/san_mainfirst" 2>/dev/null; then
+        RC_SAN_LIB=$(run_rc "$OUT/san_libfirst"  "$OUT/san_libfirst.log")
+        RC_SAN_MAIN=$(run_rc "$OUT/san_mainfirst" "$OUT/san_mainfirst.log")
+        if [ "$RC_SAN_LIB" = 0 ] && [ "$RC_SAN_MAIN" != 0 ]; then
+            if grep -q "stack-buffer-overflow" "$OUT/san_mainfirst.log"; then
+                pass "exactly one order caught (exit $RC_SAN_MAIN, stack-buffer-overflow); the quiet one exited 0   [Ch 27]"
+            else
+                fail "the caught order did not report stack-buffer-overflow   [Ch 27]"
+            fi
+            # Chapter 27 claims two things about this report, and the second is
+            # the one a reader acts on: "ASan aborts with a clear report naming
+            # the function", "a stack overread naming GetTimeout". A report that
+            # says stack-buffer-overflow and names no function of theirs sends
+            # them looking in the wrong file. An UNSYMBOLIZED report is a fact
+            # about this machine rather than a counter-example, so it skips
+            # rather than fails - the same distinction section 2 draws for
+            # llvm-symbolizer.
+            if grep -q "GetTimeout" "$OUT/san_mainfirst.log"; then
+                pass "the report names GetTimeout, not just the overread   [Ch 27]"
+            elif ! grep -qE '\.(cpp|h):[0-9]+' "$OUT/san_mainfirst.log"; then
+                skip "the ASan report is unsymbolized, so the naming claim is untestable here"
+            else
+                fail "the report is symbolized but does not name GetTimeout; Ch 27 says it names the function   [Ch 27]"
+            fi
+        elif [ "$RC_SAN_LIB" = 0 ] && [ "$RC_SAN_MAIN" = 0 ]; then
+            fail "neither order was caught; Ch 27 says the sanitizer catches exactly one   [Ch 27]"
+        else
+            fail "expected the quiet order to exit 0 and the loud one to abort, got $RC_SAN_LIB and $RC_SAN_MAIN   [Ch 27]"
+        fi
+    else
+        skip "sanitizers cannot build the ODR demonstration with $CXX"
+    fi
+fi
+
 echo
 if [ "$FAILED" = 0 ]; then
     echo "platform claims OK ($OS/$ARCH)"
 else
-    echo "check_platform_claims.sh: a claim in the book does not hold on $OS/$ARCH." >&2
-    echo "  Fix the chapter, not this script - the whole point is that the book" >&2
-    echo "  states one platform's behavior as the rule when it is not." >&2
+    echo "check_platform_claims.sh: a claim in the book does not hold on" >&2
+    echo "  $OS/$ARCH with $CXX. Fix the chapter, not this script - each FAIL" >&2
+    echo "  above names the claim. Sections 1-4 are per-platform, where the" >&2
+    echo "  mistake is one platform's behavior written down as the rule;" >&2
+    echo "  section 5's linker claims hold everywhere alike, so a failure" >&2
+    echo "  there means this toolchain differs from the chapter's transcript." >&2
     exit 1
 fi
