@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Check the book's per-platform sanitizer claims against the machine it runs on.
+# Check the book's per-platform sanitizer and toolchain claims against the
+# machine it runs on.
 #
 # The book states sanitizer behavior that DIFFERS between the maintainer's
 # macOS/arm64 machine and the Linux this repo's CI runs on: exit codes, leak
@@ -32,9 +33,11 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-# Prefer clang++: every claim below is about a compiler-rt runtime, and the
-# book's transcripts are clang's. Fall back to whatever c++ is, which is what a
-# reader following the chapters would have typed.
+# Prefer clang++: almost every claim below is about a compiler-rt runtime, and
+# the book's transcripts are clang's. (Section 5 is the exception - two of its
+# three claims are about the linker, and it reports what it observed either
+# way.) Fall back to whatever c++ is, which is what a reader following the
+# chapters would have typed.
 if [ -n "${CXX:-}" ]; then :
 elif command -v clang++ >/dev/null 2>&1; then CXX=clang++
 else CXX=c++
@@ -83,6 +86,43 @@ int main() {
     std::thread t([]{ for (int i = 0; i < 100000; ++i) g++; });
     for (int i = 0; i < 100000; ++i) g++;
     t.join();
+    return 0;
+}
+EOF
+
+# Chapter 27's ODR diamond, verbatim in structure: one struct name, two
+# definitions, one program. GetTimeout is inline, so it lands in both object
+# files as a mergeable symbol and the linker keeps whichever it sees first.
+cat > "$OUT/odr_v1.h" <<'EOF'
+struct Config { int timeout; };
+inline int GetTimeout(const Config& c) { return c.timeout; }
+EOF
+
+cat > "$OUT/odr_v2.h" <<'EOF'
+struct Config { int retries; int timeout; };                 // new field FIRST
+inline int GetTimeout(const Config& c) { return c.timeout; } // byte-identical
+EOF
+
+cat > "$OUT/odr_lib.cpp" <<'EOF'
+#include "odr_v1.h"
+#include <cstdio>
+void LibReport() {
+    Config c;                 // v1: ONE int, four bytes
+    c.timeout = 30;
+    std::printf("v1 lib  sees: %d\n", GetTimeout(c));
+}
+EOF
+
+cat > "$OUT/odr_main.cpp" <<'EOF'
+#include "odr_v2.h"
+#include <cstdio>
+void LibReport();
+int main() {
+    Config c;                 // v2: TWO ints, eight bytes
+    c.retries = 999;
+    c.timeout = 30;
+    std::printf("v2 caller sees: %d\n", GetTimeout(c));
+    LibReport();
     return 0;
 }
 EOF
@@ -211,6 +251,79 @@ if $CXX -std=c++17 -fsanitize=thread "$OUT/tsan_probe.cpp" -o "$OUT/tsan_probe" 
         || fail "no 'ThreadSanitizer: data race' in the report   [Ch 29]"
 else
     skip "no usable ThreadSanitizer here"
+fi
+
+# --- 5. Chapter 27's ODR diamond: link order decides, silently ---------------
+# Three claims, and the first two are about the LINKER rather than compiler-rt,
+# which is why this section prints what it observed either way. Chapter 27:
+# "The linker says nothing at all - it exits 0 with no diagnostic"; "Which one
+# survives depends on link order"; and, under this handbook's own flags, "the
+# sanitizer catches exactly one of them ... The loud direction gets caught; the
+# quiet one ships."
+#
+# Which definition survives is unspecified, not guaranteed - so the assertion
+# here is deliberately NOT the chapter's exact numbers (one of them is
+# uninitialized garbage that varies run to run). It is the structural claim: the
+# two orders DISAGREE, and exactly one of them is caught. Both values compared
+# below are initialized ones, so a difference is real and not luck.
+echo "== odr link order =="
+# One pair of object files; only the order they are handed to the linker
+# changes below. -O0 matters: at -O2 the compiler may inline both copies and
+# hide the whole thing, which Chapter 27 says in as many words.
+ODR_OK=1
+$CXX -std=c++17 -g -O0 -c "$OUT/odr_lib.cpp"  -o "$OUT/odr_lib.o"  2>/dev/null || ODR_OK=0
+$CXX -std=c++17 -g -O0 -c "$OUT/odr_main.cpp" -o "$OUT/odr_main.o" 2>/dev/null || ODR_OK=0
+if [ "$ODR_OK" = 0 ]; then
+    skip "cannot compile the ODR demonstration with $CXX"
+else
+    # (a) both orders link with no diagnostic - ill-formed, no diagnostic required
+    LINK_QUIET=1
+    ( cd "$OUT" && $CXX odr_lib.o odr_main.o -o demo_libfirst ) > "$OUT/odr_link1.log" 2>&1 || LINK_QUIET=0
+    ( cd "$OUT" && $CXX odr_main.o odr_lib.o -o demo_mainfirst ) > "$OUT/odr_link2.log" 2>&1 || LINK_QUIET=0
+    if [ "$LINK_QUIET" = 0 ]; then
+        fail "a link order failed to link at all   [Ch 27]"
+    elif grep -qiE "odr|duplicate symbol|multiple definition" "$OUT/odr_link1.log" "$OUT/odr_link2.log"; then
+        fail "the linker diagnosed it; Ch 27 says it says nothing at all   [Ch 27]"
+    else
+        pass "both link orders linked silently, exit 0   [Ch 27]"
+    fi
+
+    # (b) the two orders disagree. Compare only the v2 caller's line: it is 999
+    # in one order and 30 in the other, both initialized. The v1 lib line is the
+    # overread, so it is never compared.
+    if [ -x "$OUT/demo_libfirst" ] && [ -x "$OUT/demo_mainfirst" ]; then
+        A=$("$OUT/demo_libfirst"  2>/dev/null | sed -n 's/^v2 caller sees: //p')
+        B=$("$OUT/demo_mainfirst" 2>/dev/null | sed -n 's/^v2 caller sees: //p')
+        if [ -z "$A" ] || [ -z "$B" ]; then
+            skip "the demonstration printed nothing to compare"
+        elif [ "$A" != "$B" ]; then
+            pass "the orders disagree: caller saw $A then $B, same source   [Ch 27]"
+        else
+            fail "both orders printed $A; this linker does not pick by order, so Ch 27's transcript is toolchain-specific and should say so   [Ch 27]"
+        fi
+    fi
+
+    # (c) under the canonical flags, exactly one order is caught
+    if $CXX -std=c++17 -g -fsanitize=address,undefined "$OUT/odr_lib.cpp" "$OUT/odr_main.cpp" \
+            -o "$OUT/odr_san_libfirst" 2>/dev/null \
+       && $CXX -std=c++17 -g -fsanitize=address,undefined "$OUT/odr_main.cpp" "$OUT/odr_lib.cpp" \
+            -o "$OUT/odr_san_mainfirst" 2>/dev/null; then
+        RC_A=$(run_rc "$OUT/odr_san_libfirst"  "$OUT/odr_san_a.log")
+        RC_B=$(run_rc "$OUT/odr_san_mainfirst" "$OUT/odr_san_b.log")
+        if [ "$RC_A" = 0 ] && [ "$RC_B" != 0 ]; then
+            if grep -q "stack-buffer-overflow" "$OUT/odr_san_b.log"; then
+                pass "exactly one order caught (exit $RC_B, stack-buffer-overflow); the quiet one exited 0   [Ch 27]"
+            else
+                fail "the caught order did not report stack-buffer-overflow   [Ch 27]"
+            fi
+        elif [ "$RC_A" = 0 ] && [ "$RC_B" = 0 ]; then
+            fail "neither order was caught; Ch 27 says the sanitizer catches exactly one   [Ch 27]"
+        else
+            fail "expected the quiet order to exit 0 and the loud one to abort, got $RC_A and $RC_B   [Ch 27]"
+        fi
+    else
+        skip "sanitizers cannot build the ODR demonstration with $CXX"
+    fi
 fi
 
 echo
