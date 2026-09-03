@@ -34,7 +34,7 @@ Asking these early is a strength signal, not a weakness:
 - Windows only, or Mac too? Which IDE/toolset versions are standard?
 - Where is the build documentation, and is there a known-gotchas wiki or its equivalent?
 - Who owns plug-in ID registration and code signing?
-- What's the code review process, and is there a house style (naming, vendor vs std:: containers, error-handling conventions)?
+- What's the code review process, and is there a house style (naming, vendor vs std:: containers, error-handling conventions)? Appendix A.8 has the three naming dialects you will meet, so the answer lands on a map.
 - Which parts of the API does our product touch most — elements, attributes, listing, dialogs, I/O?
 
 ### A closing note

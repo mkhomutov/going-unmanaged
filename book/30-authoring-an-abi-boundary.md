@@ -22,7 +22,7 @@ Every technique in this chapter is a way of obeying it, and every corollary foll
 - **No standard-library types in exported signatures.** `std::string` and `std::vector` have different layouts between standard library implementations, sometimes between versions, and on some toolchains between Debug and Release. A parameter of type `const std::string&` is a promise that both sides were built by the same compiler in the same configuration.
 - **No exceptions across the boundary.** Chapter 8 said this from the consumer side; now you see why it was your vendor's rule too. Exception propagation is ABI, and it is not portable. Catch everything at your entry points and translate to error codes.
 - **Whoever allocates must free.** Two modules may hold two different heaps. A block `new`ed in your library and `delete`d by the caller is undefined behavior whenever those two heaps differ — which you cannot see at the call site, and cannot promise for every consumer, which is why every SDK in this book hands you a `Release` or `Close` function instead of letting you free its memory.
-- **No inline function that touches private state.** An inline accessor in your header bakes a member offset into the caller's code, permanently.
+- **No inline function that touches private state.** An inline accessor in your header bakes a member offset into the caller's code, permanently — the one row of Chapter 12's what-goes-where table that a boundary reverses.
 
 ### What breaking it looks like
 

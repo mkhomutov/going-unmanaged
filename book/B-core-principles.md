@@ -32,6 +32,11 @@ One line each. If you can say these fluently and back them with code, the concep
 - "Each .cpp compiles independently as a translation unit; the linker resolves symbols across them."
 - "Unresolved external = definition missing at link time; undeclared identifier = declaration missing at compile time."
 - "I forward-declare in headers and include in .cpp files to keep build times sane."
+- "A header carries declarations, templates and inline bodies; everything else is defined once in a .cpp — and a .cpp includes its own header first."
+
+**Reading a codebase**
+
+- "I read fifty lines of a codebase before I write one, and match what is there — never spelling an identifier with a leading underscore and a capital."
 
 **Build systems**
 

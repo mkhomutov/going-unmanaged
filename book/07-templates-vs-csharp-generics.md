@@ -34,7 +34,7 @@ void Sort(std::ranges::range auto& container);   // terse form
 
 The compiler must see the full template source to stamp out a version for your T, so template code cannot hide in a .cpp file — implementation and all go in the header. Put it in a .cpp and consumers get **linker errors** (unresolved external). (The one sanctioned exception, which you will meet in vendor code: a library that knows every T it will ever serve can keep the body in a .cpp and add an **explicit instantiation** — `template class Foo<int>;` — for exactly those types. It is a build-time optimization for closed sets, not the default.)
 
-**Try it (30 seconds).** Move a template's body into a .cpp behind a declaring header and predict the failure *stage* — compiler or linker — before building from another file. Telling those two apart at a glance is the Chapter 12 skill, arriving early.
+**Try it (30 seconds).** Move a template's body into a .cpp behind a declaring header and predict the failure *stage* — compiler or linker — before building from another file. Telling those two apart at a glance is the Chapter 12 skill, arriving early — and that chapter's what-goes-where table is the row this rule belongs to.
 
 ### Consequence 3 — templates are more powerful than generics
 
