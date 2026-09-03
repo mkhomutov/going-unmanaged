@@ -169,6 +169,25 @@ Know-they-exist, for when you meet them: C++20 adds `std::ssize(c)` — the same
 > [!TIP]
 > **Key principle:** "`size()` is unsigned, so `size() - 1` on an empty container is a huge number, not -1 — I compare with `<` instead of subtracting, because the wrap is legal and my `-fsanitize=address,undefined` build stays silent about it."
 
+### A.8 Naming: there is no house style, so learn to read three
+
+C# has one naming convention and a whole ecosystem obeys it: `PascalCase` for everything public, `_camelCase` fields, `I` on every interface. C++ has none. The standard library, the big style guides and the big frameworks each chose differently, and a codebase inherits whichever its founders read first — so the reflex to bring is not a convention but the habit of reading one off the page. Three dialects cover nearly everything you will open:
+
+| Dialect | Types | Functions | Members | Constants | Where you meet it |
+|---|---|---|---|---|---|
+| standard-library | `snake_case` — `string_view`, `size_t` | `snake_case` — `push_back` | `snake_case` | `snake_case` | the STL, Boost, most header-only libraries, this book's cookbook |
+| Google / LLVM | `PascalCase` | `PascalCase` (Google), `camelCase` (LLVM) | `name_` | `kConstant` | Chromium, LLVM, Abseil, most SDK samples, this book's chapters |
+| framework | `PascalCase`, often with a prefix letter | `camelCase` (Qt), `PascalCase` (Unreal) | `m_name` (Qt), bare (Unreal, with `bEnabled`-style prefixes) | varies | Qt, Unreal, JUCE, most C++-native SDKs |
+
+Members are the row worth a second look, because every spelling is legal and one is a trap: `name_` (this book), `m_name` (the frameworks), and `_name` — safe *at member scope*, and one capital letter away from the form the language reserves. **The one hard rule:** an identifier that starts with an underscore followed by a capital letter, or contains a double underscore, is the implementation's, anywhere — `_Foo`, `__count`, and the include guard `_WIDGET_H`, which is the commonest violation in the wild — and using one is undefined behavior that this book's flags never mention: clang has `-Wreserved-identifier`, off even under `-Wall -Wextra`, and clang-tidy's `bugprone-reserved-identifier` check is the tool a team turns on. (A leading underscore followed by a *lowercase* letter is reserved only at namespace scope, which is why `_name` members survive and `_helper()` functions do not.) Macros are `SCREAMING_CASE` and nothing else is, so a macro can never pass for a function. And the `I` on an interface is COM's habit, not C++'s — Chapter 30's `IScorer` wears it deliberately, for the shape it imitates.
+
+Two of those dialects are on these pages by design. The chapters write `GetSize()`, `Draw()`, `Tick()` — the PascalCase a C# hand reaches for, and the one most SDK samples use — while the cookbook writes `read_all_text`, `split`, `join`, because those functions stand in for standard-library spellings. Chapter 32's `Logger::write` and Chapter 33's `Registry::add` are lowercase because a logger and a registry read as library types. That mix is not an oversight; it is what a real codebase looks like, and reading across it without stumbling is the skill.
+
+The enforcement tool for layout is `.clang-format`, the `.editorconfig` you know — one file at the repository root, and `clang-format -i` rewrites whitespace and line breaks, never names. Names are checked, where a team bothers, by clang-tidy's `readability-identifier-naming`. Neither is universal, so the working rule is older than both.
+
+> [!TIP]
+> **Key principle:** "There is no house style until I open the codebase — I read fifty lines before I write one, match what is there, and never spell an identifier with a leading underscore and a capital."
+
 ---
 
 

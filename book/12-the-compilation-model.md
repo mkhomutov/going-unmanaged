@@ -57,6 +57,28 @@ int main() { Widget w; w.Draw(); }  // linker connects call to Widget.cpp's body
 
 A thing can be *declared* many times but *defined* only once per translation unit — the **One Definition Rule (ODR)**. For non-inline functions and variables it is once across the whole *program*; classes, templates and inline functions may be defined in many translation units, provided every definition is identical. That exception is what makes headers work at all: `Widget`'s class definition is compiled into every .cpp that includes it.
 
+### What goes in the header, and what goes in the .cpp
+
+C# never asked: a type is one file, declaration and body inseparable, and `partial` exists for the day it is not. Here every entity has a place, and the table is worth memorising once, because each row's mistake fails at a different stage — Chapter 23 provokes most of them:
+
+| The thing | Where | Why |
+|---|---|---|
+| a class definition — members, method *declarations* | the header | every translation unit that uses the type needs its layout |
+| a member function body | the `.cpp`, as `void Widget::Draw() { ... }` | one definition per program, and changing it recompiles one TU rather than every includer |
+| a one-line accessor | in-class, in the header | implicitly `inline`, so many TUs may carry it — and at a binary boundary it bakes a member offset into every caller ([Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)) |
+| a template, class or function | the header, body and all | the compiler must see the source to instantiate ([Chapter 7](07-templates-vs-csharp-generics.md#chapter-7--templates-vs-c-generics)); a `.tpp` or `.inl` included at the header's foot is the same thing with a longer name |
+| a free function | declared in the header, defined once in a `.cpp` | defined in the header without `inline`, it is Chapter 23's breakage 5: `duplicate symbol` |
+| a constant | `inline constexpr` in the header (C++17) | never `#define`: typed, scoped, visible to the debugger |
+| a static data member | `inline static` in-class (C++17), or defined once in the `.cpp` | Chapter 4's annoyance, and its fix |
+| a helper nobody else calls | the `.cpp`, in an anonymous namespace | internal linkage — invisible to the linker, and no header to keep in sync |
+
+`void Widget::Draw() { ... }` outside the class is not a second declaration; it is *the* definition, and the `Widget::` is the qualified name saying whose `Draw` this body belongs to.
+
+Two conventions ride on the table. **`.h` versus `.hpp`** is house style, not language — both are pasted the same way — with one real signal: `.h` is what a header shared with C looks like, and [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s `engine.h` carries an `#ifdef __cplusplus` guard for exactly that reader; `.hpp` says "C++ only, do not try". Match the codebase. **Include order** has one rule with a reason: a `.cpp` includes its own header *first*, then project headers, then third-party, then the standard library. Own-header-first means a header that forgot an include fails in its own `.cpp`, where its author is looking, rather than in some consumer's — Chapter 23's eighth breakage is that failure moved to the wrong file. And `#include "Widget.h"` with quotes searches next to the including file before the include path, where `<string>` searches only the path: local headers in quotes, everything else in angle brackets.
+
+> [!TIP]
+> **Key principle:** "A header carries declarations, templates and inline bodies; everything else is defined once in a .cpp — and a .cpp includes its own header first, so a header that is not self-sufficient fails where its author is looking."
+
 ### Compile errors vs linker errors — read which stage failed
 
 ```text
