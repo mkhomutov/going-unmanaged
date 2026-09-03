@@ -147,6 +147,26 @@ jobs:
           [ "$d" = 1 ] || { echo "FAIL: Chapter 14 says the documented cl line shows exactly one extra move-construction here; saw $d"; exit 1; }
           [ "$n" = 0 ] || { echo "FAIL: /Zc:nrvo should elide it entirely; saw $n"; exit 1; }
 
+      # Chapter 40's lab under Visual Studio: the SDK drop installed, the
+      # MODULE built against the prefix, the host loading it - and the one
+      # line in that lab only Windows can check, CMAKE_MSVC_RUNTIME_LIBRARY.
+      # dumpbin reads the export table back the way nm does on the Unix legs;
+      # it is on PATH here because msvc-dev-cmd ran just above.
+      - name: Chapter 40's pluginlab
+        run: |
+          cmake -S exercises/pluginlab/sdk -B build/pl-sdk -DCMAKE_INSTALL_PREFIX="$(pwd -W)/build/pl-prefix"
+          cmake --build build/pl-sdk --config Debug
+          cmake --install build/pl-sdk --config Debug
+          cmake -S exercises/pluginlab/plugin -B build/pl-plugin -DCMAKE_PREFIX_PATH="$(pwd -W)/build/pl-prefix"
+          cmake --build build/pl-plugin --config Debug
+          cmake -S exercises/pluginlab/host -B build/pl-host -DCMAKE_PREFIX_PATH="$(pwd -W)/build/pl-prefix"
+          cmake --build build/pl-host --config Debug
+          ./build/pl-host/Debug/host.exe build/pl-plugin/Debug/monitor.dll | tee host.log
+          grep -q 'monitor loaded against hostsdk' host.log
+          MSYS_NO_PATHCONV=1 dumpbin /exports build/pl-plugin/Debug/monitor.dll | tee exports.log
+          [ "$(grep -c 'Plugin_Entry' exports.log)" = 1 ] || { echo "FAIL: monitor.dll should export exactly one Plugin_Entry"; exit 1; }
+          ! grep -q 'HostSdk_VersionString\|Describe' exports.log || { echo "FAIL: monitor.dll exports a symbol that should be hidden"; exit 1; }
+
       # scripts/check.ps1 is the Windows mirror of check.sh, and the TASK cards
       # point Windows readers at it - so it gets the same treatment as every
       # other claim: exercised here, where a Developer-shell PATH (msvc-dev-cmd

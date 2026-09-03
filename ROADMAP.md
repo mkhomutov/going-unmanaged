@@ -904,6 +904,39 @@ cross-reference landed as a correction (issue #54).
 
 ---
 
+### 22. CMake for the plug-in — DONE (Chapter 40)
+
+**Missing:** Chapter 26 built an executable from a library; nothing built
+the artifact this book is about. `add_library(MODULE)` appeared nowhere,
+neither did symbol visibility, the hand-written imported target for an SDK
+that ships no config package, `CMAKE_MSVC_RUNTIME_LIBRARY` (Chapter 26's
+Debug/Release pitfall had no CMake spelling), generator expressions
+explained, presets, or the install/export half that Chapter 27's try-it
+asked for and deplab implemented unshown.
+
+**Evidence:** a coverage review (2026-09-03) read the book against sixteen
+topics a reader asked about; "CMake advanced usage" was the one where the
+repo's own files knew more than its pages — `exercises/deplab/mathlib/`'s
+`$<INSTALL_INTERFACE:...>` is called load-bearing in CLAUDE.md and explained
+nowhere in the book.
+
+**Delivered:** Chapter 40 — *CMake for the Plug-in* — and
+`exercises/pluginlab/`: a vendor-style SDK drop with no config package, the
+plug-in as a MODULE library located through `cmake/FindHostSDK.cmake`, and
+a stand-in host that loads it. The chapter's own finding came out of the
+lab: hidden visibility is a compiler flag and covers what the plug-in
+compiles, not the static library it links, so the first `monitor.so`
+exported the SDK's helper function too — the fix is a linker option per
+linker, and the judge is `nm -g --defined-only` read after every build,
+which `build_all.sh` now does. Generator expressions are explained once,
+presets shown, deplab's install/export file quoted whole and pinned, and
+the two tools CI cannot judge (custom commands, toolchain files) stated as
+unverified prose.
+
+**Still open from this item:** nothing in scope. The toolchain-file and
+custom-command listings are book-only by necessity — a cross-compile cannot
+run on the CI matrix — and say so.
+
 ## Tier 3 — distinctive to this handbook
 
 Material no general C++ book would carry, which is precisely why it belongs

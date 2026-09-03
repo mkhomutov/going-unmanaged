@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 39 chapters, appendices A–I), indexed by `book/README.md`. The
+(6 parts, 40 chapters, appendices A–I), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
 artifact produced by `scripts/build_book.sh`. Appendices run A–I with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
@@ -62,7 +62,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–39, `A-`…`I-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–40, `A-`…`I-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -213,13 +213,28 @@ Chapter 25's Finding 10.
   documented callback window is asserted instead. The struct-misdeclaration
   judge is the load-bearing one: delete the size-field check and it is an
   ASan stack-buffer-overflow, not a wrong value
+- `exercises/pluginlab/` — Chapter 40's lab: three CMake projects. `sdk/` is a
+  vendor-style drop (header + static helper library, installed to a prefix,
+  deliberately NO config package — vendor code, never edited); `plugin/` is
+  the reference plug-in (a MODULE library, `cmake/FindHostSDK.cmake` writing
+  the imported target by hand, hidden visibility plus one exported symbol,
+  and linker options because hidden covers what you compile and not the
+  static library you link — the chapter's finding); `host/` is a stand-in
+  host that dlopens the module and calls its entry point. build_all.sh
+  installs the drop, builds both, runs the host against the module and reads
+  the export table back with `nm` — `Plugin_Entry` present, nothing of the
+  SDK's or the plug-in's own — under the cmake probe; the buildlab-msvc job
+  builds all three under Visual Studio. Five files are quoted whole in the
+  chapter (FULL pairings in check_verbatim.sh), so editing one means editing
+  Chapter 40 in the same commit
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
   Its last four sections may skip: one builds `exercises/deplab/` three ways
   (Chapter 27), one configures, builds and runs `exercises/buildlab/`'s
-  CMakeLists, one rebuilds `solutions/device_threaded_solution.cpp` under
+  CMakeLists, one installs `exercises/pluginlab/`'s SDK drop and builds,
+  loads and inspects its plug-in (Chapter 40), one rebuilds `solutions/device_threaded_solution.cpp` under
   `-fsanitize=thread` (a second build, because TSan and ASan do not combine),
   and the last builds `exercises/cookbook/expected.cpp` as C++23.
   Without cmake on PATH, without a git that can clone a `file://` repository
@@ -303,6 +318,8 @@ Chapter 25's Finding 10.
 - `.github/workflows/ci.yml` — runs build_all.sh on every push/PR, plus a
   `platform-claims` job (check_platform_claims.sh on ubuntu and macos), a
   `buildlab-msvc` job (Chapter 26's CMakeLists under MSVC both ways, then
+  Chapter 40's three pluginlab projects with `dumpbin /exports` reading the
+  module's one symbol back, then
   Chapter 14's `/Zc:nrvo` claim: the chapter's own `cl /std:c++17 /W4 /EHsc`
   line must print exactly one extra move-construction in the RVO section, and
   adding `/Zc:nrvo` must print none — it is the one claim in the book resting

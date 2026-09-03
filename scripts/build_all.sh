@@ -625,6 +625,71 @@ fi
 # Chapter 29's lab under the third sanitizer. TSan cannot be combined with ASan,
 # so this is a second build of the same source rather than a longer flag list -
 # which is the chapter's point about them made structurally.
+# Chapter 40's lab: three projects, in the order a plug-in shop builds them.
+# The SDK drop is installed to a prefix (a header and an archive, no config
+# package - the point), the plug-in is configured against that prefix through
+# its hand-written find-module, the stand-in host is built against the same
+# prefix, and the host loads the module. Then the claim the chapter is built
+# around: the module's export table holds Plugin_Entry and NOTHING else of
+# the plug-in's or the SDK's - hidden visibility covers what the plug-in
+# compiles, and the linker option covers the archive it links. "It loaded"
+# proves neither, so nm reads the table back.
+echo "== pluginlab cmake =="
+if command -v cmake > /dev/null 2>&1; then
+    PL=build/pluginlab
+    rm -rf "$PL"
+    cmake -S exercises/pluginlab/sdk -B "$PL/sdk" \
+        -DCMAKE_INSTALL_PREFIX="$PWD/$PL/prefix" > /dev/null
+    cmake --build "$PL/sdk" --config Debug > /dev/null
+    cmake --install "$PL/sdk" --config Debug > /dev/null
+    cmake -S exercises/pluginlab/plugin -B "$PL/plugin" \
+        -DCMAKE_PREFIX_PATH="$PWD/$PL/prefix" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON > /dev/null
+    cmake --build "$PL/plugin" --config Debug > /dev/null
+    cmake -S exercises/pluginlab/host -B "$PL/host" \
+        -DCMAKE_PREFIX_PATH="$PWD/$PL/prefix" > /dev/null
+    cmake --build "$PL/host" --config Debug > /dev/null
+    # Where the two binaries landed depends on the generator (Debug/ under a
+    # multi-config one) and the platform (.so / .dylib / .dll), so look.
+    MODULE=$(find "$PL/plugin" -type f \( -name 'monitor.so' -o -name 'monitor.dylib' -o -name 'monitor.dll' \) | head -1)
+    HOST=$(find "$PL/host" -type f \( -name host -o -name host.exe \) -perm -u+x | head -1)
+    if [ -z "$MODULE" ] || [ -z "$HOST" ]; then
+        echo "build_all.sh: pluginlab built but the module or the host is missing" >&2
+        exit 1
+    fi
+    if ! "$HOST" "$MODULE" | grep -q 'monitor loaded against hostsdk'; then
+        echo "build_all.sh: the host loaded $MODULE but the plug-in's log line never arrived" >&2
+        exit 1
+    fi
+    # The compile database shows the visibility flag reached monitor.cpp...
+    if ! grep -q -- '-fvisibility=hidden.*monitor\.cpp' "$PL/plugin/compile_commands.json"; then
+        echo "build_all.sh: monitor.cpp was not compiled with -fvisibility=hidden" >&2
+        exit 1
+    fi
+    # ...and the export table shows what that did and did not cover.
+    if command -v nm > /dev/null 2>&1; then
+        EXPORTS=$(nm -g --defined-only "$MODULE" 2>/dev/null | awk '{print $NF}')
+        if [ "$(printf '%s\n' "$EXPORTS" | grep -c 'Plugin_Entry')" != 1 ]; then
+            echo "build_all.sh: $MODULE does not export exactly one Plugin_Entry:" >&2
+            printf '%s\n' "$EXPORTS" | sed 's/^/  /' >&2
+            exit 1
+        fi
+        if printf '%s\n' "$EXPORTS" | grep -q 'HostSdk_VersionString\|Describe'; then
+            echo "build_all.sh: $MODULE exports a symbol that should be hidden - the" >&2
+            echo "  SDK's helper or the plug-in's own function. Chapter 40's finding:" >&2
+            printf '%s\n' "$EXPORTS" | sed 's/^/  /' >&2
+            exit 1
+        fi
+        echo "  ok   exercises/pluginlab/: installed, built, loaded; exports Plugin_Entry only"
+    else
+        echo "  ok   exercises/pluginlab/: installed, built, loaded (no nm here to read the exports)"
+    fi
+elif [ "$REQUIRE_CMAKE" = 1 ]; then
+    echo "build_all.sh: cmake not found, and --require-cmake was given" >&2
+    exit 1
+else
+    echo "  SKIPPED - cmake not installed (CI runs this for real)"
+fi
+
 #
 # Same bargain as the cmake step above, for the same reason: ThreadSanitizer is
 # not part of the toolchain the rest of this script needs. It is missing from

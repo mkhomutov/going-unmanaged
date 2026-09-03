@@ -68,6 +68,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 37. [No Repro, Dump Attached](37-no-repro-dump-attached.md#chapter-37--no-repro-dump-attached) — the sixth ticket: a crash report from a machine you will never see, and every bench rig is green
 38. [The Bridge Out](38-the-bridge-out.md#chapter-38--the-bridge-out) — serving C#, Python, and the rest from inside the host: one queue, one seam, and a deadline on every wait
 39. [The Round Trip Home](39-the-round-trip-home.md#chapter-39--the-round-trip-home) — P/Invoke from the native side: a signature written twice in two languages, and the four things nothing checks
+40. [CMake for the Plug-in](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in) — a MODULE with one exported symbol, an SDK that ships no config package, and the build decisions Chapter 26 never had to make
 
 **[Appendices](A-fundamentals-refresher.md#appendices)**
 

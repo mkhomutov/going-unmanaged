@@ -185,5 +185,5 @@ The finished surface is `exercises/interoplab/` — write your own first, in a d
 ---
 
 <!-- nav:begin -->
-[← Chapter 38 — The Bridge Out](38-the-bridge-out.md) · [Contents](README.md) · [Appendix A — Fundamentals Refresher →](A-fundamentals-refresher.md)
+[← Chapter 38 — The Bridge Out](38-the-bridge-out.md) · [Contents](README.md) · [Chapter 40 — CMake for the Plug-in →](40-cmake-for-the-plug-in.md)
 <!-- nav:end -->
