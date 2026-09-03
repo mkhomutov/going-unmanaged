@@ -10,6 +10,40 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [Unreleased]
+
+Six topics a reader asked the book about, read against every page and
+found either absent or scattered. This is the first of a series of small
+additions that close them; each appends, and no number moves.
+
+### Added
+
+- **Chapter 10** gains `std::variant` — the tagged union with the compiler on
+  your side, against both the C `kind`-plus-`union` of vendor event structs
+  and the class hierarchy a C# developer would write — and a table of what
+  `std::optional` is *not* (no `optional<T&>`, no `?.`, and `*` on an empty
+  one is quiet undefined behaviour), plus a paragraph on `decltype` beside
+  `auto`.
+- **Chapter 6** gains *Value categories in one table*: lvalue, prvalue and
+  xvalue, the binding table for `T&`/`const T&`/`T&&`, and four traps that
+  compile clean — the named rvalue reference that is an lvalue, `std::move`
+  on a const object, `return std::move(local)`, and lifetime extension
+  through a member but not through a call. Two of the four are priced by
+  `exercises/choosing/passing.cpp`, quoted by excerpt and pinned by
+  `check_verbatim.sh`.
+- **Appendix H**, procedure 4, gains the branch that is not a box: a closed
+  set of unrelated types is a `vector<variant<...>>`, asserted by
+  `exercises/choosing/storing.cpp`.
+- **Appendix F**: Recipe 18 (find an element, an index, or a substring —
+  the three spellings of "not found"), Recipe 19 (a value that may be
+  absent), Recipe 20 (switch on the kind of a message, with the
+  `overloaded` idiom). `exercises/cookbook/maybe.cpp` is new.
+- **Chapter 1** names custom deleters and `enable_shared_from_this`;
+  **Chapter 11** the algorithm-versus-member `find` trap; **Chapter 14** a
+  fourth Tracer experiment (a const source moves as a copy); **Appendix I**
+  `cbegin` and `std::as_const`; **Appendix E** entries for decltype,
+  ownership, variant and xvalue; **Appendix B** two new principles.
+
 ## [0.8.0] — 2026-09-03
 
 The release the readers asked for. Every previous version was steered by the

@@ -210,6 +210,7 @@ Now the two halves meet: the container from procedure 1, holding what.
 ```mermaid
 flowchart LR
     E{"Is there a reason<br/>NOT to store by value?"} -- "no reason" --> VAL2["vector&lt;T&gt; — the default"]
+    E -- "a closed set of<br/>unrelated types" --> VAR["vector&lt;variant&lt;A, B&gt;&gt;<br/>— still by value, no base"]
     E -- "it is a polymorphic base" --> UP1["vector&lt;unique_ptr&lt;Base&gt;&gt;"]
     E -- "addresses must hold still" --> UP2["vector&lt;unique_ptr&lt;T&gt;&gt;,<br/>or a node-based container"]
     E -- "moving it is expensive" --> UP2
@@ -260,6 +261,25 @@ void BoxedElementsStandStillWhenTheVectorGrows() {
 
 3. **Cost of moving.** Reallocation move-constructs every element. Eight elements in a `vector<Counted>` cost **eight moves** on growth, while the same eight behind `unique_ptr` cost **zero** — only pointers were shuffled. For cheap-to-move types that is noise; for expensive or immovable ones it is the deciding number.
 
+**And one answer that is not a box.** The first reason above assumes the alternatives share a base. When they do not — a closed set of unrelated types you own, the events a device sends or the states of a small machine — the C# reflex is to invent the base so the list can hold them, and the C++ answer is `std::variant` ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)): the element *is* the variant, stored by value, and there is no base for anything to be sliced to.
+
+```cpp
+void AClosedSetStoresByValueWithoutABase() {
+    std::vector<std::variant<Tri, Quad>> shapes;
+    shapes.emplace_back(Tri{});
+    shapes.emplace_back(Quad{});
+    int total = 0;
+    for (const auto& s : shapes) {
+        total += std::visit([](const auto& shape) { return shape.Sides(); }, s);
+    }
+    CHECK(total == 7);                          // 3 + 4: each kept its identity, unboxed
+    CHECK(std::holds_alternative<Tri>(shapes[0]));
+    CHECK(sizeof(shapes[0]) <= sizeof(Quad) + sizeof(std::size_t));   // the value, plus a tag
+}
+```
+
+The set has to be closed, and that is the whole cost: adding a fourth alternative is a change to the type, and every `visit` that forgets it stops compiling — which is the feature. A set someone else extends stays a virtual base behind `unique_ptr`.
+
 And the default remains `vector<T>`, by value. Boxing every element is the reflex C# installed — a `List<Widget>` really is a list of pointers to scattered heap objects — and importing it wholesale gives up the contiguity that made you choose C++ ([Chapter 2](02-value-semantics.md#chapter-2--value-semantics)'s "a million points is one solid block"). Box for a reason from the list above, and write the reason down.
 
 **A note on `shared_ptr`.** [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)'s rule stands here: `unique_ptr` unless you can explain why. A container of `shared_ptr` usually means the design has not decided who owns the elements, and "the container and also somebody else" is a decision, not an absence of one. The book recommends it without hesitation exactly once — [Chapter 29](29-concurrency.md#chapter-29--concurrency)'s callback holder, where a `weak_ptr` on the other side asks "is this still alive?" — and that is the shape to hold it to.
@@ -294,7 +314,7 @@ If a future toolchain makes one of these claims false, the build fails rather th
 - **Container:** `vector` until a keyed lookup, an ordering, a stable address, or front insertion says otherwise; `array` when the size is a compile-time constant.
 - **Parameter:** polymorphic base? `unique_ptr<Base>` if kept, `const Base&` if only read. Otherwise: does it keep a copy? Sink by value and move. Otherwise borrow with `const&` — a view for read-only buffers, `T&` only to modify.
 - **Return:** by value, always, including collections; `unique_ptr<Base>` for a polymorphic object; `optional` if it can find nothing ([Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes) decides which); document the term if you hand back a view.
-- **Element:** by value, unless slicing, address stability, or move cost makes you box it — and then say which.
+- **Element:** by value, unless slicing, address stability, or move cost makes you box it — and then say which; a closed set of unrelated types is a `variant`, still by value.
 
 <!-- nav:begin -->
 [← Appendix G — The Bridge Catalogue](G-the-bridge-catalogue.md) · [Contents](README.md) · [Appendix I — Const-Correctness →](I-const.md)

@@ -6,7 +6,13 @@
 // commit (the cookbook discipline), and scripts/check_verbatim.sh checks
 // that pairing in BOTH directions - every cpp fence on the page must be in
 // this directory, and each function named above must be on the page, whole.
-// Everything else here, main() included, appears in no listing.
+//
+// Three more units are quoted by Chapter 6's "Value categories in one
+// table", forward direction only (the chapter's other listings are its
+// own): `MakeNamedMoved`, `MovingFromAConstObjectCopies` and
+// `ReturnStdMoveCostsTheMoveElisionRemoved`. Same rule: edit both sides in
+// the same commit. Everything else here, main() included, appears in no
+// listing.
 #include <cstdio>
 #include <cstdlib>
 #include <new>
@@ -70,6 +76,24 @@ Counted MakeNamed() {
     Counted local("named");
     return local;
 }
+
+// ---- Chapter 6: value categories, priced -----------------------------------
+// return std::move(local) casts a candidate for NRVO into a plain rvalue:
+// the compiler may no longer build `local` in the caller's storage, so the
+// move it would have elided now always happens. clang and GCC both say so
+// (-Wpessimizing-move, in -Wall); the pragma exists because this file's job
+// is to measure the thing the warning is about.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpessimizing-move"
+#endif
+Counted MakeNamedMoved() {
+    Counted local("named");
+    return std::move(local);             // the pessimizing move
+}
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 // Every cell of the appendix's cost table, including the const& column,
 // whose lower two rows the table claims and no earlier version measured.
@@ -191,6 +215,32 @@ void ReturningCostsNoCopy() {
     }
 }
 
+// A const object cannot be stolen from. std::move casts it to const&&, and
+// nothing a class writes takes const&& - so overload resolution falls back
+// to the copy constructor. No warning, no error: one silent copy, and the
+// source untouched.
+void MovingFromAConstObjectCopies() {
+    const Counted keep("const");
+    ResetTally();
+    Counted taken = std::move(keep);     // reads as a move, is a copy
+    CHECK(Tally().copies == 1);
+    CHECK(Tally().moves  == 0);
+    CHECK(keep.Payload().size() > 0);    // nothing was taken from it
+    (void)taken;
+}
+
+// The move that elision would have removed, measured on both build passes:
+// ReturningCostsNoCopy allows MakeNamed zero or one move, because NRVO is
+// permitted; MakeNamedMoved is always exactly one, because the cast forbade
+// it. -fno-elide-constructors changes the first and not the second.
+void ReturnStdMoveCostsTheMoveElisionRemoved() {
+    ResetTally();
+    Counted c = MakeNamedMoved();
+    CHECK(Tally().copies == 0);
+    CHECK(Tally().moves  == 1);          // always one: NRVO was cast away
+    (void)c;
+}
+
 void ReturningAVectorCopiesNoElement() {
     ResetTally();
     std::vector<Counted> v = [] {
@@ -210,6 +260,8 @@ int main() {
     BorrowingCostsNothing();
     TheMissingAmpersandCostsNCopies();
     ReturningCostsNoCopy();
+    MovingFromAConstObjectCopies();
+    ReturnStdMoveCostsTheMoveElisionRemoved();
     ReturningAVectorCopiesNoElement();
 
     if (Failures() != 0) {

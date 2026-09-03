@@ -71,6 +71,66 @@ Returning containers by value is cheap for a *separate* reason, and the two are 
 
 **One `&&` that is not this one.** Everything above is `&&` on a *concrete* type, and it means what it says: this binds only to things you may steal from. In one narrow place the same characters are a different feature — a function template's own parameter, with `T` deduced from that very argument. `template <class T> void f(T&& x)` is a **forwarding reference**: it binds to lvalues and rvalues alike, `T` is deduced differently for each, and the way you pass it onward is `std::forward<T>(x)`, not `std::move(x)` — which is how `std::make_unique` and `emplace_back` hand your arguments through untouched. Narrow means narrow: a member of a class template, a `const T&&`, a `std::vector<T>&&`, or an explicit `f<int>(x)` are plain rvalue references again, exactly like everything above. You will meet the feature long before you have reason to write it. The thing to carry out of this chapter is only that the two are spelled identically and are not the same thing, so a rule you learned about `Buffer&&` does not automatically hold for `T&&`; cppreference's *forwarding references* page is the short version on the day you need it.
 
+### Value categories in one table
+
+Every expression in C++ has a *value category*, and the overload pair above is chosen by it. C# never asked you: every expression there is a reference or a copy, and the runtime keeps the object alive either way. Here the category decides whether an object may be stolen from, and three words carry the whole story:
+
+- An **lvalue** has a name, or an address you could keep — `x`, `v[3]`, `*p`, a function returning a reference. Nobody may steal from it, because somebody may still be looking.
+- A **prvalue** is a temporary being made — `Buffer(n)`, `MakeBuffer()`, `a + b`. Since C++17 it is not even an object yet, which is what mandatory elision means.
+- An **xvalue** is an lvalue that has been marked expiring — the result of `std::move(x)`. Same object, permission granted.
+
+(The two groupings cppreference uses: *glvalue* is lvalue-or-xvalue, "has identity"; *rvalue* is prvalue-or-xvalue, "may be moved from".)
+
+What binds to what — the table the chapter rests on:
+
+| Parameter | an lvalue | a temporary, or `std::move(x)` | a **const** lvalue or temporary |
+|---|---|---|---|
+| `T&` | yes | no | no |
+| `const T&` | yes | yes — and a temporary lives as long as the reference | yes |
+| `T&&` | no | yes | **no** |
+| `const T&&` | no | yes | yes — and nobody writes one, so this column lands in the copy constructor |
+
+Four traps fall straight out of that table, and every one of them compiles clean:
+
+1. **A named rvalue reference is an lvalue.** Inside `Buffer(Buffer&& other)`, `other` has a name — so `data_(other.data_)` copies, and the move constructor must write `std::move(other.data_)` or it is Finding 1 of Chapter 25's copy-shaped move. Every move operation in this book spells it that way for this reason.
+2. **`std::move` on a const object copies.** It casts to `const Buffer&&`, the last column: no move constructor takes that, the copy constructor does, and clang under this book's flags says nothing about it. `exercises/choosing/` prices it:
+
+```cpp
+void MovingFromAConstObjectCopies() {
+    const Counted keep("const");
+    ResetTally();
+    Counted taken = std::move(keep);     // reads as a move, is a copy
+    CHECK(Tally().copies == 1);
+    CHECK(Tally().moves  == 0);
+    CHECK(keep.Payload().size() > 0);    // nothing was taken from it
+    (void)taken;
+}
+```
+
+3. **`return std::move(local);` costs the move that elision would have removed.** A plain `return local;` is eligible for NRVO (Chapter 14 watches it happen); the cast turns the operand into an xvalue the compiler may not elide. `-Wall` on clang and GCC names it, `-Wpessimizing-move`, and the lab measures exactly one move on both of its build passes:
+
+```cpp
+Counted MakeNamedMoved() {
+    Counted local("named");
+    return std::move(local);             // the pessimizing move
+}
+```
+
+```cpp
+void ReturnStdMoveCostsTheMoveElisionRemoved() {
+    ResetTally();
+    Counted c = MakeNamedMoved();
+    CHECK(Tally().copies == 0);
+    CHECK(Tally().moves  == 1);          // always one: NRVO was cast away
+    (void)c;
+}
+```
+
+4. **`const T&` extends a temporary's life — through a member, not through a call.** `const std::string& s = MakeWidget().name;` keeps the whole Widget alive for as long as `s` exists; `const std::string& s = MakeWidget().Name();` binds to a reference *returned by* a function, the Widget dies at the semicolon, and AddressSanitizer reports a `stack-use-after-scope` on the next read. Chapter 10's dangling `string_view` is the same rule with a view in place of the reference.
+
+> [!TIP]
+> **Key principle:** "A named rvalue reference is an lvalue and a const object cannot be stolen from — so I write std::move inside every move operation, never around a return, and never expect it to move a const."
+
 ### The canonical exercise: Rule of Five for a raw buffer
 
 Learn this shape cold:

@@ -117,9 +117,10 @@ Chapter 25's Finding 10.
   `../fakedevice/`'s vendor code rather than copying it; the reference solution
   is `solutions/device_threaded_solution.cpp`
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
-  (files, strings, timing, handles, lookups, paths, async, events, logging),
-  each with a `main()` asserting what its recipes claim; build_all.sh builds
-  and runs all nine. Same sync
+  (files, strings, timing, handles, lookups, paths, async, events, logging,
+  maybe — the last holds optional and variant), each with a `main()`
+  asserting what its recipes claim; build_all.sh builds and runs all ten.
+  Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
   same commit (the mains are scaffolding and appear in no listing)
@@ -249,7 +250,9 @@ Chapter 25's Finding 10.
   `exercises/bridgelab/`, and Appendix H is held to `exercises/choosing/`
   both ways (every fence on the page is in that directory, and every unit
   the lab's banners name is on the page whole — that lab has no TASK card
-  to carry the reverse the way bridgelab's does) — plus one pairing whose
+  to carry the reverse the way bridgelab's does), and Chapter 6 quotes three
+  of that lab's units by excerpt, forward only, pinned by opening line (its
+  other fences are teaching sketches) — plus one pairing whose
   code half is not a file under `exercises/` at all: Chapter 27's two ODR
   headers are an ill-formed program that no harness may commit, so
   `check_platform_claims.sh` generates them into a temp directory and

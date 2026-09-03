@@ -1,7 +1,8 @@
 // Appendix H, procedures 1 and 4 - which container, and what goes in it.
 //
-// Quoted in Appendix H, whole and by name: `GrowthRelocatesAndMovesEveryElement`
-// and `BoxedElementsStandStillWhenTheVectorGrows`. Editing one means editing
+// Quoted in Appendix H, whole and by name: `GrowthRelocatesAndMovesEveryElement`,
+// `BoxedElementsStandStillWhenTheVectorGrows` and
+// `AClosedSetStoresByValueWithoutABase`. Editing one means editing
 // Appendix H in the same commit (the cookbook discipline), and
 // scripts/check_verbatim.sh checks that pairing in BOTH directions - every
 // cpp fence on the page must be in this directory, and each function named
@@ -19,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 #include "counted.h"
@@ -40,6 +42,11 @@ class Square : public Shape {
 public:
     int Sides() const override { return 4; }
 };
+
+// Two shapes with NO common base at all, for the branch of procedure 4 that
+// is not a pointer: unrelated types, a closed set, nothing to slice to.
+struct Tri  { int Sides() const { return 3; } };
+struct Quad { int Sides() const { return 4; } };
 
 // The address of a container's block, as an INTEGER. Taken before a
 // reallocation and compared after it, which is the whole experiment - and
@@ -167,6 +174,22 @@ void StoringByValueSlicesAPolymorphicBase() {
     CHECK(total == 7);                          // 3 + 4: each kept its own identity
 }
 
+// The answer to procedure 4 that is not a box. A closed set of unrelated
+// alternatives needs no base class and no unique_ptr: the variant is the
+// element, stored by value, and there is no base for a Tri to be sliced to.
+void AClosedSetStoresByValueWithoutABase() {
+    std::vector<std::variant<Tri, Quad>> shapes;
+    shapes.emplace_back(Tri{});
+    shapes.emplace_back(Quad{});
+    int total = 0;
+    for (const auto& s : shapes) {
+        total += std::visit([](const auto& shape) { return shape.Sides(); }, s);
+    }
+    CHECK(total == 7);                          // 3 + 4: each kept its identity, unboxed
+    CHECK(std::holds_alternative<Tri>(shapes[0]));
+    CHECK(sizeof(shapes[0]) <= sizeof(Quad) + sizeof(std::size_t));   // the value, plus a tag
+}
+
 int main() {
     GrowthRelocatesAndMovesEveryElement();
     BoxedElementsStandStillWhenTheVectorGrows();
@@ -174,6 +197,7 @@ int main() {
     NodeBasedContainersNeverMoveAnElement();
     ReferencesSurviveWhereIteratorsDoNot();
     StoringByValueSlicesAPolymorphicBase();
+    AClosedSetStoresByValueWithoutABase();
 
     if (Failures() != 0) {
         std::printf("choosing/storing: %d FAILED check(s)\n", Failures());

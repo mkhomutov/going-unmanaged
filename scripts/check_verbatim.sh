@@ -29,6 +29,8 @@
 #                    bridgelab's does; and Appendix G must hold NO cpp fence at
 #                    all - its recorded shape is lookup material with no
 #                    C++ listings (ROADMAP item 16's delivered note)
+#   3b. excerpts   - Chapter 6 quotes three units of exercises/choosing/
+#                    by excerpt, forward only, pinned by opening line
 #   4. generated   - a listing the book quotes that no lab commits, because
 #                    the code half is a script that writes it to a temp
 #                    directory: Chapter 27's ODR headers, generated and
@@ -210,6 +212,7 @@ H_UNITS = [
     ('exercises/choosing/passing.cpp',  'void ReturningCostsNoCopy()'),
     ('exercises/choosing/storing.cpp',  'void GrowthRelocatesAndMovesEveryElement()'),
     ('exercises/choosing/storing.cpp',  'void BoxedElementsStandStillWhenTheVectorGrows()'),
+    ('exercises/choosing/storing.cpp',  'void AClosedSetStoresByValueWithoutABase()'),
 ]
 h_page = open('book/H-choosing.md').read()
 for path, opening in H_UNITS:
@@ -218,6 +221,31 @@ for path, opening in H_UNITS:
         failures.append(f"{path}: no unit starting {opening!r} (check_verbatim's own list is stale)")
     elif unit not in h_page:
         failures.append(f"{path}: {opening!r} is not quoted whole in book/H-choosing.md")
+
+# Chapter 6 quotes three units of exercises/choosing/passing.cpp by excerpt -
+# the value-category traps, priced - and its other fences are teaching
+# sketches with no code half, so the pairing is forward only and pinned by
+# opening line: each named fence must be byte-identical to something the
+# lab compiles. The reverse is carried by the lab file's banner naming
+# them, the same way Appendix H's units are named there.
+EXCERPTS = [
+    ('book/06-the-rule-of-five-and-move-semantics.md', 'exercises/choosing/*.cpp',
+     ('void MovingFromAConstObjectCopies()',
+      'Counted MakeNamedMoved()',
+      'void ReturnStdMoveCostsTheMoveElisionRemoved()')),
+]
+excerpt_pairs = 0
+for chapter, pattern, openings in EXCERPTS:
+    sources = ''.join(open(p).read() for p in sorted(glob.glob(pattern)))
+    by_first = {b.strip().split('\n')[0]: b for b in cpp_fences(chapter)}
+    for opening in openings:
+        excerpt_pairs += 1
+        block = next((b for first, b in by_first.items() if first.startswith(opening)), None)
+        if block is None:
+            failures.append(f"{chapter}: no cpp fence starting {opening!r} "
+                            "(check_verbatim's own list is stale)")
+        elif block.rstrip('\n') not in sources:
+            failures.append(f"{chapter}: the {opening!r} listing is not verbatim in {pattern}")
 
 # Chapter 27's ODR diamond has no lab file to point at. It is an ill-formed
 # program whose FAILURE is the lesson, so it is generated into a temp directory
@@ -264,5 +292,5 @@ print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
       f"{len(f_blocks)} cookbook fences, {len(TICKETS)} cards, "
       f"{len(ch38_fences)} ch38 fences, {len(ch39_fences)} ch39 fences, "
       f"{len(h_fences)} appH fences + "
-      f"{len(H_UNITS)} appH units, {gen_pairs} generated, G cpp-free)")
+      f"{len(H_UNITS)} appH units, {excerpt_pairs} ch6 excerpts, {gen_pairs} generated, G cpp-free)")
 PYEOF

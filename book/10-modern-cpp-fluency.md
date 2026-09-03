@@ -18,6 +18,8 @@ const auto& name = GetName();    // the read-only idiom
 > [!WARNING]
 > **Trap:** auto strips references: `auto w = widgets[0]` is a copy. Muscle memory: `const auto&` for reading, `auto&` for modifying, plain `auto` only when you want a copy.
 
+`auto` has a sibling you will read long before you write it: **`decltype(expr)`** is "the type this expression has", answered by the compiler and never at runtime — C# has no counterpart, since `typeof` hands you a runtime object and `var` is only the `auto` half. Two spellings cover almost every sighting. `using SetCallback = decltype(&Device_SetCallback);` names a vendor function-pointer type without retyping its signature, so it cannot drift from the header; and `decltype(auto)` in library forwarding code means "whatever this returns, reference and all", which you may skip over. Chapter 38's queue uses the library form, `std::invoke_result_t<F>`, which is `decltype` of a call with the plumbing hidden.
+
 ### Lambdas — capture is explicit (no GC to keep captures alive)
 
 ```cpp
@@ -65,6 +67,46 @@ auto w2 = FindByName("x").value_or(Widget{});  // ?? equivalent
 
 > [!TIP]
 > **Key principle:** "A function that can fail to produce a value returns optional\<T\>, not a null pointer or a magic value like -1."
+
+What `optional` is *not*, because each row is a place the `T?` reflex misfires:
+
+| In C# | In C++ | What is missing |
+|---|---|---|
+| `Widget? w` — a nullable *reference* | `const Widget*`, or `std::reference_wrapper` | `std::optional<T&>` does not exist; the compiler refuses it outright |
+| `w?.Name` | `if (w) Use(w->Name)` | no null-propagating call in C++17 — and `w->Name` on an empty optional is not a null-reference exception |
+| `w = null` | `w = std::nullopt`, or `w.reset()` | — |
+| `bool?` | a small `enum class` | `optional<bool>` compiles and reads as three-state nothing |
+
+The second row is the one to carry. `*` and `->` on an empty `optional` are Chapter 3's quiet undefined behaviour: the value reads as garbage, the program carries on, and this book's sanitizer flags say nothing about it (a hardened standard library, Chapter 13, is what traps it). Check first, or call `value()`, which throws `bad_optional_access` and is the one spelling that fails loudly. C++23 adds `and_then` and `transform`, the `?.` chain; until your toolchain has them, Recipe 19 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) is the by-hand form.
+
+### std::variant — the tagged union with the compiler on your side
+
+C# has no closed sum type. When a value is "one of these three things" you write a small class hierarchy and pattern-match on it — `switch (e) { case Fault f: ... }` — and the runtime carries the real type for you. C++ has that too (Chapter 5), and it also has the older spelling you will read in every vendor event struct: a `kind` field next to a `union`, with nothing checking that the tag and the payload agree. `std::variant` is that union with the tag enforced.
+
+```cpp
+struct Temperature { int centi; };
+struct Fault       { int code; };
+struct Heartbeat   {};
+using Event = std::variant<Temperature, Fault, Heartbeat>;   // exactly one of these
+
+Event e = Fault{7};
+if (auto* f = std::get_if<Fault>(&e)) Alarm(f->code);       // the 'as' test: nullptr if not
+std::holds_alternative<Fault>(e);                            // the 'is' test
+std::get<Temperature>(e);                                    // throws bad_variant_access - never garbage
+
+std::visit(overloaded{                                       // the switch: one lambda per alternative
+    [](const Temperature& t) { Plot(t.centi); },
+    [](const Fault& f)       { Alarm(f.code); },
+    [](Heartbeat)            { Tick(); },
+}, e);
+```
+
+`overloaded` is a two-line idiom that turns a handful of lambdas into one callable; C++17 does not ship it, every codebase has one, and Recipe 20 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) spells it out. `std::monostate` is the "not yet set" alternative for a variant that must be default-constructible. And the property the C `union` never had: leave one alternative out of the `visit` and the program does not compile — libc++ says so in as many words, *`std::visit` requires the visitor to be exhaustive*. A `switch` on a `kind` field with a missing `case` compiles and falls through.
+
+When to reach for which. A **closed** set of unrelated types that you own — the events a device sends, the result of a parse, the states of a small machine — is a variant: stored by value, no base class, no heap, nothing to slice ([Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s procedure 4 has this branch). An **open** set that someone else extends — plug-ins, a Shape hierarchy a customer subclasses — is a virtual base behind `unique_ptr` (Chapter 5), because a variant's list of alternatives is fixed at the point it is spelled. `std::any` exists too, as the `object` box; it is almost never what you want, and reaching for it usually means the set was closed and nobody wrote it down.
+
+> [!TIP]
+> **Key principle:** "A closed set of unrelated alternatives is a std::variant — stored by value, visited exhaustively, and the compiler refuses a visitor that forgets one; an open set someone else extends is a virtual base behind unique_ptr."
 
 ### std::string_view — non-owning view of a string
 

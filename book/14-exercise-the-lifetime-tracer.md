@@ -205,11 +205,12 @@ husk#2 destroyed  husk#1 destroyed        <- the gutted b and a, normal destruct
 
 Eleven constructions, eleven destructions — balanced books, no leaks. Destruction runs in reverse construction order within each scope — a guarantee for the *named locals*; the order of the two element lines inside the vector is the standard library's business (libstdc++ destroys front-to-back as shown here, libc++ on a Mac back-to-front, and the standard blesses both). The husks in the roll-call are visual proof of which objects were genuinely emptied.
 
-### Three experiments to run
+### Four experiments to run
 
 1. **Delete `noexcept`** from the move constructor. The reallocation line flips from move to copy — vector's exception-safety rule, observed live.
 2. **Add `v.reserve(4);`** before the push_backs. The entire reallocation block vanishes — no growth, no transfer.
 3. **Add `Tracer x("x"); x = x;`** — self-copy-assignment. The copy assignment here has no self-check and survives only because `std::string::operator=` tolerates it. Ask yourself what happens when the member is a raw pointer: that question is the doorway to the Buffer worked example in Chapter 15.
+4. **Make `a` const** — `const Tracer a("a");` — and watch the third line of the singles section. `Tracer c = std::move(a);` now prints `copy-CONSTRUCTED`, and `a` never becomes a husk: the cast asked for a steal, the const forbade it, and the copy constructor answered without a word from the compiler. Chapter 6's value-category table is the reason, and the trap it names second.
 
 ---
 
