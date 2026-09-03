@@ -38,9 +38,9 @@ while [ $# -gt 0 ]; do
 done
 
 # Prefer clang++: almost every claim below is about a compiler-rt runtime, and
-# the book's transcripts are clang's. (Sections 5 and 6 are the exceptions -
-# 5's first two claims are about the linker, 6's about the standard library,
-# and both report what they observed either way.) Fall back to whatever c++
+# the book's transcripts are clang's. (Sections 5, 6 and 7 are the exceptions
+# - 5's first two claims and all of 7's are about the linker, 6's about the
+# standard library, and each reports what it observed either way.) Fall back to whatever c++
 # is, which is what a reader following the chapters would have typed.
 if [ -n "${CXX:-}" ]; then :
 elif command -v clang++ >/dev/null 2>&1; then CXX=clang++
@@ -454,6 +454,114 @@ else
     skip "cannot compile the null-string demonstration with $CXX"
 fi
 
+# --- 7. a macro that changes a layout in one TU only -------------------------
+# Chapter 26's compile-time-switches section: Chapter 27's diamond with a
+# preprocessor define for a cause. session.h is quoted in the chapter and
+# pinned to this heredoc by check_verbatim.sh. Three claims: both link orders
+# link silently, the two orders disagree at -O0, and - unlike Chapter 27 -
+# NEITHER order is caught by the sanitizers, because in THIS program the
+# object is built in the larger layout, so every read is inside it (see (c)).
+# Like section 5, these are linker claims and hold on every platform alike.
+echo "== macro odr =="
+cat > "$OUT/session.h" <<'EOF'
+// session.h
+#pragma once
+struct Session {
+    int id;
+#ifdef AUDIT
+    int audit_count;     // present only where AUDIT is defined
+#endif
+    int timeout;
+};
+inline int GetTimeout(const Session& s) { return s.timeout; }
+EOF
+cat > "$OUT/audit_lib.cpp" <<'EOF'
+// compiled WITHOUT -DAUDIT: an 8-byte Session
+#include "session.h"
+int LibTimeout(const Session& s) { return GetTimeout(s); }
+EOF
+cat > "$OUT/audit_main.cpp" <<'EOF'
+// compiled WITH -DAUDIT: a 12-byte Session
+#include "session.h"
+#include <cstdio>
+int LibTimeout(const Session& s);
+int main() {
+    Session s{};
+    s.id = 7;
+    s.timeout = 30;                 // audit_count stays 0
+    std::printf("main sees: %d\n", GetTimeout(s));
+    std::printf("lib  sees: %d\n", LibTimeout(s));
+    return 0;
+}
+EOF
+MACRO_OK=1
+$CXX -std=c++17 -g -O0 -I"$OUT" -c "$OUT/audit_lib.cpp" -o "$OUT/audit_lib.o" 2>/dev/null || MACRO_OK=0
+$CXX -std=c++17 -g -O0 -I"$OUT" -DAUDIT -c "$OUT/audit_main.cpp" -o "$OUT/audit_main.o" 2>/dev/null || MACRO_OK=0
+if [ "$MACRO_OK" = 0 ]; then
+    skip "cannot compile the macro-ODR demonstration with $CXX"
+else
+    # (a) both orders link silently
+    MLINK=1
+    $CXX "$OUT/audit_lib.o" "$OUT/audit_main.o" -o "$OUT/macro_libfirst"  > "$OUT/macro_link_a.log" 2>&1 || MLINK=0
+    $CXX "$OUT/audit_main.o" "$OUT/audit_lib.o" -o "$OUT/macro_mainfirst" > "$OUT/macro_link_b.log" 2>&1 || MLINK=0
+    if [ "$MLINK" = 0 ]; then
+        fail "a link order failed to link at all   [Ch 26]"
+        for order in a b; do
+            if [ -s "$OUT/macro_link_$order.log" ]; then
+                echo "       (order $order)"
+                sed 's/^/       /' "$OUT/macro_link_$order.log"
+            fi
+        done
+    elif grep -qiE "odr|duplicate symbol|multiple definition" "$OUT/macro_link_a.log" "$OUT/macro_link_b.log"; then
+        fail "the linker diagnosed it; Ch 26 says it says nothing   [Ch 26]"
+    else
+        pass "both link orders linked silently, exit 0   [Ch 26]"
+    fi
+    # (b) the two orders disagree about what main reads
+    if [ -x "$OUT/macro_libfirst" ] && [ -x "$OUT/macro_mainfirst" ]; then
+        RC_A=$(run_rc "$OUT/macro_libfirst"  "$OUT/macro_run_a.log")
+        RC_B=$(run_rc "$OUT/macro_mainfirst" "$OUT/macro_run_b.log")
+        A=$(sed -n 's/^main sees: //p' "$OUT/macro_run_a.log")
+        B=$(sed -n 's/^main sees: //p' "$OUT/macro_run_b.log")
+        if [ "$RC_A" != 0 ] || [ "$RC_B" != 0 ]; then
+            fail "a demo exited nonzero ($RC_A and $RC_B); Ch 26 says both run to completion   [Ch 26]"
+        elif [ -z "$A" ] || [ -z "$B" ]; then
+            skip "the macro-ODR demonstration printed nothing to compare"
+        elif [ "$A" != "$B" ]; then
+            pass "the orders disagree: main saw $A then $B, same source   [Ch 26]"
+        else
+            fail "both orders printed $A; this linker does not pick by order, so Ch 26's transcript is toolchain-specific   [Ch 26]"
+        fi
+    else
+        skip "the link produced no binaries, so the two orders cannot be compared"
+    fi
+    # (c) under the canonical flags, NEITHER order is caught - a claim about
+    # THIS program, and the chapter says so: main.cpp, which builds the
+    # object, is the -DAUDIT (larger) translation unit on purpose, so every
+    # read lands inside it. Build the object in the smaller layout and the
+    # larger layout's reader overreads, which ASan does catch - Chapter 27's
+    # asymmetry. What is asserted is the silence the chapter's listing
+    # produces, not a property of the bug class.
+    if $CXX -std=c++17 -g -O0 -fsanitize=address,undefined -I"$OUT" \
+            -c "$OUT/audit_lib.cpp" -o "$OUT/san_audit_lib.o" 2>/dev/null \
+       && $CXX -std=c++17 -g -O0 -fsanitize=address,undefined -I"$OUT" -DAUDIT \
+            -c "$OUT/audit_main.cpp" -o "$OUT/san_audit_main.o" 2>/dev/null \
+       && $CXX -fsanitize=address,undefined \
+            "$OUT/san_audit_lib.o" "$OUT/san_audit_main.o" -o "$OUT/san_macro_a" 2>/dev/null \
+       && $CXX -fsanitize=address,undefined \
+            "$OUT/san_audit_main.o" "$OUT/san_audit_lib.o" -o "$OUT/san_macro_b" 2>/dev/null; then
+        RC_SA=$(run_rc "$OUT/san_macro_a" "$OUT/san_macro_a.log")
+        RC_SB=$(run_rc "$OUT/san_macro_b" "$OUT/san_macro_b.log")
+        if [ "$RC_SA" = 0 ] && [ "$RC_SB" = 0 ]; then
+            pass "neither order caught: every read was in bounds, both exited 0   [Ch 26]"
+        else
+            fail "a sanitizer caught an order ($RC_SA and $RC_SB); Ch 26 says neither is caught   [Ch 26]"
+        fi
+    else
+        skip "sanitizers cannot build the macro-ODR demonstration with $CXX"
+    fi
+fi
+
 echo
 if [ "$FAILED" = 0 ]; then
     echo "platform claims OK ($OS/$ARCH, $STDLIB)"
@@ -462,8 +570,8 @@ else
     echo "  $OS/$ARCH with $CXX. Fix the chapter, not this script - each FAIL" >&2
     echo "  above names the claim. Sections 1-4 are per-platform, where the" >&2
     echo "  mistake is one platform's behavior written down as the rule;" >&2
-    echo "  section 5's linker claims hold everywhere alike, so a failure" >&2
-    echo "  there means this toolchain differs from the chapter's transcript;" >&2
+    echo "  sections 5 and 7 are linker claims that hold everywhere alike, so a" >&2
+    echo "  failure there means this toolchain differs from the chapter's transcript;" >&2
     echo "  section 6 is per standard library, keyed by the library's macro." >&2
     exit 1
 fi

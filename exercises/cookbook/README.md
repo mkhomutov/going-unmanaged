@@ -14,7 +14,7 @@ Cookbook*), one translation unit per domain —
 | `paths.cpp` | 10–12 — combine, the exists pair, listing |
 | `async.cpp` | 13 — run work on another thread and wait for it |
 | `events.cpp` | 14 — expose an event |
-| `logging.cpp` | 15 — print a diagnostic you will actually see |
+| `logging.cpp` | 15, 24 — print a diagnostic you will actually see; compile one out of Release (built twice, once with `-DNDEBUG`) |
 | `alternatives.cpp` | 19–20 — a value that may be absent; a value that is one of several kinds |
 | `errors.cpp` | 21–22 — an exception type of your own; a value or an error, on C++17 |
 | `expected.cpp` | Chapter 8's chaining listing — `std::expected`, the one C++23 TU, built as its own probe |

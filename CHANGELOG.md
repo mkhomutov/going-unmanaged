@@ -67,6 +67,19 @@ closes the gaps; each appends, and no number moves.
   that no default flag enforces. **Appendix D**'s first-week question
   points at it; **CONTRIBUTING** records the book's own convention;
   **Appendix B** two new principles.
+- **Chapter 26** gains *Compile-time switches, and the one that must be
+  global* — the four tools in preference order, and the macro that changes
+  a struct's layout in one translation unit: a silent link, an answer that
+  depends on link order, and, unlike Chapter 27's diamond, no order the
+  sanitizers catch. `check_platform_claims.sh` holds all three claims on
+  both CI platforms, and `exercises/buildlab/` gains a `GREETER_AUDIT`
+  option whose PUBLIC reach `build_all.sh` reads back from the compile
+  database. Also *A layout that survives*: the directory tree to copy on
+  day one, with `exercises/deplab/mathlib/` as the built example.
+- **Appendix F**: Recipe 24 (compile a diagnostic out of Release — `assert`
+  as `[Conditional("DEBUG")]`, and the side effect that vanishes with it;
+  `logging.cpp` is built twice, once under `-DNDEBUG`). **Appendix B** one
+  new principle.
 - **Chapter 1** names custom deleters and `enable_shared_from_this`;
   **Chapter 11** the algorithm-versus-member `find` trap; **Chapter 14** a
   fourth Tracer experiment (a const source moves as a copy); **Appendix I**

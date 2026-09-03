@@ -43,6 +43,7 @@ One line each. If you can say these fluently and back them with code, the concep
 - "CMake doesn't build my code — it generates the thing that builds my code. Configure, then build: two steps, always."
 - "Requirements belong to targets, not to the whole project — PRIVATE for what I need, PUBLIC for what my consumers need too."
 - "I list source files, never glob them — a file joining the build should be visible in the diff."
+- "I put a define that changes a type's layout PUBLIC on the type's own target and never in a shipped header — two layouts of one struct is an ODR violation the sanitizers see only by luck."
 
 **Dependencies**
 

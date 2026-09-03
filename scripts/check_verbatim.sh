@@ -254,6 +254,10 @@ for page, path, opening in UNITS:
 GENERATED = [
     ('book/27-dependency-management.md', 'scripts/check_platform_claims.sh',
      ('// v1.h', '// v2.h')),
+    # Chapter 26's macro-ODR header, the same arrangement: an ill-formed
+    # program's one listing, generated and asserted by the same script.
+    ('book/26-build-systems-and-cmake.md', 'scripts/check_platform_claims.sh',
+     ('// session.h',)),
 ]
 gen_pairs = 0
 for chapter, script, openings in GENERATED:

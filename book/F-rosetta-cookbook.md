@@ -40,6 +40,7 @@ stays right.
 | `class ParseException : Exception` | `class ParseException extends Exception` | [Recipe 21 — Throw and catch your own exception type](#recipe-21--throw-and-catch-your-own-exception-type) |
 | `int.TryParse` with a reason / a `Result<T>` from a library | `Optional` / `Either` from a library | [Recipe 22 — Return a value or an error](#recipe-22--return-a-value-or-an-error) |
 | `string.IsNullOrEmpty` / `s ?? ""` | `s == null \|\| s.isEmpty()` | [Recipe 23 — Test for an empty string, and for no string at all](#recipe-23--test-for-an-empty-string-and-for-no-string-at-all) |
+| `[Conditional("DEBUG")]` / `#if DEBUG` | `assert` (with `-ea`) | [Recipe 24 — Compile a diagnostic out of Release](#recipe-24--compile-a-diagnostic-out-of-release) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -913,6 +914,37 @@ Needs `<string>`.
 
 > [!WARNING]
 > **Trap:** `std::string name = Thing_GetName(h);` with a null return is undefined behavior that reads like an assignment — libc++ dies inside the constructor and libstdc++ throws `std::logic_error` — and `scripts/check_platform_claims.sh` asserts both, because neither is a report you would expect from that line.
+
+### Recipe 24 — Compile a diagnostic out of Release
+
+**In C#:** `[Conditional("DEBUG")] static void CheckInvariant(...)` — or `#if DEBUG … #endif`
+
+**The recipe:**
+
+```cpp
+void check_channel_count([[maybe_unused]] int channels) {          // used only in Debug
+    assert(channels > 0 && "a session has at least one channel");   // gone under NDEBUG
+#ifndef NDEBUG
+    std::cerr << "[debug] channels=" << channels << '\n';           // and so is this block
+#endif
+}
+```
+
+**Why it looks like this.** `assert` is [Appendix E](E-glossary.md#appendix-e--glossary)'s
+`assert / NDEBUG` entry wearing `[Conditional("DEBUG")]`'s job, with two
+differences worth the paragraph. The `&& "message"` is the idiom for a
+message, since the whole expression is what the failure prints, and an
+`#ifndef NDEBUG` block is `#if DEBUG` for anything larger than one
+expression — the sign inverted, because the define means *release*. And
+unlike `[Conditional]`, which removes the *call*, the call and its argument
+evaluation survive here; only the body empties, which is why the parameter
+is `[[maybe_unused]]` (in Release nothing reads it, and `-Wextra` would say
+so) and why a macro — `#ifdef NDEBUG` / `#define CHECK_CHANNELS(x) ((void)0)`
+— is the spelling that also spares the argument. Needs `<cassert>`,
+`<iostream>`.
+
+> [!WARNING]
+> **Trap:** the expression inside `assert` vanishes with it — `assert(bump() == 1)` runs `bump()` in Debug and never in Release, and `exercises/cookbook/logging.cpp` is built both ways to prove it.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
