@@ -12,9 +12,9 @@ numbers may still move.
 
 ## [Unreleased]
 
-Six topics a reader asked the book about, read against every page and
-found either absent or scattered. This is the first of a series of small
-additions that close them; each appends, and no number moves.
+Sixteen topics a reader asked the book about, read against every page and
+found covered, scattered, or absent. This is the series of additions that
+closes the gaps; each appends, and no number moves.
 
 ### Added
 
@@ -57,14 +57,14 @@ additions that close them; each appends, and no number moves.
 - **Chapter 9** points at Recipe 23; **Appendix B** one new principle.
 - **Chapter 12** gains *What goes in the header, and what goes in the
   .cpp*: the decision table by kind of entity, `.h` versus `.hpp`, and the
-  own-header-first include order with its reason. **Chapter 23** gains an
-  eighth breakage — a header that borrows an include from its own .cpp
-  and fails in the consumer with `use of undeclared identifier 'std'`.
+  own-header-first include order with its reason (and its one exception,
+  a precompiled header). **Chapter 23**'s breakage 6 gains its second
+  half — a header that borrows an include from its own .cpp and fails
+  in the consumer with `use of undeclared identifier 'std'`.
 - **Appendix A.8**, *Naming: there is no house style, so learn to read
   three*: the standard-library, Google/LLVM and framework dialects in one
   table, the members row's three spellings, the reserved-identifier rule
-  that no default flag enforces, and which dialect this book's chapters
-  and cookbook each use, and why. **Appendix D**'s first-week question
+  that no default flag enforces. **Appendix D**'s first-week question
   points at it; **CONTRIBUTING** records the book's own convention;
   **Appendix B** two new principles.
 - **Chapter 1** names custom deleters and `enable_shared_from_this`;

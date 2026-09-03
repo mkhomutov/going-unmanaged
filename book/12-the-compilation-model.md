@@ -8,7 +8,7 @@ In C# the compiler sees the whole project at once and assemblies carry metadata.
 
 ### The pipeline
 
-1. **Preprocessor** — dumb text machine. `#include "Widget.h"` literally copy-pastes the file's contents into your source.
+1. **Preprocessor** — dumb text machine. `#include "Widget.h"` literally copy-pastes the file's contents into your source. (Quotes search next to the including file before the include path; `<string>` searches only the path — local headers in quotes, everything else in angle brackets.)
 2. **Compiler** — compiles each .cpp file completely independently into an object file (.obj/.o). Each .cpp + everything it included = one **translation unit**. The compiler has no idea other .cpp files exist.
 3. **Linker** — stitches all object files together, matching "I call function X" with "here's the body of X".
 
@@ -59,25 +59,25 @@ A thing can be *declared* many times but *defined* only once per translation uni
 
 ### What goes in the header, and what goes in the .cpp
 
-C# never asked: a type is one file, declaration and body inseparable, and `partial` exists for the day it is not. Here every entity has a place, and the table is worth memorising once, because each row's mistake fails at a different stage — Chapter 23 provokes most of them:
+C# never asked: a type is one file, declaration and body inseparable, and `partial` exists for the day it is not. Here every entity has a place, and each row's mistake fails at a different stage — Chapter 23 provokes most of them:
 
-| The thing | Where | Why |
-|---|---|---|
-| a class definition — members, method *declarations* | the header | every translation unit that uses the type needs its layout |
-| a member function body | the `.cpp`, as `void Widget::Draw() { ... }` | one definition per program, and changing it recompiles one TU rather than every includer |
-| a one-line accessor | in-class, in the header | implicitly `inline`, so many TUs may carry it — and at a binary boundary it bakes a member offset into every caller ([Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)) |
-| a template, class or function | the header, body and all | the compiler must see the source to instantiate ([Chapter 7](07-templates-vs-csharp-generics.md#chapter-7--templates-vs-c-generics)); a `.tpp` or `.inl` included at the header's foot is the same thing with a longer name |
-| a free function | declared in the header, defined once in a `.cpp` | defined in the header without `inline`, it is Chapter 23's breakage 5: `duplicate symbol` |
-| a constant | `inline constexpr` in the header (C++17) | never `#define`: typed, scoped, visible to the debugger |
-| a static data member | `inline static` in-class (C++17), or defined once in the `.cpp` | Chapter 4's annoyance, and its fix |
-| a helper nobody else calls | the `.cpp`, in an anonymous namespace | internal linkage — invisible to the linker, and no header to keep in sync |
+| The thing | Where |
+|---|---|
+| a class definition — members, method *declarations* | the header: every translation unit that uses the type needs its layout |
+| a member function body | the `.cpp`, as `void Widget::Draw() { ... }` — one definition per program, and a change recompiles one TU |
+| a one-line accessor | in-class, in the header (implicitly `inline`) — unless the class crosses a binary boundary, where an inline body bakes a member offset into every caller and [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) forbids it |
+| a template, class or function | the header, body and all ([Chapter 7](07-templates-vs-csharp-generics.md#chapter-7--templates-vs-c-generics)); a `.tpp` or `.inl` included at the header's foot is the same thing with a longer name, and Chapter 27 prices what it costs every includer |
+| a free function | declared in the header, defined once in a `.cpp`; defined in the header without `inline` it is Chapter 23's breakage 5, `multiple definition` / `duplicate symbol` |
+| a constant, or a static data member | `inline constexpr` / `inline static` in the header (C++17) — the fix for [Chapter 4](04-classes-inheritance-interfaces.md#chapter-4--classes-inheritance-interfaces)'s separate definition in the `.cpp`, which still works; never `#define` |
+| a helper nobody else calls | the `.cpp`, in an anonymous namespace: internal linkage, no header to keep in sync |
 
-`void Widget::Draw() { ... }` outside the class is not a second declaration; it is *the* definition, and the `Widget::` is the qualified name saying whose `Draw` this body belongs to.
+Two conventions ride on the table:
 
-Two conventions ride on the table. **`.h` versus `.hpp`** is house style, not language — both are pasted the same way — with one real signal: `.h` is what a header shared with C looks like, and [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s `engine.h` carries an `#ifdef __cplusplus` guard for exactly that reader; `.hpp` says "C++ only, do not try". Match the codebase. **Include order** has one rule with a reason: a `.cpp` includes its own header *first*, then project headers, then third-party, then the standard library. Own-header-first means a header that forgot an include fails in its own `.cpp`, where its author is looking, rather than in some consumer's — Chapter 23's eighth breakage is that failure moved to the wrong file. And `#include "Widget.h"` with quotes searches next to the including file before the include path, where `<string>` searches only the path: local headers in quotes, everything else in angle brackets.
+- **`.h` versus `.hpp`** is house style, not language — both are pasted the same way. The one real signal: `.h` is what a header shared with C looks like, `.hpp` says "C++ only". Match the codebase.
+- **Include order** has one rule with a reason: a `.cpp` includes its own header *first*, then project headers, then third-party, then the standard library — so a header that forgot an include fails in its own `.cpp`, where its author is looking, rather than in some consumer's. Chapter 23's breakage 6 has the failure both ways. The one exception is a precompiled header: MSVC's `/Yu` ignores everything above the `#include "pch.h"` line, so where a project has one, it goes first and your own header second.
 
 > [!TIP]
-> **Key principle:** "A header carries declarations, templates and inline bodies; everything else is defined once in a .cpp — and a .cpp includes its own header first, so a header that is not self-sufficient fails where its author is looking."
+> **Key principle:** "A header carries declarations, templates and inline bodies; everything else is defined once in a .cpp — and a .cpp includes its own header first."
 
 ### Compile errors vs linker errors — read which stage failed
 
@@ -128,15 +128,7 @@ private:
 
 Why bother: **build times** — including Widget.h means every file including Renderer.h recompiles whenever Widget.h changes; in a CAD-sized codebase header hygiene is the difference between 5-minute and 2-hour builds. And **circular dependencies** — forward declarations break A-needs-B-needs-A deadlocks. Rule: include as little as possible in headers, forward-declare where you can, include fully in .cpp files.
 
-### Two more, 30 seconds each
-
-```cpp
-namespace {                      // anonymous namespace in a .cpp:
-    int Helper() { return 42; }  // private to this translation unit
-}
-// 'inline' historically = "definition allowed in multiple translation
-// units without ODR violation" - why in-class bodies in headers are fine.
-```
+### Modules, 30 seconds
 
 C++20 **modules** (import instead of #include) fix this whole mess — but adoption is slow and virtually every SDK ecosystem is headers all the way. Know they exist; expect to live in headers.
 

@@ -342,14 +342,13 @@ everything the header exists to hide.
   every error code…") — they double as a cheat sheet. Appendix B mirrors
   them; if you add one, add it in both places in the same PR.
 - **Code style in the book:** 4 spaces, trailing-underscore members
-  (`name_`), comments explain *why*, not what. Two naming dialects, by
-  design (Appendix A.8 says so to the reader): chapter listings use
-  `PascalCase` methods, the C#-adjacent spelling most SDK samples share;
-  cookbook recipes use `snake_case`, because they stand in for
-  standard-library spellings. A lab whose class reads as a library type
-  (Chapter 32's `Logger`, Chapter 33's `Registry`) may use lowercase
-  methods. Never a leading underscore plus a capital, or a double
-  underscore, anywhere — those are reserved.
+  (`name_`), comments explain *why*, not what. Naming follows the dialects
+  Appendix A.8 documents: chapter listings spell like an SDK sample
+  (`PascalCase` methods), cookbook recipes like the standard library
+  (`snake_case`), and a class that imitates a standard type spells like the
+  thing it imitates (Chapter 35's `ThingHandle`, Chapter 38's queue).
+  Never a reserved identifier — a leading underscore plus a capital, or a
+  double underscore, anywhere.
 
 ## Versioning and numbering
 
