@@ -44,9 +44,10 @@ labs, since it asks you to publish the shapes those two taught you to consume.
 `cookbook/` and `choosing/` are the odd ones out: not exercises at all, but
 appendix listings compiled and checked by `build_all.sh` so those pages
 cannot rot — Appendix F's recipes and Appendix H's cost measurements
-respectively (each README has the sync rule, and `choosing/`'s is enforced
-in both directions — for Appendix H, and for the three units Chapter 6
-quotes). Nothing in either to attempt cold.
+respectively (each README has the sync rule, and where a chapter quotes a
+unit whole the pairing is enforced in both directions — Appendix H and
+Chapter 6 for `choosing/`, Chapter 8 for three of `cookbook/`'s). Nothing
+in either to attempt cold.
 
 Twelve directories hold their reference in the open, rather than behind a
 fold. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and

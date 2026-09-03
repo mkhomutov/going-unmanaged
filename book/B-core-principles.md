@@ -146,7 +146,7 @@ One line each. If you can say these fluently and back them with code, the concep
 - "Whether exceptions exist at all is a property of the build, not a per-function choice — I find out which dialect a codebase speaks before I write my first function in it."
 - "Throw by value, catch by const reference — catching by value slices. No finally: RAII is the finally."
 - "No exception crosses the add-on boundary — I catch at entry points and translate to error codes. Destructors never throw."
-- "I translate at the edges: inside a module I may throw, at its boundary the throw becomes a value the caller must look at, and only at the top of the program does a value become a throw again."
+- "A value becomes a throw again only at the top of the program — the one frame with nobody left to hand it to — and never in between."
 - "static_cast for conversions I can prove, dynamic_cast to query at runtime; const_cast and reinterpret_cast are code-review question marks."
 - "std::string is an encoding-unaware byte buffer — I keep it UTF-8 and convert to/from vendor strings explicitly, naming the encoding."
 - "UB means the compiler assumes it never happens — Debug-works-Release-breaks is the signature. I treat warnings as errors, run sanitizers regularly, and reach for AddressSanitizer the moment anything smells like memory corruption."

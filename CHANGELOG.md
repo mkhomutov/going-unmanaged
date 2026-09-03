@@ -43,13 +43,14 @@ additions that close them; each appends, and no number moves.
   again only at the top; a C++17 `Result<T, E>` over `std::variant`; what
   C++23's `and_then`/`transform` collapse; and three pieces of exception
   vocabulary the chapter had used without introducing (a custom exception
-  type, catch order, `exception_ptr`). The listings are Recipe 22's, held
-  whole on both pages.
+  type, catch order, `exception_ptr`). Its `Result` and `load_config` are
+  Recipe 22's, held whole on both pages; its chaining listing is the
+  cookbook's one C++23 file, `exercises/cookbook/expected.cpp`, built as
+  its own probe with `--require-expected` in CI.
 - **Appendix F**: Recipe 21 (throw and catch your own exception type),
-  Recipe 22 (return a value or an error — `optional`, a C++17 `Result`,
-  `std::expected` side by side; `exercises/cookbook/expected.cpp` is the
-  cookbook's one C++23 TU, built behind a probe with `--require-expected`
-  in CI), Recipe 23 (test for an empty string, and for no string at all —
+  Recipe 22 (return a value or an error — a C++17 `Result<T, E>` over
+  `std::variant`, with `optional` and `std::expected` as its neighbours),
+  Recipe 23 (test for an empty string, and for no string at all —
   a `std::string` cannot be null, and the null `const char*` from a C API
   is the one that can). `check_platform_claims.sh` now asserts what that
   null does under each standard library.

@@ -118,10 +118,10 @@ Chapter 25's Finding 10.
   is `solutions/device_threaded_solution.cpp`
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
   (files, strings, timing, handles, lookups, paths, async, events, logging,
-  alternatives for optional and variant, errors for a custom exception and
-  the C++17 `Result`, and expected — the one C++23 TU, built behind a probe
-  with `--require-expected` in CI), each with a `main()` asserting what its
-  recipes claim; build_all.sh builds and runs all of them. Same sync
+  alternatives, errors, expected), each with a `main()` asserting what its
+  recipes claim; build_all.sh builds and runs all twelve. `expected.cpp` is
+  the one cut by standard rather than domain — C++23, Chapter 8's chaining
+  listing, its own probe. Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
   same commit (the mains are scaffolding and appear in no listing)
@@ -324,8 +324,9 @@ with `main()` cannot be tested; duplicating it into the lab was rejected).
 Everything verifiable is wired into `build_all.sh` (still the one invariant,
 still ALL GREEN). A step needing a tool that may be missing locally (cmake now,
 TSan later) copies check_mermaid.sh: SKIPPED locally, plus a `--require-<tool>`
-flag CI passes so it can never skip there (`--require-cmake`, `--require-tsan`;
-check_mermaid.sh's own predates the pattern and is just `--required`) — and the
+flag CI passes so it can never skip there (`--require-cmake`, `--require-git`,
+`--require-tsan`, `--require-expected`; check_mermaid.sh's own predates the
+pattern and is just `--required`) — and the
 probe does the thing rather than looking for the tool, since TSan can be
 installed and still fail to start. A lab that revisits an SDK the repo already
 has links that vendor code in place (threadlab). Deliberately broken
@@ -338,7 +339,8 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 1. Every file in `solutions/` compiles clean and runs clean under
    `-std=c++17 -Wall -Wextra -fsanitize=address,undefined` (words.cpp and
-   invalid.cpp use `-std=c++20`). Run `./scripts/build_all.sh` after ANY
+   invalid.cpp use `-std=c++20`; `exercises/cookbook/expected.cpp` is the
+   one C++23 file, built as its own probe with `--require-expected` in CI). Run `./scripts/build_all.sh` after ANY
    change to code; it must print ALL GREEN.
 2. `exercises/*/Fake*.h|.cpp` are "vendor code": their public contracts are
    quoted verbatim in the book. Changing them requires updating Chapter

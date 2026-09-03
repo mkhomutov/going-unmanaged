@@ -11,7 +11,11 @@
 #
 # This script closes that gap. It runs the demonstrations and asserts what the
 # chapters promise, per platform, so a wrong claim fails a build instead of
-# waiting for a reader on the other operating system to find it.
+# waiting for a reader on the other operating system to find it. One section
+# is keyed by standard library rather than by OS - Recipe 23's null
+# const char* handed to std::string, which libc++ and libstdc++ treat
+# differently - because that claim is about the library, and the library is
+# whichever one $CXX links, not whichever OS this is.
 #
 # Note what this does NOT contradict. Deliberately broken programs stay
 # book-only "because a green run would mean it stopped working" (ROADMAP,
@@ -34,10 +38,10 @@ while [ $# -gt 0 ]; do
 done
 
 # Prefer clang++: almost every claim below is about a compiler-rt runtime, and
-# the book's transcripts are clang's. (Section 5 is the exception - two of its
-# three claims are about the linker, and it reports what it observed either
-# way.) Fall back to whatever c++ is, which is what a reader following the
-# chapters would have typed.
+# the book's transcripts are clang's. (Sections 5 and 6 are the exceptions -
+# 5's first two claims are about the linker, 6's about the standard library,
+# and both report what they observed either way.) Fall back to whatever c++
+# is, which is what a reader following the chapters would have typed.
 if [ -n "${CXX:-}" ]; then :
 elif command -v clang++ >/dev/null 2>&1; then CXX=clang++
 else CXX=c++
@@ -49,6 +53,7 @@ OUT=$(mktemp -d)
 trap 'rm -rf "$OUT"' EXIT
 
 FAILED=0
+STDLIB="stdlib not probed"
 pass() { echo "  ok   $1"; }
 fail() { echo "  FAIL $1"; FAILED=1; }
 skip() {
@@ -428,6 +433,7 @@ EOF
 if $CXX -std=c++17 -g -O0 "$OUT/nullstr.cpp" -o "$OUT/nullstr" 2>/dev/null; then
     RC=$(run_rc "$OUT/nullstr" "$OUT/nullstr.log")
     LIB=$(sed -n 's/^lib: //p' "$OUT/nullstr.log")
+    STDLIB=${LIB:-stdlib unknown}
     case "$LIB" in
         libc++)
             if [ "$RC" != 0 ] && ! grep -q "^constructed" "$OUT/nullstr.log"; then
@@ -450,7 +456,7 @@ fi
 
 echo
 if [ "$FAILED" = 0 ]; then
-    echo "platform claims OK ($OS/$ARCH)"
+    echo "platform claims OK ($OS/$ARCH, $STDLIB)"
 else
     echo "check_platform_claims.sh: a claim in the book does not hold on" >&2
     echo "  $OS/$ARCH with $CXX. Fix the chapter, not this script - each FAIL" >&2

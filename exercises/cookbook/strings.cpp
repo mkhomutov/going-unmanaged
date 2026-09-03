@@ -8,7 +8,6 @@
 #include <cassert>
 #include <cstdio>
 #include <iomanip>
-#include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -135,22 +134,11 @@ std::string utf16_to_utf8(std::u16string_view utf16) {
 }
 
 // Recipe 23 - string.IsNullOrEmpty / s ?? ""
-bool is_blank(const std::string& s) {
-    return s.empty();                       // a std::string cannot be null: only empty
-}
-
 std::string name_or_default(const char* from_c_api) {
     if (from_c_api == nullptr) {            // the one null there is: a C API's "no name"
         return "unnamed";
     }
     return from_c_api;                      // safe now - std::string(nullptr) is UB
-}
-
-std::optional<std::string> label_of(bool has_label, const std::string& text) {
-    if (!has_label) {
-        return std::nullopt;                // "no string" is a different answer from ""
-    }
-    return text;                            // ...which may itself be empty, legitimately
 }
 
 int main() {
@@ -200,16 +188,10 @@ int main() {
 
     // Recipe 23: empty is a value, null is a type - and the C pointer is the
     // only null. name_or_default takes the null; std::string never sees it.
-    assert(is_blank(std::string()));
-    assert(is_blank(""));
-    assert(!is_blank(" "));
-    const std::string s{};                  // {} and () and "" all mean the same empty
-    assert(s == "" && s.size() == 0 && s.empty() && s.c_str()[0] == '\0');
+    assert(std::string().empty());          // default-constructed: empty, never null
     assert(name_or_default(nullptr) == "unnamed");
     assert(name_or_default("") == "");     // empty from the API is empty, not missing
     assert(name_or_default("sensor0") == "sensor0");
-    assert(!label_of(false, "ignored").has_value());
-    assert(label_of(true, "") == std::optional<std::string>{""});   // present and empty
     // The trap, as a comment: `std::string name = Thing_GetName(h);` with a
     // null return dies inside the constructor on libc++ and throws
     // std::logic_error on libstdc++ - scripts/check_platform_claims.sh

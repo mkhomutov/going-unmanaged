@@ -29,9 +29,10 @@
 #                    bridgelab's does; and Appendix G must hold NO cpp fence at
 #                    all - its recorded shape is lookup material with no
 #                    C++ listings (ROADMAP item 16's delivered note)
-#                    that same whole-unit reverse serves Chapter 6, which
-#                    quotes three units of exercises/choosing/passing.cpp
-#                    by excerpt: one UNITS table, a page column per row
+#                    that same whole-unit table carries a page column, so
+#                    it also serves Chapter 6 (three units of
+#                    exercises/choosing/passing.cpp) and Chapter 8 (three
+#                    of the cookbook's, from errors.cpp and expected.cpp)
 #   4. generated   - a listing the book quotes that no lab commits, because
 #                    the code half is a script that writes it to a temp
 #                    directory: Chapter 27's ODR headers, generated and
@@ -189,9 +190,10 @@ for i, block in enumerate(h_fences, 1):
 # named units are the contract instead - which is what stops a lab function
 # from growing a branch the page never shows. The table carries a page
 # column because more than one page quotes a lab by whole unit: Appendix H
-# and Chapter 6 for exercises/choosing/, Chapter 8 for the cookbook. Whole-unit containment is the stronger check in both
-# directions at once - the fence cannot be truncated, and the lab unit
-# cannot grow - which is why Chapter 6 gets no forward-only substring pass.
+# and Chapter 6 for exercises/choosing/, Chapter 8 for the cookbook.
+# Whole-unit containment is the stronger check in both directions at once -
+# the fence cannot be truncated, and the lab unit cannot grow - which is
+# why no chapter gets a forward-only substring pass of its own.
 def whole_unit(path, opening):
     """The text from the line starting with `opening` to where its braces close."""
     lines = open(path).read().split('\n')
@@ -228,6 +230,7 @@ UNITS = [
     # so Chapter 8, Appendix F and errors.cpp are one listing in three places.
     (CH8,    'exercises/cookbook/errors.cpp',   'template <class T, class E>'),
     (CH8,    'exercises/cookbook/errors.cpp',   'Result<Config, ConfigError> load_config('),
+    (CH8,    'exercises/cookbook/expected.cpp', 'std::expected<int, ConfigError> channels_doubled('),
 ]
 pages = {}
 for page, path, opening in UNITS:

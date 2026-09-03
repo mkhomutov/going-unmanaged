@@ -2,8 +2,8 @@
 # Build and run every reference solution under strict flags + sanitizers.
 # This is the repo's core invariant; CI runs the same script.
 #
-#   scripts/build_all.sh                   -> everything; cmake, git and TSan
-#                                             may SKIP
+#   scripts/build_all.sh                   -> everything; cmake, git, TSan and
+#                                             the one C++23 listing may SKIP
 #   scripts/build_all.sh --require-cmake   -> also fail if cmake is missing (CI)
 #   scripts/build_all.sh --require-git     -> also fail if git cannot build and
 #                                             clone a file:// repository (CI)
@@ -623,26 +623,27 @@ else
     echo "  SKIPPED - no usable ThreadSanitizer here (CI runs this for real)"
 fi
 
-# Recipe 22's third spelling is std::expected, which is C++23 - the one
-# listing in the cookbook past the book's own C++17 pin. Same bargain as the
-# sections above: a compiler without <expected> is a fact about a laptop
-# and a bug in CI, so the probe compiles a one-line use of the header and
-# --require-expected refuses to skip. The probe is a compile, not a run:
-# unlike TSan there is no runtime that can be present and fail to start.
+# Chapter 8's chaining listing is std::expected, which is C++23 - the one
+# file in the cookbook past the book's own C++17 pin. Same bargain as the
+# sections above: a compiler that cannot build it is a fact about a laptop
+# and a bug in CI, so --require-expected refuses to skip. The probe IS the
+# translation unit: <expected> arrived one release before its and_then and
+# transform did in both standard libraries (libstdc++ 12 before 13, libc++
+# 16 before 17), so a one-line probe of the header would pass on a compiler
+# that then cannot build the listing. The flags are the canonical set with
+# one token changed, derived rather than retyped so they cannot drift.
 echo "== cookbook expected (c++23) =="
-FLAGS23="-std=c++23 -Wall -Wextra -fsanitize=address,undefined -g"
-printf '#include <expected>\nint main() { return std::expected<int, int>{0}.value(); }\n' > "$OUT/expected_probe.cpp"
-if $CXX $FLAGS23 "$OUT/expected_probe.cpp" -o "$OUT/expected_probe" > /dev/null 2>&1; then
-    $CXX $FLAGS23 exercises/cookbook/expected.cpp -o "$OUT/cb_expected"
+FLAGS23=${FLAGS/-std=c++17/-std=c++23}
+if $CXX $FLAGS23 exercises/cookbook/expected.cpp -o "$OUT/cb_expected" > "$OUT/expected_build.log" 2>&1; then
     UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_expected" > /dev/null
     echo "  ok   exercises/cookbook/expected.cpp under -std=c++23"
 elif [ "$REQUIRE_EXPECTED" = 1 ]; then
-    echo "build_all.sh: $CXX cannot compile a one-line use of <expected> under" >&2
-    echo "  -std=c++23, and --require-expected was given. Re-run the probe by" >&2
-    echo "  hand to see why: $CXX $FLAGS23 <a main() using std::expected>" >&2
+    echo "build_all.sh: $CXX cannot build exercises/cookbook/expected.cpp under" >&2
+    echo "  $FLAGS23, and --require-expected was given. The compiler said:" >&2
+    sed 's/^/  /' "$OUT/expected_build.log" >&2
     exit 1
 else
-    echo "  SKIPPED - no C++23 <expected> here (CI runs this for real)"
+    echo "  SKIPPED - $CXX cannot build the C++23 listing here (CI runs this for real)"
 fi
 
 echo "ALL GREEN"
