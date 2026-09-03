@@ -11,4 +11,7 @@ public:
 
 private:
     std::string name_;
+#ifdef GREETER_AUDIT
+    std::string audit_tag_ = "[audit]";   // a member that exists only under the define:
+#endif                                    // the reason the define is PUBLIC (Chapter 26)
 };

@@ -288,7 +288,7 @@ for V in 1 2 3 4 5; do
 done
 echo "  ok   five const violations refused, each naming const   [App I]"
 
-# Chapter 26's CMakeLists, configured, built and run both ways. The reference
+# Chapter 26's CMakeLists, configured, built and run three ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from
 # its snippets, so this holds the chapter's destination to the same standard as
 # everything above. What it does not hold: the forms the chapter passes through
@@ -558,7 +558,14 @@ if command -v cmake > /dev/null 2>&1; then
     # and this whole section stays green while checking nothing - the exact
     # rot it exists to catch. So read the flags back out of the compile
     # database: instrumented when asked, and NOT instrumented when not.
-    for db in "$CM/compile_commands.json" "$CM-asan/compile_commands.json"; do
+    # The third configuration - Chapter 26's compile-time switch - is built
+    # here so that all three databases are checked for existence at once.
+    rm -rf "$CM-audit"
+    cmake -S exercises/buildlab -B "$CM-audit" -DGREETER_AUDIT=ON \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON > /dev/null
+    cmake --build "$CM-audit" --config Debug > /dev/null
+    GREET_AUDIT=$(greet_binary "$CM-audit")
+    for db in "$CM/compile_commands.json" "$CM-asan/compile_commands.json" "$CM-audit/compile_commands.json"; do
         if [ ! -f "$db" ]; then
             echo "build_all.sh: no $db. Only the Makefile and Ninja generators" >&2
             echo "  write a compile database, and without one the flags cannot" >&2
@@ -579,14 +586,10 @@ if command -v cmake > /dev/null 2>&1; then
         echo "  GREETER_SANITIZE is not a switch." >&2
         exit 1
     fi
-    # The third configuration: Chapter 26's compile-time switch. The define is
-    # PUBLIC on greeter, so it must reach main.cpp (the executable's TU) as
+    # The compile-time switch: Greeter.h has a member behind the define, so it
+    # is PUBLIC on greeter and must reach main.cpp (the executable's TU) as
     # well as Greeter.cpp - the compile database is the only place that shows
     # it did - and the binary must print the audit line it compiles in.
-    rm -rf "$CM-audit"
-    cmake -S exercises/buildlab -B "$CM-audit" -DGREETER_AUDIT=ON         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON > /dev/null
-    cmake --build "$CM-audit" --config Debug > /dev/null
-    GREET_AUDIT=$(greet_binary "$CM-audit")
     for tu in Greeter main; do
         if ! grep -q -- "-DGREETER_AUDIT=1.*$tu\.cpp" "$CM-audit/compile_commands.json"; then
             echo "build_all.sh: GREETER_AUDIT=ON did not put -DGREETER_AUDIT=1 on" >&2
@@ -599,11 +602,15 @@ if command -v cmake > /dev/null 2>&1; then
         echo "  it is not a switch." >&2
         exit 1
     fi
-    if ! "$GREET_AUDIT" | grep -q '^\[audit\]'; then
+    # Captured first, then grepped: under pipefail a grep -q that exits at
+    # its first match can SIGPIPE a writer that has more to say.
+    AUDIT_OUT=$("$GREET_AUDIT")
+    PLAIN_OUT=$("$GREET")
+    if ! printf '%s\n' "$AUDIT_OUT" | grep -q '^\[audit\]'; then
         echo "build_all.sh: the GREETER_AUDIT build printed no [audit] line" >&2
         exit 1
     fi
-    if "$GREET" | grep -q '^\[audit\]'; then
+    if printf '%s\n' "$PLAIN_OUT" | grep -q '^\[audit\]'; then
         echo "build_all.sh: the default build printed an [audit] line" >&2
         exit 1
     fi

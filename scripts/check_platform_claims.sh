@@ -38,9 +38,9 @@ while [ $# -gt 0 ]; do
 done
 
 # Prefer clang++: almost every claim below is about a compiler-rt runtime, and
-# the book's transcripts are clang's. (Sections 5 and 6 are the exceptions -
-# 5's first two claims are about the linker, 6's about the standard library,
-# and both report what they observed either way.) Fall back to whatever c++
+# the book's transcripts are clang's. (Sections 5, 6 and 7 are the exceptions
+# - 5's first two claims and all of 7's are about the linker, 6's about the
+# standard library, and each reports what it observed either way.) Fall back to whatever c++
 # is, which is what a reader following the chapters would have typed.
 if [ -n "${CXX:-}" ]; then :
 elif command -v clang++ >/dev/null 2>&1; then CXX=clang++
@@ -459,9 +459,9 @@ fi
 # preprocessor define for a cause. session.h is quoted in the chapter and
 # pinned to this heredoc by check_verbatim.sh. Three claims: both link orders
 # link silently, the two orders disagree at -O0, and - unlike Chapter 27 -
-# NEITHER order is caught by the sanitizers, because every read is inside
-# the object it was handed. Like section 5, these are linker claims and hold
-# on every platform alike.
+# NEITHER order is caught by the sanitizers, because in THIS program the
+# object is built in the larger layout, so every read is inside it (see (c)).
+# Like section 5, these are linker claims and hold on every platform alike.
 echo "== macro odr =="
 cat > "$OUT/session.h" <<'EOF'
 // session.h
@@ -506,6 +506,12 @@ else
     $CXX "$OUT/audit_main.o" "$OUT/audit_lib.o" -o "$OUT/macro_mainfirst" > "$OUT/macro_link_b.log" 2>&1 || MLINK=0
     if [ "$MLINK" = 0 ]; then
         fail "a link order failed to link at all   [Ch 26]"
+        for order in a b; do
+            if [ -s "$OUT/macro_link_$order.log" ]; then
+                echo "       (order $order)"
+                sed 's/^/       /' "$OUT/macro_link_$order.log"
+            fi
+        done
     elif grep -qiE "odr|duplicate symbol|multiple definition" "$OUT/macro_link_a.log" "$OUT/macro_link_b.log"; then
         fail "the linker diagnosed it; Ch 26 says it says nothing   [Ch 26]"
     else
@@ -529,7 +535,13 @@ else
     else
         skip "the link produced no binaries, so the two orders cannot be compared"
     fi
-    # (c) under the canonical flags, NEITHER order is caught
+    # (c) under the canonical flags, NEITHER order is caught - a claim about
+    # THIS program, and the chapter says so: main.cpp, which builds the
+    # object, is the -DAUDIT (larger) translation unit on purpose, so every
+    # read lands inside it. Build the object in the smaller layout and the
+    # larger layout's reader overreads, which ASan does catch - Chapter 27's
+    # asymmetry. What is asserted is the silence the chapter's listing
+    # produces, not a property of the bug class.
     if $CXX -std=c++17 -g -O0 -fsanitize=address,undefined -I"$OUT" \
             -c "$OUT/audit_lib.cpp" -o "$OUT/san_audit_lib.o" 2>/dev/null \
        && $CXX -std=c++17 -g -O0 -fsanitize=address,undefined -I"$OUT" -DAUDIT \

@@ -6,7 +6,8 @@
 // discipline). main() is scaffolding - it captures cerr into a buffer to
 // assert the text, so a green run stays silent on stderr. build_all.sh
 // builds this TU twice, the second time with -DNDEBUG, because Recipe 24's
-// claim is about what vanishes under that define.
+// claim is about what vanishes under that define - which is why the judges
+// here are plain ifs rather than asserts: an assert would vanish with it.
 #include <cassert>
 #include <iostream>
 #include <sstream>
@@ -33,7 +34,8 @@ int main() {
     std::streambuf* old = std::cerr.rdbuf(captured.rdbuf());
     report_failure("cannot open settings.ini");
     std::cerr.rdbuf(old);
-    assert(captured.str() == "error: cannot open settings.ini\n");
+    if (captured.str() != "error: cannot open settings.ini\n") return 1;   // a plain if: this TU
+                                                                          // is also built with NDEBUG
 
     report_progress(3, 10);    // stdout; build_all.sh silences it
 
@@ -46,9 +48,16 @@ int main() {
     int bumps = 0;
     assert(++bumps == 1);      // the trap: a side effect inside an assert
 #ifdef NDEBUG
-    if (!debug_lines.str().empty() || bumps != 0) return 1;   // both vanished with the define
+    constexpr bool kDebug = false;
 #else
-    if (debug_lines.str() != "[debug] channels=2\n" || bumps != 1) return 1;
+    constexpr bool kDebug = true;
 #endif
+    // One judge whose text is the claim: in Debug the block printed and the
+    // side effect ran; under NDEBUG neither did.
+    if (debug_lines.str() != (kDebug ? "[debug] channels=2\n" : "") || bumps != (kDebug ? 1 : 0)) {
+        std::cerr << "Recipe 24 FAILED (" << (kDebug ? "Debug" : "NDEBUG") << " build): got '"
+                  << debug_lines.str() << "', bumps=" << bumps << '\n';
+        return 1;
+    }
     return 0;
 }

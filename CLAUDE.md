@@ -74,9 +74,8 @@ Chapter 25's Finding 10.
   point; built by build_all.sh so the scaffold stays green. Also
   `CMakeLists.txt`, Chapter 26's reference build description assembled from
   that chapter's snippets — build_all.sh configures/builds/runs it three
-  times (default, Debug + `-DGREETER_SANITIZE=ON`, and `-DGREETER_AUDIT=ON`,
-  reading the compile database back each time: the sanitizer flags and the
-  PUBLIC define must reach `main.cpp`, and neither may appear by default)
+  times (default, Debug + `-DGREETER_SANITIZE=ON`, `-DGREETER_AUDIT=ON`) and
+  reads each switch's reach back from the compile database
 - `exercises/deplab/` — Chapter 27's lab (its *Try it*, steps 1–4), and the
   only one whose subject is entirely build description: `mathlib/` is the
   dependency, and one `app/main.cpp` is consumed three ways — vendored
@@ -284,11 +283,12 @@ Chapter 25's Finding 10.
   atos-vs-llvm-symbolizer point), and what a null `const char*` handed to
   `std::string` does under each standard library (libc++ faults in the
   constructor, libstdc++ throws — Recipe 23's trap, detected by macro rather
-  than by OS). It also holds Chapter 27's ODR diamond and Chapter 26's
-  macro-ODR pair (a define that changes a struct's layout in one TU only:
-  silent link, order-dependent answer, and — unlike Chapter 27 — no order
-  caught by the sanitizers; `session.h` is pinned to the script's heredoc by
-  check_verbatim.sh) —
+  than by OS). It also holds Chapter 26's macro-ODR pair — a define that
+  changes a struct's layout in one TU only: silent link, order-dependent
+  answer, and, unlike Chapter 27, no order caught by the sanitizers for that
+  listing (the object is built in the larger layout), with `session.h`
+  pinned to the script's heredoc by check_verbatim.sh — and
+  Chapter 27's ODR diamond —
   both link orders link silently, the two orders disagree, and exactly one
   is caught, naming `GetTimeout` — the one section whose first two claims
   are about the linker rather than a compiler-rt runtime and so hold on

@@ -89,7 +89,7 @@ alternative reality many SDK shops actually live in.
 **Still open from this item:** no work, but the coverage has an edge worth
 naming. What CI builds is the shape the chapter *ends* on, assembled in
 `exercises/buildlab/CMakeLists.txt`: the script configures, builds and runs it
-twice — default, then Debug with `-DGREETER_SANITIZE=ON` — and reads the flags
+three times — default, Debug with `-DGREETER_SANITIZE=ON`, and `-DGREETER_AUDIT=ON` — and reads the flags
 back out of the compile database, because a configure that built and ran proves
 the build works and not that the switch did anything. Without cmake on PATH the
 step prints SKIPPED and the run stays green; CI passes `--require-cmake`, which

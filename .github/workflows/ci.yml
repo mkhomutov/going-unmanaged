@@ -16,7 +16,7 @@ jobs:
       # The repo invariant: every solution compiles and runs clean under
       # -Wall -Wextra -fsanitize=address,undefined. Must print ALL GREEN.
       # --require-cmake: the script's two cmake steps - Chapter 27's deplab and
-      # Chapter 26's CMakeLists, configured, built and run both ways - SKIP on a
+      # Chapter 26's CMakeLists, configured, built and run three ways - SKIP on a
       # machine without cmake, which is right on a laptop and very wrong here.
       # Both hosted images ship cmake, so the flag only ever fires if that
       # changes.

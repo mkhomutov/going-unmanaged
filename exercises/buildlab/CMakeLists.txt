@@ -4,9 +4,10 @@
 # is the exercise, and this file is only the answer. It is assembled from the
 # chapter's own snippets, in the shape the chapter ends with - library plus
 # executable, warnings PRIVATE, sanitizers behind an option and carried by an
-# INTERFACE target. scripts/build_all.sh configures, builds and runs it both
+# INTERFACE target. scripts/build_all.sh configures, builds and runs it three
 # ways, which is what keeps THIS shape honest; the earlier forms the chapter
-# walks through are in no file and nothing checks them.
+# walks through are in no file and nothing checks them, and the GREETER_AUDIT
+# block at the end is one option the chapter names without listing.
 
 cmake_minimum_required(VERSION 3.16)
 
@@ -69,12 +70,15 @@ endif()
 target_link_libraries(greeter PUBLIC sanitizers)   # and every other target too
 
 # A compile definition, for the chapter's compile-time-switches section: the
-# csproj's DefineConstants, spelled per target. PUBLIC, so every translation
-# unit that includes Greeter.h - the library's and the executable's - compiles
-# the same code; a define that changed the class's layout on one target only
-# would be Chapter 27's diamond. build_all.sh reads the compile database back
-# to confirm the define reached main.cpp as well as Greeter.cpp, and reached
-# neither by default - because "it configured and ran" proves neither.
+# csproj's DefineConstants, spelled per target. Greeter.h has a member behind
+# this define, so it MUST be PUBLIC: every translation unit that includes the
+# header - the library's and the executable's - has to compile the same
+# class, or the two disagree about sizeof(Greeter) and the linker never says
+# (Chapter 27's diamond). A define that only changed a .cpp's behavior would
+# be PRIVATE, by the chapter's own rule. build_all.sh reads the compile
+# database back to confirm the define reached main.cpp as well as
+# Greeter.cpp, and reached neither by default - "it configured and ran"
+# proves neither.
 option(GREETER_AUDIT "Log every greeting (a compile-time switch)" OFF)
 if(GREETER_AUDIT)
     target_compile_definitions(greeter PUBLIC GREETER_AUDIT=1)

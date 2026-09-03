@@ -930,18 +930,18 @@ void check_channel_count([[maybe_unused]] int channels) {          // used only 
 }
 ```
 
-**Why it looks like this.** `assert` is the standard library's
-`[Conditional("DEBUG")]`: it compiles to nothing when `NDEBUG` is defined,
-which a CMake Release build does
-([Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)),
-and the `&& "message"` is the idiom for a message, since the whole expression
-is what the failure prints. An `#ifndef NDEBUG` block is `#if DEBUG` for
-anything larger than one expression; the sign is inverted because the
-define means *release*. `[[maybe_unused]]` is the tell that both vanished:
-in Release the parameter is read by nothing, and `-Wall` would say so
-without it. What belongs inside is
-[Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
-decision — a bug, never a value. Needs `<cassert>`, `<iostream>`.
+**Why it looks like this.** `assert` is [Appendix E](E-glossary.md#appendix-e--glossary)'s
+`assert / NDEBUG` entry wearing `[Conditional("DEBUG")]`'s job, with two
+differences worth the paragraph. The `&& "message"` is the idiom for a
+message, since the whole expression is what the failure prints, and an
+`#ifndef NDEBUG` block is `#if DEBUG` for anything larger than one
+expression — the sign inverted, because the define means *release*. And
+unlike `[Conditional]`, which removes the *call*, the call and its argument
+evaluation survive here; only the body empties, which is why the parameter
+is `[[maybe_unused]]` (in Release nothing reads it, and `-Wextra` would say
+so) and why a macro — `#ifdef NDEBUG` / `#define CHECK_CHANNELS(x) ((void)0)`
+— is the spelling that also spares the argument. Needs `<cassert>`,
+`<iostream>`.
 
 > [!WARNING]
 > **Trap:** the expression inside `assert` vanishes with it — `assert(bump() == 1)` runs `bump()` in Debug and never in Release, and `exercises/cookbook/logging.cpp` is built both ways to prove it.
