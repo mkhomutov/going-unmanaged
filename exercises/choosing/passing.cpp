@@ -1,12 +1,17 @@
-// Appendix H, procedures 2 and 3 - how to take a parameter, what to return.
+// Appendix H, procedures 2 and 3 - how to take a parameter, what to return -
+// plus two of Chapter 6's value-category traps, priced with the same
+// instrument.
 //
 // Quoted in Appendix H, whole and by name: `class Widget`, `MakeTemporary`,
 // `MakeNamed`, `TheSinkAllocatesWhereTheBorrowDoesNot` and
-// `ReturningCostsNoCopy`. Editing one means editing Appendix H in the same
-// commit (the cookbook discipline), and scripts/check_verbatim.sh checks
-// that pairing in BOTH directions - every cpp fence on the page must be in
-// this directory, and each function named above must be on the page, whole.
-// Everything else here, main() included, appears in no listing.
+// `ReturningCostsNoCopy`. Quoted in Chapter 6 ("Value categories in one
+// table"), whole and by name: `MakeNamedMoved`, `MovingFromAConstObjectCopies`
+// and `ReturnStdMoveCostsTheMoveElisionRemoved`. Editing a named unit means
+// editing its page in the same commit (the cookbook discipline), and
+// scripts/check_verbatim.sh holds every pairing in BOTH directions - each
+// unit named here must be on its page whole, and every cpp fence on Appendix
+// H must be in this directory. Everything else here, main() included,
+// appears in no listing.
 #include <cstdio>
 #include <cstdlib>
 #include <new>
@@ -70,6 +75,24 @@ Counted MakeNamed() {
     Counted local("named");
     return local;
 }
+
+// ---- Chapter 6: value categories, priced -----------------------------------
+// return std::move(local) casts a candidate for NRVO into a plain rvalue:
+// the compiler may no longer build `local` in the caller's storage, so the
+// move it would have elided now always happens. clang and GCC both say so
+// (-Wpessimizing-move, in -Wall); the pragma exists because this file's job
+// is to measure the thing the warning is about.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpessimizing-move"
+#endif
+Counted MakeNamedMoved() {
+    Counted local("named");
+    return std::move(local);             // the pessimizing move
+}
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 // Every cell of the appendix's cost table, including the const& column,
 // whose lower two rows the table claims and no earlier version measured.
@@ -191,6 +214,32 @@ void ReturningCostsNoCopy() {
     }
 }
 
+// A const object cannot be stolen from. std::move casts it to const&&, and
+// nothing a class writes takes const&& - so overload resolution falls back
+// to the copy constructor. No warning, no error: one silent copy, and the
+// source untouched.
+void MovingFromAConstObjectCopies() {
+    const Counted keep("const");
+    ResetTally();
+    Counted taken = std::move(keep);     // reads as a move, is a copy
+    CHECK(Tally().copies == 1);
+    CHECK(Tally().moves  == 0);
+    CHECK(keep.Payload().size() > 0);    // nothing was taken from it
+    (void)taken;
+}
+
+// The move that elision would have removed, measured on both build passes:
+// ReturningCostsNoCopy allows MakeNamed zero or one move, because NRVO is
+// permitted; MakeNamedMoved is always exactly one, because the cast forbade
+// it. -fno-elide-constructors changes the first and not the second.
+void ReturnStdMoveCostsTheMoveElisionRemoved() {
+    ResetTally();
+    Counted c = MakeNamedMoved();
+    CHECK(Tally().copies == 0);
+    CHECK(Tally().moves  == 1);          // always one: NRVO was cast away
+    (void)c;
+}
+
 void ReturningAVectorCopiesNoElement() {
     ResetTally();
     std::vector<Counted> v = [] {
@@ -210,6 +259,8 @@ int main() {
     BorrowingCostsNothing();
     TheMissingAmpersandCostsNCopies();
     ReturningCostsNoCopy();
+    MovingFromAConstObjectCopies();
+    ReturnStdMoveCostsTheMoveElisionRemoved();
     ReturningAVectorCopiesNoElement();
 
     if (Failures() != 0) {
@@ -217,6 +268,6 @@ int main() {
         return 1;
     }
     std::printf("choosing/passing: every branch of procedures 2 and 3 costs "
-                "what the appendix says\n");
+                "what the appendix says, and Chapter 6's two traps what it says\n");
     return 0;
 }

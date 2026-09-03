@@ -74,6 +74,8 @@ int&       At(std::size_t i)       { return data_[i]; }   // writable path
 
 The const overload returns `const int&` for the reason the whole page rests on: handing back a writable reference from a const member function would give the caller a non-const path to an object they reached through a const one. The promise would be intact in the signature and broken in fact. [Finding 8 of Chapter 25](25-findings-from-practice.md#chapter-25--findings-from-practice-a-living-log) is this pair found the hard way, on the Chapter 15 Buffer — including the half the compiler will not enforce for you.
 
+Two small relatives of the pair. A container's `cbegin()` and `cend()` hand out `const_iterator`s whatever the constness of the container, so a loop that only reads can say so. And `std::as_const(x)` casts an lvalue to `const&` in place — the honest way to call the const overload on a non-const object, in a test say, without declaring a `const&` alias first.
+
 ### It is transitive, and that is the entire cost
 
 Marking one function `const` forces everything it calls on `this` to be const too, and that requirement propagates as far as it needs to. Which produces the characteristic experience of retrofitting const into a codebase that never had it: **you add one keyword and get twenty errors.**

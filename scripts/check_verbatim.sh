@@ -5,7 +5,7 @@
 # discipline once failed silently — solutions/tracer.cpp drifted from Chapter
 # 14's listing and nothing noticed until a review diffed them by hand.
 #
-# Three checks, all substring containment on exact bytes:
+# Four kinds of check, all substring containment on exact bytes:
 #   1. full        - the committed file appears verbatim inside its chapter
 #                    (vendor headers, ticket-lab fixed files, solution folds)
 #   2. banner      - same, after stripping the file's leading //-comment
@@ -29,6 +29,9 @@
 #                    bridgelab's does; and Appendix G must hold NO cpp fence at
 #                    all - its recorded shape is lookup material with no
 #                    C++ listings (ROADMAP item 16's delivered note)
+#                    that same whole-unit reverse serves Chapter 6, which
+#                    quotes three units of exercises/choosing/passing.cpp
+#                    by excerpt: one UNITS table, a page column per row
 #   4. generated   - a listing the book quotes that no lab commits, because
 #                    the code half is a script that writes it to a temp
 #                    directory: Chapter 27's ODR headers, generated and
@@ -181,10 +184,14 @@ for i, block in enumerate(h_fences, 1):
         failures.append(f"book/H-choosing.md cpp fence #{i} ({first!r}) is in no exercises/choosing/ file")
 
 # Reverse: each unit the lab's banners promise is quoted must actually be on
-# the page, WHOLE. Chapter 38's reverse direction is carried by its TASK
+# its page, WHOLE. Chapter 38's reverse direction is carried by its TASK
 # card; exercises/choosing/ has no card (it is not an exercise), so the
 # named units are the contract instead - which is what stops a lab function
-# from growing a branch the appendix never shows.
+# from growing a branch the page never shows. The table carries a page
+# column because two pages quote this lab: Appendix H, and Chapter 6's
+# value-category traps. Whole-unit containment is the stronger check in both
+# directions at once - the fence cannot be truncated, and the lab unit
+# cannot grow - which is why Chapter 6 gets no forward-only substring pass.
 def whole_unit(path, opening):
     """The text from the line starting with `opening` to where its braces close."""
     lines = open(path).read().split('\n')
@@ -200,24 +207,31 @@ def whole_unit(path, opening):
             break
     return None
 
-H_UNITS = [
-    ('exercises/choosing/counted.h',    'struct Counts {'),
-    ('exercises/choosing/counted.h',    'inline Counts& Tally() {'),
-    ('exercises/choosing/passing.cpp',  'class Widget {'),
-    ('exercises/choosing/passing.cpp',  'Counted MakeTemporary()'),
-    ('exercises/choosing/passing.cpp',  'Counted MakeNamed()'),
-    ('exercises/choosing/passing.cpp',  'void TheSinkAllocatesWhereTheBorrowDoesNot()'),
-    ('exercises/choosing/passing.cpp',  'void ReturningCostsNoCopy()'),
-    ('exercises/choosing/storing.cpp',  'void GrowthRelocatesAndMovesEveryElement()'),
-    ('exercises/choosing/storing.cpp',  'void BoxedElementsStandStillWhenTheVectorGrows()'),
+H_PAGE = 'book/H-choosing.md'
+CH6 = 'book/06-the-rule-of-five-and-move-semantics.md'
+UNITS = [
+    (H_PAGE, 'exercises/choosing/counted.h',    'struct Counts {'),
+    (H_PAGE, 'exercises/choosing/counted.h',    'inline Counts& Tally() {'),
+    (H_PAGE, 'exercises/choosing/passing.cpp',  'class Widget {'),
+    (H_PAGE, 'exercises/choosing/passing.cpp',  'Counted MakeTemporary()'),
+    (H_PAGE, 'exercises/choosing/passing.cpp',  'Counted MakeNamed()'),
+    (H_PAGE, 'exercises/choosing/passing.cpp',  'void TheSinkAllocatesWhereTheBorrowDoesNot()'),
+    (H_PAGE, 'exercises/choosing/passing.cpp',  'void ReturningCostsNoCopy()'),
+    (H_PAGE, 'exercises/choosing/storing.cpp',  'void GrowthRelocatesAndMovesEveryElement()'),
+    (H_PAGE, 'exercises/choosing/storing.cpp',  'void BoxedElementsStandStillWhenTheVectorGrows()'),
+    (H_PAGE, 'exercises/choosing/storing.cpp',  'void AClosedSetStoresByValueWithoutABase()'),
+    (CH6,    'exercises/choosing/passing.cpp',  'Counted MakeNamedMoved()'),
+    (CH6,    'exercises/choosing/passing.cpp',  'void MovingFromAConstObjectCopies()'),
+    (CH6,    'exercises/choosing/passing.cpp',  'void ReturnStdMoveCostsTheMoveElisionRemoved()'),
 ]
-h_page = open('book/H-choosing.md').read()
-for path, opening in H_UNITS:
+pages = {}
+for page, path, opening in UNITS:
+    text = pages.setdefault(page, open(page).read())
     unit = whole_unit(path, opening)
     if unit is None:
         failures.append(f"{path}: no unit starting {opening!r} (check_verbatim's own list is stale)")
-    elif unit not in h_page:
-        failures.append(f"{path}: {opening!r} is not quoted whole in book/H-choosing.md")
+    elif unit not in text:
+        failures.append(f"{path}: {opening!r} is not quoted whole in {page}")
 
 # Chapter 27's ODR diamond has no lab file to point at. It is an ill-formed
 # program whose FAILURE is the lesson, so it is generated into a temp directory
@@ -264,5 +278,5 @@ print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
       f"{len(f_blocks)} cookbook fences, {len(TICKETS)} cards, "
       f"{len(ch38_fences)} ch38 fences, {len(ch39_fences)} ch39 fences, "
       f"{len(h_fences)} appH fences + "
-      f"{len(H_UNITS)} appH units, {gen_pairs} generated, G cpp-free)")
+      f"{len(UNITS)} whole units on {len(pages)} pages, {gen_pairs} generated, G cpp-free)")
 PYEOF

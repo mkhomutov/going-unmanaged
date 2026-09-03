@@ -29,7 +29,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 
 **[Part III — The Standard Library](10-modern-cpp-fluency.md#part-iii--the-standard-library)**
 
-10. [Modern C++ Fluency](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency) — auto, lambdas and optional: the C++ that reads like C#
+10. [Modern C++ Fluency](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency) — auto, lambdas, optional and variant: the C++ that reads like C#
 11. [STL Containers, Algorithms, and Iterator Invalidation](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) — the Dictionary equivalents, and the loop that eats itself
 
 **[Part IV — The Build and the Toolchain](12-the-compilation-model.md#part-iv--the-build-and-the-toolchain)**

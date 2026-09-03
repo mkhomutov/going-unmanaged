@@ -117,9 +117,10 @@ Chapter 25's Finding 10.
   `../fakedevice/`'s vendor code rather than copying it; the reference solution
   is `solutions/device_threaded_solution.cpp`
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
-  (files, strings, timing, handles, lookups, paths, async, events, logging),
-  each with a `main()` asserting what its recipes claim; build_all.sh builds
-  and runs all nine. Same sync
+  (files, strings, timing, handles, lookups, paths, async, events, logging,
+  alternatives — the last holds optional and variant), each with a `main()`
+  asserting what its recipes claim; build_all.sh builds and runs all ten.
+  Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
   same commit (the mains are scaffolding and appear in no listing)
@@ -136,9 +137,10 @@ Chapter 25's Finding 10.
   appendix directory: `counted.h` (a copy/move-counting type plus the
   `CHECK` judge), `passing.cpp` (procedures 2–3) and `storing.cpp`
   (procedures 1 and 4), no TASK.md. Its banners name exactly which units
-  Appendix H quotes, and check_verbatim.sh holds the pairing BOTH ways —
-  editing a named unit means editing `book/H-choosing.md` in the same
-  commit. Two rules are load-bearing and easy to undo by accident: the
+  Appendix H quotes — and which three of `passing.cpp`'s Chapter 6 quotes,
+  the value-category traps priced with the same instrument — and
+  check_verbatim.sh holds every pairing BOTH ways: editing a named unit
+  means editing its page in the same commit. Two rules are load-bearing and easy to undo by accident: the
   judge is `CHECK` (counts failures, sets the exit code), never `assert`,
   which a Release build compiles away; and build_all.sh builds
   `passing.cpp` a SECOND time under `-fno-elide-constructors`, because
@@ -249,7 +251,9 @@ Chapter 25's Finding 10.
   `exercises/bridgelab/`, and Appendix H is held to `exercises/choosing/`
   both ways (every fence on the page is in that directory, and every unit
   the lab's banners name is on the page whole — that lab has no TASK card
-  to carry the reverse the way bridgelab's does) — plus one pairing whose
+  to carry the reverse the way bridgelab's does; the same whole-unit table
+  carries a page column, because Chapter 6 quotes three of `passing.cpp`'s
+  units too) — plus one pairing whose
   code half is not a file under `exercises/` at all: Chapter 27's two ODR
   headers are an ill-formed program that no harness may commit, so
   `check_platform_claims.sh` generates them into a temp directory and
@@ -502,7 +506,8 @@ stay on the list marked DONE so item numbers never shift. Short version:
   The glossary was item 10 and is now Appendix E (letters run A–I with no
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
-  timers), then 17 (UTF-8↔UTF-16); it grows by PR like the Findings log
+  timers), then 17 (UTF-8↔UTF-16), then 18–20 (find, optional, variant);
+  it grows by PR like the Findings log
   (Recipe template in CONTRIBUTING.md)
 - Carried over: both DONE. The COM-style refcounting exercise (Bestiary
   Shape 3's missing lab) is Chapter 35 + `exercises/comlab/`; the

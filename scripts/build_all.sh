@@ -98,6 +98,7 @@ run "cb_paths"    $CXX $FLAGS   exercises/cookbook/paths.cpp            -o $OUT/
 run "cb_async"    $CXX $FLAGS   exercises/cookbook/async.cpp            -o $OUT/cb_async
 run "cb_events"   $CXX $FLAGS   exercises/cookbook/events.cpp           -o $OUT/cb_events
 run "cb_logging"  $CXX $FLAGS   exercises/cookbook/logging.cpp          -o $OUT/cb_logging
+run "cb_alternatives" $CXX $FLAGS exercises/cookbook/alternatives.cpp   -o $OUT/cb_alternatives
 # Chapter 32's lab, built TWICE with the translation units in opposite orders.
 # The chapter's bug is decided by link order, so the fix's whole claim is that
 # order no longer matters - one build proves it compiles, two builds prove the
@@ -207,6 +208,7 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_paths > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_async > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_events > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_logging > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_alternatives > /dev/null
 # Both link orders of the Chapter 32 lab: surviving exit IS the claim here.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_a > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_b > /dev/null

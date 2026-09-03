@@ -111,6 +111,7 @@ One line each. If you can say these fluently and back them with code, the concep
 
 - "Capture by copy when a lambda outlives its scope; by reference dangles."
 - "Fail-able lookups return optional<T>, not null or sentinels."
+- "A closed set of alternatives is a std::variant by value, visited exhaustively; an open set someone else extends is a virtual base behind unique_ptr."
 - "string_view for read-only string params — zero copies. But never store one to a temporary."
 
 **STL**
@@ -128,6 +129,7 @@ One line each. If you can say these fluently and back them with code, the concep
 - "Move = steal the pointer and null out the source, or its destructor double-frees."
 - "Move operations get noexcept — otherwise vector copies instead of moving on reallocation."
 - "Copy assignment via copy-and-swap: strong exception guarantee, self-assignment safe for free."
+- "A named rvalue reference is an lvalue: std::move inside every move operation, never around a returned local, and never on a const."
 
 **OOP mechanics**
 

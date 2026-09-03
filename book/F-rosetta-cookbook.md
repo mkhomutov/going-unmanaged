@@ -33,6 +33,9 @@ stays right.
 | `Console.WriteLine` / `Console.Error` | `System.out` / `System.err` | [Recipe 15 — Print a diagnostic you will actually see](#recipe-15--print-a-diagnostic-you-will-actually-see) |
 | `System.Timers.Timer` / `Task.Delay` | `ScheduledExecutorService` | [Recipe 16 — Run something every interval](#recipe-16--run-something-every-interval) |
 | `Encoding.UTF8.GetString` / `GetBytes` | `getBytes(UTF_8)` / `new String(bytes, UTF_8)` | [Recipe 17 — Convert between UTF-8 and UTF-16](#recipe-17--convert-between-utf-8-and-utf-16) |
+| `list.IndexOf` / `Contains` / `str.Contains` | `indexOf` / `contains` | [Recipe 18 — Find an element, an index, or a substring](#recipe-18--find-an-element-an-index-or-a-substring) |
+| `int?` / `??` / `?.` | `Optional<T>` / `orElse` / `map` | [Recipe 19 — Carry a value that may be absent](#recipe-19--carry-a-value-that-may-be-absent) |
+| pattern-matching `switch` on a type | sealed interfaces + `switch` | [Recipe 20 — Switch on the kind of a message](#recipe-20--switch-on-the-kind-of-a-message) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -650,6 +653,124 @@ Needs `<string>`, `<string_view>`.
 
 > [!WARNING]
 > **Trap:** none of the three `size()`s counts characters — "Grüße" is five characters, seven UTF-8 bytes and five UTF-16 units, while one 𝄞 is one, four and two. A length check that "worked for years" on ASCII is an encoding bug with a long fuse.
+
+### Recipe 18 — Find an element, an index, or a substring
+
+**In C#:** `list.IndexOf(x)`, `list.Contains(x)`, `text.Contains("word")`
+
+**The recipe:**
+
+```cpp
+template <class Seq, class T>
+std::optional<std::size_t> index_of(const Seq& values, const T& wanted) {
+    const auto it = std::find(values.begin(), values.end(), wanted);
+    if (it == values.end()) {
+        return std::nullopt;             // an algorithm says "not found" as end()
+    }
+    return static_cast<std::size_t>(std::distance(values.begin(), it));
+}
+
+bool contains_word(std::string_view text, std::string_view word) {
+    return text.find(word) != std::string_view::npos;    // a string says it as npos
+}
+```
+
+**Why it looks like this.** "Not found" has three spellings in C++: an
+algorithm says `end()`, a string says `npos` — the largest `size_t` there
+is — and a lookup you write yourself says `optional` or `nullptr`, which is
+why `index_of` hands back the index as Recipe 19's `optional` rather than as
+C#'s `-1`, and only after the check. `std::find` is `IndexOf` without the
+index, and the index is a `std::distance` away; C++20 gives the associative
+containers a member `contains`, C++23 gives strings one, and a `vector`
+never gets it.
+[Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)
+owns the algorithm story. Needs `<algorithm>`, `<iterator>`, `<optional>`,
+`<string_view>`.
+
+> [!WARNING]
+> **Trap:** `if (text.find(word))` compiles and tests the *position* — a match at offset 0 reads as false and `npos` as true; and `std::find_if` over a `std::map` compiles too, walking every node when the member `m.find(key)` was the lookup you meant.
+
+### Recipe 19 — Carry a value that may be absent
+
+**In C#:** `int? port = int.TryParse(text, out var p) ? p : null;` `port ?? 8080;` `text?.Length`
+
+**The recipe:**
+
+```cpp
+std::optional<int> parse_port(std::string_view text) {
+    int value = 0;
+    const auto [end, ec] = std::from_chars(text.data(), text.data() + text.size(), value);
+    if (ec != std::errc{} || end != text.data() + text.size() || value < 0 || value > 65535) {
+        return std::nullopt;              // not a port: absence, not an error (Chapter 8)
+    }
+    return value;                         // TryParse's out-parameter, as the return
+}
+
+int port_or_default(std::optional<int> port) {
+    return port.value_or(8080);           // the ?? operator
+}
+
+std::optional<std::size_t> digits_in(const std::optional<std::string>& text) {
+    if (!text) {
+        return std::nullopt;              // ?. by hand: C++17 has no null-propagating call
+    }
+    return text->size();                  // -> is only legal once you have checked
+}
+```
+
+**Why it looks like this.** `std::optional<T>` is `T?` with the value kept
+behind `*` and `->` rather than in front of them, so the caller has to
+look before touching it, and `std::from_chars` is `int.TryParse` — no
+exception, no locale, an error code and an end pointer you check. The
+three shapes are the three C# operators: `std::nullopt` is `null`,
+`value_or` is `??`, and `?.` has no C++17 spelling — the `if (!text)` is
+that operator written out.
+[Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency) owns
+the type, and
+[Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)
+decides when absence is the right answer at all. Needs `<optional>`,
+`<charconv>`, `<string>`, `<string_view>`.
+
+> [!WARNING]
+> **Trap:** `*port` or `port->` on an empty optional is undefined behavior, not a null-reference exception — it reads garbage, the program carries on, and the sanitizers say nothing; `port.value()` is the spelling that throws.
+
+### Recipe 20 — Switch on the kind of a message
+
+**In C#:** `switch (e) { case Temperature t: ...; case Fault f: ...; case Heartbeat: ...; }`
+
+**The recipe:**
+
+```cpp
+struct Temperature { int centi; };        // centi-degrees, as the wire carries them
+struct Fault       { int code; };
+struct Heartbeat   {};
+using Event = std::variant<Temperature, Fault, Heartbeat>;
+
+template <class... Fs> struct overloaded : Fs... { using Fs::operator()...; };
+template <class... Fs> overloaded(Fs...) -> overloaded<Fs...>;
+
+std::string describe(const Event& e) {
+    return std::visit(overloaded{
+        [](const Temperature& t) { return "temperature " + std::to_string(t.centi) + " centi-degrees"; },
+        [](const Fault& f)       { return "fault " + std::to_string(f.code); },
+        [](Heartbeat)            { return std::string("heartbeat"); },
+    }, e);
+}
+```
+
+**Why it looks like this.** C# pattern-matches on the runtime type of an
+object; C++17 has no runtime type for three unrelated structs, so the
+closed set is spelled as a `std::variant` and the `switch` as
+`std::visit` — a call that hands the live alternative to whichever lambda
+takes it. The two `overloaded` lines are the idiom that turns those lambdas
+into one callable with one `operator()` each; the standard library does not
+ship it, and every codebase on C++17 has a copy.
+[Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency) owns
+the type, and says when a variant beats the class hierarchy you would have
+written in C#. Needs `<variant>`, `<string>`.
+
+> [!WARNING]
+> **Trap:** leave one alternative out of the visitor and the build fails — which is the feature; the same omission in a `switch` on a `kind` field compiles and falls through, and that is how a vendor's new event type crashes a plug-in a year after it shipped.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

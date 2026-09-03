@@ -8,14 +8,15 @@ instead of assurances —
 | File | Procedures | What it checks |
 |---|---|---|
 | `counted.h` | — | the instrument: a type that tallies its own copies and moves, plus the `CHECK` judge |
-| `passing.cpp` | 2, 3 | what a sink costs against `const&` for each kind of caller — in copies, moves **and allocations** — the missing `&` in a loop, and what returning costs |
+| `passing.cpp` | 2, 3 | what a sink costs against `const&` for each kind of caller — in copies, moves **and allocations** — the missing `&` in a loop, and what returning costs; plus two of Chapter 6's value-category traps (a move from a const, `return std::move(local)`) |
 | `storing.cpp` | 1, 4 | that vector growth relocates elements while boxed ones stand still, what each costs, and which containers spare references |
 
-**The sync rule.** Some units here are quoted in `book/H-choosing.md`, and
-each file's banner names exactly which. `scripts/check_verbatim.sh` holds
-the pairing in **both** directions: every `cpp` fence on the page must be
-byte-identical to something in this directory, and every unit the banners
-name must appear on the page *whole*. Editing one side means editing the
+**The sync rule.** Some units here are quoted in `book/H-choosing.md` —
+and three in `passing.cpp` by Chapter 6 — and each file's banner names
+exactly which, and where. `scripts/check_verbatim.sh` holds the pairing in
+**both** directions: every `cpp` fence on Appendix H must be byte-identical
+to something in this directory, and every unit the banners name must appear
+on its page *whole*. Editing one side means editing the
 other in the same commit — the cookbook discipline. Anything not named in a
 banner, `main()` included, is scaffolding and appears in no listing.
 
