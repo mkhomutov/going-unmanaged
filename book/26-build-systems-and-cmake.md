@@ -168,6 +168,37 @@ target_link_libraries(greeter PUBLIC sanitizers)   # and every other target too
 
 One place to change when the flag list grows, and a checklist you can read: any target not linking `sanitizers` is a target nobody is checking.
 
+### Compile-time switches, and the one that must be global
+
+C# has `#if DEBUG`, `[Conditional("DEBUG")]`, `DefineConstants` in the csproj, and a feature-flag library reading configuration at run time. C++ has the same four tools, plus a hazard C# cannot express: a preprocessor switch can change the *layout* of a type, and a type's layout is baked into every translation unit that saw the header. In order of preference:
+
+1. **A runtime flag.** A `bool` read from configuration, tested with `if`. For anything that changes behavior and not types it is the best tool, because no build is involved at all; reaching for the preprocessor first is a habit from before configuration files.
+2. **`if constexpr` on a constant.** `inline constexpr bool kAuditing = true;` in a header, and `if constexpr (kAuditing) { ... }` where it matters. The compiler discards the dead branch but *parses* both, so a typo in the disabled half still fails the build — the thing `#ifdef` never gives you — and no type's layout can depend on it.
+3. **A compile definition with `#ifdef`.** For what genuinely must not compile at all: a platform-specific file, an SDK version guard (`#if SDK_VERSION >= 29`, which Appendix D warns you to expect), a debug-only diagnostic. CMake spells it `target_compile_definitions(greeter PUBLIC GREETER_AUDIT=1)` — the csproj's `DefineConstants` line — and the visibility keyword decides which translation units see it.
+4. **`NDEBUG`**, the switch the language ships: `assert` compiles to nothing under it, a CMake Release build defines it, and Recipe 24 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) is what that costs when a side effect lives inside the assert.
+
+The rule is about tool 3, and it is Chapter 27's diamond with a macro for a cause:
+
+```cpp
+// session.h
+#pragma once
+struct Session {
+    int id;
+#ifdef AUDIT
+    int audit_count;     // present only where AUDIT is defined
+#endif
+    int timeout;
+};
+inline int GetTimeout(const Session& s) { return s.timeout; }
+```
+
+Compile one translation unit with `-DAUDIT` and one without, and there are two `Session`s in the program — eight bytes and twelve — and two `GetTimeout`s reading `timeout` at different offsets, both named identically, both `inline`, so the linker keeps one and says nothing. On this machine at `-O0` the answer depends on link order — one order reads 30 in both files, the other 0 in both — and at `-O2` the library's copy is inlined and wrong whichever way the objects are listed. What is different from Chapter 27 is worse: **neither link order is caught by the sanitizers**, because every read is inside the object it was handed. `check_platform_claims.sh` holds the silent link, the disagreement, and the sanitizers' silence on both CI platforms.
+
+So: a definition that changes a class's layout is `PUBLIC` on the target that owns the class, so every consumer compiles the same struct — and it never appears in a public header of a shipped library at all, which is [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s one rule from the preprocessor's side. `exercises/buildlab/` carries the discipline in miniature: `GREETER_AUDIT` is an `option()` wired through `target_compile_definitions(... PUBLIC ...)`, and `build_all.sh` reads the compile database back to confirm the define reached `main.cpp` as well as `Greeter.cpp`, and reached neither by default.
+
+> [!TIP]
+> **Key principle:** "A switch that changes behavior is a runtime flag or an if constexpr; one that changes a type's layout is a PUBLIC compile definition on the target that owns the type, never in a shipped header — two layouts of one struct in one binary is an ODR violation the sanitizers cannot see."
+
 ### In the wild: vendor SDKs and IDE-native projects
 
 A well-maintained SDK ships CMake support, and consuming it is two lines:
@@ -182,6 +213,23 @@ That imported target carries its own include directories, its libraries, and any
 Plenty of SDKs ship no such thing. Then you locate the pieces by hand — `find_path` for headers, `find_library` for the binary — and wrap them in an imported target yourself so the rest of your build stays clean. Do that once, in one file, rather than scattering include paths through the project.
 
 And the honest note: a great many native SDK shops never use CMake at all. They keep a checked-in Visual Studio solution or Xcode project, because the SDK's own samples ship that way and the team edits build settings in a properties dialog. That is a legitimate, extremely common setup — and the compilation model underneath it is identical, which is why Chapter 12 is the chapter that matters and this one is the tooling on top. If you land in such a team, read their project's settings the way you would read a CMakeLists: which sources, which flags, which libraries, which configurations.
+
+### A layout that survives
+
+This chapter opened by saying C++ has no standard layout. What it has is a convention most projects converge on, and one the tools reward:
+
+```text
+myplugin/
+  CMakeLists.txt        one per directory; the root one adds the others
+  include/myplugin/     public headers - the ABI surface (Chapter 30) - included as <myplugin/x.h>
+  src/                  .cpp files and private headers; nothing here is a promise
+  tests/                a second executable, run by CTest (Chapter 28)
+  third_party/          vendored dependencies, each with a README naming its version (Chapter 27)
+  cmake/                find-modules, and the hand-written imported target for an SDK that ships no config
+  build/                generated and gitignored - the only directory `rm -rf` should ever touch
+```
+
+Two of those lines carry the reasoning. `include/myplugin/` is separate from `src/` because a header in the first is a contract and a header in the second is not — [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s boundary, expressed as a directory — and the project-name subdirectory makes every include spell `<myplugin/session.h>`, which cannot collide with a vendor's `session.h`. And the SDK lives *outside* the tree, located at configure time: it is the dependency you do not control ([Chapter 27](27-dependency-management.md#chapter-27--dependency-management)), and copying it in makes its licence and its size your repository's problem. Plug-in work adds a directory for resources and signing scripts; the tree above is the one `exercises/deplab/mathlib/` uses, built by CI, and the one to copy on day one. The nearest thing to a written community convention is the "pitchfork" layout, of which this is the subset worth keeping.
 
 ### Pitfalls
 
@@ -208,6 +256,7 @@ Write the CMakeLists for the Greeter trio from scratch — file listed, then lib
 2. **Prove the sanitizer switch.** Configure with `-DGREETER_SANITIZE=ON`, add a deliberate heap overflow to main.cpp, and confirm ASan reports it — the report should name `main.cpp` and the line. Then comment out `target_link_options`, rebuild, and read the resulting link failure until the `___asan_init` symbols make sense. Predict the *stage* before you run it: this is Chapter 23's error-stage triage on a real, non-obvious case.
 3. **Generate a native project.** With the full IDE installed, `cmake -S . -B build-ide -G Xcode` (or `-G "Visual Studio 17 2022"`), then open the result and build from the IDE. Same CMakeLists, same code, a project file you never wrote — the payoff for the two-step model. `cmake --help` lists the generators your installation actually offers, which is the honest way to find out what is available on your machine.
 4. **Split it.** Move Greeter into a `src/` subdirectory with its own CMakeLists and pull it in with `add_subdirectory`. That is the shape every real project has, and doing it once removes the mystery.
+5. **Prove a define's reach.** Configure with `-DGREETER_AUDIT=ON`, open `build/compile_commands.json`, and find `-DGREETER_AUDIT=1` on *both* `Greeter.cpp` and `main.cpp` — then change the `PUBLIC` to `PRIVATE`, reconfigure, and watch it vanish from `main.cpp` while the build stays green. Now give `Greeter` a member behind `#ifdef GREETER_AUDIT`, keep the `PRIVATE`, and run it: the two translation units disagree about `sizeof(Greeter)`, nothing reports it, and you have built the compile-time-switches section's diamond with your own hands.
 
 ---
 

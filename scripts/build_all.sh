@@ -102,6 +102,10 @@ run "cb_paths"    $CXX $FLAGS   exercises/cookbook/paths.cpp            -o $OUT/
 run "cb_async"    $CXX $FLAGS   exercises/cookbook/async.cpp            -o $OUT/cb_async
 run "cb_events"   $CXX $FLAGS   exercises/cookbook/events.cpp           -o $OUT/cb_events
 run "cb_logging"  $CXX $FLAGS   exercises/cookbook/logging.cpp          -o $OUT/cb_logging
+# logging.cpp a SECOND time with NDEBUG defined: Recipe 24's claim is that an
+# assert - side effect included - compiles to nothing under it, and one build
+# cannot prove a claim about two.
+run "cb_logging_nd" $CXX $FLAGS -DNDEBUG exercises/cookbook/logging.cpp   -o $OUT/cb_logging_nd
 run "cb_alternatives" $CXX $FLAGS exercises/cookbook/alternatives.cpp   -o $OUT/cb_alternatives
 run "cb_errors"   $CXX $FLAGS   exercises/cookbook/errors.cpp           -o $OUT/cb_errors
 # Chapter 32's lab, built TWICE with the translation units in opposite orders.
@@ -213,6 +217,7 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_paths > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_async > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_events > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_logging > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_logging_nd > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_alternatives > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_errors > /dev/null
 # Both link orders of the Chapter 32 lab: surviving exit IS the claim here.
@@ -574,7 +579,35 @@ if command -v cmake > /dev/null 2>&1; then
         echo "  GREETER_SANITIZE is not a switch." >&2
         exit 1
     fi
-    echo "  ok   exercises/buildlab/CMakeLists.txt (default, and GREETER_SANITIZE=ON)"
+    # The third configuration: Chapter 26's compile-time switch. The define is
+    # PUBLIC on greeter, so it must reach main.cpp (the executable's TU) as
+    # well as Greeter.cpp - the compile database is the only place that shows
+    # it did - and the binary must print the audit line it compiles in.
+    rm -rf "$CM-audit"
+    cmake -S exercises/buildlab -B "$CM-audit" -DGREETER_AUDIT=ON         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON > /dev/null
+    cmake --build "$CM-audit" --config Debug > /dev/null
+    GREET_AUDIT=$(greet_binary "$CM-audit")
+    for tu in Greeter main; do
+        if ! grep -q -- "-DGREETER_AUDIT=1.*$tu\.cpp" "$CM-audit/compile_commands.json"; then
+            echo "build_all.sh: GREETER_AUDIT=ON did not put -DGREETER_AUDIT=1 on" >&2
+            echo "  $tu.cpp - the option is not PUBLIC, or not wired at all." >&2
+            exit 1
+        fi
+    done
+    if grep -q -- '-DGREETER_AUDIT' "$CM/compile_commands.json"; then
+        echo "build_all.sh: the default configuration carries GREETER_AUDIT, so" >&2
+        echo "  it is not a switch." >&2
+        exit 1
+    fi
+    if ! "$GREET_AUDIT" | grep -q '^\[audit\]'; then
+        echo "build_all.sh: the GREETER_AUDIT build printed no [audit] line" >&2
+        exit 1
+    fi
+    if "$GREET" | grep -q '^\[audit\]'; then
+        echo "build_all.sh: the default build printed an [audit] line" >&2
+        exit 1
+    fi
+    echo "  ok   exercises/buildlab/CMakeLists.txt (default, GREETER_SANITIZE=ON, GREETER_AUDIT=ON)"
 elif [ "$REQUIRE_CMAKE" = 1 ]; then
     echo "build_all.sh: cmake not found, and --require-cmake was given" >&2
     exit 1

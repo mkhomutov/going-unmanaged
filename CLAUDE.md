@@ -73,8 +73,10 @@ Chapter 25's Finding 10.
 - `exercises/buildlab/` — Greeter.h/.cpp + main.cpp, the Chapter 23 starting
   point; built by build_all.sh so the scaffold stays green. Also
   `CMakeLists.txt`, Chapter 26's reference build description assembled from
-  that chapter's snippets — build_all.sh configures/builds/runs it twice
-  (default, then Debug + `-DGREETER_SANITIZE=ON`)
+  that chapter's snippets — build_all.sh configures/builds/runs it three
+  times (default, Debug + `-DGREETER_SANITIZE=ON`, and `-DGREETER_AUDIT=ON`,
+  reading the compile database back each time: the sanitizer flags and the
+  PUBLIC define must reach `main.cpp`, and neither may appear by default)
 - `exercises/deplab/` — Chapter 27's lab (its *Try it*, steps 1–4), and the
   only one whose subject is entirely build description: `mathlib/` is the
   dependency, and one `app/main.cpp` is consumed three ways — vendored
@@ -282,7 +284,11 @@ Chapter 25's Finding 10.
   atos-vs-llvm-symbolizer point), and what a null `const char*` handed to
   `std::string` does under each standard library (libc++ faults in the
   constructor, libstdc++ throws — Recipe 23's trap, detected by macro rather
-  than by OS). It also holds Chapter 27's ODR diamond —
+  than by OS). It also holds Chapter 27's ODR diamond and Chapter 26's
+  macro-ODR pair (a define that changes a struct's layout in one TU only:
+  silent link, order-dependent answer, and — unlike Chapter 27 — no order
+  caught by the sanitizers; `session.h` is pinned to the script's heredoc by
+  check_verbatim.sh) —
   both link orders link silently, the two orders disagree, and exactly one
   is caught, naming `GetTimeout` — the one section whose first two claims
   are about the linker rather than a compiler-rt runtime and so hold on
@@ -515,7 +521,8 @@ stay on the list marked DONE so item numbers never shift. Short version:
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
   timers), then 17 (UTF-8↔UTF-16), then 18–20 (find, optional, variant),
-  then 21–23 (a custom exception, value-or-error, the empty string);
+  then 21–23 (a custom exception, value-or-error, the empty string), then
+  24 (a diagnostic compiled out of Release);
   it grows by PR like the Findings log
   (Recipe template in CONTRIBUTING.md)
 - Carried over: both DONE. The COM-style refcounting exercise (Bestiary

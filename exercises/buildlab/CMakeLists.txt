@@ -67,3 +67,15 @@ if(GREETER_SANITIZE)
 endif()
 
 target_link_libraries(greeter PUBLIC sanitizers)   # and every other target too
+
+# A compile definition, for the chapter's compile-time-switches section: the
+# csproj's DefineConstants, spelled per target. PUBLIC, so every translation
+# unit that includes Greeter.h - the library's and the executable's - compiles
+# the same code; a define that changed the class's layout on one target only
+# would be Chapter 27's diamond. build_all.sh reads the compile database back
+# to confirm the define reached main.cpp as well as Greeter.cpp, and reached
+# neither by default - because "it configured and ran" proves neither.
+option(GREETER_AUDIT "Log every greeting (a compile-time switch)" OFF)
+if(GREETER_AUDIT)
+    target_compile_definitions(greeter PUBLIC GREETER_AUDIT=1)
+endif()
