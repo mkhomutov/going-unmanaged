@@ -11,7 +11,11 @@
 #
 # This script closes that gap. It runs the demonstrations and asserts what the
 # chapters promise, per platform, so a wrong claim fails a build instead of
-# waiting for a reader on the other operating system to find it.
+# waiting for a reader on the other operating system to find it. One section
+# is keyed by standard library rather than by OS - Recipe 23's null
+# const char* handed to std::string, which libc++ and libstdc++ treat
+# differently - because that claim is about the library, and the library is
+# whichever one $CXX links, not whichever OS this is.
 #
 # Note what this does NOT contradict. Deliberately broken programs stay
 # book-only "because a green run would mean it stopped working" (ROADMAP,
@@ -34,10 +38,10 @@ while [ $# -gt 0 ]; do
 done
 
 # Prefer clang++: almost every claim below is about a compiler-rt runtime, and
-# the book's transcripts are clang's. (Section 5 is the exception - two of its
-# three claims are about the linker, and it reports what it observed either
-# way.) Fall back to whatever c++ is, which is what a reader following the
-# chapters would have typed.
+# the book's transcripts are clang's. (Sections 5 and 6 are the exceptions -
+# 5's first two claims are about the linker, 6's about the standard library,
+# and both report what they observed either way.) Fall back to whatever c++
+# is, which is what a reader following the chapters would have typed.
 if [ -n "${CXX:-}" ]; then :
 elif command -v clang++ >/dev/null 2>&1; then CXX=clang++
 else CXX=c++
@@ -49,6 +53,7 @@ OUT=$(mktemp -d)
 trap 'rm -rf "$OUT"' EXIT
 
 FAILED=0
+STDLIB="stdlib not probed"
 pass() { echo "  ok   $1"; }
 fail() { echo "  FAIL $1"; FAILED=1; }
 skip() {
@@ -394,15 +399,71 @@ else
     fi
 fi
 
+# --- 6. a null const char* handed to std::string ----------------------------
+# Recipe 23's trap: `std::string name = Thing_GetName(h);` when the C API
+# returns null for "unnamed". The standard says undefined behavior, and the
+# two standard libraries the book runs on do different things with it - the
+# recipe names both. Keyed by which library compiled the program rather than
+# by OS: clang on Linux uses libstdc++ by default, so OS would be the wrong
+# key, and a claim about a library should be tested against the library.
+echo "== null const char* to std::string =="
+cat > "$OUT/nullstr.cpp" <<'EOF'
+#include <cstdio>
+#include <stdexcept>
+#include <string>
+const char* Thing_GetName() { return nullptr; }   // a C API's "unnamed"
+int main() {
+#if defined(_LIBCPP_VERSION)
+    std::puts("lib: libc++");
+#elif defined(__GLIBCXX__)
+    std::puts("lib: libstdc++");
+#else
+    std::puts("lib: other");
+#endif
+    std::fflush(stdout);                            // the next line may not return
+    try {
+        std::string name = Thing_GetName();         // the trap, verbatim
+        std::printf("constructed: %zu\n", name.size());
+    } catch (const std::logic_error& e) {
+        std::printf("threw logic_error: %s\n", e.what());
+    }
+    return 0;
+}
+EOF
+if $CXX -std=c++17 -g -O0 "$OUT/nullstr.cpp" -o "$OUT/nullstr" 2>/dev/null; then
+    RC=$(run_rc "$OUT/nullstr" "$OUT/nullstr.log")
+    LIB=$(sed -n 's/^lib: //p' "$OUT/nullstr.log")
+    STDLIB=${LIB:-stdlib unknown}
+    case "$LIB" in
+        libc++)
+            if [ "$RC" != 0 ] && ! grep -q "^constructed" "$OUT/nullstr.log"; then
+                pass "libc++ dies inside the constructor (exit $RC), nothing to catch   [Recipe 23]"
+            else
+                fail "libc++ survived a null const char* (exit $RC); Recipe 23 says it dies in the constructor   [Recipe 23]"
+            fi ;;
+        libstdc++)
+            if [ "$RC" = 0 ] && grep -q "^threw logic_error" "$OUT/nullstr.log"; then
+                pass "libstdc++ throws std::logic_error   [Recipe 23]"
+            else
+                fail "libstdc++ did not throw logic_error (exit $RC); Recipe 23 says it does   [Recipe 23]"
+            fi ;;
+        *)
+            skip "an unrecognized standard library; Recipe 23 speaks only for libc++ and libstdc++" ;;
+    esac
+else
+    skip "cannot compile the null-string demonstration with $CXX"
+fi
+
 echo
 if [ "$FAILED" = 0 ]; then
-    echo "platform claims OK ($OS/$ARCH)"
+    echo "platform claims OK ($OS/$ARCH, $STDLIB)"
 else
     echo "check_platform_claims.sh: a claim in the book does not hold on" >&2
     echo "  $OS/$ARCH with $CXX. Fix the chapter, not this script - each FAIL" >&2
     echo "  above names the claim. Sections 1-4 are per-platform, where the" >&2
     echo "  mistake is one platform's behavior written down as the rule;" >&2
     echo "  section 5's linker claims hold everywhere alike, so a failure" >&2
-    echo "  there means this toolchain differs from the chapter's transcript." >&2
+    echo "  there means this toolchain differs from the chapter's transcript;" >&2
+    echo "  section 6 is per standard library, keyed by the library's macro." >&2
     exit 1
 fi

@@ -29,7 +29,12 @@ jobs:
       # ubuntu - LeakSanitizer is unsupported on macOS/arm64, so only the
       # Linux leg can say anything about the callback contexts the chapter
       # deliberately never frees inside the destructor.
-      - run: ./scripts/build_all.sh --require-cmake --require-git --require-tsan
+      # --require-expected: the one C++23 listing in the cookbook (Recipe 22's
+      # std::expected) is built behind a probe, and a probe that skips in CI
+      # is a listing nobody checks. Both hosted images ship a compiler with
+      # <expected>; the flag exists so a runner image that stops doing so
+      # fails loudly rather than skipping quietly.
+      - run: ./scripts/build_all.sh --require-cmake --require-git --require-tsan --require-expected
 
   # The book states sanitizer behavior that differs between the maintainer's
   # macOS/arm64 machine and Linux - exit codes, leak detection, whether a frame

@@ -29,9 +29,10 @@
 #                    bridgelab's does; and Appendix G must hold NO cpp fence at
 #                    all - its recorded shape is lookup material with no
 #                    C++ listings (ROADMAP item 16's delivered note)
-#                    that same whole-unit reverse serves Chapter 6, which
-#                    quotes three units of exercises/choosing/passing.cpp
-#                    by excerpt: one UNITS table, a page column per row
+#                    that same whole-unit table carries a page column, so
+#                    it also serves Chapter 6 (three units of
+#                    exercises/choosing/passing.cpp) and Chapter 8 (three
+#                    of the cookbook's, from errors.cpp and expected.cpp)
 #   4. generated   - a listing the book quotes that no lab commits, because
 #                    the code half is a script that writes it to a temp
 #                    directory: Chapter 27's ODR headers, generated and
@@ -188,10 +189,11 @@ for i, block in enumerate(h_fences, 1):
 # card; exercises/choosing/ has no card (it is not an exercise), so the
 # named units are the contract instead - which is what stops a lab function
 # from growing a branch the page never shows. The table carries a page
-# column because two pages quote this lab: Appendix H, and Chapter 6's
-# value-category traps. Whole-unit containment is the stronger check in both
-# directions at once - the fence cannot be truncated, and the lab unit
-# cannot grow - which is why Chapter 6 gets no forward-only substring pass.
+# column because more than one page quotes a lab by whole unit: Appendix H
+# and Chapter 6 for exercises/choosing/, Chapter 8 for the cookbook.
+# Whole-unit containment is the stronger check in both directions at once -
+# the fence cannot be truncated, and the lab unit cannot grow - which is
+# why no chapter gets a forward-only substring pass of its own.
 def whole_unit(path, opening):
     """The text from the line starting with `opening` to where its braces close."""
     lines = open(path).read().split('\n')
@@ -209,6 +211,7 @@ def whole_unit(path, opening):
 
 H_PAGE = 'book/H-choosing.md'
 CH6 = 'book/06-the-rule-of-five-and-move-semantics.md'
+CH8 = 'book/08-error-handling.md'
 UNITS = [
     (H_PAGE, 'exercises/choosing/counted.h',    'struct Counts {'),
     (H_PAGE, 'exercises/choosing/counted.h',    'inline Counts& Tally() {'),
@@ -223,6 +226,11 @@ UNITS = [
     (CH6,    'exercises/choosing/passing.cpp',  'Counted MakeNamedMoved()'),
     (CH6,    'exercises/choosing/passing.cpp',  'void MovingFromAConstObjectCopies()'),
     (CH6,    'exercises/choosing/passing.cpp',  'void ReturnStdMoveCostsTheMoveElisionRemoved()'),
+    # Chapter 8's translation layer quotes Recipe 22's Result and load_config,
+    # so Chapter 8, Appendix F and errors.cpp are one listing in three places.
+    (CH8,    'exercises/cookbook/errors.cpp',   'template <class T, class E>'),
+    (CH8,    'exercises/cookbook/errors.cpp',   'Result<Config, ConfigError> load_config('),
+    (CH8,    'exercises/cookbook/expected.cpp', 'std::expected<int, ConfigError> channels_doubled('),
 ]
 pages = {}
 for page, path, opening in UNITS:

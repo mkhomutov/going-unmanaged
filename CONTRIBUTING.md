@@ -102,8 +102,9 @@ re-teach. End with the headers it needs.>
 ````
 
 Two rules beyond the shape. The listing is code, not prose: it lives in
-`exercises/cookbook/` (one translation unit per domain, a `main()` that
-asserts what the recipe claims, wired into `build_all.sh`), and the appendix
+`exercises/cookbook/` (one translation unit per domain — `expected.cpp`,
+C++23, is the one cut by standard instead — with a `main()` that asserts
+what the recipe claims, wired into `build_all.sh`), and the appendix
 quotes it **verbatim** — editing either side means editing both in the same
 commit, exactly as testlab works. And the numbering is the Findings
 contract: add your recipe at the end with the next free number, add its row
@@ -273,13 +274,14 @@ home, decided once so no PR has to argue it again:
 - **Everything verifiable is wired into `scripts/build_all.sh`.** That script
   remains the single repo invariant — it must print `ALL GREEN` — and adding
   chapter code without adding it to the script is half a contribution.
-- **A step that needs a tool which may be absent locally** (cmake and
-  ThreadSanitizer today) follows the `check_mermaid.sh` precedent: print a
+- **A step that needs a tool which may be absent locally** (cmake, a git
+  that clones `file://`, ThreadSanitizer, and a compiler that builds the
+  C++23 `<expected>` listing today) follows the `check_mermaid.sh` precedent: print a
   `SKIPPED` line and stay green on a machine that lacks it, and take a
   `--require-*` flag that refuses to skip. CI always passes that flag, so a
   step can never silently skip there. A local run should never look like a
-  pass it did not earn. Name the flag for the tool — `--require-cmake` and
-  `--require-tsan` in `build_all.sh`; `check_mermaid.sh` predates the pattern
+  pass it did not earn. Name the flag for the thing probed — `--require-cmake`,
+  `--require-git`, `--require-tsan` and `--require-expected` in `build_all.sh`; `check_mermaid.sh` predates the pattern
   and spells its own `--required`, and checks one thing, so it stays. **Probe
   by doing the thing, not by looking for the tool.** The TSan step compiles
   *and runs* a trivial instrumented program, because ThreadSanitizer can be
@@ -308,7 +310,10 @@ everything the header exists to hide.
   `g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined`
   (clang++ works identically). Run `./scripts/build_all.sh` before opening a
   PR — it must print `ALL GREEN`. If you add a solution, add it to that script
-  in the same PR.
+  in the same PR. (The one exception is `exercises/cookbook/expected.cpp`,
+  Chapter 8's `std::expected` listing, which is C++23 and builds as its own
+  probe in `build_all.sh` — a second such file needs the same probe and the
+  same argument, not a quiet copy.)
 - **Vendor code is frozen.** `exercises/fakesdk/FakeSDK.h|.cpp` and
   `exercises/fakedevice/FakeDevice.h|.cpp` are "vendor code": their public
   contracts are quoted verbatim in Chapters 17 and 18. Changing them requires

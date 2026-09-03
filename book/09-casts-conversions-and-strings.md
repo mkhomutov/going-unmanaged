@@ -46,7 +46,7 @@ const char* c = s.c_str();  // borrow a C-style pointer (valid only while
 std::string_view v = s;     // non-owning view (Chapter 10)
 ```
 
-Comparison is by value out of the box (`s1 == s2` compares contents), formatting is `std::format` (C++20, like string interpolation) or the classic streams.
+Comparison is by value out of the box (`s1 == s2` compares contents), formatting is `std::format` (C++20, like string interpolation) or the classic streams. And a `std::string` cannot be null: default-constructed it is empty, `s.empty()` is the test, and `string.IsNullOrEmpty` has no work left to do — which makes the null `const char*` a vendor `Get*Name` returns for "unnamed" the one null in the picture. Constructing a `std::string` from it is undefined behavior, and Recipe 23 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) is the check that goes in front of it.
 
 The SDK reality — multiple string types in one function. Most large SDKs ship their own string class (Qt's `QString`, Windows' `BSTR`, many vendor "UniString" types), typically UTF-16 like C# strings internally. `std::wstring` keeps the same company on Windows without being a vendor type at all: it is standard C++, and it is UTF-16 only because `wchar_t` is 16 bits there — on Linux and macOS `wchar_t` is 32 bits and a `wstring` is conventionally UTF-32. Conversions at the boundary are daily work:
 

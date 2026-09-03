@@ -1,5 +1,5 @@
-// Appendix F, Recipes 2-5 and 17 - strings: split, join, build, format,
-// and the UTF-8 <-> UTF-16 boundary.
+// Appendix F, Recipes 2-5, 17 and 23 - strings: split, join, build, format,
+// the UTF-8 <-> UTF-16 boundary, and the empty string that is not null.
 //
 // The recipe functions below are quoted VERBATIM in book/F-rosetta-cookbook.md:
 // editing one means editing the appendix in the same commit (the testlab
@@ -133,6 +133,14 @@ std::string utf16_to_utf8(std::u16string_view utf16) {
     return out;
 }
 
+// Recipe 23 - string.IsNullOrEmpty / s ?? ""
+std::string name_or_default(const char* from_c_api) {
+    if (from_c_api == nullptr) {            // the one null there is: a C API's "no name"
+        return "unnamed";
+    }
+    return from_c_api;                      // safe now - std::string(nullptr) is UB
+}
+
 int main() {
     // Recipe 2, including the two behaviors the appendix claims: interior
     // empty fields are kept, the final empty field is not (C# keeps it).
@@ -177,5 +185,16 @@ int main() {
             assert(utf8_to_utf16(utf16_to_utf8(u16)) == u16);
         }
     }
+
+    // Recipe 23: empty is a value, null is a type - and the C pointer is the
+    // only null. name_or_default takes the null; std::string never sees it.
+    assert(std::string().empty());          // default-constructed: empty, never null
+    assert(name_or_default(nullptr) == "unnamed");
+    assert(name_or_default("") == "");     // empty from the API is empty, not missing
+    assert(name_or_default("sensor0") == "sensor0");
+    // The trap, as a comment: `std::string name = Thing_GetName(h);` with a
+    // null return dies inside the constructor on libc++ and throws
+    // std::logic_error on libstdc++ - scripts/check_platform_claims.sh
+    // asserts both, per standard library.
     return 0;
 }

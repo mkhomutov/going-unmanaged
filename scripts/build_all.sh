@@ -2,24 +2,28 @@
 # Build and run every reference solution under strict flags + sanitizers.
 # This is the repo's core invariant; CI runs the same script.
 #
-#   scripts/build_all.sh                   -> everything; cmake, git and TSan
-#                                             may SKIP
+#   scripts/build_all.sh                   -> everything; cmake, git, TSan and
+#                                             the one C++23 listing may SKIP
 #   scripts/build_all.sh --require-cmake   -> also fail if cmake is missing (CI)
 #   scripts/build_all.sh --require-git     -> also fail if git cannot build and
 #                                             clone a file:// repository (CI)
 #   scripts/build_all.sh --require-tsan    -> also fail if ThreadSanitizer is
 #                                             unusable here (CI)
+#   scripts/build_all.sh --require-expected -> also fail if the compiler has no
+#                                             C++23 <expected> (CI)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 REQUIRE_CMAKE=0
 REQUIRE_TSAN=0
 REQUIRE_GIT=0
+REQUIRE_EXPECTED=0
 while [ $# -gt 0 ]; do
     case "$1" in
-        --require-cmake) REQUIRE_CMAKE=1; shift ;;
-        --require-tsan)  REQUIRE_TSAN=1;  shift ;;
-        --require-git)   REQUIRE_GIT=1;   shift ;;
+        --require-cmake)    REQUIRE_CMAKE=1;    shift ;;
+        --require-tsan)     REQUIRE_TSAN=1;     shift ;;
+        --require-git)      REQUIRE_GIT=1;      shift ;;
+        --require-expected) REQUIRE_EXPECTED=1; shift ;;
         *) echo "build_all.sh: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -99,6 +103,7 @@ run "cb_async"    $CXX $FLAGS   exercises/cookbook/async.cpp            -o $OUT/
 run "cb_events"   $CXX $FLAGS   exercises/cookbook/events.cpp           -o $OUT/cb_events
 run "cb_logging"  $CXX $FLAGS   exercises/cookbook/logging.cpp          -o $OUT/cb_logging
 run "cb_alternatives" $CXX $FLAGS exercises/cookbook/alternatives.cpp   -o $OUT/cb_alternatives
+run "cb_errors"   $CXX $FLAGS   exercises/cookbook/errors.cpp           -o $OUT/cb_errors
 # Chapter 32's lab, built TWICE with the translation units in opposite orders.
 # The chapter's bug is decided by link order, so the fix's whole claim is that
 # order no longer matters - one build proves it compiles, two builds prove the
@@ -209,6 +214,7 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_async > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_events > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_logging > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_alternatives > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_errors > /dev/null
 # Both link orders of the Chapter 32 lab: surviving exit IS the claim here.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_a > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_b > /dev/null
@@ -615,6 +621,29 @@ elif [ "$REQUIRE_TSAN" = 1 ]; then
     exit 1
 else
     echo "  SKIPPED - no usable ThreadSanitizer here (CI runs this for real)"
+fi
+
+# Chapter 8's chaining listing is std::expected, which is C++23 - the one
+# file in the cookbook past the book's own C++17 pin. Same bargain as the
+# sections above: a compiler that cannot build it is a fact about a laptop
+# and a bug in CI, so --require-expected refuses to skip. The probe IS the
+# translation unit: <expected> arrived one release before its and_then and
+# transform did in both standard libraries (libstdc++ 12 before 13, libc++
+# 16 before 17), so a one-line probe of the header would pass on a compiler
+# that then cannot build the listing. The flags are the canonical set with
+# one token changed, derived rather than retyped so they cannot drift.
+echo "== cookbook expected (c++23) =="
+FLAGS23=${FLAGS/-std=c++17/-std=c++23}
+if $CXX $FLAGS23 exercises/cookbook/expected.cpp -o "$OUT/cb_expected" > "$OUT/expected_build.log" 2>&1; then
+    UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_expected" > /dev/null
+    echo "  ok   exercises/cookbook/expected.cpp under -std=c++23"
+elif [ "$REQUIRE_EXPECTED" = 1 ]; then
+    echo "build_all.sh: $CXX cannot build exercises/cookbook/expected.cpp under" >&2
+    echo "  $FLAGS23, and --require-expected was given. The compiler said:" >&2
+    sed 's/^/  /' "$OUT/expected_build.log" >&2
+    exit 1
+else
+    echo "  SKIPPED - $CXX cannot build the C++23 listing here (CI runs this for real)"
 fi
 
 echo "ALL GREEN"
