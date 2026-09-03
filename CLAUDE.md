@@ -118,9 +118,10 @@ Chapter 25's Finding 10.
   is `solutions/device_threaded_solution.cpp`
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
   (files, strings, timing, handles, lookups, paths, async, events, logging,
-  alternatives — the last holds optional and variant), each with a `main()`
-  asserting what its recipes claim; build_all.sh builds and runs all ten.
-  Same sync
+  alternatives for optional and variant, errors for a custom exception and
+  the C++17 `Result`, and expected — the one C++23 TU, built behind a probe
+  with `--require-expected` in CI), each with a `main()` asserting what its
+  recipes claim; build_all.sh builds and runs all of them. Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
   same commit (the mains are scaffolding and appear in no listing)
@@ -215,15 +216,17 @@ Chapter 25's Finding 10.
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
-  Its last three sections may skip: one builds `exercises/deplab/` three ways
+  Its last four sections may skip: one builds `exercises/deplab/` three ways
   (Chapter 27), one configures, builds and runs `exercises/buildlab/`'s
-  CMakeLists, the last rebuilds `solutions/device_threaded_solution.cpp` under
-  `-fsanitize=thread` (a second build, because TSan and ASan do not combine).
+  CMakeLists, one rebuilds `solutions/device_threaded_solution.cpp` under
+  `-fsanitize=thread` (a second build, because TSan and ASan do not combine),
+  and the last builds `exercises/cookbook/expected.cpp` as C++23.
   Without cmake on PATH, without a git that can clone a `file://` repository
-  (deplab's FetchContent path only), or without a ThreadSanitizer that can
-  compile *and start* a trivial program, each prints SKIPPED and stays green;
-  `--require-cmake`, `--require-git` and `--require-tsan` (CI passes all three)
-  refuse to skip
+  (deplab's FetchContent path only), without a ThreadSanitizer that can
+  compile *and start* a trivial program, or without a compiler that has
+  `<expected>`, each prints SKIPPED and stays green; `--require-cmake`,
+  `--require-git`, `--require-tsan` and `--require-expected` (CI passes all
+  four) refuse to skip
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
   flags: one or more .cpp files, compiled in the order written (= link order,
   which Chapter 32's two-order test turns on), then an optional vendor
@@ -253,7 +256,7 @@ Chapter 25's Finding 10.
   the lab's banners name is on the page whole — that lab has no TASK card
   to carry the reverse the way bridgelab's does; the same whole-unit table
   carries a page column, because Chapter 6 quotes three of `passing.cpp`'s
-  units too) — plus one pairing whose
+  units and Chapter 8 two of `cookbook/errors.cpp`'s) — plus one pairing whose
   code half is not a file under `exercises/` at all: Chapter 27's two ODR
   headers are an ill-formed program that no harness may commit, so
   `check_platform_claims.sh` generates them into a temp directory and
@@ -276,7 +279,10 @@ Chapter 25's Finding 10.
   asserts what the chapters promise *per platform*: ASan's exit code (134 on
   macOS, 1 on Linux), TSan's (134 / 66), whether LeakSanitizer reports at all
   (no on macOS/arm64), and whether a frame carries a column number (Ch 31's
-  atos-vs-llvm-symbolizer point). It also holds Chapter 27's ODR diamond —
+  atos-vs-llvm-symbolizer point), and what a null `const char*` handed to
+  `std::string` does under each standard library (libc++ faults in the
+  constructor, libstdc++ throws — Recipe 23's trap, detected by macro rather
+  than by OS). It also holds Chapter 27's ODR diamond —
   both link orders link silently, the two orders disagree, and exactly one
   is caught, naming `GetTimeout` — the one section whose first two claims
   are about the linker rather than a compiler-rt runtime and so hold on
@@ -506,7 +512,8 @@ stay on the list marked DONE so item numbers never shift. Short version:
   The glossary was item 10 and is now Appendix E (letters run A–I with no
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
-  timers), then 17 (UTF-8↔UTF-16), then 18–20 (find, optional, variant);
+  timers), then 17 (UTF-8↔UTF-16), then 18–20 (find, optional, variant),
+  then 21–23 (a custom exception, value-or-error, the empty string);
   it grows by PR like the Findings log
   (Recipe template in CONTRIBUTING.md)
 - Carried over: both DONE. The COM-style refcounting exercise (Bestiary

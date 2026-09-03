@@ -188,8 +188,8 @@ for i, block in enumerate(h_fences, 1):
 # card; exercises/choosing/ has no card (it is not an exercise), so the
 # named units are the contract instead - which is what stops a lab function
 # from growing a branch the page never shows. The table carries a page
-# column because two pages quote this lab: Appendix H, and Chapter 6's
-# value-category traps. Whole-unit containment is the stronger check in both
+# column because more than one page quotes a lab by whole unit: Appendix H
+# and Chapter 6 for exercises/choosing/, Chapter 8 for the cookbook. Whole-unit containment is the stronger check in both
 # directions at once - the fence cannot be truncated, and the lab unit
 # cannot grow - which is why Chapter 6 gets no forward-only substring pass.
 def whole_unit(path, opening):
@@ -209,6 +209,7 @@ def whole_unit(path, opening):
 
 H_PAGE = 'book/H-choosing.md'
 CH6 = 'book/06-the-rule-of-five-and-move-semantics.md'
+CH8 = 'book/08-error-handling.md'
 UNITS = [
     (H_PAGE, 'exercises/choosing/counted.h',    'struct Counts {'),
     (H_PAGE, 'exercises/choosing/counted.h',    'inline Counts& Tally() {'),
@@ -223,6 +224,10 @@ UNITS = [
     (CH6,    'exercises/choosing/passing.cpp',  'Counted MakeNamedMoved()'),
     (CH6,    'exercises/choosing/passing.cpp',  'void MovingFromAConstObjectCopies()'),
     (CH6,    'exercises/choosing/passing.cpp',  'void ReturnStdMoveCostsTheMoveElisionRemoved()'),
+    # Chapter 8's translation layer quotes Recipe 22's Result and load_config,
+    # so Chapter 8, Appendix F and errors.cpp are one listing in three places.
+    (CH8,    'exercises/cookbook/errors.cpp',   'template <class T, class E>'),
+    (CH8,    'exercises/cookbook/errors.cpp',   'Result<Config, ConfigError> load_config('),
 ]
 pages = {}
 for page, path, opening in UNITS:

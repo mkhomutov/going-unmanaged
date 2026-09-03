@@ -7,7 +7,7 @@ Cookbook*), one translation unit per domain —
 | File | Recipes |
 |---|---|
 | `files.cpp` | 1, 9 — read and write a whole file |
-| `strings.cpp` | 2–5 — split, join, build, format |
+| `strings.cpp` | 2–5, 23 — split, join, build, format; the empty string that is not null |
 | `timing.cpp` | 6, 16 — time a call; a repeating timer |
 | `handles.cpp` | 7 — wrap a C handle so it frees itself |
 | `lookups.cpp` | 8, 18 — look up a key without inserting it; find an element, an index, or a substring |
@@ -16,10 +16,15 @@ Cookbook*), one translation unit per domain —
 | `events.cpp` | 14 — expose an event |
 | `logging.cpp` | 15 — print a diagnostic you will actually see |
 | `alternatives.cpp` | 19–20 — a value that may be absent; a value that is one of several kinds |
+| `errors.cpp` | 21–22 — an exception type of your own; a value or an error, on C++17 |
+| `expected.cpp` | 22 — the same on C++23: `std::expected`, built behind a probe |
 
 — each with a `main()` that asserts what its recipes claim.
-`scripts/build_all.sh` builds and runs all ten under the canonical flags on
-every push, so a recipe that stops being true stops being green.
+`scripts/build_all.sh` builds and runs all of them under the canonical flags on
+every push, so a recipe that stops being true stops being green — all but one
+as C++17, the book's pin. `expected.cpp` is C++23 and sits behind a probe:
+a toolchain without `<expected>` prints SKIPPED, and CI passes
+`--require-expected` so it can never skip there.
 
 The sync rule is the testlab discipline: the recipe functions here are quoted
 **verbatim** in `book/F-rosetta-cookbook.md`. Editing a recipe on either side

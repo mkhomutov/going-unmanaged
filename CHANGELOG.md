@@ -38,6 +38,22 @@ additions that close them; each appends, and no number moves.
   the three spellings of "not found"), Recipe 19 (a value that may be
   absent), Recipe 20 (switch on the kind of a message, with the
   `overloaded` idiom). `exercises/cookbook/alternatives.cpp` is new.
+- **Chapter 8** gains *Living in both dialects: the translation layer* —
+  a throw becomes a value at a module boundary and a value becomes a throw
+  again only at the top; a C++17 `Result<T, E>` over `std::variant`; what
+  C++23's `and_then`/`transform` collapse; and three pieces of exception
+  vocabulary the chapter had used without introducing (a custom exception
+  type, catch order, `exception_ptr`). The listings are Recipe 22's, held
+  whole on both pages.
+- **Appendix F**: Recipe 21 (throw and catch your own exception type),
+  Recipe 22 (return a value or an error — `optional`, a C++17 `Result`,
+  `std::expected` side by side; `exercises/cookbook/expected.cpp` is the
+  cookbook's one C++23 TU, built behind a probe with `--require-expected`
+  in CI), Recipe 23 (test for an empty string, and for no string at all —
+  a `std::string` cannot be null, and the null `const char*` from a C API
+  is the one that can). `check_platform_claims.sh` now asserts what that
+  null does under each standard library.
+- **Chapter 9** points at Recipe 23; **Appendix B** one new principle.
 - **Chapter 1** names custom deleters and `enable_shared_from_this`;
   **Chapter 11** the algorithm-versus-member `find` trap; **Chapter 14** a
   fourth Tracer experiment (a const source moves as a copy); **Appendix I**

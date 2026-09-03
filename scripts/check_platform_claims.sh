@@ -394,6 +394,60 @@ else
     fi
 fi
 
+# --- 6. a null const char* handed to std::string ----------------------------
+# Recipe 23's trap: `std::string name = Thing_GetName(h);` when the C API
+# returns null for "unnamed". The standard says undefined behavior, and the
+# two standard libraries the book runs on do different things with it - the
+# recipe names both. Keyed by which library compiled the program rather than
+# by OS: clang on Linux uses libstdc++ by default, so OS would be the wrong
+# key, and a claim about a library should be tested against the library.
+echo "== null const char* to std::string =="
+cat > "$OUT/nullstr.cpp" <<'EOF'
+#include <cstdio>
+#include <stdexcept>
+#include <string>
+const char* Thing_GetName() { return nullptr; }   // a C API's "unnamed"
+int main() {
+#if defined(_LIBCPP_VERSION)
+    std::puts("lib: libc++");
+#elif defined(__GLIBCXX__)
+    std::puts("lib: libstdc++");
+#else
+    std::puts("lib: other");
+#endif
+    std::fflush(stdout);                            // the next line may not return
+    try {
+        std::string name = Thing_GetName();         // the trap, verbatim
+        std::printf("constructed: %zu\n", name.size());
+    } catch (const std::logic_error& e) {
+        std::printf("threw logic_error: %s\n", e.what());
+    }
+    return 0;
+}
+EOF
+if $CXX -std=c++17 -g -O0 "$OUT/nullstr.cpp" -o "$OUT/nullstr" 2>/dev/null; then
+    RC=$(run_rc "$OUT/nullstr" "$OUT/nullstr.log")
+    LIB=$(sed -n 's/^lib: //p' "$OUT/nullstr.log")
+    case "$LIB" in
+        libc++)
+            if [ "$RC" != 0 ] && ! grep -q "^constructed" "$OUT/nullstr.log"; then
+                pass "libc++ dies inside the constructor (exit $RC), nothing to catch   [Recipe 23]"
+            else
+                fail "libc++ survived a null const char* (exit $RC); Recipe 23 says it dies in the constructor   [Recipe 23]"
+            fi ;;
+        libstdc++)
+            if [ "$RC" = 0 ] && grep -q "^threw logic_error" "$OUT/nullstr.log"; then
+                pass "libstdc++ throws std::logic_error   [Recipe 23]"
+            else
+                fail "libstdc++ did not throw logic_error (exit $RC); Recipe 23 says it does   [Recipe 23]"
+            fi ;;
+        *)
+            skip "an unrecognized standard library; Recipe 23 speaks only for libc++ and libstdc++" ;;
+    esac
+else
+    skip "cannot compile the null-string demonstration with $CXX"
+fi
+
 echo
 if [ "$FAILED" = 0 ]; then
     echo "platform claims OK ($OS/$ARCH)"
@@ -403,6 +457,7 @@ else
     echo "  above names the claim. Sections 1-4 are per-platform, where the" >&2
     echo "  mistake is one platform's behavior written down as the rule;" >&2
     echo "  section 5's linker claims hold everywhere alike, so a failure" >&2
-    echo "  there means this toolchain differs from the chapter's transcript." >&2
+    echo "  there means this toolchain differs from the chapter's transcript;" >&2
+    echo "  section 6 is per standard library, keyed by the library's macro." >&2
     exit 1
 fi

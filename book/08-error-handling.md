@@ -95,7 +95,7 @@ if (!cfg)
 Use(*cfg);                          // the T side - dereference, like optional
 ```
 
-Most codebases are not on C++23, so most codebases that want this shape ship their own: Abseil's `StatusOr`, Boost.Outcome, LLVM's `Expected`, or a house `Result<T, E>`. They differ in spelling and in how loudly they complain when you get it wrong; they are all the same idea, and recognizing the shape when you meet it under a new name is the actual skill.
+Most codebases are not on C++23, so most codebases that want this shape ship their own: Abseil's `StatusOr`, Boost.Outcome, LLVM's `Expected`, or a house `Result<T, E>` — which is twenty lines over `std::variant`, and the translation-layer section below writes them. They differ in spelling and in how loudly they complain when you get it wrong; they are all the same idea, and recognizing the shape when you meet it under a new name is the actual skill.
 
 > [!WARNING]
 > **Trap:** assuming these types force the check. `*cfg` without testing `cfg` first is undefined behavior on the error side, exactly as `optional`'s `operator*` is — the same bug class as an ignored error code, wearing a nicer type. Only an exception is impossible to ignore.
@@ -134,6 +134,57 @@ Exception-safety guarantees (worth knowing cold): **basic** — no leaks, object
 
 > [!TIP]
 > **Key principle:** "I check every error code, use RAII so early returns can't leak, and never let an exception escape the plug-in boundary — I catch at entry points and translate to the SDK's error codes."
+
+### Living in both dialects: the translation layer
+
+The two poles are not a choice you make once for the whole program. Most real codebases speak both: exceptions inside a module, where every frame between a throw and its handler is yours and RAII makes the flight leak-free; values at the module's edge, where the caller is a different team, a different build setting, or a different language. The skill is the **translation**, and it runs in exactly two directions.
+
+**Inward, at a module boundary, a throw becomes a value.** The parser throws — it is the deepest frame, and from where it stands a malformed file is the event pole — and the function that owns the boundary catches once and returns:
+
+```cpp
+Result<Config, ConfigError> load_config(const std::string& text) {
+    try {
+        return Result<Config, ConfigError>::ok(Config{parse_channel_count(text, 1)});
+    } catch (const ParseError& e) {          // the throw stops here: failure becomes a value
+        return Result<Config, ConfigError>::fail(ConfigError{e.line(), e.what()});
+    }
+}
+```
+
+Nothing above that function ever sees a `ParseError`. The caller sees a result it must look at, on the signature — the property the error-code pole was always about — and `Plugin_Process` below did the same translation into an `int32_t`; this is that entry point with a richer value on the way out.
+
+**Outward, at the top of the program, a value becomes a throw again.** `value()` on the error side throws — `bad_variant_access` for the type below, `bad_expected_access<E>` in C++23, `bad_optional_access` for `optional` — and that is the one place it is allowed to: the request loop, the menu handler, the `main` of a tool, where "this operation failed, and here is why" is actionable and there is nobody left to hand a value to. Translating outward anywhere lower puts you back in the hot-loop trap of the cost section.
+
+**The type in the middle.** `std::expected` is C++23 and this book pins C++17, so the type most readers write is a `Result<T, E>` of their own — twenty lines over [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s `std::variant`:
+
+```cpp
+template <class T, class E>
+class Result {
+public:
+    static Result ok(T value)   { return Result(State(std::in_place_index<0>, std::move(value))); }
+    static Result fail(E error) { return Result(State(std::in_place_index<1>, std::move(error))); }
+
+    bool has_value() const noexcept { return state_.index() == 0; }
+    explicit operator bool() const noexcept { return has_value(); }
+
+    const T& value() const { return std::get<0>(state_); }   // throws bad_variant_access on a failure
+    const E& error() const { return std::get<1>(state_); }   // ...and on a success
+
+private:
+    using State = std::variant<T, E>;       // by index, so T and E may be the same type
+    explicit Result(State s) : state_(std::move(s)) {}
+    State state_;
+};
+```
+
+Two named doors, and the value behind an accessor rather than in a field, so no caller reads it without a line that says which door they expect. Recipe 22 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) sets this beside `optional` and the real `std::expected`, and `exercises/cookbook/errors.cpp` asserts all of it — including that `value()` on a failure throws, which is the outward translation in one line.
+
+**Chaining.** Five steps that may each fail read, in C++17, as five `if (!r) return r.error();` lines — flat early returns, the error-code pole's own shape, and nothing to apologize for. C++23's `expected` adds `and_then` for a step that may itself fail and `transform` for one that cannot, so the five lines collapse into one expression; Abseil's `StatusOr` and Boost.Outcome have their own spellings of the same two verbs. Recognize the shape when a house type offers it, and do not build it before you need it.
+
+**Three pieces of exception vocabulary this chapter has used without introducing.** A custom exception type derives from `std::runtime_error` (or `logic_error`), builds its message in the constructor, and carries the payload `what()` cannot — a line number, an error code — as a member; Recipe 21 is the shape. Catch clauses are tried **in order**, so a derived type goes before its base or its handler is dead code — clang says so under `-Wall` (`-Wexceptions`), GCC by default. And an exception can travel as a value: `std::exception_ptr` holds one for a later rethrow, which is how `std::packaged_task` carries a throw from [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out)'s main thread into the client's `future`, and how `std::async` delivers Recipe 13's rethrow at `.get()`.
+
+> [!TIP]
+> **Key principle:** "I translate at the edges: inside a module I may throw, at its boundary the throw becomes a value the caller must look at, and only at the top of the program does a value become a throw again."
 
 ### In the wild: C-style SDKs
 

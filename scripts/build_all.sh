@@ -9,17 +9,21 @@
 #                                             clone a file:// repository (CI)
 #   scripts/build_all.sh --require-tsan    -> also fail if ThreadSanitizer is
 #                                             unusable here (CI)
+#   scripts/build_all.sh --require-expected -> also fail if the compiler has no
+#                                             C++23 <expected> (CI)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 REQUIRE_CMAKE=0
 REQUIRE_TSAN=0
 REQUIRE_GIT=0
+REQUIRE_EXPECTED=0
 while [ $# -gt 0 ]; do
     case "$1" in
-        --require-cmake) REQUIRE_CMAKE=1; shift ;;
-        --require-tsan)  REQUIRE_TSAN=1;  shift ;;
-        --require-git)   REQUIRE_GIT=1;   shift ;;
+        --require-cmake)    REQUIRE_CMAKE=1;    shift ;;
+        --require-tsan)     REQUIRE_TSAN=1;     shift ;;
+        --require-git)      REQUIRE_GIT=1;      shift ;;
+        --require-expected) REQUIRE_EXPECTED=1; shift ;;
         *) echo "build_all.sh: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -99,6 +103,7 @@ run "cb_async"    $CXX $FLAGS   exercises/cookbook/async.cpp            -o $OUT/
 run "cb_events"   $CXX $FLAGS   exercises/cookbook/events.cpp           -o $OUT/cb_events
 run "cb_logging"  $CXX $FLAGS   exercises/cookbook/logging.cpp          -o $OUT/cb_logging
 run "cb_alternatives" $CXX $FLAGS exercises/cookbook/alternatives.cpp   -o $OUT/cb_alternatives
+run "cb_errors"   $CXX $FLAGS   exercises/cookbook/errors.cpp           -o $OUT/cb_errors
 # Chapter 32's lab, built TWICE with the translation units in opposite orders.
 # The chapter's bug is decided by link order, so the fix's whole claim is that
 # order no longer matters - one build proves it compiles, two builds prove the
@@ -209,6 +214,7 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_async > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_events > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_logging > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_alternatives > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_errors > /dev/null
 # Both link orders of the Chapter 32 lab: surviving exit IS the claim here.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_a > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_b > /dev/null
@@ -615,6 +621,28 @@ elif [ "$REQUIRE_TSAN" = 1 ]; then
     exit 1
 else
     echo "  SKIPPED - no usable ThreadSanitizer here (CI runs this for real)"
+fi
+
+# Recipe 22's third spelling is std::expected, which is C++23 - the one
+# listing in the cookbook past the book's own C++17 pin. Same bargain as the
+# sections above: a compiler without <expected> is a fact about a laptop
+# and a bug in CI, so the probe compiles a one-line use of the header and
+# --require-expected refuses to skip. The probe is a compile, not a run:
+# unlike TSan there is no runtime that can be present and fail to start.
+echo "== cookbook expected (c++23) =="
+FLAGS23="-std=c++23 -Wall -Wextra -fsanitize=address,undefined -g"
+printf '#include <expected>\nint main() { return std::expected<int, int>{0}.value(); }\n' > "$OUT/expected_probe.cpp"
+if $CXX $FLAGS23 "$OUT/expected_probe.cpp" -o "$OUT/expected_probe" > /dev/null 2>&1; then
+    $CXX $FLAGS23 exercises/cookbook/expected.cpp -o "$OUT/cb_expected"
+    UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_expected" > /dev/null
+    echo "  ok   exercises/cookbook/expected.cpp under -std=c++23"
+elif [ "$REQUIRE_EXPECTED" = 1 ]; then
+    echo "build_all.sh: $CXX cannot compile a one-line use of <expected> under" >&2
+    echo "  -std=c++23, and --require-expected was given. Re-run the probe by" >&2
+    echo "  hand to see why: $CXX $FLAGS23 <a main() using std::expected>" >&2
+    exit 1
+else
+    echo "  SKIPPED - no C++23 <expected> here (CI runs this for real)"
 fi
 
 echo "ALL GREEN"

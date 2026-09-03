@@ -36,6 +36,9 @@ stays right.
 | `list.IndexOf` / `Contains` / `str.Contains` | `indexOf` / `contains` | [Recipe 18 — Find an element, an index, or a substring](#recipe-18--find-an-element-an-index-or-a-substring) |
 | `int?` / `??` / `?.` | `Optional<T>` / `orElse` / `map` | [Recipe 19 — Carry a value that may be absent](#recipe-19--carry-a-value-that-may-be-absent) |
 | pattern-matching `switch` on a type | sealed interfaces + `switch` | [Recipe 20 — Switch on the kind of a message](#recipe-20--switch-on-the-kind-of-a-message) |
+| `class ParseException : Exception` | `class ParseException extends Exception` | [Recipe 21 — Throw and catch your own exception type](#recipe-21--throw-and-catch-your-own-exception-type) |
+| `int.TryParse` with a reason / a `Result<T>` from a library | `Optional` / `Either` from a library | [Recipe 22 — Return a value or an error](#recipe-22--return-a-value-or-an-error) |
+| `string.IsNullOrEmpty` / `s ?? ""` | `s == null \|\| s.isEmpty()` | [Recipe 23 — Test for an empty string, and for no string at all](#recipe-23--test-for-an-empty-string-and-for-no-string-at-all) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -771,6 +774,176 @@ written in C#. Needs `<variant>`, `<string>`.
 
 > [!WARNING]
 > **Trap:** leave one alternative out of the visitor and the build fails — which is the feature; the same omission in a `switch` on a `kind` field compiles and falls through, and that is how a vendor's new event type crashes a plug-in a year after it shipped.
+
+### Recipe 21 — Throw and catch your own exception type
+
+**In C#:** `class ParseException : Exception { public int Line { get; } }` … `catch (ParseException e)`
+
+**The recipe:**
+
+```cpp
+class ParseError : public std::runtime_error {
+public:
+    ParseError(int line, const std::string& what)
+        : std::runtime_error("line " + std::to_string(line) + ": " + what),
+          line_(line) {}
+    int line() const noexcept { return line_; }    // the payload what() cannot carry
+private:
+    int line_;
+};
+
+int parse_channel_count(const std::string& text, int line) {
+    if (text.empty() || text.size() > 3 ||
+        text.find_first_not_of("0123456789") != std::string::npos) {
+        throw ParseError(line, "channel count is not a number: '" + text + "'");
+    }
+    return std::stoi(text);                 // at most three digits: cannot overflow
+}
+
+int channels_or_default(const std::string& text, int line) {
+    try {
+        return parse_channel_count(text, line);
+    } catch (const ParseError& e) {          // the derived type FIRST
+        log_line(e.line(), e.what());
+        return 2;
+    } catch (const std::exception& e) {      // then the base: order is the rule
+        log_line(line, e.what());
+        return 2;
+    }
+}
+```
+
+**Why it looks like this.** Derive from `std::runtime_error` (or
+`std::logic_error` for a caller bug) so every `catch (const std::exception&)`
+in the program — the plug-in entry point of
+[Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)
+among them — already handles it, and build the message once in the
+constructor, because `what()` returns a `const char*` that cannot be
+assembled later. Anything `what()` cannot carry is a member with an
+accessor. Throw by value, catch by `const&` (Chapter 8): a catch by value
+slices the payload off. Needs `<stdexcept>`, `<string>`.
+
+> [!WARNING]
+> **Trap:** catch clauses are tried in order, so a `catch (const std::exception&)` written above the `catch (const ParseError&)` makes the second handler dead code — clang says so under `-Wall` (`-Wexceptions`) and GCC by default; a codebase that silences warnings ships it.
+
+### Recipe 22 — Return a value or an error
+
+**In C#:** `if (!int.TryParse(text, out var n)) …` when the caller needs the *reason* — or a `Result<T, TError>` from a library
+
+**The recipe:**
+
+```cpp
+template <class T, class E>
+class Result {
+public:
+    static Result ok(T value)   { return Result(State(std::in_place_index<0>, std::move(value))); }
+    static Result fail(E error) { return Result(State(std::in_place_index<1>, std::move(error))); }
+
+    bool has_value() const noexcept { return state_.index() == 0; }
+    explicit operator bool() const noexcept { return has_value(); }
+
+    const T& value() const { return std::get<0>(state_); }   // throws bad_variant_access on a failure
+    const E& error() const { return std::get<1>(state_); }   // ...and on a success
+
+private:
+    using State = std::variant<T, E>;       // by index, so T and E may be the same type
+    explicit Result(State s) : state_(std::move(s)) {}
+    State state_;
+};
+
+struct ConfigError { int line; std::string what; };
+struct Config      { int channels; };
+
+// The translation, inward: the parser throws, the module boundary returns.
+// Nothing above this function ever sees a ParseError.
+Result<Config, ConfigError> load_config(const std::string& text) {
+    try {
+        return Result<Config, ConfigError>::ok(Config{parse_channel_count(text, 1)});
+    } catch (const ParseError& e) {          // the throw stops here: failure becomes a value
+        return Result<Config, ConfigError>::fail(ConfigError{e.line(), e.what()});
+    }
+}
+```
+
+And the same function in C++23, where the type ships with the library —
+`exercises/cookbook/expected.cpp`, built behind a probe because the
+book's own pin is C++17:
+
+```cpp
+std::expected<Config, ConfigError> load_config(std::string_view text) {
+    if (text.empty() || text.size() > 3 ||
+        text.find_first_not_of("0123456789") != std::string_view::npos) {
+        return std::unexpected(ConfigError{1, "channel count is not a number"});
+    }
+    return Config{std::stoi(std::string(text))};
+}
+
+// The chain: and_then for a step that may itself fail, transform for one
+// that cannot. Five `if (!r) return r.error();` lines, spelled once.
+std::expected<int, ConfigError> channels_doubled(std::string_view text) {
+    return load_config(text)
+        .and_then([](Config c) -> std::expected<int, ConfigError> {
+            if (c.channels > 64) return std::unexpected(ConfigError{1, "too many channels"});
+            return c.channels;
+        })
+        .transform([](int n) { return n * 2; });
+}
+```
+
+**Why it looks like this.** Three spellings of one idea, chosen by what the
+caller needs to know: `std::optional<T>` (Recipe 19) when absence needs no
+explanation, a `Result<T, E>` when it does and the toolchain is C++17,
+`std::expected` when it is C++23. The `Result` above is
+[Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
+`std::variant` behind two named doors, and the `try` inside `load_config`
+is [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
+translation layer: the parser throws, the boundary returns, and `value()`
+turns the failure back into a throw only at the top of the program. Needs
+`<variant>`, `<utility>`, `<string>` — or `<expected>` and a C++23 flag.
+
+> [!WARNING]
+> **Trap:** `value()` on the error side throws — `bad_variant_access` here, `bad_expected_access<E>` in C++23 — so a caller that skips the check has not written error-code style, it has written an exception with a worse name; test with `if (r)` first, and `value()` is for the one frame allowed to throw.
+
+### Recipe 23 — Test for an empty string, and for no string at all
+
+**In C#:** `if (string.IsNullOrEmpty(name))` … `name ?? "unnamed"`
+
+**The recipe:**
+
+```cpp
+bool is_blank(const std::string& s) {
+    return s.empty();                       // a std::string cannot be null: only empty
+}
+
+std::string name_or_default(const char* from_c_api) {
+    if (from_c_api == nullptr) {            // the one null there is: a C API's "no name"
+        return "unnamed";
+    }
+    return from_c_api;                      // safe now - std::string(nullptr) is UB
+}
+
+std::optional<std::string> label_of(bool has_label, const std::string& text) {
+    if (!has_label) {
+        return std::nullopt;                // "no string" is a different answer from ""
+    }
+    return text;                            // ...which may itself be empty, legitimately
+}
+```
+
+**Why it looks like this.** C# fuses two facts into one type — a `string`
+can be `null` *and* it can be empty, and `IsNullOrEmpty` exists because
+callers rarely care which — where C++ separates them by type. A
+`std::string` default-constructs empty and can never be null, so `empty()`
+is the whole test (not `s == ""`, a comparison against a literal, and not
+`s.size() == 0`); "no string at all" is `std::optional<std::string>`
+(Recipe 19); and the one null in the picture is the `const char*` a C API
+returns for "unnamed", which
+[Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)
+says to check before it reaches a `std::string`. Needs `<string>`,
+`<optional>`.
+
+> [!WARNING]
+> **Trap:** `std::string name = Thing_GetName(h);` with a null return is undefined behavior that reads like an assignment — libc++ dies inside the constructor and libstdc++ throws `std::logic_error` — and `scripts/check_platform_claims.sh` asserts both, because neither is a report you would expect from that line.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
