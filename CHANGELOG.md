@@ -22,14 +22,14 @@ additions that close them; each appends, and no number moves.
   your side, against both the C `kind`-plus-`union` of vendor event structs
   and the class hierarchy a C# developer would write — and a table of what
   `std::optional` is *not* (no `optional<T&>`, no `?.`, and `*` on an empty
-  one is quiet undefined behaviour), plus a paragraph on `decltype` beside
+  one is quiet undefined behavior), plus a paragraph on `decltype` beside
   `auto`.
 - **Chapter 6** gains *Value categories in one table*: lvalue, prvalue and
   xvalue, the binding table for `T&`/`const T&`/`T&&`, and four traps that
   compile clean — the named rvalue reference that is an lvalue, `std::move`
   on a const object, `return std::move(local)`, and lifetime extension
   through a member but not through a call. Two of the four are priced by
-  `exercises/choosing/passing.cpp`, quoted by excerpt and pinned by
+  `exercises/choosing/passing.cpp`, quoted whole and pinned both ways by
   `check_verbatim.sh`.
 - **Appendix H**, procedure 4, gains the branch that is not a box: a closed
   set of unrelated types is a `vector<variant<...>>`, asserted by
@@ -37,7 +37,7 @@ additions that close them; each appends, and no number moves.
 - **Appendix F**: Recipe 18 (find an element, an index, or a substring —
   the three spellings of "not found"), Recipe 19 (a value that may be
   absent), Recipe 20 (switch on the kind of a message, with the
-  `overloaded` idiom). `exercises/cookbook/maybe.cpp` is new.
+  `overloaded` idiom). `exercises/cookbook/alternatives.cpp` is new.
 - **Chapter 1** names custom deleters and `enable_shared_from_this`;
   **Chapter 11** the algorithm-versus-member `find` trap; **Chapter 14** a
   fourth Tracer experiment (a const source moves as a copy); **Appendix I**
@@ -140,7 +140,7 @@ meaning. Appendix letters now run A–I with no gap.
   number). The one technical defect the study found: Chapter 2 declared a
   `Shape` with no virtual destructor and then used it as
   `vector<unique_ptr<Shape>>` in a listing commented *"correct polymorphic
-  container"* — the undefined behaviour Chapter 5 exists to name, in prose
+  container"* — the undefined behavior Chapter 5 exists to name, in prose
   no CI check could see, and correct in the five other places the repo
   declares that hierarchy. Beyond it the findings were structural.
   **Routing:** Chapters 16 and 18 contained no reference to Chapter 29, so a
@@ -1168,7 +1168,7 @@ in changed.
   comes from CI — the finding that prompted the Finding 10 caveat below.
   Three key principles added to Appendix B; README's and CONTRIBUTING's lists
   record it, and ROADMAP item 5 is marked DONE. `scripts/check.sh` was
-  verified against the UBSan behaviour the chapter documents and is correct
+  verified against the UBSan behavior the chapter documents and is correct
   as written.
 - **New: Chapter 30 — Authoring an ABI Boundary.** The other side of the
   Chapter 16 Bestiary, which teaches consuming vendor shapes but never

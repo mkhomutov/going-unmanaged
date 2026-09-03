@@ -661,7 +661,8 @@ Needs `<string>`, `<string_view>`.
 **The recipe:**
 
 ```cpp
-std::optional<std::size_t> index_of(const std::vector<int>& values, int wanted) {
+template <class Seq, class T>
+std::optional<std::size_t> index_of(const Seq& values, const T& wanted) {
     const auto it = std::find(values.begin(), values.end(), wanted);
     if (it == values.end()) {
         return std::nullopt;             // an algorithm says "not found" as end()
@@ -669,52 +670,43 @@ std::optional<std::size_t> index_of(const std::vector<int>& values, int wanted) 
     return static_cast<std::size_t>(std::distance(values.begin(), it));
 }
 
-bool contains_word(const std::string& text, const std::string& word) {
-    return text.find(word) != std::string::npos;    // a string says it as npos
+bool contains_word(std::string_view text, std::string_view word) {
+    return text.find(word) != std::string_view::npos;    // a string says it as npos
 }
 ```
 
-**Why it looks like this.** "Not found" has three spellings in C++, and
-the recipe shows the two the standard library uses. `std::find` is
-`IndexOf` without the index: it hands back an iterator, "not found" is
-`end()`, and the index is a `std::distance` away — taken only after the
-check, so the recipe returns it as an `optional` (Recipe 19) rather than as
-C#'s `-1`. `std::string::find` is a different function with a different
-sentinel, `npos`, the largest `size_t` there is. The third spelling is the
-one you write yourself: a lookup returning `optional` or a null pointer.
+**Why it looks like this.** "Not found" has three spellings in C++: an
+algorithm says `end()`, a string says `npos` — the largest `size_t` there
+is — and a lookup you write yourself says `optional` or `nullptr`, which is
+why `index_of` hands back the index as Recipe 19's `optional` rather than as
+C#'s `-1`, and only after the check. `std::find` is `IndexOf` without the
+index, and the index is a `std::distance` away; C++20 gives the associative
+containers a member `contains`, C++23 gives strings one, and a `vector`
+never gets it.
 [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)
-owns the algorithm story; C++20's `contains` on strings and containers is
-the newer spelling of the boolean half. Needs `<algorithm>`, `<iterator>`,
-`<optional>`, `<string>`, `<vector>`.
+owns the algorithm story. Needs `<algorithm>`, `<iterator>`, `<optional>`,
+`<string_view>`.
 
 > [!WARNING]
-> **Trap:** `if (text.find(word))` compiles and tests the *position* — a match at offset 0 reads as false and `npos` as true; and `std::find` on a `std::map` compiles too, walking every node when the member `m.find(key)` was the lookup you meant.
+> **Trap:** `if (text.find(word))` compiles and tests the *position* — a match at offset 0 reads as false and `npos` as true; and `std::find_if` over a `std::map` compiles too, walking every node when the member `m.find(key)` was the lookup you meant.
 
 ### Recipe 19 — Carry a value that may be absent
 
-**In C#:** `int? port = ...;` `port ?? 8080;` `text?.Length`
+**In C#:** `int? port = int.TryParse(text, out var p) ? p : null;` `port ?? 8080;` `text?.Length`
 
 **The recipe:**
 
 ```cpp
 std::optional<int> parse_port(std::string_view text) {
-    if (text.empty()) {
-        return std::nullopt;              // no value - the C# null, spelled
-    }
     int value = 0;
-    for (char c : text) {
-        if (c < '0' || c > '9') {
-            return std::nullopt;          // not a number: absence, not an error (Chapter 8)
-        }
-        value = value * 10 + (c - '0');
-        if (value > 65535) {
-            return std::nullopt;
-        }
+    const auto [end, ec] = std::from_chars(text.data(), text.data() + text.size(), value);
+    if (ec != std::errc{} || end != text.data() + text.size() || value < 0 || value > 65535) {
+        return std::nullopt;              // not a port: absence, not an error (Chapter 8)
     }
-    return value;
+    return value;                         // TryParse's out-parameter, as the return
 }
 
-int port_or_default(const std::optional<int>& port) {
+int port_or_default(std::optional<int> port) {
     return port.value_or(8080);           // the ?? operator
 }
 
@@ -728,19 +720,19 @@ std::optional<std::size_t> digits_in(const std::optional<std::string>& text) {
 
 **Why it looks like this.** `std::optional<T>` is `T?` with the value kept
 behind `*` and `->` rather than in front of them, so the caller has to
-look before touching it. The three shapes above are the three C# operators:
-`std::nullopt` is `null`, `value_or` is `??`, and `?.` has no C++17
-spelling at all — the `if (!text)` is that operator written out, and
-C++23's `and_then`/`transform` is where the chain finally arrives.
+look before touching it, and `std::from_chars` is `int.TryParse` — no
+exception, no locale, an error code and an end pointer you check. The
+three shapes are the three C# operators: `std::nullopt` is `null`,
+`value_or` is `??`, and `?.` has no C++17 spelling — the `if (!text)` is
+that operator written out.
 [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency) owns
-the type and lists what it is not — there is no `optional<T&>`, so a
-nullable *reference* stays a pointer — and
+the type, and
 [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)
 decides when absence is the right answer at all. Needs `<optional>`,
-`<string>`, `<string_view>`.
+`<charconv>`, `<string>`, `<string_view>`.
 
 > [!WARNING]
-> **Trap:** `*port` or `port->` on an empty optional is undefined behaviour, not a null-reference exception — it reads garbage, the program carries on, and the sanitizers say nothing; `port.value()` is the spelling that throws.
+> **Trap:** `*port` or `port->` on an empty optional is undefined behavior, not a null-reference exception — it reads garbage, the program carries on, and the sanitizers say nothing; `port.value()` is the spelling that throws.
 
 ### Recipe 20 — Switch on the kind of a message
 
@@ -753,9 +745,7 @@ struct Temperature { int centi; };        // centi-degrees, as the wire carries 
 struct Fault       { int code; };
 struct Heartbeat   {};
 using Event = std::variant<Temperature, Fault, Heartbeat>;
-```
 
-```cpp
 template <class... Fs> struct overloaded : Fs... { using Fs::operator()...; };
 template <class... Fs> overloaded(Fs...) -> overloaded<Fs...>;
 

@@ -1,18 +1,17 @@
-// Appendix H, procedures 2 and 3 - how to take a parameter, what to return.
+// Appendix H, procedures 2 and 3 - how to take a parameter, what to return -
+// plus two of Chapter 6's value-category traps, priced with the same
+// instrument.
 //
 // Quoted in Appendix H, whole and by name: `class Widget`, `MakeTemporary`,
 // `MakeNamed`, `TheSinkAllocatesWhereTheBorrowDoesNot` and
-// `ReturningCostsNoCopy`. Editing one means editing Appendix H in the same
-// commit (the cookbook discipline), and scripts/check_verbatim.sh checks
-// that pairing in BOTH directions - every cpp fence on the page must be in
-// this directory, and each function named above must be on the page, whole.
-//
-// Three more units are quoted by Chapter 6's "Value categories in one
-// table", forward direction only (the chapter's other listings are its
-// own): `MakeNamedMoved`, `MovingFromAConstObjectCopies` and
-// `ReturnStdMoveCostsTheMoveElisionRemoved`. Same rule: edit both sides in
-// the same commit. Everything else here, main() included, appears in no
-// listing.
+// `ReturningCostsNoCopy`. Quoted in Chapter 6 ("Value categories in one
+// table"), whole and by name: `MakeNamedMoved`, `MovingFromAConstObjectCopies`
+// and `ReturnStdMoveCostsTheMoveElisionRemoved`. Editing a named unit means
+// editing its page in the same commit (the cookbook discipline), and
+// scripts/check_verbatim.sh holds every pairing in BOTH directions - each
+// unit named here must be on its page whole, and every cpp fence on Appendix
+// H must be in this directory. Everything else here, main() included,
+// appears in no listing.
 #include <cstdio>
 #include <cstdlib>
 #include <new>
@@ -269,6 +268,6 @@ int main() {
         return 1;
     }
     std::printf("choosing/passing: every branch of procedures 2 and 3 costs "
-                "what the appendix says\n");
+                "what the appendix says, and Chapter 6's two traps what it says\n");
     return 0;
 }

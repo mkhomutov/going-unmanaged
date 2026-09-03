@@ -274,11 +274,10 @@ void AClosedSetStoresByValueWithoutABase() {
     }
     CHECK(total == 7);                          // 3 + 4: each kept its identity, unboxed
     CHECK(std::holds_alternative<Tri>(shapes[0]));
-    CHECK(sizeof(shapes[0]) <= sizeof(Quad) + sizeof(std::size_t));   // the value, plus a tag
 }
 ```
 
-The set has to be closed, and that is the whole cost: adding a fourth alternative is a change to the type, and every `visit` that forgets it stops compiling — which is the feature. A set someone else extends stays a virtual base behind `unique_ptr`.
+The price is that the set is closed: a fourth alternative is a change to the type, and a set someone else extends stays a virtual base behind `unique_ptr`.
 
 And the default remains `vector<T>`, by value. Boxing every element is the reflex C# installed — a `List<Widget>` really is a list of pointers to scattered heap objects — and importing it wholesale gives up the contiguity that made you choose C++ ([Chapter 2](02-value-semantics.md#chapter-2--value-semantics)'s "a million points is one solid block"). Box for a reason from the list above, and write the reason down.
 

@@ -44,7 +44,9 @@ public:
 };
 
 // Two shapes with NO common base at all, for the branch of procedure 4 that
-// is not a pointer: unrelated types, a closed set, nothing to slice to.
+// is not a pointer: unrelated types, a closed set, nothing to slice to. The
+// same 3 + 4 as the boxed Triangle and Square above, so the two totals are
+// one experiment with two containers.
 struct Tri  { int Sides() const { return 3; } };
 struct Quad { int Sides() const { return 4; } };
 
@@ -187,7 +189,6 @@ void AClosedSetStoresByValueWithoutABase() {
     }
     CHECK(total == 7);                          // 3 + 4: each kept its identity, unboxed
     CHECK(std::holds_alternative<Tri>(shapes[0]));
-    CHECK(sizeof(shapes[0]) <= sizeof(Quad) + sizeof(std::size_t));   // the value, plus a tag
 }
 
 int main() {

@@ -68,16 +68,7 @@ auto w2 = FindByName("x").value_or(Widget{});  // ?? equivalent
 > [!TIP]
 > **Key principle:** "A function that can fail to produce a value returns optional\<T\>, not a null pointer or a magic value like -1."
 
-What `optional` is *not*, because each row is a place the `T?` reflex misfires:
-
-| In C# | In C++ | What is missing |
-|---|---|---|
-| `Widget? w` — a nullable *reference* | `const Widget*`, or `std::reference_wrapper` | `std::optional<T&>` does not exist; the compiler refuses it outright |
-| `w?.Name` | `if (w) Use(w->Name)` | no null-propagating call in C++17 — and `w->Name` on an empty optional is not a null-reference exception |
-| `w = null` | `w = std::nullopt`, or `w.reset()` | — |
-| `bool?` | a small `enum class` | `optional<bool>` compiles and reads as three-state nothing |
-
-The second row is the one to carry. `*` and `->` on an empty `optional` are Chapter 3's quiet undefined behaviour: the value reads as garbage, the program carries on, and this book's sanitizer flags say nothing about it (a hardened standard library, Chapter 13, is what traps it). Check first, or call `value()`, which throws `bad_optional_access` and is the one spelling that fails loudly. C++23 adds `and_then` and `transform`, the `?.` chain; until your toolchain has them, Recipe 19 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) is the by-hand form.
+Three things `optional` is *not*, each a place the `T?` reflex misfires. It is not a nullable *reference*: `std::optional<T&>` does not exist before C++26 and the compiler refuses it outright, so `Widget? w` stays a `const Widget*` (or an `optional<std::reference_wrapper<Widget>>`, if you must). It is not `?.`: C++17 has no null-propagating call, and `w->Name` on an empty optional is not a null-reference exception but Chapter 3's quiet undefined behavior — the value reads as garbage, the program carries on, and this book's sanitizer flags say nothing about it (a hardened standard library, Chapter 13, is what traps it); check first, or call `value()`, which throws `bad_optional_access` and is the one spelling that fails loudly. And `optional<bool>` is not a three-state flag, it is three-state nothing — write the `enum class`. C++23 adds `and_then` and `transform`, the `?.` chain; until your toolchain has them, Recipe 19 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) is the by-hand form.
 
 ### std::variant — the tagged union with the compiler on your side
 
@@ -103,10 +94,10 @@ std::visit(overloaded{                                       // the switch: one 
 
 `overloaded` is a two-line idiom that turns a handful of lambdas into one callable; C++17 does not ship it, every codebase has one, and Recipe 20 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) spells it out. `std::monostate` is the "not yet set" alternative for a variant that must be default-constructible. And the property the C `union` never had: leave one alternative out of the `visit` and the program does not compile — libc++ says so in as many words, *`std::visit` requires the visitor to be exhaustive*. A `switch` on a `kind` field with a missing `case` compiles and falls through.
 
-When to reach for which. A **closed** set of unrelated types that you own — the events a device sends, the result of a parse, the states of a small machine — is a variant: stored by value, no base class, no heap, nothing to slice ([Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s procedure 4 has this branch). An **open** set that someone else extends — plug-ins, a Shape hierarchy a customer subclasses — is a virtual base behind `unique_ptr` (Chapter 5), because a variant's list of alternatives is fixed at the point it is spelled. `std::any` exists too, as the `object` box; it is almost never what you want, and reaching for it usually means the set was closed and nobody wrote it down.
+That fixed list is the whole trade: a variant's alternatives are closed at the point it is spelled, where a virtual hierarchy (Chapter 5) stays open to whoever subclasses it later. Which of the two a given set of types wants is [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s procedure 4, which routes here for the mechanism and adds only the choice. `std::any` exists too, as the `object` box; it is almost never what you want, and reaching for it usually means the set was closed and nobody wrote it down.
 
 > [!TIP]
-> **Key principle:** "A closed set of unrelated alternatives is a std::variant — stored by value, visited exhaustively, and the compiler refuses a visitor that forgets one; an open set someone else extends is a virtual base behind unique_ptr."
+> **Key principle:** "A closed set of alternatives is a std::variant by value, visited exhaustively; an open set someone else extends is a virtual base behind unique_ptr."
 
 ### std::string_view — non-owning view of a string
 

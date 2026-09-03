@@ -9,8 +9,8 @@ it, stamped with an instance ID and its own address.
 Push several into a `std::vector` WITHOUT `reserve` and predict every output line
 before running.
 
-Then the three experiments (Chapter 14): delete `noexcept` from the move ctor;
-add `v.reserve(4);`; self-assignment `x = x`. Predict each before running.
+Then the four experiments (Chapter 14): delete `noexcept` from the move ctor;
+add `v.reserve(4);`; self-assignment `x = x`; make `a` const and watch `std::move(a)` copy. Predict each before running.
 
 Build: g++ -std=c++17 -Wall -Wextra -fsanitize=address,undefined -g your.cpp -o task
   (or: ../../scripts/check.sh your.cpp — from this directory)

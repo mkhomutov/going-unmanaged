@@ -15,7 +15,7 @@ Cookbook*), one translation unit per domain —
 | `async.cpp` | 13 — run work on another thread and wait for it |
 | `events.cpp` | 14 — expose an event |
 | `logging.cpp` | 15 — print a diagnostic you will actually see |
-| `maybe.cpp` | 19–20 — a value that may be absent; a value that is one of several kinds |
+| `alternatives.cpp` | 19–20 — a value that may be absent; a value that is one of several kinds |
 
 — each with a `main()` that asserts what its recipes claim.
 `scripts/build_all.sh` builds and runs all ten under the canonical flags on

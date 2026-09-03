@@ -51,7 +51,7 @@ if (it != v.end()) {   // "not found" == end, the idiom
 }
 ```
 
-Two spellings of the same search, and they are not interchangeable: `std::find` walks a range and knows nothing about the container, so on a `std::map` it compiles and visits every node, while the *member* `m.find(key)` is the O(log n) — or O(1) — lookup you meant. `std::string` has a member `find` too, and it says "not found" as `npos`, not `end()`. Recipe 18 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) puts the three sentinels side by side.
+Two spellings of one search, and they are not interchangeable: `std::find_if` with a key-comparing lambda over a `std::map` compiles and visits every node, while the *member* `m.find(key)` is the O(log n) — or O(1) — lookup you meant. Recipe 18 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) puts the three spellings of "not found" side by side.
 
 ### Algorithms — LINQ's rough equivalent
 
