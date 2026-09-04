@@ -801,6 +801,105 @@ else
     echo "  SKIPPED - cmake not installed (CI runs this for real)"
 fi
 
+# Appendix J's one verified entry: the runtime half of Chapter 12's trio
+# reaching the loader. The project is generated here rather than committed -
+# a SHARED library and the executable that needs it are two files nobody
+# would open as a lab, and the CMakeLists is the whole lesson, so the page
+# quotes it and check_verbatim.sh pins the page to this heredoc (the
+# arrangement Chapter 27's ODR headers use with check_platform_claims.sh).
+# Two installs, because an install that only ever runs proves nothing about
+# what the runpath did: the first sets INSTALL_RPATH and the installed
+# executable must run from a directory that is not the prefix; the second
+# passes -DCMAKE_SKIP_INSTALL_RPATH=ON and the same run must FAIL to load -
+# nonzero-versus-zero, never an exit code, since dyld and ld.so disagree on
+# the number. Windows has no runpath and no leg of this script, so its half
+# of the entry (the DLL copy step) stays prose.
+echo "== rpathlab cmake =="
+if command -v cmake > /dev/null 2>&1; then
+    RL=build/rpathlab
+    rm -rf "$RL"
+    mkdir -p "$RL/src"
+    cat > "$RL/CMakeLists.txt" <<'EOF'
+cmake_minimum_required(VERSION 3.16)
+project(rpathlab LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# The runtime half of Chapter 12's trio: a SHARED library the executable
+# needs at load time, installed beside it.
+add_library(telemetry SHARED src/telemetry.cpp)
+target_include_directories(telemetry PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+add_executable(report src/main.cpp)
+target_link_libraries(report PRIVATE telemetry)
+
+# Where the loader looks, written into the executable at install time:
+# relative to the executable itself, so the prefix can move as a whole.
+# $ORIGIN is the executable's directory on Linux, @loader_path on macOS;
+# Windows has no such field - there the library is copied beside the
+# executable instead (see the catalogue).
+include(GNUInstallDirs)
+if(APPLE)
+    set_target_properties(report PROPERTIES INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
+elseif(UNIX)
+    set_target_properties(report PROPERTIES INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+endif()
+
+install(TARGETS telemetry report
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+EOF
+    cat > "$RL/src/telemetry.h" <<'EOF'
+#pragma once
+int telemetry_version();
+EOF
+    cat > "$RL/src/telemetry.cpp" <<'EOF'
+#include "telemetry.h"
+int telemetry_version() { return 7; }
+EOF
+    cat > "$RL/src/main.cpp" <<'EOF'
+#include "telemetry.h"
+#include <cstdio>
+int main() {
+    std::printf("telemetry v%d\n", telemetry_version());
+    return telemetry_version() == 7 ? 0 : 1;
+}
+EOF
+    cmake -S "$RL" -B "$RL/build" -DCMAKE_INSTALL_PREFIX="$PWD/$RL/prefix" > /dev/null
+    cmake --build "$RL/build" > /dev/null
+    cmake --install "$RL/build" > /dev/null
+    # From a directory that is not the prefix, with no environment help: the
+    # runpath is the only way the loader can find libtelemetry.
+    RP_EXE="$PWD/$RL/prefix/bin/report"          # absolute, before the cd
+    RP_RC=0
+    RP_OUT=$(cd / && env -u LD_LIBRARY_PATH -u DYLD_LIBRARY_PATH "$RP_EXE" 2>&1) || RP_RC=$?
+    if [ "$RP_RC" != 0 ] || [ "$RP_OUT" != "telemetry v7" ]; then
+        echo "build_all.sh: the installed rpathlab executable did not run from / (exit $RP_RC):" >&2
+        printf '%s\n' "$RP_OUT" | sed 's/^/  /' >&2
+        exit 1
+    fi
+    echo "  ok   rpathlab: installed executable found its library through INSTALL_RPATH"
+    cmake -S "$RL" -B "$RL/build-none" -DCMAKE_INSTALL_PREFIX="$PWD/$RL/prefix-none" \
+        -DCMAKE_SKIP_INSTALL_RPATH=ON > /dev/null
+    cmake --build "$RL/build-none" > /dev/null
+    cmake --install "$RL/build-none" > /dev/null
+    NR_EXE="$PWD/$RL/prefix-none/bin/report"
+    NR_RC=0
+    NR_OUT=$(cd / && env -u LD_LIBRARY_PATH -u DYLD_LIBRARY_PATH "$NR_EXE" 2>&1) || NR_RC=$?
+    if [ "$NR_RC" = 0 ]; then
+        echo "build_all.sh: rpathlab ran WITHOUT a runpath - the loader found the library some other way," >&2
+        echo "  so the INSTALL_RPATH check above proved nothing. Output was:" >&2
+        printf '%s\n' "$NR_OUT" | sed 's/^/  /' >&2
+        exit 1
+    fi
+    echo "  ok   rpathlab: without INSTALL_RPATH the same executable fails to load (exit $NR_RC)"
+elif [ "$REQUIRE_CMAKE" = 1 ]; then
+    echo "build_all.sh: cmake not found, and --require-cmake was given" >&2
+    exit 1
+else
+    echo "  SKIPPED - cmake not installed (CI runs this for real)"
+fi
+
 # Chapter 29's lab under the third sanitizer. TSan cannot be combined with ASan,
 # so this is a second build of the same source rather than a longer flag list -
 # which is the chapter's point about them made structurally.

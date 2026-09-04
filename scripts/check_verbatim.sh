@@ -286,6 +286,29 @@ for chapter, script, openings in GENERATED:
             failures.append(f"{chapter}: the {opening!r} listing is not verbatim "
                             f"in {script}, which generates and asserts it")
 
+# Appendix J is Chapter 26/27/40's lookup half, and its one CMake listing is
+# the runtime-delivery project that build_all.sh generates into a temp
+# directory and holds both ways (installed executable loads through
+# INSTALL_RPATH; fails to load without it) - the generated arrangement above,
+# with a cmake fence instead of a cpp one. Every cmake fence on the page must
+# be verbatim in build_all.sh, and the page holds no cpp fence, as Appendix G
+# does not: a page with nothing to compile owes build_all.sh nothing, and a
+# page with one listing owes it exactly that listing.
+def cmake_fences(path):
+    return re.findall(r'```cmake\n(.*?)```', open(path).read(), re.S)
+
+j_generator = open('scripts/build_all.sh').read()
+j_cmake = cmake_fences('book/J-cmake-catalogue.md')
+if not j_cmake:
+    failures.append("book/J-cmake-catalogue.md holds no cmake fence; its runtime-delivery listing is missing")
+for i, block in enumerate(j_cmake, 1):
+    if block.rstrip('\n') not in j_generator:
+        first = block.strip().split('\n')[0]
+        failures.append(f"book/J-cmake-catalogue.md cmake fence #{i} ({first!r}) is not verbatim in scripts/build_all.sh, which generates and asserts it")
+j_cpp = cpp_fences('book/J-cmake-catalogue.md')
+if j_cpp:
+    failures.append(f"book/J-cmake-catalogue.md holds {len(j_cpp)} cpp fence(s); its contract is no C++ listings")
+
 # Appendix G holds the opposite contract: no cpp fence at all (ROADMAP item
 # 16's shape decision - a page with nothing to compile owes build_all.sh
 # nothing). The day one lands it becomes the book's only unverified listing.
@@ -303,5 +326,5 @@ print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
       f"{len(f_blocks)} cookbook fences, {len(TICKETS)} cards, "
       f"{len(ch38_fences)} ch38 fences, {len(ch39_fences)} ch39 fences, "
       f"{len(h_fences)} appH fences + "
-      f"{len(UNITS)} whole units on {len(pages)} pages, {gen_pairs} generated, G cpp-free)")
+      f"{len(UNITS)} whole units on {len(pages)} pages, {gen_pairs} generated, {len(j_cmake)} J cmake, G and J cpp-free)")
 PYEOF

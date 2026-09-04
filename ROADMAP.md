@@ -16,7 +16,7 @@ chapter that closed them. Item numbers get cited in issues and commit
 messages, so they never shift.
 
 **Everything on this list appends.** New chapters go at the end (Chapter 41
-onward, in whatever order they land); new appendices continue from J. No item
+onward, in whatever order they land); new appendices continue from K. No item
 here requires renumbering, so every one of them is a MINOR release. If you
 think an item genuinely belongs *inside* an existing part, open an issue
 first — see the numbering rules in [CONTRIBUTING.md](CONTRIBUTING.md).

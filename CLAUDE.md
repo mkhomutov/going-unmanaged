@@ -6,9 +6,9 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 41 chapters, appendices A–I), indexed by `book/README.md`. The
+(6 parts, 41 chapters, appendices A–J), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
-artifact produced by `scripts/build_book.sh`. Appendices run A–I with no
+artifact produced by `scripts/build_book.sh`. Appendices run A–J with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
 lookup half: the mechanism survey and decision table; no C++ listings —
 check_verbatim.sh enforces that no cpp fence lands there), H the choosing
@@ -16,7 +16,11 @@ procedures (item 17: which container, how to take a parameter, what to
 return, value-or-pointer inside a collection — the opposite contract to
 G, its every cpp fence pinned to `exercises/choosing/`, which asserts the
 costs the page quotes), and I const-correctness (item 8), whose lab asserts
-refusals rather than results.
+refusals rather than results. J is the CMake catalogue — Chapters 26,
+27 and 40's lookup half, the shape G is to Chapter 38: no cpp fence
+(enforced), and its one cmake fence is the runtime-delivery project that
+build_all.sh generates and holds both ways, pinned to that script's
+heredoc by check_verbatim.sh.
 Part VI ("The Real Codebase") is the home for appended chapters about what a
 project has that an exercise does not — build systems, dependencies, testing,
 concurrency, authoring an ABI boundary, reading tool output. Chapter 29
@@ -70,7 +74,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–41, `A-`…`I-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–41, `A-`…`J-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -259,10 +263,11 @@ Chapter 25's Finding 10.
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
-  Its last five sections may skip: one builds `exercises/deplab/` three ways
+  Its last six sections may skip: one builds `exercises/deplab/` three ways
   (Chapter 27), one configures, builds and runs `exercises/buildlab/`'s
   CMakeLists, one installs `exercises/pluginlab/`'s SDK drop and builds,
-  loads and inspects its plug-in (Chapter 40), one rebuilds
+  loads and inspects its plug-in (Chapter 40), one generates Appendix J's
+  runtime-delivery project and installs it with and without a runpath, one rebuilds
   `solutions/device_threaded_solution.cpp` under
   `-fsanitize=thread` (a second build, because TSan and ASan do not combine),
   and the last builds `exercises/cookbook/expected.cpp` as C++23.
@@ -571,7 +576,7 @@ stay on the list marked DONE so item numbers never shift. Short version:
   `exercises/bridgelab/` (the main-thread queue under a bounded-wait
   judge), plus Appendix G, the survey of mechanisms and its decision
   table.
-  The glossary was item 10 and is now Appendix E (letters run A–I with no
+  The glossary was item 10 and is now Appendix E (letters run A–J with no
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
   timers), then 17 (UTF-8↔UTF-16), then 18–20 (find, optional, variant),

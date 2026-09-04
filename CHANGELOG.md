@@ -114,6 +114,23 @@ numbers may still move.
   one class is one header pair named for the type, private headers beside
   their `.cpp` and never under the project-name prefix.
 
+- **New: Appendix J — The CMake Catalogue** (MINOR — an appended
+  appendix). The lookup half of Chapters 26, 27 and 40, in the shape
+  Appendix G is to Chapter 38: a table of every verb those chapters teach
+  and the page that owns it, then the tools none of them needed — the
+  runtime reaching the loader (`INSTALL_RPATH`, `$ORIGIN` and
+  `@loader_path`, the DLL copy step Windows needs instead), precompiled
+  headers, link-time optimization and its ABI hazard, `ExternalProject`
+  against `FetchContent`, CTest's environment and timeout properties,
+  CPack, unity builds and a compiler cache, and how to read a configure
+  you did not write — each priced, with a decision table. One entry is
+  verified: `build_all.sh` generates the runtime-delivery project, installs
+  it, runs the executable from a directory that is not the prefix, then
+  installs it again without a runpath and asserts the same run fails to
+  load; `check_verbatim.sh` pins the page's one cmake fence to that
+  heredoc and refuses any cpp fence on the page. Appendix letters now
+  run A–J with no gap.
+
 ## [0.9.0] — 2026-09-04
 
 The release a list steered. Version 0.8.0 began with eighteen constructed
