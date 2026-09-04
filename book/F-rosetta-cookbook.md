@@ -49,6 +49,8 @@ stays right.
 | `TimeSpan.FromSeconds(2)` handed to a native call | `Duration.ofSeconds(2)` / `toMillis()` | [Recipe 30 — Pass a timeout to a C API](#recipe-30--pass-a-timeout-to-a-c-api) |
 | `IConfiguration` read at startup / `IsEnabledAsync` | `System.getenv` at startup | [Recipe 31 — Read a feature flag once](#recipe-31--read-a-feature-flag-once) |
 | `[Flags] enum` + `HasFlag` | `EnumSet.of` / `contains` | [Recipe 32 — Combine flags as an enum class](#recipe-32--combine-flags-as-an-enum-class) |
+| a field of class type + `IDisposable` | a field + `AutoCloseable` | [Recipe 33 — Hold an owned object as a field](#recipe-33--hold-an-owned-object-as-a-field) |
+| `new BigThing()` — always on the heap | `new BigThing()` — always on the heap | [Recipe 34 — An object too big for the stack](#recipe-34--an-object-too-big-for-the-stack) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1311,6 +1313,107 @@ is true for every set, exactly as `HasFlag(0)` is. Needs `<cstdint>`.
 
 > [!WARNING]
 > **Trap:** `(set & flag) != Channel::None` reads as `HasFlag` and is wrong for a *combined* flag — with `Stereo = Left | Right`, a set holding only `Left` tests true — which is why `has` compares against the flag itself, as `HasFlag` does.
+
+### Recipe 33 — Hold an owned object as a field
+
+**In C#:** `private readonly Log _log;` plus `IDisposable`, and the question of who calls `Dispose`
+
+**The recipe:**
+
+```cpp
+class Log {                                  // polymorphic: lives behind a pointer (Chapter 2)
+public:
+    virtual ~Log() = default;
+    virtual void write(const std::string& line) = 0;
+};
+
+struct Sink {                                // shared with a callback: co-owned (Chapter 29)
+    std::vector<int> samples;
+};
+
+class Session {
+public:
+    Session(std::string name, std::unique_ptr<Log> log, std::shared_ptr<Sink> sink)
+        : name_(std::move(name)), log_(std::move(log)), sink_(std::move(sink)) {}
+
+    void record(int sample) {
+        sink_->samples.push_back(sample);
+        if (log_) {                          // the pointer is where "may be absent" lives
+            log_->write(name_ + ": recorded");
+        }
+    }
+
+private:
+    std::string name_;                       // by value: the field IS the object, and dies with the owner
+    std::vector<int> history_;               // by value too: its elements are on the heap, the field is three pointers
+    std::unique_ptr<Log> log_;               // one owner, polymorphic, optional: behind a unique_ptr
+    std::shared_ptr<Sink> sink_;             // co-owned: alive while anyone still holds it
+};   // no Dispose to write: the fields die in reverse order of declaration, then the object
+```
+
+**Why it looks like this.** The C# question — can a field own something,
+and who disposes it — has a shorter answer here than there: every field
+is destroyed when its owner is, in reverse order of declaration, with
+nothing to write. What is yours to decide is the *shape* of the field,
+and it is [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s
+fourth procedure applied to a single member: by value until something
+forces otherwise, because a `std::string` or `std::vector` field already
+keeps its bulk on the heap and costs the enclosing object only a few
+pointers; behind a `unique_ptr` when the field is a polymorphic base
+([Chapter 2](02-value-semantics.md#chapter-2--value-semantics)'s slicing),
+may be absent, is an incomplete type
+([Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s
+PIMPL), or is too big for the object to carry (Recipe 34); behind a
+`shared_ptr` only when the object is genuinely co-owned and the cycle
+question has an answer ([Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)).
+A `unique_ptr` field also decides the class's copies for you —
+[Chapter 6](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics)'s
+Rule of Zero: copying is deleted, moving is generated, and the harness
+reads both back with `static_assert`. Needs `<memory>`, `<string>`,
+`<vector>`.
+
+> [!WARNING]
+> **Trap:** a `unique_ptr<Impl>` field whose `Impl` is only forward-declared compiles until the compiler generates the destructor where `Impl` is still incomplete — Chapter 30's `~Widget();` declared in the header and defined in the `.cpp` is the fix, and it catches everyone exactly once.
+
+### Recipe 34 — An object too big for the stack
+
+**In C#:** nothing — a class instance is on the heap whether it is forty bytes or forty megabytes, and no struct is ever that big
+
+**The recipe:**
+
+```cpp
+struct FrameBuffer {
+    std::array<std::uint8_t, 4 * 1024 * 1024> pixels{};   // 4 MB inline: a class this size has no business on a stack
+};
+static_assert(sizeof(FrameBuffer) > 1024 * 1024, "FrameBuffer is a heap object by design");
+
+std::unique_ptr<FrameBuffer> make_frame() {
+    return std::make_unique<FrameBuffer>();  // one owner on the stack, four megabytes on the heap
+}
+```
+
+**Why it looks like this.** [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)'s
+decision asked whether the object outlives its scope and whether it has
+one owner; this is the third question, and C# never asked it because the
+runtime answered it for every class. A stack frame is small —
+[Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior)'s
+numbers: 1 MB per thread on Windows, 512 KB for a thread you spawn on
+macOS, 8 MB for the main thread on both Unixes — and `sizeof` is
+transitive, so a `std::array` member this size makes every object that
+holds one, and every function that holds one of those, a stack overflow
+waiting for the driver thread of
+[Chapter 29](29-concurrency.md#chapter-29--concurrency). `make_unique`
+puts the bytes on the heap and leaves a pointer-sized owner behind, which
+is the same ownership as before at a different address. When the size is
+not a compile-time constant, `std::vector<std::uint8_t>(n)` is the same
+answer with the count decided at run time. The `static_assert` is the
+budget written down where it cannot go stale
+([Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s
+judge): a reviewer who changes the array's size meets the sentence.
+Needs `<array>`, `<cstdint>`, `<memory>`.
+
+> [!WARNING]
+> **Trap:** the failure is a crash on *entry* to the function, before its first line runs, and the report is none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s three shapes — AddressSanitizer says `stack-overflow` when the frame overshoots by a little and a bare `SEGV` or `BUS` "on unknown address", the faulting frame inside `memset` zeroing the array, when it overshoots by megabytes; one stack, no allocation site, either way.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

@@ -22,6 +22,8 @@ void F() {
 
 Contrast to internalize: in C# the language puts every class instance on the GC heap. (Recent runtimes stack-allocate objects that provably never escape a method, but that is an optimization you neither request nor observe — the semantics are unchanged.) In C++ heap use is a deliberate choice — and good C++ minimizes it. "Why is this on the heap?" is a legitimate code review question.
 
+The question has one answer C# never had to give: *because it does not fit*. A class instance in C# was on the heap whether it held forty bytes or forty megabytes; here a `std::array` of four megabytes is four megabytes of the object that holds it, and of the frame of the function that holds *that*, and a frame is the size above — a single such local on a thread you spawned is a crash on entry to the function, before its first line runs. The spelling that puts the bytes on the heap and leaves a pointer-sized owner behind is `std::make_unique<Big>()` — Chapter 1's ownership at a different address — and Recipe 34 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) is the shape, with the `static_assert` that keeps the size budget written down.
+
 ### Undefined behavior (UB) as a concept
 
 UB is not "an exception is thrown" and not "the program crashes". It means **the standard places no requirements whatsoever** on what happens — and crucially, **the compiler is allowed to assume UB never occurs** and optimize accordingly. Result: code that works in Debug, breaks in Release; works on your machine, corrupts data in production; appears to work for years.
