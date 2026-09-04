@@ -106,6 +106,8 @@ it, as long as you say where it came from. All the code is
 [MIT](LICENSE): `exercises/`, `solutions/`, `scripts/`, `.github/`, **and every
 code sample inside the chapters** — so a snippet you paste into your own work
 carries no attribution obligation with it. Use it, fork it, teach from it.
+The one exception is `exercises/third_party/`: vendored code under its own
+license, named in that directory's README.
 
 Attributing the text takes one line:
 

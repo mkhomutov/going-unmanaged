@@ -85,7 +85,7 @@ So your first real dependency is very likely one of these, and the ecosystem has
 
 The same shift covers data. There is no Entity Framework and no ADO.NET; the native default for local storage is **SQLite**, consumed through its C API — prepare, step, finalize; opaque handles; an error code from every call. That is Bestiary Shape 1 in production, which means Chapter 17 already trained you for it without saying so: the discipline is identical, only the header changes. C++ wrappers exist (**sqlite_orm**, **SOCI**), but most native codebases speak the raw API, and reading it is cheaper than learning a wrapper nobody else on the team uses.
 
-None of them appears in this book's exercises, and that is the offline, standard-library-only rule doing its job rather than an oversight. What the book trains is the part that transfers: the strategies above decide how one of these lands in your build, and the Bestiary shapes describe the API you will meet when it does.
+One of them does appear in this repository: nlohmann/json is vendored under `exercises/third_party/`, with its version recorded beside it, for the two JSON recipes in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) — this chapter's first strategy, practised once, so the README a vendored dependency should carry is there to read. Nothing under `solutions/` touches it; the standard-library-only rule for solutions stands. What the book trains is the part that transfers: the strategies above decide how one of these lands in your build, and the Bestiary shapes describe the API you will meet when it does.
 
 ### The diamond, and why C++ makes it dangerous
 
@@ -132,7 +132,7 @@ Your product's SDK is not a dependency you manage. Its version is dictated by th
 
 - **The SDK wins every conflict.** If the SDK requires a particular toolset version, that is your toolset version, and every other dependency must build under it.
 - **What you can add is a policy question, not just a technical one.** Many teams working on shipped native software require review before a new dependency lands — licence compatibility (does it ship in a commercial product?), security surface, build-time cost, and who updates it when it breaks. Ask what the process is before you propose adding something; "I checked the licence" is a good sentence to say early.
-- **Prefer the standard library, then a header-only utility, then a built dependency,** in that order. This book's exercises use the standard library only, and that constraint is a reasonable default in production too — every dependency is a thing you will one day have to build on a machine you have not met.
+- **Prefer the standard library, then a header-only utility, then a built dependency,** in that order. This book's solutions use the standard library only, and its one vendored header serves two recipes; that constraint is a reasonable default in production too — every dependency is a thing you will one day have to build on a machine you have not met.
 
 ### Pitfalls
 

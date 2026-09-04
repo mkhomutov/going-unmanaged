@@ -38,6 +38,8 @@ if (-not (Get-Command cl -ErrorAction SilentlyContinue)) {
 }
 
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+# The one vendored header (Appendix F's JSON recipes), reachable from any attempt.
+$thirdParty = Join-Path $root "exercises/third_party"
 $std = if ($env:STD) { $env:STD } else { 'c++17' }
 $san = if ($env:SAN) { $env:SAN } else { 'address' }
 $opt = if ($env:OPT) { $env:OPT } else { '0' }
@@ -76,9 +78,9 @@ try {
         # @(...) forces an array even for a single vendor file: splatting a
         # bare string hands cl one argument per CHARACTER (found the hard way).
         $vendor = @(Get-ChildItem $sdkDir -Filter 'Fake*.cpp' | ForEach-Object FullName)
-        cl @flags "/I$sdkDir" $vendor $sources "/Fe:$out" "/Fo$tmp/" "/Fd$tmp/"
+        cl @flags "/I$sdkDir" "/I$thirdParty" $vendor $sources "/Fe:$out" "/Fo$tmp/" "/Fd$tmp/"
     } else {
-        cl @flags $sources "/Fe:$out" "/Fo$tmp/" "/Fd$tmp/"
+        cl @flags "/I$thirdParty" $sources "/Fe:$out" "/Fo$tmp/" "/Fd$tmp/"
     }
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     Write-Host "== built clean: $($flags -join ' ')"
