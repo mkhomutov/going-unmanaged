@@ -50,10 +50,11 @@ unit whole the pairing is enforced in both directions — Appendix H and
 Chapter 6 for `choosing/`, Chapter 8 for three of `cookbook/`'s). Nothing
 in either to attempt cold.
 
-Thirteen directories hold their reference in the open, rather than behind a
+Fourteen directories hold their reference in the open, rather than behind a
 fold. `pluginlab/` is Chapter 40's: three CMake projects — a vendor-style SDK
 drop, the plug-in, a stand-in host — that `build_all.sh` installs, builds,
-loads and inspects, asserting the module's export table holds one symbol. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and
+loads and inspects, asserting the module's export table holds the entry
+point and nothing of the plug-in's own or the SDK's. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and
 `dumplab/` are
 the ticket-shaped ones: each TASK.md carries the broken code to work from
 plus the ticket's attached evidence (reportlab's sanitizer report,
@@ -98,7 +99,7 @@ twice proves the *pin* chose the version, and asking merely that the two
 outputs differ would let through a pin that chose the wrong commit. `testlab/`
 holds Chapter 28's harness and suite, which the chapter prints in full anyway,
 and `abilab/` holds Chapter 30's three worked boundaries for the same reason.
-All five are kept green by `scripts/build_all.sh`. Write your own first — in a
+All of them are kept green by `scripts/build_all.sh`. Write your own first — in a
 directory of your own, without reading these.
 
 ## Building your attempt

@@ -22,13 +22,13 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(HostSDK REQUIRED)
 
 # MODULE, not SHARED: a library that exists to be loaded at run time by
-# name, that nothing links against - so no import library on Windows, no
-# soname dance on Linux, and CMake refuses to let another target link it.
+# name, that nothing links against - so CMake publishes no import library
+# on Windows, no soname on Linux, and refuses to let another target link it.
 add_library(monitor MODULE monitor.cpp)
 target_link_libraries(monitor PRIVATE HostSDK::Core)
 
 set_target_properties(monitor PROPERTIES
-    PREFIX ""                            # monitor.so / .dylib / .dll, not libmonitor
+    PREFIX ""                            # monitor.so (macOS too) / monitor.dll, not libmonitor
     CXX_VISIBILITY_PRESET hidden         # export nothing by default...
     VISIBILITY_INLINES_HIDDEN ON)        # ...inline bodies included
 # ...and monitor_export.h marks the one function that IS exported.
@@ -37,9 +37,10 @@ set_target_properties(monitor PROPERTIES
 # links brings its own: libhostsdk was built with default visibility, so
 # without the line below every hostsdk function is exported from the module
 # too - and the host, which links the same library, now has two copies of
-# each in one process (Chapter 27's diamond, delivered by your plug-in). Tell
-# the linker the surface is one name. MSVC needs nothing: it exports only
-# what wears __declspec(dllexport).
+# each in one process, and which copy a call reaches is the platform
+# loader's decision, not yours (Chapter 27's diamond, delivered by your
+# plug-in). Tell the linker the surface is one name. MSVC needs nothing: it
+# exports only what wears __declspec(dllexport).
 if(APPLE)
     target_link_options(monitor PRIVATE "-Wl,-exported_symbol,_Plugin_Entry")
 elseif(NOT MSVC)

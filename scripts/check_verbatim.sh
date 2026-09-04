@@ -106,6 +106,7 @@ FULL = [
     # Chapter 40 quotes its lab's build files whole, comments included - a
     # CMake file's comments are the listing, not a banner - and deplab's
     # install/export file, which Chapter 27 pointed at and never showed.
+    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/sdk/include/hostsdk/hostsdk.h'),
     ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/cmake/FindHostSDK.cmake'),
     ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/CMakeLists.txt'),
     ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/CMakePresets.json'),

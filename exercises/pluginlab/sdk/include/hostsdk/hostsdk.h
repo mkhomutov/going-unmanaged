@@ -17,6 +17,11 @@ extern "C" {
 // What the host hands a plug-in on load. The size field is Chapter 30's
 // versioning device: a plug-in built against an older header sees a smaller
 // struct and can say so, instead of reading past the end of it.
+//
+// LIFETIME: the table is valid only for the duration of the Plugin_Entry
+// call. Copy what you keep; never store the pointer.
+// THREADS: every function in the table may be called only from the thread
+// Plugin_Entry was called on. The host sets every slot the size covers.
 typedef struct HostApi {
     uint32_t size;                          // sizeof(HostApi), set by the host
     uint32_t api_version;                   // the host's HOSTSDK_API_VERSION

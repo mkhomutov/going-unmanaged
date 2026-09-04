@@ -622,18 +622,18 @@ else
     echo "  SKIPPED - cmake not installed (CI runs this for real)"
 fi
 
-# Chapter 29's lab under the third sanitizer. TSan cannot be combined with ASan,
-# so this is a second build of the same source rather than a longer flag list -
-# which is the chapter's point about them made structurally.
 # Chapter 40's lab: three projects, in the order a plug-in shop builds them.
 # The SDK drop is installed to a prefix (a header and an archive, no config
 # package - the point), the plug-in is configured against that prefix through
 # its hand-written find-module, the stand-in host is built against the same
-# prefix, and the host loads the module. Then the claim the chapter is built
-# around: the module's export table holds Plugin_Entry and NOTHING else of
-# the plug-in's or the SDK's - hidden visibility covers what the plug-in
-# compiles, and the linker option covers the archive it links. "It loaded"
-# proves neither, so nm reads the table back.
+# prefix, and the host loads the module - twice, the second time passing the
+# shorter table an older host would, which the plug-in must refuse. Then the
+# claim the chapter is built around: the module's export table holds
+# Plugin_Entry and NOTHING else of the plug-in's or the SDK's - hidden
+# visibility covers what the plug-in compiles, and the linker option covers
+# the archive it links. "It loaded" proves neither, so nm reads the table
+# back. Last, both binaries are built again with the sanitizer flags injected
+# from outside the CMakeLists (the lab's files stay the chapter's) and run.
 echo "== pluginlab cmake =="
 if command -v cmake > /dev/null 2>&1; then
     PL=build/pluginlab
@@ -649,23 +649,55 @@ if command -v cmake > /dev/null 2>&1; then
         -DCMAKE_PREFIX_PATH="$PWD/$PL/prefix" > /dev/null
     cmake --build "$PL/host" --config Debug > /dev/null
     # Where the two binaries landed depends on the generator (Debug/ under a
-    # multi-config one) and the platform (.so / .dylib / .dll), so look.
-    MODULE=$(find "$PL/plugin" -type f \( -name 'monitor.so' -o -name 'monitor.dylib' -o -name 'monitor.dll' \) | head -1)
-    HOST=$(find "$PL/host" -type f \( -name host -o -name host.exe \) -perm -u+x | head -1)
+    # multi-config one) and the platform (.so on Linux AND macOS - a MODULE is
+    # never .dylib - or .dll), so look.
+    find_module() { find "$1" -type f \( -name 'monitor.so' -o -name 'monitor.dll' \) | head -1; }
+    find_host()   { find "$1" -type f \( -name host -o -name host.exe \) -perm -u+x | head -1; }
+    MODULE=$(find_module "$PL/plugin")
+    HOST=$(find_host "$PL/host")
     if [ -z "$MODULE" ] || [ -z "$HOST" ]; then
         echo "build_all.sh: pluginlab built but the module or the host is missing" >&2
         exit 1
     fi
-    if ! "$HOST" "$MODULE" | grep -q 'monitor loaded against hostsdk'; then
-        echo "build_all.sh: the host loaded $MODULE but the plug-in's log line never arrived" >&2
+    # Captured first, then grepped, with the exit status kept apart from the
+    # text: under pipefail a host that printed the line and then failed, or
+    # never found the entry point, would both read as "the line never arrived".
+    HOST_RC=0
+    HOST_OUT=$("$HOST" "$MODULE" 2>&1) || HOST_RC=$?
+    if [ "$HOST_RC" != 0 ]; then
+        echo "build_all.sh: the host exited $HOST_RC loading $MODULE:" >&2
+        printf '%s\n' "$HOST_OUT" | sed 's/^/  /' >&2
+        exit 1
+    fi
+    if ! printf '%s\n' "$HOST_OUT" | grep -q 'monitor loaded against hostsdk'; then
+        echo "build_all.sh: the host loaded $MODULE but the plug-in's log line never arrived:" >&2
+        printf '%s\n' "$HOST_OUT" | sed 's/^/  /' >&2
+        exit 1
+    fi
+    # The other half of the chapter's step 4: a shorter table must be refused
+    # (return -1, host exits 1), not read past.
+    OLDER_RC=0
+    OLDER_OUT=$("$HOST" "$MODULE" --older 2>&1) || OLDER_RC=$?
+    if [ "$OLDER_RC" = 0 ] || ! printf '%s\n' "$OLDER_OUT" | grep -q 'plug-in returned -1'; then
+        echo "build_all.sh: the plug-in did not refuse an older host's shorter table (exit $OLDER_RC):" >&2
+        printf '%s\n' "$OLDER_OUT" | sed 's/^/  /' >&2
         exit 1
     fi
     # The compile database shows the visibility flag reached monitor.cpp...
+    if [ ! -f "$PL/plugin/compile_commands.json" ]; then
+        echo "build_all.sh: no $PL/plugin/compile_commands.json. Only the Makefile and" >&2
+        echo "  Ninja generators write a compile database, and without one the" >&2
+        echo "  visibility flag cannot be verified - re-run with CMAKE_GENERATOR" >&2
+        echo "  unset, or set to Ninja. (CI uses the default, which writes one.)" >&2
+        exit 1
+    fi
     if ! grep -q -- '-fvisibility=hidden.*monitor\.cpp' "$PL/plugin/compile_commands.json"; then
         echo "build_all.sh: monitor.cpp was not compiled with -fvisibility=hidden" >&2
         exit 1
     fi
-    # ...and the export table shows what that did and did not cover.
+    # ...and the export table shows what that did and did not cover. Names,
+    # not a count: on Linux nm -g also lists the C runtime's own _init and
+    # friends, which are nobody's surface.
     if command -v nm > /dev/null 2>&1; then
         EXPORTS=$(nm -g --defined-only "$MODULE" 2>/dev/null | awk '{print $NF}')
         if [ "$(printf '%s\n' "$EXPORTS" | grep -c 'Plugin_Entry')" != 1 ]; then
@@ -673,16 +705,43 @@ if command -v cmake > /dev/null 2>&1; then
             printf '%s\n' "$EXPORTS" | sed 's/^/  /' >&2
             exit 1
         fi
+        # HostSdk_VersionString is the archive's (the linker option's job);
+        # Describe is the plug-in's own, external linkage on purpose (the
+        # visibility preset's job on Linux, the export list's on macOS).
         if printf '%s\n' "$EXPORTS" | grep -q 'HostSdk_VersionString\|Describe'; then
             echo "build_all.sh: $MODULE exports a symbol that should be hidden - the" >&2
             echo "  SDK's helper or the plug-in's own function. Chapter 40's finding:" >&2
             printf '%s\n' "$EXPORTS" | sed 's/^/  /' >&2
             exit 1
         fi
-        echo "  ok   exercises/pluginlab/: installed, built, loaded; exports Plugin_Entry only"
+        echo "  ok   exercises/pluginlab/: installed, built, loaded, refused an older host;"
+        echo "       exports Plugin_Entry, hides HostSdk_VersionString and Describe"
     else
-        echo "  ok   exercises/pluginlab/: installed, built, loaded (no nm here to read the exports)"
+        echo "  ok   exercises/pluginlab/: installed, built, loaded, refused an older host (no nm here to read the exports)"
     fi
+    # Once more under the canonical sanitizers, injected from outside: the
+    # CMakeLists are the chapter's listings and carry no sanitizer option,
+    # and CMAKE_<LANG>_FLAGS plus the linker-flags variables are how a build
+    # is instrumented without editing it.
+    SAN_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g"
+    cmake -S exercises/pluginlab/plugin -B "$PL/plugin-san" \
+        -DCMAKE_PREFIX_PATH="$PWD/$PL/prefix" -DCMAKE_CXX_FLAGS="$SAN_FLAGS" \
+        -DCMAKE_MODULE_LINKER_FLAGS="$SAN_FLAGS" > /dev/null
+    cmake --build "$PL/plugin-san" --config Debug > /dev/null
+    cmake -S exercises/pluginlab/host -B "$PL/host-san" \
+        -DCMAKE_PREFIX_PATH="$PWD/$PL/prefix" -DCMAKE_CXX_FLAGS="$SAN_FLAGS" \
+        -DCMAKE_EXE_LINKER_FLAGS="$SAN_FLAGS" > /dev/null
+    cmake --build "$PL/host-san" --config Debug > /dev/null
+    MODULE_SAN=$(find_module "$PL/plugin-san")
+    HOST_SAN=$(find_host "$PL/host-san")
+    SAN_RC=0
+    SAN_OUT=$(UBSAN_OPTIONS=halt_on_error=1 "$HOST_SAN" "$MODULE_SAN" 2>&1) || SAN_RC=$?
+    if [ "$SAN_RC" != 0 ] || ! printf '%s\n' "$SAN_OUT" | grep -q 'monitor loaded against hostsdk'; then
+        echo "build_all.sh: the sanitized host/module pair failed (exit $SAN_RC):" >&2
+        printf '%s\n' "$SAN_OUT" | sed 's/^/  /' >&2
+        exit 1
+    fi
+    echo "  ok   exercises/pluginlab/: sanitized build loaded clean"
 elif [ "$REQUIRE_CMAKE" = 1 ]; then
     echo "build_all.sh: cmake not found, and --require-cmake was given" >&2
     exit 1
@@ -690,6 +749,9 @@ else
     echo "  SKIPPED - cmake not installed (CI runs this for real)"
 fi
 
+# Chapter 29's lab under the third sanitizer. TSan cannot be combined with ASan,
+# so this is a second build of the same source rather than a longer flag list -
+# which is the chapter's point about them made structurally.
 #
 # Same bargain as the cmake step above, for the same reason: ThreadSanitizer is
 # not part of the toolchain the rest of this script needs. It is missing from
