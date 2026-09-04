@@ -52,6 +52,30 @@ numbers may still move.
   the junk parse, and the bit arithmetic at compile time. Appendix E gains
   a *feature flag* entry; Chapter 26 points at Recipe 31.
 
+- **New: Recipes 33–34 — Hold an owned object as a field; an object too
+  big for the stack** (MINOR — two appended recipes). The field-level
+  question a C# developer asks — can a field be a smart pointer, and who
+  disposes it — was answered in Chapters 6, 29, 30 and 37 and in one
+  place nowhere; Recipe 33 is that place, Appendix H's fourth procedure
+  applied to a single member, with the destruction order asserted by a
+  log that reports its own death. Recipe 34 is the third question
+  Chapter 1's decision never asked, because C# answered it for every
+  class: an object that does not fit a frame goes behind `make_unique`,
+  with a `static_assert` as the size budget. Chapter 1's first flowchart
+  gains that branch, Chapter 3 the paragraph behind it, Chapter 31's
+  symptom index the crash-on-entry row, and Appendix E a *stack overflow*
+  entry that says what AddressSanitizer calls it — `stack-overflow` when
+  the fault lands within 64 KB of the stack pointer, a bare `SEGV`/`BUS`
+  otherwise, and which one is not stable even between runs. Section 8 of
+  `check_platform_claims.sh` holds the three things every run shares (a
+  nonzero exit, one of those two names, no allocation stack) under a
+  bounded runner; its first draft had
+  written the maintainer's macOS answer down as the rule, and CI's Linux
+  leg answered the same binary three different ways in three runs, which
+  is the exact mistake that script exists to catch. The Recipe 16 harness
+  no longer sleeps a fixed 120 ms and hopes for two ticks, which a loaded
+  runner had just proved it could fail to see.
+
 ## [0.9.0] — 2026-09-04
 
 The release a list steered. Version 0.8.0 began with eighteen constructed

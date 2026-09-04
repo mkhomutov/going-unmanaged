@@ -45,6 +45,7 @@ jobs:
   # run them on. This job is that Linux, and macOS alongside it so the contrast
   # is asserted from both ends rather than assumed from one.
   platform-claims:
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:

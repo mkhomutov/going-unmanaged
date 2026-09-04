@@ -49,6 +49,8 @@ stays right.
 | `TimeSpan.FromSeconds(2)` handed to a native call | `Duration.ofSeconds(2)` / `toMillis()` | [Recipe 30 — Pass a timeout to a C API](#recipe-30--pass-a-timeout-to-a-c-api) |
 | `IConfiguration` read at startup / `IsEnabledAsync` | `System.getenv` at startup | [Recipe 31 — Read a feature flag once](#recipe-31--read-a-feature-flag-once) |
 | `[Flags] enum` + `HasFlag` | `EnumSet.of` / `contains` | [Recipe 32 — Combine flags as an enum class](#recipe-32--combine-flags-as-an-enum-class) |
+| a field of class type + `IDisposable` | a field + `AutoCloseable` | [Recipe 33 — Hold an owned object as a field](#recipe-33--hold-an-owned-object-as-a-field) |
+| `new BigThing()` — always on the heap | `new BigThing()` — always on the heap | [Recipe 34 — An object too big for the stack](#recipe-34--an-object-too-big-for-the-stack) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1311,6 +1313,105 @@ is true for every set, exactly as `HasFlag(0)` is. Needs `<cstdint>`.
 
 > [!WARNING]
 > **Trap:** `(set & flag) != Channel::None` reads as `HasFlag` and is wrong for a *combined* flag — with `Stereo = Left | Right`, a set holding only `Left` tests true — which is why `has` compares against the flag itself, as `HasFlag` does.
+
+### Recipe 33 — Hold an owned object as a field
+
+**In C#:** `private readonly Log _log;` — and, if `Log` is `IDisposable`, an `IDisposable` on the owner whose `Dispose` calls `_log.Dispose()` by hand
+
+**The recipe:**
+
+```cpp
+class Log {                                  // polymorphic: lives behind a pointer (Chapter 2)
+public:
+    virtual ~Log() = default;
+    virtual void write(const std::string& line) = 0;
+};
+
+struct Sink {                                // shared with a callback: co-owned (Chapter 29)
+    std::vector<int> samples;
+};
+
+class Session {
+public:
+    Session(std::string name, std::unique_ptr<Log> log, std::shared_ptr<Sink> sink)
+        : name_(std::move(name)), log_(std::move(log)), sink_(std::move(sink)) {}
+
+    void record(int sample) {
+        sink_->samples.push_back(sample);
+        if (log_) {                          // the pointer is where "may be absent" lives
+            log_->write(name_ + ": recorded");
+        }
+    }
+
+private:
+    std::string name_;                       // by value: the field IS the object, and dies with the owner
+    std::vector<int> history_;               // by value too: its elements are on the heap, the field is three pointers
+    std::unique_ptr<Log> log_;               // one owner, polymorphic, optional: behind a unique_ptr
+    std::shared_ptr<Sink> sink_;             // co-owned: alive while anyone still holds it
+};   // no Dispose to write: the fields die in reverse order of declaration, then the object
+```
+
+**Why it looks like this.** The C# question — can a field own something,
+and who disposes it — has a shorter answer here: every field is destroyed
+when its owner is, with nothing to write. What is yours to decide is the
+field's *shape*, and it is
+[Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s
+fourth procedure applied to one member: by value until something forces
+otherwise — a `std::string` or `std::vector` field already keeps its bulk
+on the heap; behind a `unique_ptr` when the type is a polymorphic base
+([Chapter 2](02-value-semantics.md#chapter-2--value-semantics)), may be
+absent, is incomplete
+([Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s
+PIMPL) or is too big to carry (Recipe 34); behind a `shared_ptr` only when
+co-owned and the cycle question is answered
+([Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)). A
+`unique_ptr` field also settles the class's copies —
+[Chapter 6](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics)'s
+Rule of Zero: copy deleted, move generated, nothing written. Needs
+`<memory>`, `<string>`, `<vector>`.
+
+> [!WARNING]
+> **Trap:** fields die in reverse *declaration* order, so a field that another field's destructor uses must be declared before it — declare a by-value `Sink` after a `Log` whose destructor writes a last line into it, and that line lands in a dead field; nothing warns, because `-Wreorder` is about the constructor's list, not the class's, and under libc++ the sanitizers stay quiet too, since the container annotation un-poisons the slot before the write ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit)'s first pitfall).
+
+### Recipe 34 — An object too big for the stack
+
+**In C#:** nothing to decide — a class instance is on the heap at forty bytes and at forty megabytes; only a struct or a `stackalloc` sees the stack, and when one of those is too big the runtime at least says `StackOverflowException`
+
+**The recipe:**
+
+```cpp
+struct FrameBuffer {
+    std::array<std::uint8_t, 4 * 1024 * 1024> pixels{};   // 4 MB inline: a class this size has no business on a stack
+};
+static_assert(sizeof(FrameBuffer) > 1024 * 1024, "FrameBuffer is a heap object by design");
+
+std::unique_ptr<FrameBuffer> make_frame() {
+    return std::make_unique<FrameBuffer>();  // one owner on the stack, four megabytes on the heap
+}
+```
+
+**Why it looks like this.** [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)'s
+decision asked whether the object outlives its scope and whether it has
+one owner; this is the third question, and C# never asked it because the
+runtime answered it for every class. A stack frame is small —
+[Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior)'s
+numbers: 1 MB per thread on Windows, 512 KB for a thread you spawn on
+macOS, 8 MB for the main thread on both Linux and macOS — and `sizeof`
+is transitive, so a `std::array` member this size makes every object that
+holds one, and every function that holds one of those, a stack overflow
+waiting for a thread whose stack you did not size —
+[Chapter 29](29-concurrency.md#chapter-29--concurrency)'s driver thread. `make_unique`
+puts the bytes on the heap and leaves a pointer-sized owner behind, which
+is the same ownership as before at a different address. When the size is
+not a compile-time constant, `std::vector<std::uint8_t>(n)` is the same
+answer with the count decided at run time. The `static_assert` is the
+reason for the heap written down where it cannot go stale
+([Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s
+judge): a reviewer who changes the array's size meets the sentence.
+Needs `<array>`, `<cstdint>`, `<memory>`.
+
+> [!WARNING]
+> **Trap:** the failure is a crash on *entry* to the function, before its first line runs, and the report is none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s four shapes — AddressSanitizer names it `stack-overflow` only when the faulting write lands within 64 KB of the stack pointer, and a bare `SEGV`/`BUS` "on unknown address" otherwise, which depends on what happens to be mapped below the thread's stack rather than on the platform or the frame size (the same binary answers differently between runs on Linux) — with no allocation site to read either way.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

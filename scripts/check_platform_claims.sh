@@ -84,6 +84,34 @@ int main() {
 }
 EOF
 
+# Recipe 34 / Appendix E: a frame that does not fit the thread's stack, with
+# the stack sized by hand (pthread, 512 KB) so the overshoot is the same on
+# every platform. Two sizes, because the claim is that AddressSanitizer's
+# NAME for the crash is not a function of the overshoot: 600 KB overshoots by
+# a little, 1 MB by half a megabyte - past the guard page, and no further,
+# because the zeroing write walks every byte below the stack until it faults,
+# and a walk of megabytes can scribble over the runtime's own mappings and
+# hang the report (a 4 MB frame did, on CI).
+for KB in 600 1024; do
+cat > "$OUT/frame_$KB.cpp" <<EOF
+#include <array>
+#include <cstdint>
+#include <cstdio>
+#include <pthread.h>
+struct Big { std::array<std::uint8_t, $KB * 1024> bytes{}; };
+void* worker(void*) { Big b; b.bytes[0] = 1; std::printf("ran %d\\n", b.bytes[0]); return nullptr; }
+int main() {
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setstacksize(&attr, 512 * 1024);
+    pthread_t t;
+    pthread_create(&t, &attr, worker, nullptr);
+    pthread_join(t, nullptr);
+    return 0;
+}
+EOF
+done
+
 cat > "$OUT/race.cpp" <<'EOF'
 #include <thread>
 int g = 0;
@@ -150,6 +178,30 @@ run_rc() {
     local prog="$1" logfile="$2"; shift 2
     local rc=0
     "$prog" > "$logfile" 2>&1 || rc=$?
+    echo "$rc"
+}
+
+# The same, with a deadline: a program that corrupts the sanitizer runtime on
+# its way to a fault can hang inside the report (section 8's 4 MB frame did,
+# on CI), and a hung check stops the job rather than failing it - Chapter
+# 38's rule about waits, applied to this script. 124 on timeout, like
+# coreutils' timeout, which macOS does not ship.
+run_rc_bounded() {
+    local prog="$1" logfile="$2" limit="${3:-60}"
+    local rc=0 pid waited=0
+    "$prog" > "$logfile" 2>&1 &
+    pid=$!
+    while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt "$limit" ]; do
+        sleep 1
+        waited=$((waited + 1))
+    done
+    if kill -0 "$pid" 2>/dev/null; then
+        kill -9 "$pid" 2>/dev/null || true
+        wait "$pid" 2>/dev/null || true
+        echo 124
+        return
+    fi
+    wait "$pid" || rc=$?
     echo "$rc"
 }
 
@@ -562,6 +614,51 @@ else
     fi
 fi
 
+# --- 8. a frame that does not fit the stack ---------------------------------
+# Recipe 34's trap and Appendix E's stack-overflow entry: the crash is on
+# entry to the function, and AddressSanitizer's NAME for it is one of two -
+# "stack-overflow" when the faulting write lands within 64 KB of the stack
+# pointer (compiler-rt's IsStackOverflow window), a bare SEGV/BUS "on unknown
+# address" otherwise - and which one depends on what happens to be mapped
+# below the thread's stack, not on the platform or the overshoot. The first
+# draft of this section wrote the maintainer's macOS/arm64 answer down as the
+# rule; CI's Linux leg then answered the same binary three different ways in
+# three runs, which is this script's founding mistake caught by this script.
+# So it asserts only what every run on every platform shares: nonzero exit,
+# one of those two names, and no allocation stack - the three things the book
+# claims (a first draft also asserted frame #0 was the zeroing routine; on
+# Linux it is the function itself, or an unsymbolized libc frame) - and it
+# bounds the run, because a frame that walks far below the stack can hang the
+# runtime mid-report.
+echo "== stack overflow report names =="
+if $CXX -std=c++17 -g -fsanitize=address -pthread "$OUT/frame_600.cpp" -o "$OUT/frame_600" 2>/dev/null \
+   && $CXX -std=c++17 -g -fsanitize=address -pthread "$OUT/frame_1024.cpp" -o "$OUT/frame_1024" 2>/dev/null; then
+    RC_S=$(run_rc_bounded "$OUT/frame_600" "$OUT/frame_600.log" 60)
+    RC_L=$(run_rc_bounded "$OUT/frame_1024" "$OUT/frame_1024.log" 60)
+    if [ "$RC_S" = 124 ] || [ "$RC_L" = 124 ]; then
+        fail "a frame past a 512 KB stack hung for a minute instead of crashing ($RC_S / $RC_L)   [Recipe 34]"
+    elif [ "$RC_S" = 0 ] || [ "$RC_L" = 0 ]; then
+        fail "a frame past a 512 KB stack ran to completion ($RC_S / $RC_L); Recipe 34 says it crashes on entry   [Recipe 34]"
+    else
+        pass "both frames crashed, exit $RC_S and $RC_L   [Recipe 34, App E]"
+    fi
+    for KB in 600 1024; do
+        NAME=$(grep -m1 -oE 'AddressSanitizer: [A-Za-z-]+' "$OUT/frame_$KB.log" | cut -d' ' -f2 || true)
+        if printf '%s' "$NAME" | grep -qE '^(stack-overflow|SEGV|BUS)$'; then
+            pass "$KB KB on a 512 KB stack: ASan names it $NAME (one of the two the book allows)   [Recipe 34, App E]"
+        else
+            fail "$KB KB on a 512 KB stack: expected stack-overflow, SEGV or BUS, got '${NAME:-(no ASan line)}'   [Recipe 34, App E]"
+        fi
+    done
+    if grep -q "allocated by" "$OUT/frame_600.log" "$OUT/frame_1024.log"; then
+        fail "a stack-overflow report carried an allocation stack; Recipe 34 says there is none   [Recipe 34]"
+    else
+        pass "neither report carries an allocation site   [Recipe 34, Ch 31]"
+    fi
+else
+    skip "AddressSanitizer cannot build the stack-overflow demonstrations with $CXX"
+fi
+
 echo
 if [ "$FAILED" = 0 ]; then
     echo "platform claims OK ($OS/$ARCH, $STDLIB)"
@@ -572,6 +669,7 @@ else
     echo "  mistake is one platform's behavior written down as the rule;" >&2
     echo "  sections 5 and 7 are linker claims that hold everywhere alike, so a" >&2
     echo "  failure there means this toolchain differs from the chapter's transcript;" >&2
-    echo "  section 6 is per standard library, keyed by the library's macro." >&2
+    echo "  section 6 is per standard library, keyed by the library's macro;" >&2
+    echo "  section 8 asserts only what every platform and every run share." >&2
     exit 1
 fi

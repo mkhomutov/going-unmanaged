@@ -21,6 +21,7 @@ Cookbook*), one translation unit per domain —
 | `json.cpp` | 25–26 — serialize a record, read a config; the one TU with a dependency, `exercises/third_party/nlohmann/`, included with `-isystem` |
 | `containers.cpp` | 27 — pre-size a collection: `reserve` against `vector(n)` and `resize` |
 | `flags.cpp` | 31–32 — a feature flag read once and kept as a member; a `[Flags]` enum as an `enum class` with its operators |
+| `ownership.cpp` | 33–34 — an owned object as a field, and who disposes it; an object too big for the stack |
 
 — each with a `main()` that asserts what its recipes claim.
 `scripts/build_all.sh` builds and runs all of them on every push, so a recipe
