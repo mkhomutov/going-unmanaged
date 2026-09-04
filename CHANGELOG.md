@@ -104,6 +104,16 @@ numbers may still move.
   wrong-build profile, Chapter 36's stretch a route here, and one key
   principle joins Appendix B.
 
+- **Chapter 26 — the root files, and two layout rules** (MINOR — an
+  appended passage). "A layout that survives" drew the directories and
+  stopped; a C# developer arriving from a `.sln` does not know which root
+  files are load-bearing. The section now lists them — presets,
+  `.clang-format`, `.clang-tidy`, `.gitignore` with `build/`, the README's
+  three commands, the licence and the NOTICE — and states the two rules the
+  tree implies and no file does: the namespace mirrors the directory, and
+  one class is one header pair named for the type, private headers beside
+  their `.cpp` and never under the project-name prefix.
+
 ## [0.9.0] — 2026-09-04
 
 The release a list steered. Version 0.8.0 began with eighteen constructed
