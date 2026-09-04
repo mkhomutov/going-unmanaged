@@ -1,17 +1,20 @@
-// Appendix F, Recipe 31 - a feature flag read once at startup and kept as a
-// member, and a [Flags] enum spelled as an enum class with its operators.
+// Appendix F, Recipes 31 and 32 - a feature flag read once at startup and
+// kept as a member, and a [Flags] enum spelled as an enum class with its
+// operators.
 //
-// Features, Processor, Channel and its three operators are quoted VERBATIM
-// in book/F-rosetta-cookbook.md: editing one means editing the appendix in
-// the same commit (the testlab discipline). main() is scaffolding - it sets
-// the environment, reads the flags once, and asserts the branch and the
-// bit arithmetic; the refusal the recipe names stays a comment.
+// Features and Processor (Recipe 31), and Channel with its three operators
+// (Recipe 32), are quoted VERBATIM in book/F-rosetta-cookbook.md: editing
+// one means editing the appendix in the same commit (the testlab
+// discipline). main() is scaffolding - it sets the environment, reads the
+// flags once, asserts the branch, the read-once, the junk-keeps-the-default
+// parse and the bit arithmetic; the refusals the recipes name stay comments.
 #include <cassert>
+#include <charconv>
 #include <cstdint>
 #include <cstdlib>
 #include <string_view>
 
-// Recipe 31 - IConfiguration read at startup; [Flags] enum
+// Recipe 31 - IConfiguration read at startup, once
 struct Features {
     bool audit = false;                  // the defaults ARE the off state
     bool fast_path = false;
@@ -24,7 +27,10 @@ struct Features {
         Features f;
         if (const char* v = std::getenv("MYPLUGIN_AUDIT"))      f.audit = std::string_view(v) == "1";
         if (const char* v = std::getenv("MYPLUGIN_FAST_PATH"))  f.fast_path = std::string_view(v) == "1";
-        if (const char* v = std::getenv("MYPLUGIN_BATCH_SIZE")) f.batch_size = std::atoi(v);
+        if (const char* v = std::getenv("MYPLUGIN_BATCH_SIZE")) {
+            const std::string_view s(v);
+            std::from_chars(s.data(), s.data() + s.size(), f.batch_size);   // junk: batch_size stays 64 (Recipe 19)
+        }
         return f;
     }
 };
@@ -44,6 +50,7 @@ private:
     Features features_;
 };
 
+// Recipe 32 - [Flags] enum Channel, and HasFlag
 enum class Channel : std::uint8_t { None = 0, Left = 1, Right = 2, Sub = 4 };   // [Flags] enum Channel
 
 constexpr Channel operator|(Channel a, Channel b) {
@@ -71,7 +78,11 @@ int main() {
     assert(Processor(off).process(21) == 42);
 
     // Set, read once, kept: the environment can change afterwards and the
-    // Processor does not care - that is the whole point of reading once.
+    // Processor does not care - that is the whole point of reading once. (A
+    // Processor that re-read the environment in process() fails the last
+    // assert here; it was run.) The broken shape the recipe's trap names -
+    // the read at the point of use on the deadline path - would pass every
+    // assertion in this file and stays book-only.
     set_env("MYPLUGIN_FAST_PATH", "1");
     set_env("MYPLUGIN_BATCH_SIZE", "128");
     const Features on = Features::from_environment();
@@ -79,6 +90,11 @@ int main() {
     const Processor fast(on);
     set_env("MYPLUGIN_FAST_PATH", "0");
     assert(fast.process(21) == 21);
+
+    // Junk in the environment keeps the default - from_chars leaves the
+    // target untouched on failure, where atoi would have written 0 over 64.
+    set_env("MYPLUGIN_BATCH_SIZE", "abc");
+    assert(Features::from_environment().batch_size == 64);
 
     // The [Flags] enum: combine, test, and the type survives the arithmetic.
     constexpr Channel stereo = Channel::Left | Channel::Right;
@@ -88,10 +104,16 @@ int main() {
     static_assert(has(stereo | Channel::Sub, Channel::Sub));
     static_assert(!has(Channel::None, Channel::Left));
     static_assert((stereo & Channel::Sub) == Channel::None);
-    // The refusal the recipe names, as a comment because a refusal cannot
-    // be compiled: without the operators above, `Channel::Left | Channel::Right`
-    // is "invalid operands to binary expression" - an enum class does not
-    // decay to int, which is the feature. A plain `enum` would compile it
-    // and hand back an int, and the type would be gone.
+    static_assert(has(Channel::Left, Channel::None));   // like HasFlag(0): always true - test bits, not None
+    // The trap the recipe names: an overlap test reads as HasFlag and is
+    // wrong for a combined flag - a set holding only Left "has" stereo.
+    static_assert((Channel::Left & stereo) != Channel::None);   // the wrong test says yes
+    static_assert(!has(Channel::Left, stereo));                 // has() says no
+    // The refusal, as a comment because a refusal cannot be compiled:
+    // without the operators above, `Channel::Left | Channel::Right` is
+    // "invalid operands to binary expression" (clang; GCC says "no match
+    // for 'operator|'") - an enum class does not decay to int, which is the
+    // feature. A plain `enum` would compile it and hand back an int, and
+    // the type would be gone.
     return 0;
 }
