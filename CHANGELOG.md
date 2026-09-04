@@ -10,110 +10,173 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
-## [Unreleased]
+## [0.9.0] — 2026-09-04
 
-Sixteen topics a reader asked the book about, read against every page and
-found covered, scattered, or absent. This is the series of additions that
-closes the gaps; each appends, and no number moves.
+The release a list steered. Version 0.8.0 began with eighteen constructed
+readers taking the repository cold and asking how it felt; this one began
+with sixteen topics a reader named — JSON, ownership, `std::variant`, naming,
+const in arguments, the header/`.cpp` split, project structure, feature
+flags, exceptions and `std::expected` together, the empty string, CMake past
+the basics, `decltype`, `std::find`, `std::optional`, value categories,
+templates — read against every page with a verdict of covered, scattered or
+absent. It is a colder instrument than a study: it does not ask whether the
+book is any good, only whether a specific thing is in it and whether anyone
+could find it.
 
-### Added
+The verdict was mostly *scattered*, which is the same diagnosis 0.8.0 reached
+from the other direction. The book knew about value categories in three
+chapters and collected them nowhere; it taught const in five places before
+Appendix I gathered them and taught `std::optional` in two without ever
+saying what it is not; it had named the header/`.cpp` split as obvious and
+never drawn the line. Those are now sections rather than sediment. Two topics
+were genuinely absent and became chapters. **Chapter 40** is the plug-in's own
+build, because Chapter 26 built an executable from a library — the shape of
+an exercise, and not the artifact this book is about. **Chapter 41** is the
+five or six templates a plug-in author writes, because Chapter 7 stopped
+where the comparison with C# generics stopped and left the reader able to
+read one but not to write one. And one topic, JSON, forced a decision the
+repository had deferred since Chapter 27 was written: teach the subject
+without a dependency, or take one. It took one, once, under the rules that
+chapter itself states.
 
-- **Chapter 10** gains `std::variant` — the tagged union with the compiler on
-  your side, against both the C `kind`-plus-`union` of vendor event structs
-  and the class hierarchy a C# developer would write — and a table of what
-  `std::optional` is *not* (no `optional<T&>`, no `?.`, and `*` on an empty
-  one is quiet undefined behavior), plus a paragraph on `decltype` beside
-  `auto`.
-- **Chapter 6** gains *Value categories in one table*: lvalue, prvalue and
-  xvalue, the binding table for `T&`/`const T&`/`T&&`, and four traps that
-  compile clean — the named rvalue reference that is an lvalue, `std::move`
-  on a const object, `return std::move(local)`, and lifetime extension
-  through a member but not through a call. Two of the four are priced by
-  `exercises/choosing/passing.cpp`, quoted whole and pinned both ways by
-  `check_verbatim.sh`.
-- **Appendix H**, procedure 4, gains the branch that is not a box: a closed
-  set of unrelated types is a `vector<variant<...>>`, asserted by
-  `exercises/choosing/storing.cpp`.
-- **Appendix F**: Recipe 18 (find an element, an index, or a substring —
-  the three spellings of "not found"), Recipe 19 (a value that may be
-  absent), Recipe 20 (switch on the kind of a message, with the
-  `overloaded` idiom). `exercises/cookbook/alternatives.cpp` is new.
-- **Chapter 8** gains *Living in both dialects: the translation layer* —
-  a throw becomes a value at a module boundary and a value becomes a throw
-  again only at the top; a C++17 `Result<T, E>` over `std::variant`; what
-  C++23's `and_then`/`transform` collapse; and three pieces of exception
-  vocabulary the chapter had used without introducing (a custom exception
-  type, catch order, `exception_ptr`). Its `Result` and `load_config` are
-  Recipe 22's, held whole on both pages; its chaining listing is the
-  cookbook's one C++23 file, `exercises/cookbook/expected.cpp`, built as
-  its own probe with `--require-expected` in CI.
-- **Appendix F**: Recipe 21 (throw and catch your own exception type),
-  Recipe 22 (return a value or an error — a C++17 `Result<T, E>` over
-  `std::variant`, with `optional` and `std::expected` as its neighbours),
-  Recipe 23 (test for an empty string, and for no string at all —
-  a `std::string` cannot be null, and the null `const char*` from a C API
-  is the one that can). `check_platform_claims.sh` now asserts what that
-  null does under each standard library.
-- **Chapter 9** points at Recipe 23; **Appendix B** one new principle.
-- **Chapter 12** gains *What goes in the header, and what goes in the
-  .cpp*: the decision table by kind of entity, `.h` versus `.hpp`, and the
-  own-header-first include order with its reason (and its one exception,
-  a precompiled header). **Chapter 23**'s breakage 6 gains its second
-  half — a header that borrows an include from its own .cpp and fails
-  in the consumer with `use of undeclared identifier 'std'`.
-- **Appendix A.8**, *Naming: there is no house style, so learn to read
-  three*: the standard-library, Google/LLVM and framework dialects in one
-  table, the members row's three spellings, the reserved-identifier rule
-  that no default flag enforces. **Appendix D**'s first-week question
-  points at it; **CONTRIBUTING** records the book's own convention;
-  **Appendix B** two new principles.
-- **Chapter 26** gains *Compile-time switches, and the one that must be
-  global* — the four tools in preference order, and the macro that changes
-  a struct's layout in one translation unit: a silent link, an answer that
-  depends on link order, and, unlike Chapter 27's diamond, no order the
-  sanitizers catch. `check_platform_claims.sh` holds all three claims on
-  both CI platforms, and `exercises/buildlab/` gains a `GREETER_AUDIT`
-  option whose PUBLIC reach `build_all.sh` reads back from the compile
-  database. Also *A layout that survives*: the directory tree to copy on
-  day one, with `exercises/deplab/mathlib/` as the built example.
-- **Appendix F**: Recipe 24 (compile a diagnostic out of Release — `assert`
-  as `[Conditional("DEBUG")]`, and the side effect that vanishes with it;
-  `logging.cpp` is built twice, once under `-DNDEBUG`). **Appendix B** one
-  new principle.
-- **Chapter 40 — CMake for the Plug-in** (ROADMAP item 22), and
-  `exercises/pluginlab/`: the plug-in as a MODULE library, the SDK that
-  ships no config package and the hand-written find-module that consumes
-  it, symbol visibility and the export table as the judge — with the
-  chapter's own finding, that hidden visibility covers what you compile and
-  not the static library you link — `CMAKE_MSVC_RUNTIME_LIBRARY`,
-  generator expressions explained once, presets, and deplab's
-  install/export file quoted whole at last. `build_all.sh` installs the
-  drop, builds the module and the host, loads one with the other and reads
-  the export table back; the `buildlab-msvc` job does the same under
-  Visual Studio. **Appendix B** three new principles.
-- **Chapter 41 — Templates You Will Write** (ROADMAP item 23), and
-  `exercises/templatelab/`: the working subset rather than a tutorial —
-  the seam as a template parameter (one `Session<Sdk>` over FakeDevice and
-  over a recording double, Chapter 28's promise discharged), `static_assert`
-  and the traits as the compile-time judge, the detection idiom as the one
-  pre-concepts trick worth owning, `if constexpr`, a fold-expression
-  `Join`, a `Ring<T, N>`, and how to read an instantiation error from the
-  bottom. The lab's second build must be refused with the `static_assert`'s
-  own sentence as the first error. ROADMAP records general template
-  metaprogramming as deliberately out of scope. Chapter 7, Chapter 28 and
-  Appendix E point at it; **Appendix B** two new principles.
-- **Appendix F**: Recipe 25 (serialize a record to JSON) and Recipe 26
-  (read a JSON config with defaults), on the repository's first third-party
-  dependency — nlohmann/json, vendored under `exercises/third_party/` with
-  its version recorded, included with `-isystem`, and reachable from the
-  cookbook only. Chapter 27 now practises its own first strategy;
-  CONTRIBUTING records the rule ROADMAP item 2 asked for, and `NOTICE`
-  records the one carve-out from the code's MIT.
-- **Chapter 1** names custom deleters and `enable_shared_from_this`;
-  **Chapter 11** the algorithm-versus-member `find` trap; **Chapter 14** a
-  fourth Tracer experiment (a const source moves as a copy); **Appendix I**
-  `cbegin` and `std::as_const`; **Appendix E** entries for decltype,
-  ownership, variant and xvalue; **Appendix B** two new principles.
+The additions were reviewed against the code before they merged, and the two
+findings worth recording are both judges that could not fail. The plug-in
+lab's export check asserted that nothing of the plug-in's own leaked into the
+module, while the only function it could have caught sat in an anonymous
+namespace and was never a candidate. The template lab's must-fail build
+declared a `Session` over a policy missing a function and never called the
+member that used it, so with its `static_assert` deleted the broken policy
+compiled clean — a class template's member is compiled only when something
+uses it, which is now the wrong-that-looks-like-working Chapter 41 is built
+around rather than a hole in its lab. Both judges fail properly now. It is
+the rule these labs teach, applied to the labs.
+
+MINOR: two chapters, two labs and nine recipes appended, plus the
+repository's first third-party dependency and new sections throughout; no
+existing chapter, Finding, Recipe or appendix letter changed meaning.
+
+
+- **New: Chapter 40 — CMake for the Plug-in** (MINOR — an appended chapter;
+  closes ROADMAP item 22). Chapter 26 built an executable from a library;
+  nothing in the book built the artifact it is about. This does: the plug-in
+  as a `MODULE` library that nothing links, the SDK that ships no config
+  package and the hand-written `FindHostSDK.cmake` that turns it into an
+  imported target anyway, `CMAKE_MSVC_RUNTIME_LIBRARY` as the CMake spelling
+  of Chapter 26's Debug/Release pitfall, generator expressions explained
+  once, presets, and `exercises/deplab/mathlib/`'s install/export half quoted
+  whole at last — the producing side of `find_package` that Chapter 27
+  pointed at and never showed. The chapter's own finding came out of building
+  the lab: `CXX_VISIBILITY_PRESET hidden` is a compiler flag and covers the
+  code this project compiles, so the first module exported the SDK's helper
+  along with its entry point, and the host that links the same archive had
+  two copies of it in one process with nothing warning. The fix is a linker
+  option per linker; the judge is the export table, read back after every
+  build. `exercises/pluginlab/` is three CMake projects — a vendor drop, the
+  plug-in, a stand-in host that loads it — which `build_all.sh` installs,
+  builds, loads both ways and inspects with `nm`, then builds again with the
+  sanitizers injected from outside the listings; the `buildlab-msvc` job
+  repeats it under Visual Studio with `dumpbin`. Three key principles join
+  Appendix B.
+- **New: Chapter 41 — Templates You Will Write** (MINOR — an appended
+  chapter; closes ROADMAP item 23). The working subset rather than a
+  tutorial: the seam as a template parameter, which is the compile-time fake
+  Chapter 28 named and never showed — one `Session<Sdk>` compiled against
+  FakeDevice and against a recording double — then `static_assert` and the
+  traits as the judge for a claim about a type, the detection idiom as the
+  one pre-concepts trick worth owning, `if constexpr`, a fold expression, a
+  non-type parameter, and how to read an instantiation error from the end
+  that names your line, which is not the same end on every compiler.
+  `exercises/templatelab/` is judged twice: green against both policies under
+  the canonical flags, then a second build that must be *refused* with the
+  `static_assert`'s own sentence as its first error — the `constlab`
+  discipline, applied to a template. General template metaprogramming is
+  recorded on the ROADMAP as deliberately out of scope; Chapter 7,
+  Chapter 28 and Appendix E point here, Appendix D gains the book to open
+  when recognizing one is no longer enough, and two key principles join
+  Appendix B.
+- **Chapter 8 and the error recipes: living in both dialects** (MINOR — an
+  appended section and three appended recipes). The chapter chose between
+  exceptions and error codes and left the reader in a codebase that has both.
+  The new section is the translation layer — a throw becomes a value at a
+  module boundary and a value becomes a throw again only at the top — with a
+  C++17 `Result<T, E>` over `std::variant`, what C++23's `and_then` and
+  `transform` collapse, and three pieces of exception vocabulary the chapter
+  had been using without introducing: a custom exception type, catch order,
+  and `exception_ptr`. Appendix F gains Recipe 21 (throw and catch your own
+  exception type), Recipe 22 (return a value or an error, with `optional` and
+  `std::expected` as its neighbours) and Recipe 23 (test for an empty string,
+  and for no string at all — a `std::string` cannot be null, and the null
+  `const char*` from a C API is the one that can). The chapter's `Result` and
+  `load_config` are Recipe 22's, held whole on both pages; its chaining
+  listing is `exercises/cookbook/expected.cpp`, the one C++23 translation
+  unit, built as its own probe.
+- **Appendix F: Recipes 18–20 and 24–26, and the repository's first
+  dependency** (MINOR — appended recipes). Recipe 18 is the three spellings
+  of "not found" (`std::find`, an index, a substring, and the member/free
+  `find` trap); Recipe 19 a value that may be absent; Recipe 20 a switch on
+  the kind of a message with the `overloaded` idiom; Recipe 24 a diagnostic
+  compiled out of Release, and the side effect that vanishes with it. Recipes
+  25 and 26 are JSON — serialize a record, read a config with defaults — and
+  they are the reason `exercises/third_party/nlohmann/` now exists: the
+  standard library has no JSON, and the two tasks the first months present
+  have no standard-library spelling. It is vendored the way Chapter 27's
+  first strategy says to, with the version and "no local patches" recorded
+  beside it, its own MIT notice next to the header, and `-isystem` so the
+  canonical warnings keep meaning what they mean for our code.
+  `build_all.sh` greps `solutions/` to hold the standard-library-only rule
+  that still governs them, and asserts that the version the README records is
+  the version the header carries. `NOTICE`, `README.md`, `CONTRIBUTING.md`
+  and `CLAUDE.md` record the one carve-out from the code's MIT.
+  `exercises/cookbook/` gains `alternatives.cpp`, `errors.cpp`,
+  `expected.cpp` and `json.cpp`.
+- **The scattered subjects, gathered** (MINOR — appended sections; PATCH
+  elsewhere). **Chapter 10** gains `std::variant` — the tagged union with the
+  compiler on your side, against both the C `kind`-plus-`union` of vendor
+  event structs and the class hierarchy a C# developer would write — a table
+  of what `std::optional` is *not* (no `optional<T&>`, no `?.`, and `*` on an
+  empty one is quiet undefined behavior), and a paragraph on `decltype`
+  beside `auto`. **Chapter 6** gains *Value categories in one table*: lvalue,
+  prvalue and xvalue, the binding table, and four traps that compile clean,
+  two of them priced by `exercises/choosing/passing.cpp` and pinned to the
+  page both ways. **Chapter 12** gains *What goes in the header, and what
+  goes in the .cpp* — the decision table by kind of entity, `.h` versus
+  `.hpp`, and the own-header-first include order with its one exception —
+  while **Chapter 23**'s breakage 6 gains its second half, a header that
+  borrows an include from its own `.cpp` and fails in the consumer.
+  **Appendix A.8** is *Naming: there is no house style, so learn to read
+  three*, with the reserved-identifier rule no default flag enforces.
+  **Appendix H**'s fourth procedure gains the branch that is not a box.
+- **Chapter 26's second pass** (MINOR — appended sections). *Compile-time
+  switches, and the one that must be global*: the four tools in preference
+  order, and the macro that changes a struct's layout in one translation unit
+  — a silent link, an answer that depends on link order, and, unlike
+  Chapter 27's diamond, no order the sanitizers catch for that listing.
+  `exercises/buildlab/` gains a `GREETER_AUDIT` option with a member behind
+  it, so `PUBLIC` is required rather than merely tidy, and `build_all.sh`
+  reads the define's reach back out of the compile database for both
+  translation units. Also *A layout that survives*: the directory tree to
+  copy on day one, with `exercises/deplab/mathlib/` as the built example.
+- **Tooling: what the checks now refuse to let rot** (PATCH).
+  `check_platform_claims.sh` gains two sections — what a null `const char*`
+  handed to `std::string` does under each standard library, keyed by the
+  library's own macro rather than by the operating system, and Chapter 26's
+  macro-ODR pair, whose silence it asserts as a property of that listing and
+  not of the bug class. `build_all.sh` gains `--require-expected` for the one
+  C++23 translation unit, the pluginlab section, the templatelab refusal, and
+  the two third-party guards. `check_verbatim.sh` grew a reverse direction
+  for Appendix H — every unit the lab's banners name must be on the page
+  whole, not merely quoted from — and pairings for the new labs, including
+  the vendor header a chapter must show before its code checks two fields of
+  it.
+- **Clarifications** (PATCH — none moves a number). **Chapter 1** names
+  custom deleters and `enable_shared_from_this`; **Chapter 9** points at
+  Recipe 23; **Chapter 11** the algorithm-versus-member `find` trap;
+  **Chapter 14** gains a fourth Tracer experiment, in which a const source
+  moves as a copy; **Appendix I** gains `cbegin` and `std::as_const`;
+  **Appendix E** gains entries for `decltype`, ownership, `variant` and
+  xvalue; **Appendix D**'s first-week question points at the naming section;
+  **CONTRIBUTING** records the book's own naming convention and the
+  third-party rule. **Appendix B** mirrors eleven new key principles.
 
 ## [0.8.0] — 2026-09-03
 
