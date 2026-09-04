@@ -84,7 +84,7 @@ One line each. If you can say these fluently and back them with code, the concep
 - "When I need to know who changed a value, I set a watchpoint — old value, new value, and the frame that did it — instead of adding print statements."
 - "A fault address just past null is a member offset — I read it against the struct definition before I read a line of code."
 - "A crash report is only as good as the symbol files I archived on release day — I keep the dSYM or PDB for every shipped build, and I symbolicate with inline expansion, because the frame that did it may live inside the frame that is named."
-- "I profile the optimized build with its symbols and frame pointers kept, attached to the host — and I read a sampler for the mean and a counter or a trace for the tail, because the complaint decides the instrument."
+- "I profile the optimized build with its symbols and frame pointers kept, and I read a sampler for the mean and a counter or a trace for the tail — the complaint decides the instrument."
 
 **Static lifetime**
 

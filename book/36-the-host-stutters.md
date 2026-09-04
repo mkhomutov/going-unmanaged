@@ -93,7 +93,7 @@ The ticket card is `exercises/perflab/TASK.md`, with both attachments and the br
 4. **Name the guilty characters.** There are two, one line each — and they are *absent*, not present.
 5. **Only now, reproduce.** Recreate the broken `meter.h`/`meter.cpp` from the card next to the committed `main.cpp`, predict the allocation count per tick — the profile shows where every one comes from — then build and run the two translation units under the canonical flags: `scripts/check.sh meter.cpp main.cpp`. The harness is the acceptance test, and it fails with the number.
 6. **Fix it and prove it.** Zero allocations at 50 ticks and at 1000 (the tick count is a run argument: `scripts/check.sh meter.cpp main.cpp 50`, then `1000`).
-7. **Stretch:** build both versions `-O2` *without* sanitizers, time them, and see how little the mean moved. Then write the sentence support needed: why the ticket was real anyway.
+7. **Stretch:** build both versions `-O2` *without* sanitizers, time them, and see how little the mean moved. Then write the sentence support needed: why the ticket was real anyway. (How to take the profile yourself: [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s profiler section.)
 
 ### The diagnosis, walked through
 
