@@ -41,8 +41,8 @@ stays right.
 | `int.TryParse` with a reason / a `Result<T>` from a library | `Optional` / `Either` from a library | [Recipe 22 — Return a value or an error](#recipe-22--return-a-value-or-an-error) |
 | `string.IsNullOrEmpty` / `s ?? ""` | `s == null \|\| s.isEmpty()` | [Recipe 23 — Test for an empty string, and for no string at all](#recipe-23--test-for-an-empty-string-and-for-no-string-at-all) |
 | `[Conditional("DEBUG")]` / `#if DEBUG` | `assert` (with `-ea`) | [Recipe 24 — Compile a diagnostic out of Release](#recipe-24--compile-a-diagnostic-out-of-release) |
-| `JsonSerializer.Serialize(record)` | Jackson `writeValueAsString` | [Recipe 25 — Serialize a record to JSON](#recipe-25--serialize-a-record-to-json) |
-| `JsonSerializer.Deserialize<Config>(text)` | Jackson `readValue` | [Recipe 26 — Read a JSON config with defaults](#recipe-26--read-a-json-config-with-defaults) |
+| `JsonSerializer.Serialize` | Jackson `writeValueAsString` | [Recipe 25 — Serialize a record to JSON](#recipe-25--serialize-a-record-to-json) |
+| `JsonSerializer.Deserialize<T>` | Jackson `readValue` | [Recipe 26 — Read a JSON config with defaults](#recipe-26--read-a-json-config-with-defaults) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -980,22 +980,27 @@ std::string serialize(const std::vector<Reading>& readings) {
 
 **Why it looks like this.** The standard library has no JSON
 ([Chapter 27](27-dependency-management.md#chapter-27--dependency-management)),
-so this is the cookbook's one recipe on a dependency — nlohmann/json,
-vendored under `exercises/third_party/` exactly as that chapter's first
-strategy says, version recorded beside it. There is no reflection to walk
-your fields, so the mapping is two free functions the library finds by
-argument-dependent lookup (Appendix E's ADL) — write them once per type and
-every `std::vector<Reading>`, `std::map<std::string, Reading>` and nested
-struct converts for free. Keys come out sorted, because the document is a
-map. Needs `<nlohmann/json.hpp>`, `<string>`, `<vector>`, and `using json =
-nlohmann::json;`.
+so this is the cookbook's one dependency — nlohmann/json, vendored under
+`exercises/third_party/` exactly as that chapter's first strategy says,
+version recorded beside it. There is no reflection to walk your fields, so
+the mapping is two free functions the library finds by argument-dependent
+lookup ([Appendix E](E-glossary.md#appendix-e--glossary)'s ADL entry) —
+write them once per type and every `std::vector<Reading>`,
+`std::map<std::string, Reading>` and nested struct converts for free; forget
+one and the error is [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s
+overload-resolution novel, naming neither `from_json` nor `Reading`. Keys
+come out sorted, because the document is a map — unlike `JsonSerializer`,
+which writes properties in declaration order, so never diff the two outputs
+as text. Needs `<nlohmann/json.hpp>` (`-isystem exercises/third_party` on the
+compile line, which `scripts/check.sh` adds), `<string>`, `<vector>`, and
+`using json = nlohmann::json;`.
 
 > [!WARNING]
-> **Trap:** `j["missing"]` on a non-const document *inserts* a null for the key — [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)'s map trap in a new coat — so a read that meant to check has changed what you serialize next; `at()` throws instead, and on a `const json` the write does not compile.
+> **Trap:** `j["missing"]` on a non-const document *inserts* a null for the key (Recipe 8's trap), so a read that meant to check has changed what you serialize next. `const` is not the fix: the write no longer compiles, but a *read* of a missing key on a `const json` is an assertion failure, undefined behavior under `NDEBUG`. `at()` is the read, on both.
 
 ### Recipe 26 — Read a JSON config with defaults
 
-**In C#:** `var cfg = JsonSerializer.Deserialize<Config>(text)!;` with `[JsonIgnore]`-and-default fields
+**In C#:** `var cfg = JsonSerializer.Deserialize<Config>(text)!;` — `public int Timeout { get; set; } = 30;` for the field that may be absent, `required` for the one that must not be
 
 **The recipe:**
 
@@ -1016,15 +1021,19 @@ Config load_config(std::string_view text) {
 
 **Why it looks like this.** Three outcomes, three spellings, and they are
 [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
-decision applied to a file: text that is not JSON at all is the event pole
+decision applied to a file. Text that is not JSON at all is the event pole
 and `parse` throws; a field that may be absent is not an error, and
 `value(key, default)` is `TryGetValue` with the default in the call; a field
 that must be there is `at()`, which throws `out_of_range` naming the key.
-The document owns its strings — `get<std::string>()` copies out, which is
-the point. Needs `<nlohmann/json.hpp>`, `<string>`, `<string_view>`.
+The default covers *absence* only: a key present with the wrong type,
+`null` included, throws `type_error` — and so does `value()` on a document
+that parsed but is not an object, because a bare `5` is valid JSON. The
+document owns its strings — `get<std::string>()` copies out, which is the
+point. Needs `<nlohmann/json.hpp>` (`-isystem exercises/third_party`),
+`<string>`, `<string_view>`, and `using json = nlohmann::json;`.
 
 > [!WARNING]
-> **Trap:** a reference into the document — `const auto& s = j.at("name").get_ref<const std::string&>();` — is [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s dangling view the moment `j` goes out of scope; copy the value out, or keep the document alive as long as anything points into it.
+> **Trap:** a reference into the document — `const auto& s = j.at("name").get_ref<const std::string&>();` — is [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s dangling view the moment `j` goes out of scope, a heap-use-after-free under ASan; copy the value out, or keep the document alive as long as anything points into it.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

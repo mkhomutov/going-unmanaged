@@ -82,12 +82,29 @@ int main() {
     assert(threw);
 
     // The trap the appendix names, demonstrated: operator[] on a non-const
-    // document INSERTS a null for a missing key - Chapter 11's map trap in
-    // a new coat - where at() throws and a const document refuses to compile
-    // the write.
+    // document INSERTS a null for a missing key - Recipe 8's map trap in a
+    // new coat - where at() throws. (A const document refuses the write and
+    // ASSERTS on the read - undefined under NDEBUG - so it is not exercised.)
     json doc = json::parse(R"({"name": "bench"})");
     assert(doc.size() == 1);
     assert(doc["missing"].is_null());          // the read created it
     assert(doc.size() == 2);
+
+    // value()'s default covers absence only: present-with-the-wrong-type is
+    // a type_error, and so is a document that parsed but is not an object.
+    threw = false;
+    try {
+        (void)load_config(R"({"name": "bench", "timeout": "5"})");
+    } catch (const json::type_error&) {
+        threw = true;
+    }
+    assert(threw);
+    threw = false;
+    try {
+        (void)load_config("5");                 // valid JSON, not an object
+    } catch (const json::type_error&) {
+        threw = true;
+    }
+    assert(threw);
     return 0;
 }

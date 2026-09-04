@@ -123,9 +123,9 @@ common, the SDK as the dependency you do not control, and the diamond problem
 — where two versions of one library in a binary is a *silent* ODR violation
 whose answer changes with link order.
 
-The book's own rule survived intact: the chapter teaches the landscape and adds
-no dependency to the repo, and its exercise has the reader write the dependency
-themselves so it works offline and stdlib-only.
+The book's own rule survived intact: the chapter teaches the landscape and added
+no dependency to the repo at delivery, and its exercise has the reader write the
+dependency themselves so it works offline and stdlib-only.
 
 **Still open from this item:** nothing. The repo took its first third-party
 dependency on 2026-09-04 — nlohmann/json, vendored under
@@ -147,8 +147,9 @@ reason is that the macro machinery is the lesson: C++ has no reflection and no
 call site at compile time, and that is *why* every C++ test framework looks the
 way it does. Writing one makes the shape obvious; installing one hides it. The
 side effect is that the ground-rule question below never had to be answered —
-no third-party code entered the repo, and **solutions use the standard library
-only** still holds unqualified.
+no third-party code entered the repo for it, and **solutions use the standard
+library only** still holds unqualified (the one vendored header, item 2's
+closing note, is the cookbook's).
 
 The chapter also lands two things the sketch did not anticipate: testability is
 *structural* (the Chapter 15 Buffer cannot be tested where it lives, because a
@@ -1177,8 +1178,8 @@ that same filter, is now delivered as prose: Chapter 27's *The batteries C#
 included* names the libraries the ecosystem converged on (nlohmann/json,
 pugixml, libcurl/cpr) and states the shock outright — the standard library
 has no HTTP client and no sockets at all. JSON/XML *parsing* remains
-third-party territory; the practical JSON coverage is an item 11 candidate
-ticket — a hand-rolled mini-parser, stdlib-only.
+third-party territory; the practical JSON coverage is Appendix F's Recipes
+25–26, on the vendored library (item 2's closing note).
 
 ### 16. The bridge out — serving a foreign client from inside the host — DONE (Chapter 38 + Appendix G)
 

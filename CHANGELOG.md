@@ -107,7 +107,8 @@ closes the gaps; each appends, and no number moves.
   dependency — nlohmann/json, vendored under `exercises/third_party/` with
   its version recorded, included with `-isystem`, and reachable from the
   cookbook only. Chapter 27 now practises its own first strategy;
-  CONTRIBUTING records the rule ROADMAP item 2 asked for.
+  CONTRIBUTING records the rule ROADMAP item 2 asked for, and `NOTICE`
+  records the one carve-out from the code's MIT.
 - **Chapter 1** names custom deleters and `enable_shared_from_this`;
   **Chapter 11** the algorithm-versus-member `find` trap; **Chapter 14** a
   fourth Tracer experiment (a const source moves as a copy); **Appendix I**

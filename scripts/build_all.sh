@@ -113,8 +113,19 @@ run "cb_logging_nd" $CXX $FLAGS -DNDEBUG exercises/cookbook/logging.cpp   -o $OU
 run "cb_alternatives" $CXX $FLAGS exercises/cookbook/alternatives.cpp   -o $OUT/cb_alternatives
 run "cb_errors"   $CXX $FLAGS   exercises/cookbook/errors.cpp           -o $OUT/cb_errors
 # The one cookbook TU with a dependency. -isystem, not -I: the vendored header
-# is the vendor's, and -Wall -Wextra are for our code (CONTRIBUTING's note on
-# vendoring a framework header, applied to the first dependency that landed).
+# is the vendor's, and -Wall -Wextra are for our code (CONTRIBUTING's
+# third-party rule). Two things the rule says that a build alone would not
+# hold: solutions/ never reaches the vendored header by any spelling, and the
+# version the README records is the version the header carries.
+if grep -rlE 'third_party|nlohmann' solutions/ > /dev/null; then
+    echo "build_all.sh: solutions/ reaches exercises/third_party/ - solutions are stdlib-only" >&2
+    exit 1
+fi
+JSON_VER=$(awk '/^#define NLOHMANN_JSON_VERSION_MAJOR /{a=$3} /^#define NLOHMANN_JSON_VERSION_MINOR /{b=$3} /^#define NLOHMANN_JSON_VERSION_PATCH /{c=$3} END{print a"."b"."c}' exercises/third_party/nlohmann/json.hpp)
+if ! grep -q "| $JSON_VER |" exercises/third_party/README.md; then
+    echo "build_all.sh: exercises/third_party/README.md does not record json.hpp's own version ($JSON_VER)" >&2
+    exit 1
+fi
 run "cb_json"     $CXX $FLAGS   -isystem exercises/third_party exercises/cookbook/json.cpp -o $OUT/cb_json
 # Chapter 32's lab, built TWICE with the translation units in opposite orders.
 # The chapter's bug is decided by link order, so the fix's whole claim is that

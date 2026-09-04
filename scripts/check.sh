@@ -55,7 +55,9 @@ OPT=${OPT:-0}
 # -O is always spelled out, including the -O0 that used to be implicit: it is
 # what makes OPT=2 a visible switch in the "built clean" line below rather than
 # a silent difference between two runs.
-FLAGS="-std=$STD -Wall -Wextra -O$OPT -g"
+# -isystem exercises/third_party: the one vendored header (Appendix F's JSON
+# recipes) is reachable from any attempt; -isystem keeps its warnings its own.
+FLAGS="-std=$STD -Wall -Wextra -O$OPT -g -isystem $root/exercises/third_party"
 if [[ $SAN != none ]]; then
     FLAGS="$FLAGS -fsanitize=$SAN"
 fi

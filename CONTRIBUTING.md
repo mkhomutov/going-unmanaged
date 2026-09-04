@@ -103,7 +103,8 @@ re-teach. End with the headers it needs.>
 
 Two rules beyond the shape. The listing is code, not prose: it lives in
 `exercises/cookbook/` (one translation unit per domain — `expected.cpp`,
-C++23, is the one cut by standard instead — with a `main()` that asserts
+C++23, is the one cut by standard instead, and `json.cpp` the one with a
+dependency — with a `main()` that asserts
 what the recipe claims, wired into `build_all.sh`), and the appendix
 quotes it **verbatim** — editing either side means editing both in the same
 commit, exactly as testlab works. And the numbering is the Findings
@@ -336,7 +337,9 @@ everything the header exists to hide.
   FakeSDK and FakeDevice is generality. Open-source ecosystems named as study
   material are fine (libusb, PortAudio, SQLite, Qt, Unreal, STM32 HAL, and COM
   as a technology).
-- **Solutions use the standard library only.** No third-party dependencies.
+- **Solutions use the standard library only.** No third-party dependencies —
+  the one the repository carries, under `exercises/third_party/`, is
+  reachable from the cookbook only (rule above).
 
 ## Content conventions
 
@@ -422,4 +425,6 @@ terms as the rest of the project, which is dual-licensed: text you write for
 `book/` goes out under [CC-BY 4.0](LICENSE-CC-BY-4.0), and code — exercises,
 solutions, scripts, CI, and the samples inside the chapters — goes out under
 the [MIT License](LICENSE). A typical PR contains both; the same split applies
-inside it.
+inside it. The one thing you do not license is `exercises/third_party/`: that
+is someone else's code under their own license, recorded in that directory's
+README.
