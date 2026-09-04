@@ -112,12 +112,11 @@ existing chapter, Finding, Recipe or appendix letter changed meaning.
   unit, built as its own probe.
 - **Appendix F: Recipes 18–20 and 24–26, and the repository's first
   dependency** (MINOR — appended recipes). Recipe 18 is the three spellings
-  of "not found" (`std::find`, an index, a substring, and the member/free
-  `find` trap); Recipe 19 a value that may be absent; Recipe 20 a switch on
-  the kind of a message with the `overloaded` idiom; Recipe 24 a diagnostic
-  compiled out of Release, and the side effect that vanishes with it. Recipes
-  25 and 26 are JSON — serialize a record, read a config with defaults — and
-  they are the reason `exercises/third_party/nlohmann/` now exists: the
+  of "not found" — an element, an index, a substring; Recipe 19 a value that
+  may be absent; Recipe 20 a switch on the kind of a message with the
+  `overloaded` idiom; Recipe 24 a diagnostic compiled out of Release, and
+  the side effect that vanishes with it. Recipes 25 and 26 are JSON —
+  serialize a record, read a config with defaults — and they are the reason `exercises/third_party/nlohmann/` now exists: the
   standard library has no JSON, and the two tasks the first months present
   have no standard-library spelling. It is vendored the way Chapter 27's
   first strategy says to, with the version and "no local patches" recorded
