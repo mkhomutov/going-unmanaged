@@ -129,8 +129,8 @@ Chapter 25's Finding 10.
   is `solutions/device_threaded_solution.cpp`
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
   (files, strings, timing, handles, lookups, paths, async, events, logging,
-  alternatives, errors, expected, json), each with a `main()` asserting what
-  its recipes claim; build_all.sh builds and runs all thirteen. `json.cpp`
+  alternatives, errors, expected, json, containers), each with a `main()` asserting what
+  its recipes claim; build_all.sh builds and runs all fourteen. `json.cpp`
   is the one with a dependency — `exercises/third_party/nlohmann/`, vendored
   with its version recorded, included with `-isystem`. `expected.cpp` is
   the one cut by standard rather than domain — C++23, Chapter 8's chaining

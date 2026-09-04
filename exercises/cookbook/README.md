@@ -19,6 +19,7 @@ Cookbook*), one translation unit per domain —
 | `errors.cpp` | 21–22 — an exception type of your own; a value or an error, on C++17 |
 | `expected.cpp` | Chapter 8's chaining listing — `std::expected`, the one C++23 TU, built as its own probe |
 | `json.cpp` | 25–26 — serialize a record, read a config; the one TU with a dependency, `exercises/third_party/nlohmann/`, included with `-isystem` |
+| `containers.cpp` | 27 — pre-size a collection: `reserve` against `vector(n)` and `resize` |
 
 — each with a `main()` that asserts what its recipes claim.
 `scripts/build_all.sh` builds and runs all of them on every push, so a recipe
