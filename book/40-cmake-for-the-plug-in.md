@@ -442,6 +442,8 @@ The lab is `exercises/pluginlab/` — the SDK drop, the plug-in and the stand-in
 
 `build_all.sh` does steps 1, 3 and 4 on every push, under the cmake probe: it installs the drop, builds the module and the host, runs the host against the module both ways, and asserts that the export table holds `Plugin_Entry` and nothing of the SDK's or the plug-in's own; then it builds the module and the host once more with the sanitizer flags injected from outside the CMakeLists and runs them again. The `buildlab-msvc` job does the same under Visual Studio, where `dumpbin` reads the export table and the runtime library back.
 
+The verbs this chapter, [Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake) and [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) teach are indexed in [Appendix J](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue), with the handful none of them needed — the runtime reaching the loader first among them.
+
 ---
 
 
