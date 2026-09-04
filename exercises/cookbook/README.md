@@ -20,6 +20,7 @@ Cookbook*), one translation unit per domain —
 | `expected.cpp` | Chapter 8's chaining listing — `std::expected`, the one C++23 TU, built as its own probe |
 | `json.cpp` | 25–26 — serialize a record, read a config; the one TU with a dependency, `exercises/third_party/nlohmann/`, included with `-isystem` |
 | `containers.cpp` | 27 — pre-size a collection: `reserve` against `vector(n)` and `resize` |
+| `flags.cpp` | 31–32 — a feature flag read once and kept as a member; a `[Flags]` enum as an `enum class` with its operators |
 
 — each with a `main()` that asserts what its recipes claim.
 `scripts/build_all.sh` builds and runs all of them on every push, so a recipe

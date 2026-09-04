@@ -47,6 +47,8 @@ stays right.
 | `Stopwatch` in a `finally` / timing a delegate | `try`/`finally` + `System.nanoTime` | [Recipe 28 — Time a block on every exit, and a call for its result](#recipe-28--time-a-block-on-every-exit-and-a-call-for-its-result) |
 | `DateTime.UtcNow.ToString("o")` | `Instant.now()` / `ISO_INSTANT` | [Recipe 29 — Stamp a log line with the time](#recipe-29--stamp-a-log-line-with-the-time) |
 | `TimeSpan.FromSeconds(2)` handed to a native call | `Duration.ofSeconds(2)` / `toMillis()` | [Recipe 30 — Pass a timeout to a C API](#recipe-30--pass-a-timeout-to-a-c-api) |
+| `IConfiguration` read at startup / `IsEnabledAsync` | `System.getenv` at startup | [Recipe 31 — Read a feature flag once](#recipe-31--read-a-feature-flag-once) |
+| `[Flags] enum` + `HasFlag` | `EnumSet.of` / `contains` | [Recipe 32 — Combine flags as an enum class](#recipe-32--combine-flags-as-an-enum-class) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1214,6 +1216,101 @@ callers can pass anything long clamps before the cast. The literals need
 
 > [!WARNING]
 > **Trap:** `.count()` has no idea what unit it is counting — `seconds(2).count()` handed to a `_ms` parameter compiles and waits two milliseconds — so the parameter type of your wrapper, not the caller's discipline, is what puts the thousand in.
+
+### Recipe 31 — Read a feature flag once
+
+**In C#:** `configuration.GetValue<bool>("FastPath")` — or `await featureManager.IsEnabledAsync("FastPath")` — wherever the code needs it
+
+**The recipe:**
+
+```cpp
+struct Features {
+    bool audit = false;                  // the defaults ARE the off state
+    bool fast_path = false;
+    int  batch_size = 64;
+
+    // One source among several - Recipe 26's JSON file, the host's
+    // preferences API, a command line. Whatever the source, it is read HERE,
+    // once, and never again.
+    static Features from_environment() {
+        Features f;
+        if (const char* v = std::getenv("MYPLUGIN_AUDIT"))      f.audit = std::string_view(v) == "1";
+        if (const char* v = std::getenv("MYPLUGIN_FAST_PATH"))  f.fast_path = std::string_view(v) == "1";
+        if (const char* v = std::getenv("MYPLUGIN_BATCH_SIZE")) {
+            const std::string_view s(v);
+            std::from_chars(s.data(), s.data() + s.size(), f.batch_size);   // junk: batch_size stays 64 (Recipe 19)
+        }
+        return f;
+    }
+};
+
+class Processor {
+public:
+    explicit Processor(Features features) : features_(features) {}   // read once, kept as a member
+
+    int process(int sample) const {
+        if (features_.fast_path) {       // a branch: free, even on the deadline path
+            return sample;
+        }
+        return sample * 2;
+    }
+
+private:
+    Features features_;
+};
+```
+
+**Why it looks like this.** A feature flag is the first of
+[Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)'s
+four switches — the only one that involves no build — and its whole
+discipline is *when* the read happens: once, at startup, into a struct
+whose defaults are the flags' off state, and from then on a member tested
+with `if`; the source is whichever channel the plug-in already has —
+Recipe 26's JSON, the host's preferences API, the environment as here —
+and the struct is what makes that not matter. A flag that must change a
+type's *layout* is not this recipe but Chapter 26's `PUBLIC` compile
+definition. The harness proves the read-once the only way it can be
+proved — it changes the environment after the constructor ran and asserts
+the member did not follow — and the broken shape, `std::getenv` inside
+`process`, stays book-only, because it would pass every assertion there.
+Needs `<charconv>`, `<cstdlib>`, `<string_view>`.
+
+> [!WARNING]
+> **Trap:** reading the flag at the point of use — `std::getenv` in the loop, a configuration lookup per call — is a walk of a shared table — under a lock, on macOS and Windows — on [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s deadline path, and nothing names it: it compiles, runs, passes, and the sanitizers are silent, so the constructor is the only place the read may live.
+
+### Recipe 32 — Combine flags as an enum class
+
+**In C#:** `[Flags] enum Channel { Left = 1, Right = 2 }`, then `Channel.Left | Channel.Right` and `set.HasFlag(Channel.Left)`
+
+**The recipe:**
+
+```cpp
+enum class Channel : std::uint8_t { None = 0, Left = 1, Right = 2, Sub = 4 };   // [Flags] enum Channel
+
+constexpr Channel operator|(Channel a, Channel b) {
+    return static_cast<Channel>(static_cast<std::uint8_t>(a) | static_cast<std::uint8_t>(b));
+}
+constexpr Channel operator&(Channel a, Channel b) {
+    return static_cast<Channel>(static_cast<std::uint8_t>(a) & static_cast<std::uint8_t>(b));
+}
+constexpr bool has(Channel set, Channel flag) { return (set & flag) == flag; }   // set.HasFlag(flag)
+```
+
+**Why it looks like this.** `[Flags]` is a promise to the formatter and to
+`HasFlag`; the arithmetic itself C# gives every enum for free. An
+`enum class` gives you the type and refuses the arithmetic —
+`Channel::Left | Channel::Right` is *invalid operands to binary
+expression* until you write the operator — and the two operators plus
+`has` are the attribute's entire job, once per enum; a plain `enum` would
+compile the `|` and hand back an `int`, the type gone. The
+`std::uint8_t` base fixes the width the standard leaves to the compiler,
+which is [Chapter 39](39-the-round-trip-home.md#chapter-39--the-round-trip-home)'s
+reason for never publishing an enum across a boundary at all; inside one,
+it keeps the bits the width the field holds. And `has(set, Channel::None)`
+is true for every set, exactly as `HasFlag(0)` is. Needs `<cstdint>`.
+
+> [!WARNING]
+> **Trap:** `(set & flag) != Channel::None` reads as `HasFlag` and is wrong for a *combined* flag — with `Stereo = Left | Right`, a set holding only `Left` tests true — which is why `has` compares against the flag itself, as `HasFlag` does.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

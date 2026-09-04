@@ -37,6 +37,21 @@ numbers may still move.
   Appendix E gains a *forwarding reference* entry and Chapter 6's coda
   points at the recipe.
 
+- **New: Recipes 31–32 — Read a feature flag once; combine flags as an
+  enum class** (MINOR — two appended recipes). Chapter 26 ranked the
+  runtime flag first among its four switches and the phrase "feature flag"
+  occurred once in the book; Recipe 31 is the shape — a struct whose
+  defaults are the off state, filled once at startup from whatever channel
+  the plug-in has and kept as a member, junk in the source leaving the
+  default in place — and its trap is the read at the point of use on the
+  deadline path, which nothing names. Recipe 32 is the `[Flags]` attribute
+  C++ does not have: an `enum class` with `|`, `&` and a `has` written
+  once, and the overlap test that reads as `HasFlag` and is wrong for a
+  combined flag. `exercises/cookbook/flags.cpp` asserts the branch, the
+  read-once (the environment changes afterwards and the member does not),
+  the junk parse, and the bit arithmetic at compile time. Appendix E gains
+  a *feature flag* entry; Chapter 26 points at Recipe 31.
+
 ## [0.9.0] — 2026-09-04
 
 The release a list steered. Version 0.8.0 began with eighteen constructed
