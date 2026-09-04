@@ -89,6 +89,21 @@ numbers may still move.
   `items()` on an array handing back index keys — the document named
   first, because the view does not keep a temporary alive.
 
+- **New section: Chapter 31 — The profiler, where it differs from C#**
+  (MINOR — an appended section). Chapter 36 taught how to read a profile
+  and no page said how to take one. The section names the tools per
+  platform (`perf`; `sample` and Instruments; Visual Studio's profiler),
+  the three things to arrange before the first sample (an optimized build
+  with its names kept, frame pointers, the inlining to expect), attaching
+  to the host, which instrument answers which complaint — a sampler for
+  the mean, because it records weight rather than duration, a counter or a
+  trace for the tail — and the discipline around Recipe 28's stopwatch.
+  Stated as prose the repository does not check, in the pattern Chapter
+  40 uses for its custom commands; the Try it gains a step that takes
+  Chapter 36's profile from perflab, the symptom index a row for the
+  wrong-build profile, Chapter 36's stretch a route here, and one key
+  principle joins Appendix B.
+
 ## [0.9.0] — 2026-09-04
 
 The release a list steered. Version 0.8.0 began with eighteen constructed
