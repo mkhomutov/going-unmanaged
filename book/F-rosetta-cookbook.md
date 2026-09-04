@@ -47,6 +47,7 @@ stays right.
 | `Stopwatch` in a `finally` / timing a delegate | `try`/`finally` + `System.nanoTime` | [Recipe 28 — Time a block on every exit, and a call for its result](#recipe-28--time-a-block-on-every-exit-and-a-call-for-its-result) |
 | `DateTime.UtcNow.ToString("o")` | `Instant.now()` / `ISO_INSTANT` | [Recipe 29 — Stamp a log line with the time](#recipe-29--stamp-a-log-line-with-the-time) |
 | `TimeSpan.FromSeconds(2)` handed to a native call | `Duration.ofSeconds(2)` / `toMillis()` | [Recipe 30 — Pass a timeout to a C API](#recipe-30--pass-a-timeout-to-a-c-api) |
+| `IConfiguration` read at startup, `[Flags] enum` + `HasFlag` | `System.getenv` / `EnumSet` | [Recipe 31 — Read a feature flag once, and combine flags](#recipe-31--read-a-feature-flag-once-and-combine-flags) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1214,6 +1215,74 @@ callers can pass anything long clamps before the cast. The literals need
 
 > [!WARNING]
 > **Trap:** `.count()` has no idea what unit it is counting — `seconds(2).count()` handed to a `_ms` parameter compiles and waits two milliseconds — so the parameter type of your wrapper, not the caller's discipline, is what puts the thousand in.
+
+### Recipe 31 — Read a feature flag once, and combine flags
+
+**In C#:** `configuration.GetValue<bool>("FastPath")` behind `IFeatureManager`, and `[Flags] enum Channel { Left = 1, Right = 2 }` with `set.HasFlag(flag)`
+
+**The recipe:**
+
+```cpp
+struct Features {
+    bool audit = false;                  // the defaults ARE the off state
+    bool fast_path = false;
+    int  batch_size = 64;
+
+    // One source among several - Recipe 26's JSON file, the host's
+    // preferences API, a command line. Whatever the source, it is read HERE,
+    // once, and never again.
+    static Features from_environment() {
+        Features f;
+        if (const char* v = std::getenv("MYPLUGIN_AUDIT"))      f.audit = std::string_view(v) == "1";
+        if (const char* v = std::getenv("MYPLUGIN_FAST_PATH"))  f.fast_path = std::string_view(v) == "1";
+        if (const char* v = std::getenv("MYPLUGIN_BATCH_SIZE")) f.batch_size = std::atoi(v);
+        return f;
+    }
+};
+
+class Processor {
+public:
+    explicit Processor(Features features) : features_(features) {}   // read once, kept as a member
+
+    int process(int sample) const {
+        if (features_.fast_path) {       // a branch: free, even on the deadline path
+            return sample;
+        }
+        return sample * 2;
+    }
+
+private:
+    Features features_;
+};
+
+enum class Channel : std::uint8_t { None = 0, Left = 1, Right = 2, Sub = 4 };   // [Flags] enum Channel
+
+constexpr Channel operator|(Channel a, Channel b) {
+    return static_cast<Channel>(static_cast<std::uint8_t>(a) | static_cast<std::uint8_t>(b));
+}
+constexpr Channel operator&(Channel a, Channel b) {
+    return static_cast<Channel>(static_cast<std::uint8_t>(a) & static_cast<std::uint8_t>(b));
+}
+constexpr bool has(Channel set, Channel flag) { return (set & flag) == flag; }   // set.HasFlag(flag)
+```
+
+**Why it looks like this.** A feature flag is the first of
+[Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)'s
+four compile-time switches — the one that involves no build at all — and
+its whole discipline is *when* the read happens: once, at startup, into a
+struct whose defaults are the flags' off state, and from then on a member
+tested with `if`. There is no `IConfiguration` to inject and no provider
+chain; the source is whichever channel your plug-in already has, and the
+struct is what makes it not matter. The second half is the `[Flags]`
+attribute, which C++ does not have: an `enum class` refuses `|` and `&`
+until you write them, and the two operators plus `has` are the
+attribute's entire job, done once per enum. The `std::uint8_t` base keeps
+the value the width the bits need (and the width a C API's field expects,
+[Chapter 39](39-the-round-trip-home.md#chapter-39--the-round-trip-home)'s
+point about enum widths). Needs `<cstdint>`, `<cstdlib>`, `<string_view>`.
+
+> [!WARNING]
+> **Trap:** reading the flag at the point of use — `std::getenv` in the loop, a config lookup per call — is a linear scan or a lock on [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s deadline path, and a flag that changes a *type's layout* is not this recipe at all but Chapter 26's `PUBLIC` compile definition, because two layouts of one struct is an ODR violation.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
