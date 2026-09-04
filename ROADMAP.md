@@ -937,6 +937,35 @@ unverified prose.
 custom-command listings are book-only by necessity — a cross-compile cannot
 run on the CI matrix — and say so.
 
+### 23. Templates you will write — DONE (Chapter 41)
+
+**Missing:** Chapter 7 mapped templates against generics and stopped there;
+Appendix E filed CRTP and SFINAE under "terms you will hear" and said so;
+Chapter 28 named the template parameter as the compile-time mocking seam
+and never showed one; Chapters 30, 34 and 39 each wanted a `static_assert`
+on a type and none wrote it.
+
+**Evidence:** the 2026-09-03 coverage review asked for "an advanced
+templates tutorial". The tutorial fails this file's gate — general C++
+material without job evidence belongs in a general C++ book, and Appendix
+D already routes to the ones that carry it — but a working subset has
+evidence on the book's own pages: the unshown seam, the three chapters
+wanting a compile-time judge, and the variadic every codebase has.
+
+**Delivered:** Chapter 41 — *Templates You Will Write* — and
+`exercises/templatelab/`: one `Session<Sdk>` compiled against FakeDevice
+and against a recording double (Chapter 28's promise discharged),
+`static_assert` plus `<type_traits>` as the compile-time judge, the
+detection idiom as the one piece of pre-concepts metaprogramming worth
+owning, `if constexpr`, a fold-expression `Join`, a `Ring<T, N>`, and
+"reading the novel" — the instantiation error walked from the bottom.
+The judge is the constlab shape: a second build that must be refused, with
+the `static_assert`'s own sentence as the first error. The chapter closes
+by naming what it deliberately omits, and the entry below records that
+decision so the tutorial request does not arrive twice.
+
+**Still open from this item:** nothing.
+
 ## Tier 3 — distinctive to this handbook
 
 Material no general C++ book would carry, which is precisely why it belongs
@@ -1457,6 +1486,23 @@ demonstrator to ask, and needs the answer *available and deferred*. A marker
 needs it absent. Those are different readers, and this book serves the first
 one. If a course wants a clean question sheet, `exercises/*/TASK.md` is
 already that file.
+
+### General template metaprogramming — SFINAE, CRTP, expression templates
+
+**Asked for as "an advanced templates tutorial" in the 2026-09-03 coverage
+review, and closed by Chapter 41 the other way.** The tutorial is the
+prototypical general-C++-book material: Vandevoorde, Josuttis and Gregor
+wrote the eight hundred pages, and this handbook's reader uses those
+techniques through the standard library every day without writing one.
+
+**Out of scope because the reader's job does not present it.** What the
+job presents — the template seam, `static_assert` as a judge, the one
+detection idiom that fixes an error message, a variadic log, a class with
+a non-type parameter, and reading an instantiation error — is Chapter 41,
+and that chapter says in its last section what it leaves out and where to
+read it. Adding SFINAE or CRTP material would fail question 11 exactly as
+the lock-free entry below does: this book's reader recognizes the shape in
+a review comment (Appendix E) and does not author it.
 
 ### General lock-free data-structure design
 

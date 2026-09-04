@@ -446,5 +446,5 @@ The lab is `exercises/pluginlab/` — the SDK drop, the plug-in and the stand-in
 
 
 <!-- nav:begin -->
-[← Chapter 39 — The Round Trip Home](39-the-round-trip-home.md) · [Contents](README.md) · [Appendix A — Fundamentals Refresher →](A-fundamentals-refresher.md)
+[← Chapter 39 — The Round Trip Home](39-the-round-trip-home.md) · [Contents](README.md) · [Chapter 41 — Templates You Will Write →](41-templates-you-will-write.md)
 <!-- nav:end -->

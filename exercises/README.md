@@ -33,6 +33,7 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [The Bridge Lab](bridgelab/TASK.md) | 38 | serving a foreign client: the main-thread queue, refusing work, the bounded wait | ~2 h | the files themselves: [main_thread_queue.h](bridgelab/main_thread_queue.h), [host.h](bridgelab/host.h), [bridge_core.h](bridgelab/bridge_core.h) + the judging [main.cpp](bridgelab/main.cpp), green under both sanitizer builds |
 | [The Interop Lab](interoplab/TASK.md) | 39 | publishing a C surface a managed caller binds by hand | ~2 h | the files themselves: [plugin.h](interoplab/plugin.h) + [plugin.cpp](interoplab/plugin.cpp), judged by [main.cpp](interoplab/main.cpp) through the boundary header alone |
 | [The Plug-in Lab](pluginlab/TASK.md) | 40 | a MODULE with one exported symbol, an SDK located by a hand-written find-module, and a stand-in host that loads the result | ~2 h | the files themselves: [plugin/CMakeLists.txt](pluginlab/plugin/CMakeLists.txt), [plugin/cmake/FindHostSDK.cmake](pluginlab/plugin/cmake/FindHostSDK.cmake), [plugin/monitor.cpp](pluginlab/plugin/monitor.cpp) + the loading [host/host.cpp](pluginlab/host/host.cpp), the export table read back by `build_all.sh` |
+| [The Template Lab](templatelab/TASK.md) | 41 | one Session over two policies, the detection idiom, and a build that must fail by name | ~2 h | the files themselves: [session.h](templatelab/session.h), [policies.h](templatelab/policies.h), [util.h](templatelab/util.h) + the judging [main.cpp](templatelab/main.cpp), green against FakeDevice and refused under `-DTEMPLATELAB_BROKEN_POLICY` |
 | [The Const Lab](constlab/TASK.md) | Appendix I | const as one subject, judged by five builds that must fail | ~45 min | the files themselves: [counter.h](constlab/counter.h) + [main.cpp](constlab/main.cpp), plus five builds that must be refused |
 
 Chapter 24 (the practice plan) sequences everything above the dependency lab —
@@ -50,8 +51,11 @@ unit whole the pairing is enforced in both directions — Appendix H and
 Chapter 6 for `choosing/`, Chapter 8 for three of `cookbook/`'s). Nothing
 in either to attempt cold.
 
-Fourteen directories hold their reference in the open, rather than behind a
-fold. `pluginlab/` is Chapter 40's: three CMake projects — a vendor-style SDK
+Fifteen directories hold their reference in the open, rather than behind a
+fold. `templatelab/` is Chapter 41's: one `Session<Sdk>` compiled against
+FakeDevice and against a recording double, and — the constlab discipline
+again — a second build that must be refused, with the `static_assert`'s own
+sentence as the first error. `pluginlab/` is Chapter 40's: three CMake projects — a vendor-style SDK
 drop, the plug-in, a stand-in host — that `build_all.sh` installs, builds,
 loads and inspects, asserting the module's export table holds the entry
 point and nothing of the plug-in's own or the SDK's. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and

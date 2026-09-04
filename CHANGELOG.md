@@ -91,6 +91,17 @@ closes the gaps; each appends, and no number moves.
   drop, builds the module and the host, loads one with the other and reads
   the export table back; the `buildlab-msvc` job does the same under
   Visual Studio. **Appendix B** three new principles.
+- **Chapter 41 — Templates You Will Write** (ROADMAP item 23), and
+  `exercises/templatelab/`: the working subset rather than a tutorial —
+  the seam as a template parameter (one `Session<Sdk>` over FakeDevice and
+  over a recording double, Chapter 28's promise discharged), `static_assert`
+  and the traits as the compile-time judge, the detection idiom as the one
+  pre-concepts trick worth owning, `if constexpr`, a fold-expression
+  `Join`, a `Ring<T, N>`, and how to read an instantiation error from the
+  bottom. The lab's second build must be refused with the `static_assert`'s
+  own sentence as the first error. ROADMAP records general template
+  metaprogramming as deliberately out of scope. Chapter 7, Chapter 28 and
+  Appendix E point at it; **Appendix B** two new principles.
 - **Chapter 1** names custom deleters and `enable_shared_from_this`;
   **Chapter 11** the algorithm-versus-member `find` trap; **Chapter 14** a
   fourth Tracer experiment (a const source moves as a copy); **Appendix I**

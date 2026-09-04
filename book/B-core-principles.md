@@ -26,6 +26,8 @@ One line each. If you can say these fluently and back them with code, the concep
 - "Requirements are implicit pre-C++20; concepts made them explicit like C#'s where clauses."
 - "Template definitions live in headers because each translation unit must see the source to instantiate."
 - "I'd prefer adding a virtual method over dynamic_cast chains."
+- "A dependency known at compile time is a template parameter, not an interface — the seam Chapter 28 asked for, with no virtual call and a fake I own; one chosen at run time stays a virtual base."
+- "A claim about a type is a static_assert, not a comment — its size, its noexcept move, the shape a policy must have — and a template I write checks its parameter up front, so the error is a sentence rather than a novel."
 
 **Compilation model**
 

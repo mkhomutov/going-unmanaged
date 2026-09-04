@@ -121,6 +121,9 @@ BANNER = [
     ('book/30-authoring-an-abi-boundary.md', 'exercises/abilab/Widget.cpp'),
     ('book/30-authoring-an-abi-boundary.md', 'exercises/abilab/IScorer.h'),
     ('book/30-authoring-an-abi-boundary.md', 'exercises/abilab/engine.h'),
+    ('book/41-templates-you-will-write.md',  'exercises/templatelab/session.h'),
+    ('book/41-templates-you-will-write.md',  'exercises/templatelab/policies.h'),
+    ('book/41-templates-you-will-write.md',  'exercises/templatelab/util.h'),
 ]
 
 for ch, f in FULL:

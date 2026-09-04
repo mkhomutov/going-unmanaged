@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 40 chapters, appendices A–I), indexed by `book/README.md`. The
+(6 parts, 41 chapters, appendices A–I), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
 artifact produced by `scripts/build_book.sh`. Appendices run A–I with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
@@ -65,7 +65,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–40, `A-`…`I-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–41, `A-`…`I-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -237,6 +237,17 @@ Chapter 25's Finding 10.
   files are quoted whole in the chapter (FULL pairings in check_verbatim.sh:
   the vendor header, four plug-in files and deplab's mathlib CMakeLists),
   so editing one means editing Chapter 40 in the same commit
+- `exercises/templatelab/` — Chapter 41's lab: `session.h` (a `Session<Sdk>`
+  over a policy, with the detection idiom `HasSdkShape` and a static_assert
+  that names the missing function), `policies.h` (the real device over
+  `../fakedevice/`, linked not copied, and a recording double), `util.h`
+  (`if constexpr`, a fold-expression `Join`, a `Ring<T, N>`) and the judging
+  `main.cpp`. build_all.sh builds and runs it against FakeDevice, then
+  builds it once more with `-DTEMPLATELAB_BROKEN_POLICY` and asserts the
+  build is REFUSED with the static_assert's own text as the first error
+  (the constlab discipline: the diagnostic's message only, path cut away).
+  The three headers are quoted banner-stripped in the chapter (BANNER
+  pairings), so editing one means editing Chapter 41 in the same commit
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)

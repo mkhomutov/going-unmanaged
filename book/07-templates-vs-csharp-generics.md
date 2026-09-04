@@ -46,7 +46,7 @@ class FixedArray {
 FixedArray<double, 3> vec3;        // this is how std::array works
 ```
 
-Non-type parameters, specialization, compile-time metaprogramming. Modern C++ prefers constexpr functions and concepts over the old arcane template tricks.
+Non-type parameters, specialization, compile-time metaprogramming. Modern C++ prefers constexpr functions and concepts over the old arcane template tricks — and the handful of templates a plug-in author actually writes, with the one trick worth owning, is [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write).
 
 ### Consequence 4 — no runtime type info via templates
 

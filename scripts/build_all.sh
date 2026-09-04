@@ -71,6 +71,10 @@ run "deplab"      $CXX $FLAGS   exercises/deplab/mathlib/src/mathlib.cpp \
 # translation units on purpose: main.cpp sees only plugin.h, which is the
 # subject - a caller that can see the implementation is not a boundary.
 run "interoplab" $CXX $FLAGS   exercises/interoplab/plugin.cpp exercises/interoplab/main.cpp -o $OUT/interoplab
+# Chapter 41's lab: one Session over two policies, one of them the real
+# FakeDevice - linked from its own directory, as threadlab does. The build
+# that must FAIL is a section of its own further down.
+run "templatelab" $CXX $FLAGS   exercises/fakedevice/FakeDevice.cpp exercises/templatelab/main.cpp -I exercises/fakedevice -I exercises/templatelab -o $OUT/templatelab
 # Chapter 28's harness and suite, verbatim from the chapter. -I solutions because
 # the class under test is the Chapter 15 solution, extracted into solutions/Buffer.h
 # so a demo with main() and a test binary with its own can both include it — the
@@ -249,6 +253,7 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/bridgelab > /dev/null
 # The Chapter 39 lab: five value assertions across the boundary, so a UBSan
 # finding that printed and exited 0 would leave the section green.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/interoplab > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/templatelab > /dev/null
 # Appendix H: these check copy/move counts, heap allocations and element
 # addresses, so a UBSan finding that printed and exited 0 would leave the
 # section green. Their judge is a counting CHECK macro rather than assert,
@@ -287,6 +292,26 @@ for V in 1 2 3 4 5; do
     fi
 done
 echo "  ok   five const violations refused, each naming const   [App I]"
+
+# Chapter 41's refusal: a policy missing Poll, and the detection idiom's
+# static_assert must be what refuses it - by its own sentence, as the FIRST
+# error, not the instantiation novel it exists to replace. Same discipline
+# as constlab above: the message only, the path cut away first.
+echo "== templatelab refusal =="
+MSG=$($CXX -std=c++17 -Wall -Wextra -DTEMPLATELAB_BROKEN_POLICY \
+          -I exercises/fakedevice -I exercises/templatelab \
+          -c exercises/templatelab/main.cpp -o /dev/null 2>&1 \
+      | grep -m1 "error:" | sed 's|^.*error:|error:|' || true)
+if [ -z "$MSG" ]; then
+    echo "build_all.sh: templatelab's broken policy COMPILED; it must not." >&2
+    exit 1
+fi
+if ! printf '%s' "$MSG" | grep -q 'Sdk policy needs'; then
+    echo "build_all.sh: templatelab's broken policy was refused, but not by the" >&2
+    echo "  static_assert - the first error was: $MSG" >&2
+    exit 1
+fi
+echo "  ok   a policy missing Poll refused by the static_assert's own sentence   [Ch 41]"
 
 # Chapter 26's CMakeLists, configured, built and run three ways. The reference
 # file in exercises/buildlab/ is the shape that chapter ENDS on, assembled from

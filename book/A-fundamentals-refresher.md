@@ -196,5 +196,5 @@ Layout has a tool and names mostly do not. `.clang-format` at the repository roo
 
 
 <!-- nav:begin -->
-[← Chapter 40 — CMake for the Plug-in](40-cmake-for-the-plug-in.md) · [Contents](README.md) · [Appendix B — Core Principles (Cheat Sheet) →](B-core-principles.md)
+[← Chapter 41 — Templates You Will Write](41-templates-you-will-write.md) · [Contents](README.md) · [Appendix B — Core Principles (Cheat Sheet) →](B-core-principles.md)
 <!-- nav:end -->
