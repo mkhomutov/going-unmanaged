@@ -51,6 +51,7 @@ stays right.
 | `[Flags] enum` + `HasFlag` | `EnumSet.of` / `contains` | [Recipe 32 — Combine flags as an enum class](#recipe-32--combine-flags-as-an-enum-class) |
 | a field of class type + `IDisposable` | a field + `AutoCloseable` | [Recipe 33 — Hold an owned object as a field](#recipe-33--hold-an-owned-object-as-a-field) |
 | `new BigThing()` — always on the heap | `new BigThing()` — always on the heap | [Recipe 34 — An object too big for the stack](#recipe-34--an-object-too-big-for-the-stack) |
+| `EnumerateObject` / `TryGetProperty` / `EnumerateArray` | Jackson `JsonNode` — `fields()` / `has` / `elements()` | [Recipe 35 — Walk a JSON document you do not own](#recipe-35--walk-a-json-document-you-do-not-own) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1412,6 +1413,80 @@ Needs `<array>`, `<cstdint>`, `<memory>`.
 
 > [!WARNING]
 > **Trap:** the failure is a crash on *entry* to the function, before its first line runs, and the report is none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s four shapes — AddressSanitizer names it `stack-overflow` only when the faulting write lands within 64 KB of the stack pointer, and a bare `SEGV`/`BUS` "on unknown address" otherwise, which depends on what happens to be mapped below the thread's stack rather than on the platform or the frame size (the same binary answers differently between runs on Linux) — with no allocation site to read either way.
+
+### Recipe 35 — Walk a JSON document you do not own
+
+**In C#:** `foreach (var p in root.EnumerateObject())`, `element.TryGetProperty("delay_ms", out var d)`, `EnumerateArray()`
+
+**The recipe:**
+
+```cpp
+struct Channel {
+    std::string name;
+    double gain = 1.0;
+    std::optional<int> delay_ms;          // present on some channels, absent on others
+};
+
+std::vector<Channel> read_channels(const json& doc) {
+    std::vector<Channel> out;
+    for (const auto& [name, node] : doc.at("channels").items()) {   // an object: its keys and values
+        Channel c;
+        c.name = name;
+        c.gain = node.value("gain", c.gain);                       // absent: the default
+        if (node.contains("delay_ms")) {                           // TryGetProperty
+            c.delay_ms = node.at("delay_ms").get<int>();
+        }
+        out.push_back(std::move(c));
+    }
+    return out;
+}
+
+int count_numbers(const json& node) {         // walk anything: objects, arrays, scalars, nested
+    if (node.is_number()) {
+        return 1;
+    }
+    if (!node.is_structured()) {              // a string, a bool, null: nothing inside
+        return 0;
+    }
+    int n = 0;
+    for (const auto& child : node) {          // an array yields its elements, an object its values
+        n += count_numbers(child);
+    }
+    return n;
+}
+```
+
+**Why it looks like this.** Recipes 25 and 26 mapped a document onto a
+type you own; this is the other case, a document whose shape belongs to
+somebody else — the host's project file, a vendor's telemetry — where you
+walk what is there rather than declare what must be. `items()` is
+`EnumerateObject`, a key and a value per pass, unpacked with
+[Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
+structured bindings; `contains` plus `at` is `TryGetProperty` split into
+its two halves, and a field that may be absent lands in a
+`std::optional` (Recipe 19) rather than in a sentinel — `value` covers
+absence only, and it converts by the *default's* type, so present with
+the wrong kind throws `type_error` and `3.5` against an `int` default
+truncates (the trap below). A plain range-`for`
+over a node is the generic walk: an array yields its elements, an object
+its values, and `is_structured()` is the guard that stops a string, a bool or a
+number from being iterated as a one-element sequence of itself — which
+the library does, and which turns a recursive walk into Recipe 34's
+`stack-overflow`. The walk's depth is the document's nesting, and the
+parser will not refuse a deep one for you (its callback form takes a
+depth), so on a hostile document it is the walk, not the parse, that
+dies.
+Keys iterate in sorted order, not file order, because the object is a
+map — Recipe 25's point from the reading side. And `items()` is a *view*
+of the document — Recipe 26's trap in loop form: `for (... :
+json::parse(text).items())` keeps the range expression alive and not the
+temporary its member call was made on, a `stack-use-after-scope` under
+ASan until C++23, so the document is named first. Needs
+`<nlohmann/json.hpp>` (`-isystem exercises/third_party`), `<optional>`,
+`<string>`, `<vector>`, and `using json = nlohmann::json;`.
+
+> [!WARNING]
+> **Trap:** `get<int>()` is a `static_cast` per number kind — on `3.5` it returns `3` and on `3000000000` it wraps, with no error and no sanitizer opinion, while on `1e300` it is undefined behavior that UBSan reports from inside `json.hpp` — so a field that must be an integer is checked for kind with `is_number_integer()` and for range by you, and `is_number()` guards neither.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
