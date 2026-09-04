@@ -64,8 +64,12 @@ numbers may still move.
   with a `static_assert` as the size budget. Chapter 1's first flowchart
   gains that branch, Chapter 3 the paragraph behind it, Chapter 31's
   symptom index the crash-on-entry row, and Appendix E a *stack overflow*
-  entry that says what AddressSanitizer calls it — `stack-overflow` for a
-  small overshoot, a bare `SEGV` or `BUS` for a large one, measured.
+  entry that says what AddressSanitizer calls it — `stack-overflow` or a
+  bare `SEGV`/`BUS`, and which one flips between macOS/arm64 and
+  Linux/x86-64 for the same two frame sizes, which section 8 of
+  `check_platform_claims.sh` now asserts per platform; the first draft of
+  that section had written the maintainer's machine down as the rule, and
+  CI's Linux leg corrected it.
 
 ## [0.9.0] — 2026-09-04
 

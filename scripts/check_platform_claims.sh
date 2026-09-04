@@ -589,12 +589,15 @@ fi
 
 # --- 8. a frame that does not fit the stack ---------------------------------
 # Recipe 34's trap and Appendix E's stack-overflow entry: the crash is on
-# entry to the function, and AddressSanitizer's name for it changes with the
-# overshoot - "stack-overflow" when the frame overshoots by a little (the fault
-# lands near the stack, where the runtime can attribute it), a bare SEGV or
-# BUS "on unknown address" when it overshoots by megabytes (the first write,
-# from the zeroing routine, lands nowhere near it). Both are nonzero exits;
-# neither is one of Chapter 31's four report shapes.
+# entry to the function, and AddressSanitizer's NAME for it - "stack-overflow"
+# or a bare SEGV/BUS "on unknown address" - depends on the platform and on how
+# far the frame overshoots. The first draft of this section wrote the
+# maintainer's macOS/arm64 answer down as the rule (a little overshoot is
+# stack-overflow, megabytes is a bare signal); Linux/x86-64 under clang gave
+# the two the OTHER way round on the first CI run, which is this script's
+# founding mistake caught by this script. So the expectation is per platform,
+# and the book claims only what both share: nonzero exit, one of those two
+# names, none of Chapter 31's four shapes, and no allocation site.
 echo "== stack overflow report names =="
 if $CXX -std=c++17 -g -fsanitize=address -pthread "$OUT/frame_600.cpp" -o "$OUT/frame_600" 2>/dev/null \
    && $CXX -std=c++17 -g -fsanitize=address -pthread "$OUT/frame_4096.cpp" -o "$OUT/frame_4096" 2>/dev/null; then
@@ -605,17 +608,29 @@ if $CXX -std=c++17 -g -fsanitize=address -pthread "$OUT/frame_600.cpp" -o "$OUT/
     else
         pass "both frames crashed, exit $RC_S and $RC_L   [Recipe 34, App E]"
     fi
-    if grep -q "AddressSanitizer: stack-overflow" "$OUT/frame_600.log"; then
-        pass "600 KB on a 512 KB stack: ASan names it stack-overflow   [Recipe 34, App E]"
+    NAME_S=$(grep -m1 -oE 'AddressSanitizer: [A-Za-z-]+' "$OUT/frame_600.log" | cut -d' ' -f2 || true)
+    NAME_L=$(grep -m1 -oE 'AddressSanitizer: [A-Za-z-]+' "$OUT/frame_4096.log" | cut -d' ' -f2 || true)
+    case "$OS" in
+        Darwin) WANT_S="stack-overflow"; WANT_L="BUS|SEGV" ;;
+        Linux)  WANT_S="SEGV|BUS";       WANT_L="stack-overflow" ;;
+        *)      WANT_S="";               WANT_L="" ;;
+    esac
+    for pair in "600:$NAME_S:$WANT_S" "4096:$NAME_L:$WANT_L"; do
+        KB=${pair%%:*}; rest=${pair#*:}; NAME=${rest%%:*}; WANT=${rest#*:}
+        if ! printf '%s' "$NAME" | grep -qE '^(stack-overflow|SEGV|BUS)$'; then
+            fail "$KB KB on a 512 KB stack: expected stack-overflow, SEGV or BUS, got '${NAME:-(no ASan line)}'   [Recipe 34, App E]"
+        elif [ -z "$WANT" ]; then
+            skip "$KB KB on a 512 KB stack: ASan said $NAME; no documented expectation for $OS"
+        elif printf '%s' "$NAME" | grep -qE "^($WANT)$"; then
+            pass "$KB KB on a 512 KB stack: ASan names it $NAME on $OS   [Recipe 34, App E]"
+        else
+            fail "$KB KB on a 512 KB stack: expected $WANT on $OS, got $NAME   [Recipe 34, App E]"
+        fi
+    done
+    if grep -q "allocated by" "$OUT/frame_600.log" "$OUT/frame_4096.log"; then
+        fail "a stack-overflow report carried an allocation stack; Recipe 34 says there is none   [Recipe 34]"
     else
-        fail "600 KB on a 512 KB stack: expected 'stack-overflow', got: $(grep -m1 -oE 'AddressSanitizer: [A-Za-z-]+' "$OUT/frame_600.log" || echo '(no ASan line)')   [Recipe 34]"
-    fi
-    if grep -q "AddressSanitizer: stack-overflow" "$OUT/frame_4096.log"; then
-        fail "4 MB on a 512 KB stack: ASan said stack-overflow; Recipe 34 says a large overshoot is a bare SEGV or BUS   [Recipe 34]"
-    elif grep -qE "AddressSanitizer: (SEGV|BUS)" "$OUT/frame_4096.log"; then
-        pass "4 MB on a 512 KB stack: a bare $(grep -m1 -oE 'AddressSanitizer: (SEGV|BUS)' "$OUT/frame_4096.log" | cut -d' ' -f2), not stack-overflow   [Recipe 34, App E]"
-    else
-        fail "4 MB on a 512 KB stack: expected SEGV or BUS, got: $(grep -m1 -oE 'AddressSanitizer: [A-Za-z-]+' "$OUT/frame_4096.log" || echo '(no ASan line)')   [Recipe 34]"
+        pass "neither report carries an allocation site   [Recipe 34, Ch 31]"
     fi
 else
     skip "AddressSanitizer cannot build the stack-overflow demonstrations with $CXX"

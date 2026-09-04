@@ -1411,7 +1411,7 @@ judge): a reviewer who changes the array's size meets the sentence.
 Needs `<array>`, `<cstdint>`, `<memory>`.
 
 > [!WARNING]
-> **Trap:** the failure is a crash on *entry* to the function, before its first line runs, and the report is none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s four shapes — AddressSanitizer's name for it changes with the overshoot, `stack-overflow` for a little and a bare `SEGV` or `BUS` for megabytes, frame #0 in the zeroing routine — and there is no allocation site to read.
+> **Trap:** the failure is a crash on *entry* to the function, before its first line runs, and the report is none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s four shapes — AddressSanitizer names it `stack-overflow` or a bare `SEGV`/`BUS` "on unknown address", and which one depends on the platform and on how far the frame overshoots (macOS/arm64 and Linux/x86-64 answer the same two sizes the opposite way round, and `check_platform_claims.sh` holds both) — with no allocation site to read.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
