@@ -1464,11 +1464,18 @@ walk what is there rather than declare what must be. `items()` is
 [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
 structured bindings; `contains` plus `at` is `TryGetProperty` split into
 its two halves, and a field that may be absent lands in a
-`std::optional` (Recipe 19) rather than in a sentinel. A plain range-`for`
+`std::optional` (Recipe 19) rather than in a sentinel — `value` covers
+absence only, and it converts by the *default's* type, so present with
+the wrong kind throws `type_error` and `3.5` against an `int` default
+truncates (the trap below). A plain range-`for`
 over a node is the generic walk: an array yields its elements, an object
-its values, and `is_structured()` is the guard that stops a scalar from
-being iterated as a one-element sequence of itself — which the library
-does, and which turns a recursive walk into Recipe 34's `stack-overflow`.
+its values, and `is_structured()` is the guard that stops a string, a bool or a
+number from being iterated as a one-element sequence of itself — which
+the library does, and which turns a recursive walk into Recipe 34's
+`stack-overflow`. The walk's depth is the document's nesting, and the
+parser will not refuse a deep one for you (its callback form takes a
+depth), so on a hostile document it is the walk, not the parse, that
+dies.
 Keys iterate in sorted order, not file order, because the object is a
 map — Recipe 25's point from the reading side. And `items()` is a *view*
 of the document — Recipe 26's trap in loop form: `for (... :
@@ -1479,7 +1486,7 @@ ASan until C++23, so the document is named first. Needs
 `<string>`, `<vector>`, and `using json = nlohmann::json;`.
 
 > [!WARNING]
-> **Trap:** `get<int>()` on a node holding `3.5` returns `3` with no error, and neither sanitizer has an opinion — the getter converts between number kinds silently — so a field that must be integral is checked with `is_number_integer()` first, not with `is_number()`.
+> **Trap:** `get<int>()` is a `static_cast` per number kind — on `3.5` it returns `3` and on `3000000000` it wraps, with no error and no sanitizer opinion, while on `1e300` it is undefined behavior that UBSan reports from inside `json.hpp` — so a field that must be an integer is checked for kind with `is_number_integer()` and for range by you, and `is_number()` guards neither.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
