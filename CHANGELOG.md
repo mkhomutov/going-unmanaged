@@ -23,6 +23,20 @@ numbers may still move.
   causes; Appendix E gains a *capacity vs size* entry. Chapters 21 and 24
   now say which standard library reports `container-overflow` by default.
 
+- **New: Recipes 28–30 — a scoped timer and a forwarding wrapper, a
+  timestamp for a log line, a timeout handed to a C API** (MINOR — three
+  appended recipes). Recipe 6 was the whole of `<chrono>` on the page;
+  these add the `finally`-shaped timer whose destructor is the stop, the
+  `time_call` wrapper that hands its arguments on through a forwarding
+  reference, the `system_clock`-to-text path with its thread-safe `gmtime`
+  spelling, and the `.count()` hand-off where a duration becomes the
+  vendor's integer, with the parameter type putting the thousand in.
+  `exercises/cookbook/timing.cpp` asserts the throwing-path record, an
+  lvalue forwarded as an lvalue and an rvalue as an rvalue, the
+  timestamp's shape, and a seconds literal arriving multiplied out.
+  Appendix E gains a *forwarding reference* entry and Chapter 6's coda
+  points at the recipe.
+
 ## [0.9.0] — 2026-09-04
 
 The release a list steered. Version 0.8.0 began with eighteen constructed

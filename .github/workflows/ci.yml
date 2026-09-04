@@ -195,6 +195,11 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           ./scripts/check.ps1 exercises/reportlab/registry.cpp exercises/reportlab/main.cpp 100
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          # Recipe 29's gmtime_s branch is compiled by no other job: the MS
+          # signature's argument order is the reverse of C11 Annex K's, which
+          # is why the _WIN32 guard exists and why it needs a Windows build.
+          ./scripts/check.ps1 exercises/cookbook/timing.cpp
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           # The SAN/OPT knobs, which Chapter 27's steps 5 and 6 need. Untested
           # they are worse than absent: a reader following the card would get a
           # build that quietly still had the sanitizer in it, and step 6's

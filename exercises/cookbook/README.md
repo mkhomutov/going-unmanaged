@@ -8,7 +8,7 @@ Cookbook*), one translation unit per domain —
 |---|---|
 | `files.cpp` | 1, 9 — read and write a whole file |
 | `strings.cpp` | 2–5, 23 — split, join, build, format; the empty string that is not null |
-| `timing.cpp` | 6, 16 — time a call; a repeating timer |
+| `timing.cpp` | 6, 16, 28–30 — time a call; a repeating timer; a scoped timer and a forwarding wrapper; a timestamp for a log line; a timeout handed to a C API |
 | `handles.cpp` | 7 — wrap a C handle so it frees itself |
 | `lookups.cpp` | 8, 18 — look up a key without inserting it; find an element, an index, or a substring |
 | `paths.cpp` | 10–12 — combine, the exists pair, listing |
