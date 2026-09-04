@@ -625,9 +625,11 @@ fi
 # rule; CI's Linux leg then answered the same binary three different ways in
 # three runs, which is this script's founding mistake caught by this script.
 # So it asserts only what every run on every platform shares: nonzero exit,
-# one of those two names, frame #0 in the zeroing routine, and no allocation
-# stack - the four things the book claims - and it bounds the run, because a
-# frame that walks far below the stack can hang the runtime mid-report.
+# one of those two names, and no allocation stack - the three things the book
+# claims (a first draft also asserted frame #0 was the zeroing routine; on
+# Linux it is the function itself, or an unsymbolized libc frame) - and it
+# bounds the run, because a frame that walks far below the stack can hang the
+# runtime mid-report.
 echo "== stack overflow report names =="
 if $CXX -std=c++17 -g -fsanitize=address -pthread "$OUT/frame_600.cpp" -o "$OUT/frame_600" 2>/dev/null \
    && $CXX -std=c++17 -g -fsanitize=address -pthread "$OUT/frame_1024.cpp" -o "$OUT/frame_1024" 2>/dev/null; then
@@ -646,11 +648,6 @@ if $CXX -std=c++17 -g -fsanitize=address -pthread "$OUT/frame_600.cpp" -o "$OUT/
             pass "$KB KB on a 512 KB stack: ASan names it $NAME (one of the two the book allows)   [Recipe 34, App E]"
         else
             fail "$KB KB on a 512 KB stack: expected stack-overflow, SEGV or BUS, got '${NAME:-(no ASan line)}'   [Recipe 34, App E]"
-        fi
-        if grep -qE '#0 .*(memset|bzero)' "$OUT/frame_$KB.log"; then
-            pass "$KB KB: frame #0 is the zeroing routine   [Ch 31 symptom index]"
-        else
-            fail "$KB KB: frame #0 is not memset/bzero: $(grep -m1 -oE '#0 .*' "$OUT/frame_$KB.log" | cut -c1-80)   [Ch 31 symptom index]"
         fi
     done
     if grep -q "allocated by" "$OUT/frame_600.log" "$OUT/frame_1024.log"; then

@@ -67,9 +67,9 @@ numbers may still move.
   entry that says what AddressSanitizer calls it — `stack-overflow` when
   the fault lands within 64 KB of the stack pointer, a bare `SEGV`/`BUS`
   otherwise, and which one is not stable even between runs. Section 8 of
-  `check_platform_claims.sh` holds the four things every run shares (a
-  nonzero exit, one of those two names, frame #0 in the zeroing routine,
-  no allocation stack) under a bounded runner; its first draft had
+  `check_platform_claims.sh` holds the three things every run shares (a
+  nonzero exit, one of those two names, no allocation stack) under a
+  bounded runner; its first draft had
   written the maintainer's macOS answer down as the rule, and CI's Linux
   leg answered the same binary three different ways in three runs, which
   is the exact mistake that script exists to catch. The Recipe 16 harness
