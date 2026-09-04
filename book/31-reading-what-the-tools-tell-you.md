@@ -155,6 +155,31 @@ Watchpoints are a scarce hardware resource — a handful at a time, each coverin
 > [!TIP]
 > **Key principle:** "When I need to know who changed a value, I set a watchpoint — old value, new value, and the frame that did it — instead of adding print statements."
 
+### The profiler, where it differs from C#
+
+[Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters) taught you to read a profile — a sampler's counts, what a percentage can and cannot acquit — and never said how the profile was taken. In C# that was never a question worth a section: the Visual Studio profiler, dotTrace or PerfView attach to a managed process, the runtime hands them every frame's name, and the allocations show up as a column because the collector counts them for you. Here the three things the runtime supplied are three things you arrange before the first sample lands, and the tools differ per platform in the way the debuggers of Chapter 13 did. Nothing in this section can be verified by the repository's CI — a profile is a fact about one machine and one run — so read it as the checklist it is.
+
+**The tools, by platform.** All three below are *sampling* profilers, the instrument Chapter 36's attachment came from: a timer interrupts the thread, the stack is written down, and a symbol's count is how often it was on it.
+
+- **Linux: `perf`.** `perf record -g ./app` then `perf report` — or `perf record -p <pid>` to sample a process already running, which is how you profile a host. Frame-pointer unwinding by default; `--call-graph dwarf` when the binary was built without them, at a cost in file size.
+- **macOS: Instruments.** The *Time Profiler* template, launched from Xcode or from the command line — `xctrace record --template 'Time Profiler' --launch -- ./app` — and *Attach to Process* for a host that is already up. Instruments is what produced the shape of Chapter 36's listing, with `[self]` and the `(in meter.plugin)` module column.
+- **Windows: Visual Studio's Performance Profiler** (Debug ▸ Performance Profiler, the *CPU Usage* tool), which attaches to a running process the same way the debugger does; and Windows Performance Recorder and Analyzer when the question is system-wide rather than one process.
+
+**Three things the runtime used to do for you.**
+
+1. **Build the thing you ship, with the names kept.** Profile at `-O2` (`/O2` on MSVC) — an unoptimised profile is a profile of a different program, with copies and calls the optimizer would have removed — but keep `-g` (`/Zi`) so frames have names. The symbol file is the same artifact [Chapter 37](37-no-repro-dump-attached.md#chapter-37--no-repro-dump-attached) archives for crash reports; a profile of a stripped binary is a column of addresses for the same reason a stripped crash report is.
+2. **Keep the frame pointers.** Add `-fno-omit-frame-pointer` on clang and GCC. Without it a sampler walking the stack by frame pointer stops one frame deep, and a profile in which every function appears to be called from nowhere is the tell. MSVC's x64 code keeps unwind tables the profiler walks regardless, so this flag has no Windows twin to forget.
+3. **Expect the inlining.** The `-O2` section above showed frames vanish from a sanitizer stack; they vanish from a profile the same way, and the time of an inlined function is charged to its host. Chapter 37's `FoldedMean` inlined into `Report` would appear as `Report` here. When a hot function seems to be doing more than its own body, ask what was inlined into it before asking what it does.
+
+**Attaching to the host.** A plug-in profiles the way it debugs (Chapter 13): the host is the process, and you attach after it has loaded your module. Your frames are the ones carrying your module's name — Chapter 36's `(in meter.plugin)` — and the trick that chapter's vendor engineer used is the reflex to build: filter to your module, then *look under your own frames* for symbols that have no business there. A `malloc`, a `memmove`, a lock in a peak meter's subtree is a finding at any percentage.
+
+**Which instrument answers which question.** A sampler measures the mean: where the time goes, on average, which is the right question for throughput work. It structurally cannot see a rare event — the one allocation in four million that took milliseconds — because it fires on a clock and the event is not on the clock. For the tail, the instrument is a *counter* or a *trace*: Chapter 36's replaced `operator new` counting allocations, RealtimeSanitizer aborting on the first one, or a tracing profiler that records every event with a timestamp — `perf trace`, Instruments' *System Trace*, Event Tracing for Windows — and shows you the one long gap rather than an average that smoothed it away. Read the complaint first: *slow* is a sampler's question; *stutter*, *spike* and *dropout* are a counter's.
+
+**Timing one function.** Recipe 28 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) is the stopwatch; the discipline around it is what makes the number mean anything. Warm the code up before measuring, repeat and report a minimum or a percentile rather than a mean, consume the result so the optimizer cannot delete the work, and measure at `-O2` *without* the sanitizers — Chapter 36 measured a factor of twenty between the sanitized and the plain build, and the factor is not uniform across code shapes, so even the ratio between two candidates lies under instrumentation. Compare two versions on the same machine in the same session; a number from last week on a different laptop is a rumour. When this grows past a loop and a stopwatch, Google Benchmark is the library that mechanises all of it — a [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) decision, and its `DoNotOptimize` is the "consume the result" rule as a function.
+
+> [!TIP]
+> **Key principle:** "I profile the optimized build with its symbols and frame pointers kept, attached to the host — and I read a sampler for the mean and a counter or a trace for the tail, because the complaint decides the instrument."
+
 ### Method: the tools are for testing hypotheses, not for browsing
 
 The single biggest difference between fast and slow debugging is not tool knowledge. It is arriving with a hypothesis.

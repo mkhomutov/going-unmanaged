@@ -89,6 +89,17 @@ numbers may still move.
   `items()` on an array handing back index keys — the document named
   first, because the view does not keep a temporary alive.
 
+- **New section: Chapter 31 — The profiler, where it differs from C#**
+  (MINOR — an appended section). Chapter 36 taught how to read a profile
+  and no page said how to take one. The section names the three platform
+  tools, the three things the runtime used to supply (an optimized build
+  with its names kept, frame pointers, the symbol file), attaching to the
+  host, which instrument answers which complaint — a sampler for the mean,
+  a counter or a trace for the tail — and the discipline around Recipe
+  28's stopwatch. Stated as prose the repository cannot verify, in the
+  pattern Chapter 40 uses for its custom commands; one key principle joins
+  Appendix B.
+
 ## [0.9.0] — 2026-09-04
 
 The release a list steered. Version 0.8.0 began with eighteen constructed
