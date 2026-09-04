@@ -64,14 +64,17 @@ numbers may still move.
   with a `static_assert` as the size budget. Chapter 1's first flowchart
   gains that branch, Chapter 3 the paragraph behind it, Chapter 31's
   symptom index the crash-on-entry row, and Appendix E a *stack overflow*
-  entry that says what AddressSanitizer calls it — `stack-overflow` or a
-  bare `SEGV`/`BUS`, and which one is not stable even between runs.
-  Section 8 of `check_platform_claims.sh` holds the three things every
-  run shares (a nonzero exit, one of those two names, no allocation
-  stack); its first draft had written the maintainer's macOS answer down
-  as the rule, and CI's Linux leg answered it two different ways on two
-  runs of the same binary, which is the exact mistake that script exists
-  to catch.
+  entry that says what AddressSanitizer calls it — `stack-overflow` when
+  the fault lands within 64 KB of the stack pointer, a bare `SEGV`/`BUS`
+  otherwise, and which one is not stable even between runs. Section 8 of
+  `check_platform_claims.sh` holds the four things every run shares (a
+  nonzero exit, one of those two names, frame #0 in the zeroing routine,
+  no allocation stack) under a bounded runner; its first draft had
+  written the maintainer's macOS answer down as the rule, and CI's Linux
+  leg answered the same binary three different ways in three runs, which
+  is the exact mistake that script exists to catch. The Recipe 16 harness
+  no longer sleeps a fixed 120 ms and hopes for two ticks, which a loaded
+  runner had just proved it could fail to see.
 
 ## [0.9.0] — 2026-09-04
 

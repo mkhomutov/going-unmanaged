@@ -144,11 +144,17 @@ int main() {
     {
         RepeatingTimer timer(std::chrono::milliseconds(10),
                              [&ticks] { ++ticks; });
-        std::this_thread::sleep_for(std::chrono::milliseconds(120));
+        // Wait for ticks rather than for time: a loaded CI runner can starve
+        // the worker for longer than any fixed sleep, and this assertion is
+        // about the timer firing while it lives, not about its cadence.
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while (ticks < 2 && std::chrono::steady_clock::now() < deadline) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
     }    // destructor stops and joins HERE
 
     const int seen = ticks;
-    assert(seen >= 2);    // several intervals passed while the timer lived
+    assert(seen >= 2);    // intervals passed while the timer lived
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     assert(ticks == seen);    // and no tick fired after the join
 

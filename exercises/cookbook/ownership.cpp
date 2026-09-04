@@ -56,30 +56,38 @@ std::unique_ptr<FrameBuffer> make_frame() {
 }
 
 namespace {
-    // A Log that reports its own death, so main can watch the field order.
+    // A Log that reports its own death AND how many owners the Sink had at
+    // that moment: the field order's judge. Session declares sink_ after
+    // log_, so sink_ dies first and the Log sees one owner left (main's).
+    // Swap the two declarations and this records two - it was run.
     class RecordingLog : public Log {
     public:
-        explicit RecordingLog(std::vector<std::string>& events) : events_(events) {}
-        ~RecordingLog() override { events_.push_back("log destroyed"); }
+        RecordingLog(std::vector<std::string>& events, std::weak_ptr<Sink> sink)
+            : events_(events), sink_(std::move(sink)) {}
+        ~RecordingLog() override {
+            events_.push_back("log destroyed, sink owners=" + std::to_string(sink_.use_count()));
+        }
         void write(const std::string& line) override { events_.push_back(line); }
     private:
         std::vector<std::string>& events_;
+        std::weak_ptr<Sink> sink_;
     };
 }
 
 int main() {
     // Recipe 33: the field that is a unique_ptr dies with the Session; the
-    // shared one does not, because someone else still holds it.
+    // shared one does not, because someone else still holds it. The order
+    // is the claim: sink_ (declared last) dies first, log_ next.
     std::vector<std::string> events;
     auto sink = std::make_shared<Sink>();
     {
-        Session s("bench", std::make_unique<RecordingLog>(events), sink);
+        Session s("bench", std::make_unique<RecordingLog>(events, sink), sink);
         s.record(7);
         assert(sink.use_count() == 2);       // the Session and this frame
     }                                        // ~Session: sink_, then log_, then history_, then name_
     assert(events.size() == 2);
     assert(events[0] == "bench: recorded");
-    assert(events[1] == "log destroyed");    // the unique_ptr field freed its Log, unasked
+    assert(events[1] == "log destroyed, sink owners=1");   // sink_, declared later, was already gone
     assert(sink.use_count() == 1);           // the shared field released its claim...
     assert(sink->samples.size() == 1);       // ...and the Sink is still here, because we are
 
@@ -97,7 +105,7 @@ int main() {
     // pointer; a FrameBuffer local in a function running on a macOS worker
     // thread (512 KB of stack, Chapter 3) would not survive its own prologue.
     std::unique_ptr<FrameBuffer> frame = make_frame();
-    static_assert(sizeof(frame) == sizeof(void*));
+    static_assert(sizeof(frame) == sizeof(void*));   // on every mainstream library; the standard imposes no size
     frame->pixels[0] = 255;
     frame->pixels.back() = 1;
     assert(frame->pixels[1] == 0);           // make_unique value-initialized the four megabytes

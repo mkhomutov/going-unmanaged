@@ -1371,7 +1371,7 @@ Rule of Zero: copy deleted, move generated, nothing written. Needs
 `<memory>`, `<string>`, `<vector>`.
 
 > [!WARNING]
-> **Trap:** fields die in reverse *declaration* order, so a field that another field's destructor uses must be declared before it — declare the `Sink` after a `Log` whose destructor writes a last line into it, and that line lands in a dead field; nothing warns, because `-Wreorder` is about the constructor's list, not the class's.
+> **Trap:** fields die in reverse *declaration* order, so a field that another field's destructor uses must be declared before it — declare a by-value `Sink` after a `Log` whose destructor writes a last line into it, and that line lands in a dead field; nothing warns, because `-Wreorder` is about the constructor's list, not the class's, and under libc++ the sanitizers stay quiet too, since the container annotation un-poisons the slot before the write ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit)'s first pitfall).
 
 ### Recipe 34 — An object too big for the stack
 
@@ -1405,13 +1405,13 @@ puts the bytes on the heap and leaves a pointer-sized owner behind, which
 is the same ownership as before at a different address. When the size is
 not a compile-time constant, `std::vector<std::uint8_t>(n)` is the same
 answer with the count decided at run time. The `static_assert` is the
-budget written down where it cannot go stale
+reason for the heap written down where it cannot go stale
 ([Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s
 judge): a reviewer who changes the array's size meets the sentence.
 Needs `<array>`, `<cstdint>`, `<memory>`.
 
 > [!WARNING]
-> **Trap:** the failure is a crash on *entry* to the function, before its first line runs, and the report is none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s four shapes — AddressSanitizer names it `stack-overflow` or a bare `SEGV`/`BUS` "on unknown address", and which of the two is not a fact about the platform or the frame size (on Linux the same binary answers differently from one run to the next, because the attribution depends on where the fault lands) — with no allocation site to read either way.
+> **Trap:** the failure is a crash on *entry* to the function, before its first line runs, and the report is none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s four shapes — AddressSanitizer names it `stack-overflow` only when the faulting write lands within 64 KB of the stack pointer, and a bare `SEGV`/`BUS` "on unknown address" otherwise, which depends on what happens to be mapped below the thread's stack rather than on the platform or the frame size (the same binary answers differently between runs on Linux) — with no allocation site to read either way.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
