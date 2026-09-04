@@ -239,7 +239,7 @@ load-bearing:
 ```text
 myplugin/
   CMakeLists.txt        the root build description (above)
-  CMakePresets.json     the named configurations - Chapter 40's dev preset; what a .sln's Configuration Manager held
+  CMakePresets.json     the named configurations - Chapter 40's dev preset; what a .sln's configurations held
   .clang-format         layout, enforced by a tool: the .editorconfig you know, with opinions (Appendix A.8)
   .clang-tidy           the checks the team turned on - reserved identifiers, naming, the bugprone-* family
   .gitignore            build/ and every generated directory; nothing under build/ is ever committed
@@ -248,20 +248,25 @@ myplugin/
 ```
 
 Two rules ride on the tree that no file states, and both exist so a name
-means the same thing everywhere. **The namespace mirrors the directory:**
-code under `include/myplugin/wire/` lives in `namespace myplugin::wire`,
-so an identifier's home is readable off its qualified name and a
-`#include` path and a `using` never disagree about what a thing is called.
-And **one class, one header pair:** `Session` is declared in `session.h`
-and defined in `session.cpp`, named for the type, lower-case, so a reader
-who meets the type in a review can open its file without a search. Private
-headers — the ones nothing outside `src/` may include — stay in `src/`
-beside the `.cpp` that owns them, and never gain the project-name prefix,
-which is the visible mark of a promise ([Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)).
-Tests sit apart in `tests/`, named for what they test (`session_test.cpp`),
-because a test binary is a second executable with its own `main` and the
-compilation model of [Chapter 28](28-testing.md#chapter-28--testing) does
-not let it share a directory's sources by accident.
+means the same thing everywhere. **The namespace mirrors the directory** —
+Boost's and Google's habit, not a standard's: code under
+`include/myplugin/wire/` lives in `namespace myplugin::wire`, so an
+identifier's home is readable off its qualified name and a `#include` path
+and a `using` never disagree about what a thing is called. And **one
+class, one header pair:** `Session` is declared in `session.h` and defined
+in `session.cpp`, named for the type — spelled however the codebase spells
+files (Appendix A.8; this book's labs use `Greeter.h`, deplab uses
+`mathlib.h`) — so a reader who meets the type in a review can open its
+file without a search. Private headers — the ones nothing outside `src/`
+may include — stay in `src/` beside the `.cpp` that owns them, and never
+gain the project-name prefix: `<myplugin/...>` is the ABI surface of the
+tree above, and everything [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)
+says about a boundary applies to it and to nothing in `src/`. Tests sit
+apart in `tests/`, named for what they test (`session_test.cpp`): a test
+binary is a second executable with its own `main`, so it can never be a
+source of the first one ([Chapter 28](28-testing.md#chapter-28--testing)),
+and a directory of its own keeps the two source lists from being confused
+by the person, since CMake will not confuse them.
 
 ### Pitfalls
 
