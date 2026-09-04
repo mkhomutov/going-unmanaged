@@ -51,7 +51,7 @@ stays right.
 | `[Flags] enum` + `HasFlag` | `EnumSet.of` / `contains` | [Recipe 32 — Combine flags as an enum class](#recipe-32--combine-flags-as-an-enum-class) |
 | a field of class type + `IDisposable` | a field + `AutoCloseable` | [Recipe 33 — Hold an owned object as a field](#recipe-33--hold-an-owned-object-as-a-field) |
 | `new BigThing()` — always on the heap | `new BigThing()` — always on the heap | [Recipe 34 — An object too big for the stack](#recipe-34--an-object-too-big-for-the-stack) |
-| `EnumerateObject` / `TryGetProperty` / `EnumerateArray` | `JsonNode` traversal | [Recipe 35 — Walk a JSON document you do not own](#recipe-35--walk-a-json-document-you-do-not-own) |
+| `EnumerateObject` / `TryGetProperty` / `EnumerateArray` | Jackson `JsonNode` — `fields()` / `has` / `elements()` | [Recipe 35 — Walk a JSON document you do not own](#recipe-35--walk-a-json-document-you-do-not-own) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1467,21 +1467,19 @@ its two halves, and a field that may be absent lands in a
 `std::optional` (Recipe 19) rather than in a sentinel. A plain range-`for`
 over a node is the generic walk: an array yields its elements, an object
 its values, and `is_structured()` is the guard that stops a scalar from
-being iterated as a one-element sequence of itself, which is what the
-library does and what a recursive walk turns into infinite recursion.
+being iterated as a one-element sequence of itself — which the library
+does, and which turns a recursive walk into Recipe 34's `stack-overflow`.
 Keys iterate in sorted order, not file order, because the object is a
 map — Recipe 25's point from the reading side. And `items()` is a *view*
-of the document ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
-dangling kind): the document must outlive the loop, and
-`for (... : json::parse(text).items())` does not give it one — a
-range-`for` keeps its range expression alive and not the temporary that
-expression's member call was made on, which under ASan is a
-`stack-use-after-scope` and in C++23 finally stops being one. Needs
+of the document — Recipe 26's trap in loop form: `for (... :
+json::parse(text).items())` keeps the range expression alive and not the
+temporary its member call was made on, a `stack-use-after-scope` under
+ASan until C++23, so the document is named first. Needs
 `<nlohmann/json.hpp>` (`-isystem exercises/third_party`), `<optional>`,
 `<string>`, `<vector>`, and `using json = nlohmann::json;`.
 
 > [!WARNING]
-> **Trap:** `get<int>()` on a node holding `3.5` returns `3` with no error — the getter converts between number kinds silently — so a field that must be integral is checked with `is_number_integer()` first, not with `is_number()`.
+> **Trap:** `get<int>()` on a node holding `3.5` returns `3` with no error, and neither sanitizer has an opinion — the getter converts between number kinds silently — so a field that must be integral is checked with `is_number_integer()` first, not with `is_number()`.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

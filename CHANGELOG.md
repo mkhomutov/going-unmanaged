@@ -85,7 +85,9 @@ numbers may still move.
   `is_structured()` guard that stops a scalar from being iterated as a
   one-element sequence of itself. The trap is `get<int>()` on `3.5`
   returning `3` without a word. `exercises/cookbook/json.cpp` asserts the
-  walk, the sorted key order, the scalar guard and the silent truncation.
+  walk, the sorted key order, the scalar guard, the silent truncation, and
+  `items()` on an array handing back index keys — the document named
+  first, because the view does not keep a temporary alive.
 
 ## [0.9.0] — 2026-09-04
 
