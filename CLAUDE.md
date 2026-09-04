@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 41 chapters, appendices A–I), indexed by `book/README.md`. The
+(6 parts, 41 chapters, appendices A–J), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
 artifact produced by `scripts/build_book.sh`. Appendices run A–J with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
@@ -576,7 +576,7 @@ stay on the list marked DONE so item numbers never shift. Short version:
   `exercises/bridgelab/` (the main-thread queue under a bounded-wait
   judge), plus Appendix G, the survey of mechanisms and its decision
   table.
-  The glossary was item 10 and is now Appendix E (letters run A–I with no
+  The glossary was item 10 and is now Appendix E (letters run A–J with no
   gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
   timers), then 17 (UTF-8↔UTF-16), then 18–20 (find, optional, variant),

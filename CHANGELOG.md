@@ -128,7 +128,8 @@ numbers may still move.
   it, runs the executable from a directory that is not the prefix, then
   installs it again without a runpath and asserts the same run fails to
   load; `check_verbatim.sh` pins the page's one cmake fence to that
-  heredoc and refuses any cpp fence on the page.
+  heredoc and refuses any cpp fence on the page. Appendix letters now
+  run A–J with no gap.
 
 ## [0.9.0] — 2026-09-04
 
