@@ -76,6 +76,17 @@ numbers may still move.
   no longer sleeps a fixed 120 ms and hopes for two ticks, which a loaded
   runner had just proved it could fail to see.
 
+- **New: Recipe 35 — Walk a JSON document you do not own** (MINOR — an
+  appended recipe). Recipes 25 and 26 mapped a document onto a type you
+  own; this is the other case, the host's project file or a vendor's
+  telemetry, where you walk what is there: `items()` as
+  `EnumerateObject`, `contains` plus `at` as `TryGetProperty`, an absent
+  field landing in an `optional`, and the generic recursive walk with the
+  `is_structured()` guard that stops a scalar from being iterated as a
+  one-element sequence of itself. The trap is `get<int>()` on `3.5`
+  returning `3` without a word. `exercises/cookbook/json.cpp` asserts the
+  walk, the sorted key order, the scalar guard and the silent truncation.
+
 ## [0.9.0] — 2026-09-04
 
 The release a list steered. Version 0.8.0 began with eighteen constructed
