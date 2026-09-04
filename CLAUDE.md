@@ -54,6 +54,11 @@ stands in for a vendor. Chapter 40 (item 22) is the plug-in's build — a
 MODULE with one exported symbol, a hand-written find-module for an SDK with
 no config package, and the finding that hidden visibility covers what you
 compile and not the archive you link, judged by the export table read back.
+Chapter 41 (item 23) is the working subset of templates — the seam as a
+policy type, Chapter 28's promised compile-time fake — whose lab's broken
+policy CALLS Pump on purpose: a member of a class template is compiled only
+when used, so without that call the missing function would compile clean
+even with the static_assert deleted, and the refusal would prove nothing.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -503,7 +508,7 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 41+, Appendix J+) — no item requires renumbering. Delivered items
+(Chapter 42+, Appendix J+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
@@ -521,7 +526,9 @@ stay on the list marked DONE so item numbers never shift. Short version:
   defaults for a foreign thread now cross-reference each other, which is all
   of the item that is done). Both were sequenced after item 9 (P/Invoke),
   which is **DONE as of 2026-09-02** — Chapter 39 — so both are now
-  unblocked. CMake for the plug-in was item 22 and is now Chapter 40 +
+  unblocked. Templates you will write was item 23 and is now Chapter 41 +
+  `exercises/templatelab/`, the second lab whose judge asserts a build
+  FAILS. CMake for the plug-in was item 22 and is now Chapter 40 +
   `exercises/pluginlab/`. Consolidated const-correctness was item 8 and is now Appendix I
   plus `exercises/constlab/`, the one lab whose judge asserts a build FAILS;
   it builds on item 17 — *Choosing*, now DONE as Appendix H plus the

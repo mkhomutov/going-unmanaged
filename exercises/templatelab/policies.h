@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <functional>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 // The real thing, in policy clothing: static functions over FakeDevice's C
@@ -19,18 +20,24 @@ struct FakeDeviceSdk {
 
     static Handle Open(const char* name) {
         Handle h = nullptr;
-        if (Device_Open(name, &h) != DevOk) throw std::runtime_error("open failed");
+        const DevErr err = Device_Open(name, &h);
+        if (err != DevOk) {
+            throw std::runtime_error("Device_Open failed: code " + std::to_string(err));
+        }
         return h;
     }
     static void Close(Handle h) { Device_Close(h); }   // null-safe by the SDK's contract
     static void Poll(Handle h, std::function<void(int)>& sink) {
         Device_SetCallback(h, &Trampoline, &sink);
         Device_Poll(h);
-        Device_SetCallback(h, nullptr, nullptr);
+        Device_SetCallback(h, nullptr, nullptr);       // sink dies with this frame
     }
 
 private:
-    static void Trampoline(int sample, void* ctx) {
+    // noexcept: the sink is called from inside the vendor's C frame, and
+    // nothing may escape through it (Chapter 30's rule). A throwing sink
+    // terminates here, loudly, rather than unwinding through C.
+    static void Trampoline(int sample, void* ctx) noexcept {
         (*static_cast<std::function<void(int)>*>(ctx))(sample);
     }
 };
@@ -47,6 +54,7 @@ struct RecordingSdk {
     static Handle Open(const char*) { ++open_count; return open_count; }
     static void Close(Handle h) { if (h != 0) ++close_count; }
     static void Poll(Handle h, std::function<void(int)>& sink) {
+        if (h == 0) return;                             // a closed handle delivers nothing
         for (int s : scripts.at(h - 1)) sink(s);
     }
 };

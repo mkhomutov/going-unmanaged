@@ -295,8 +295,13 @@ echo "  ok   five const violations refused, each naming const   [App I]"
 
 # Chapter 41's refusal: a policy missing Poll, and the detection idiom's
 # static_assert must be what refuses it - by its own sentence, as the FIRST
-# error, not the instantiation novel it exists to replace. Same discipline
-# as constlab above: the message only, the path cut away first.
+# error, not the compiler's "no member named 'Poll'" from inside Pump. The
+# broken block in main.cpp CALLS Pump on purpose: a class template's member
+# is compiled only when used, so without that call the policy would compile
+# clean with the static_assert deleted and this section would judge nothing.
+# Same discipline as constlab above, with the same precondition: the clean
+# "templatelab" build far above must SUCCEED first, so an unrelated error in
+# main.cpp turns the script red there rather than passing silently here.
 echo "== templatelab refusal =="
 MSG=$($CXX -std=c++17 -Wall -Wextra -DTEMPLATELAB_BROKEN_POLICY \
           -I exercises/fakedevice -I exercises/templatelab \

@@ -1,8 +1,13 @@
-# The Template Lab — task card
+# Exercise: The Template Lab (one Session, two policies, and a build that must fail)
 
 The working subset of templates a plug-in author writes: **Chapter 41** of
-the book. ~2 h. Do it cold; `session.h`, `policies.h`, `util.h` and
-`main.cpp` beside this card are the reference — no peeking until yours runs.
+the book. ~2 h. Do it cold in a file of your own — `session.h`,
+`policies.h`, `util.h` and `main.cpp` beside this card are the reference,
+no peeking until yours runs.
+
+*Trains: Chapter 41 — the template seam Chapter 28 named, `static_assert` as
+the judge, the detection idiom, and reading an instantiation error from the
+right end.*
 
 The lab links `../fakedevice/`'s vendor code (Chapter 18) rather than
 copying it: one of the two policies is the real device.
@@ -20,28 +25,42 @@ copying it: one of the two policies is the real device.
    a double with a scripted table of samples and two counters, opens and
    closes. Compile the same `Session` against both.
 3. **Judge it.** Under the canonical flags: open, pump, move, close against
-   both policies; assert the samples, the double's counts, and
-   `FakeDevice_OpenHandles() == 0`. Then the compile-time claims:
-   `static_assert` that `Session<...>` is not polymorphic and moves without
-   throwing.
-4. **Break a policy and read the novel.** Delete `Poll` from a policy and
-   build. Read the error from the *bottom*: the last `requested here` is
-   your line. Then write `HasSdkShape<T>` — the detection idiom, a
-   `std::void_t` partial specialization over the three calls — and a
-   `static_assert` in `Session` that names the missing function. Build the
-   broken policy again behind `#ifdef TEMPLATELAB_BROKEN_POLICY`: the build
-   must be refused with *your* sentence as the first error.
+   both policies; assert the samples, the double's counts, that a moved-from
+   `Session` pumps nothing, and `FakeDevice_OpenHandles() == 0`. Then the
+   compile-time claims: `static_assert` that `Session<...>` is not
+   polymorphic and moves without throwing.
+4. **Break a policy and read the error — twice.** Delete `Poll` from a
+   policy and build. First surprise: if nothing calls `Pump()`, the build is
+   *green* — a member of a class template is compiled only when used. Call
+   `Pump()`, build again, and find the two lines that matter: the innermost
+   failure (`no member named 'Poll'`) and the frame in *your* file (clang's
+   last `requested here`, GCC's first `required from here`). Then write
+   `HasSdkShape<T>` — the detection idiom, a `std::void_t` partial
+   specialization over the calls — and a `static_assert` in `Session` that
+   names the shape. Put the broken policy behind
+   `#ifdef TEMPLATELAB_BROKEN_POLICY`, with a `Pump()` call, and build it:
+
+   ```bash
+   c++ -std=c++17 -Wall -Wextra -DTEMPLATELAB_BROKEN_POLICY -I ../fakedevice -c your.cpp
+   ```
+
+   The build must be refused with *your* sentence as the first `error:`
+   line — whether or not anything calls `Pump()`.
 5. **The three utilities.** `Describe(value)` with `if constexpr` (numbers
-   through `to_string`, strings through `string_view`, anything else a
-   `static_assert`); `Join(sep, parts...)` with a comma fold; `Ring<T, N>`
-   over a `std::array`. Assert each, including `Join("-") == ""`.
+   through `to_string`, `char` as itself, strings through `string_view`,
+   anything else a `static_assert` whose condition depends on `T`);
+   `Join(sep, parts...)` with a comma fold; `Ring<T, N>` over a
+   `std::array`. Assert each, including `Describe('A') == "A"` and
+   `Join("-") == ""`.
 6. **Stretch.** On a C++20 toolchain, replace the detection idiom with a
-   `concept` and compare the error text for the broken policy.
+   `concept` and compare the error text for the broken policy: the concept
+   names the exact expression that failed; the `static_assert` can only
+   list what it asked for.
 
 Build (from this directory):
 
 ```bash
-../../scripts/check.sh main.cpp fakedevice
+../../scripts/check.sh your.cpp fakedevice
 ```
 
 The judge is `scripts/build_all.sh`: it builds and runs `main.cpp` against
