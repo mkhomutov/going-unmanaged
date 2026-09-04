@@ -27,9 +27,8 @@ numbers may still move.
   timestamp for a log line, a timeout handed to a C API** (MINOR — three
   appended recipes). Recipe 6 was the whole of `<chrono>` on the page;
   these add the `finally`-shaped timer whose destructor is the stop, the
-  `time_call` wrapper that is the one forwarding reference a plug-in
-  author writes — `std::forward` was explained in Chapter 6 and never
-  written — the `system_clock`-to-text path with its thread-safe `gmtime`
+  `time_call` wrapper that hands its arguments on through a forwarding
+  reference, the `system_clock`-to-text path with its thread-safe `gmtime`
   spelling, and the `.count()` hand-off where a duration becomes the
   vendor's integer, with the parameter type putting the thousand in.
   `exercises/cookbook/timing.cpp` asserts the throwing-path record, an

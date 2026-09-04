@@ -44,7 +44,7 @@ stays right.
 | `JsonSerializer.Serialize` | Jackson `writeValueAsString` | [Recipe 25 — Serialize a record to JSON](#recipe-25--serialize-a-record-to-json) |
 | `JsonSerializer.Deserialize<T>` | Jackson `readValue` | [Recipe 26 — Read a JSON config with defaults](#recipe-26--read-a-json-config-with-defaults) |
 | `new List<T>(capacity)` / `new T[n]` | `new ArrayList<>(n)` / `new int[n]` | [Recipe 27 — Pre-size a collection](#recipe-27--pre-size-a-collection) |
-| `Stopwatch` in a `finally` / timing a delegate | `try`/`finally` + `System.nanoTime` | [Recipe 28 — Time a block, and time a call](#recipe-28--time-a-block-and-time-a-call) |
+| `Stopwatch` in a `finally` / timing a delegate | `try`/`finally` + `System.nanoTime` | [Recipe 28 — Time a block on every exit, and a call for its result](#recipe-28--time-a-block-on-every-exit-and-a-call-for-its-result) |
 | `DateTime.UtcNow.ToString("o")` | `Instant.now()` / `ISO_INSTANT` | [Recipe 29 — Stamp a log line with the time](#recipe-29--stamp-a-log-line-with-the-time) |
 | `TimeSpan.FromSeconds(2)` handed to a native call | `Duration.ofSeconds(2)` / `toMillis()` | [Recipe 30 — Pass a timeout to a C API](#recipe-30--pass-a-timeout-to-a-c-api) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
@@ -1081,7 +1081,7 @@ pitfall stands. Needs `<vector>`.
 > [!WARNING]
 > **Trap:** `reserve(n)` then `v[i] = x` compiles and writes into room that holds no element — undefined behavior that AddressSanitizer names `container-overflow` under libc++ ([Chapter 21](21-exercise-iterator-invalidation.md#chapter-21--exercise-iterator-invalidation)'s report shape) and, under libstdc++, only when `-D_GLIBCXX_SANITIZE_VECTOR` switches the annotations on.
 
-### Recipe 28 — Time a block, and time a call
+### Recipe 28 — Time a block on every exit, and a call for its result
 
 **In C#:** `var sw = Stopwatch.StartNew(); try { ... } finally { Log(sw.Elapsed); }` — or a helper that times a delegate and returns its result
 
@@ -1113,9 +1113,10 @@ auto time_call(std::chrono::nanoseconds& record, F&& f, Args&&... args)
 [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)'s
 shape applied to a measurement, so the stop runs on the early return and
 on the throw without a `try` at the call site, and the copies are deleted
-because two timers writing one record is the double-close of Chapter 1's
-file handle. The wrapper is the one template with `&&` on a deduced type
-that a plug-in author writes: `F&&` and `Args&&...` are
+because a copy would be a second stopwatch with the same start writing the
+same record, and the number would no longer be the block's — Chapter 1's
+reason for deleting the file handle's copies, in miniature. The wrapper is a template with `&&` on a deduced type:
+`F&&` and `Args&&...` are
 [Chapter 6](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics)'s
 forwarding references, and `std::forward` hands each argument on as it
 arrived — an lvalue stays borrowed, an rvalue stays stealable — where
@@ -1123,27 +1124,29 @@ arrived — an lvalue stays borrowed, an rvalue stays stealable — where
 have copied. `std::invoke_result_t` names the return type without running
 the call ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
 `decltype` with the plumbing hidden), and `std::invoke` accepts a lambda,
-a function pointer or a member pointer alike. The two answer different
-questions — the timer wraps a block, the wrapper wraps a call you also
-need the result of — and both feed the number into a record you own
-rather than printing it, so a test can assert on it. Needs `<chrono>`,
-`<functional>`, `<type_traits>`, `<utility>`.
+a function pointer or a member pointer alike. Both write into a record you
+own rather than printing, so a test can assert on it — and a number from
+either is a mean, which
+[Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters) says
+can only acquit a mean; count allocations when the question is the worst
+case. Needs `<chrono>`, `<functional>`, `<type_traits>`, `<utility>`.
 
 > [!WARNING]
-> **Trap:** a timed call whose result nobody reads is a call the optimizer may delete, so the timing measures nothing — use the result; and a number from this recipe is a mean, which [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters) says can only acquit a mean: measure at `-O2` without the sanitizers, and count allocations when the question is the worst case.
+> **Trap:** a timed call whose result nobody reads is a call the optimizer may delete outright, so the timer brackets nothing and reports nanoseconds — use the result, and measure at `-O2` without the sanitizers, because [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s factor of twenty is not uniform across code shapes.
 
 ### Recipe 29 — Stamp a log line with the time
 
-**In C#:** `DateTime.UtcNow.ToString("o")`
+**In C#:** `DateTime.UtcNow.ToString("o")` — to the millisecond, where `"o"` prints seven fractional digits
 
 **The recipe:**
 
 ```cpp
 std::string timestamp_utc() {
     const auto now = std::chrono::system_clock::now();          // the wall clock: the one with a calendar
-    const std::time_t seconds = std::chrono::system_clock::to_time_t(now);
-    const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()) % 1000;
+    const auto since_epoch = now.time_since_epoch();
+    const auto whole = std::chrono::floor<std::chrono::seconds>(since_epoch);   // what to_time_t would give, rounding settled
+    const std::time_t seconds = whole.count();
+    const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(since_epoch - whole);
     std::tm utc{};
 #if defined(_WIN32)
     gmtime_s(&utc, &seconds);              // the thread-safe spellings: never std::gmtime
@@ -1160,20 +1163,23 @@ std::string timestamp_utc() {
 **Why it looks like this.** Recipe 6 said intervals come from
 `steady_clock`; a timestamp is the other clock's job, because
 `system_clock` is the only one whose `now()` means a calendar date. C++17
-can turn it into text only by stepping down into C: `to_time_t` gives
-seconds since the epoch, the `<ctime>` breakdown gives a `std::tm`, and
-`std::put_time` formats it with `strftime`'s specifiers — so the
-milliseconds, which `time_t` cannot hold, are computed separately from
-the `time_point`'s own arithmetic. The `_r` / `_s` split is not
-pedantry: `std::gmtime` returns a pointer into storage shared by every
-thread, which is [Chapter 29](29-concurrency.md#chapter-29--concurrency)'s
-data race hiding in a formatting function. C++20 collapses the whole
+can turn it into text only by stepping down into C: the whole seconds
+since the epoch become a `time_t` (`floor` rather than `to_time_t`, which
+the standard lets round or truncate as it pleases), the `<ctime>`
+breakdown gives a `std::tm`, and `std::put_time` formats it with
+`strftime`'s specifiers — so the milliseconds, which `time_t` cannot
+hold, come from the same `duration` the seconds were cut from. The `_r`
+/ `_s` split is not pedantry: on POSIX `std::gmtime` returns a pointer
+into storage shared by every thread, which is
+[Chapter 29](29-concurrency.md#chapter-29--concurrency)'s data race
+hiding in a formatting function, and on Windows it is the spelling MSVC
+deprecates. C++20 collapses the whole
 recipe into `std::format("{:%FT%TZ}", std::chrono::floor<std::chrono::milliseconds>(now))`;
 until your toolchain is there, this is the spelling. Needs `<chrono>`,
 `<ctime>`, `<iomanip>`, `<sstream>`, `<string>`.
 
 > [!WARNING]
-> **Trap:** `system_clock` can step backwards when NTP or the user adjusts the clock, so a duration made by subtracting two of its readings can be negative — timestamps come from it, intervals never do (Recipe 6's trap, from the other side).
+> **Trap:** the `Z` is a character you wrote, not something the clock knows — swap `gmtime_r` for `localtime_r` to get "readable" times and every line now claims UTC while carrying local time, wrong by the offset in every log you correlate with another machine's.
 
 ### Recipe 30 — Pass a timeout to a C API
 
@@ -1189,17 +1195,20 @@ int wait_for_sample(std::chrono::milliseconds timeout) {
 }
 ```
 
-**Why it looks like this.** Every SDK in
-[Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary)'s Bestiary
-takes its timeouts as a bare integer with the unit in the parameter name,
-and the wrapper is where the typed duration stops: your side speaks
+**Why it looks like this.** A C API has no `TimeSpan`: a timeout arrives
+as a bare integer with the unit in the parameter name — the shape of every
+C-facing SDK in [Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary)'s
+Bestiary — and the wrapper is where the typed duration stops: your side speaks
 `std::chrono::milliseconds`, and `count()` — the only call that turns a
 duration back into a number — sits on the line next to the `_ms`
 parameter and nowhere else. The conversions run in one direction for
 free: `wait_for_sample(2s)` and `wait_for_sample(std::chrono::minutes(1))`
 compile, because seconds to milliseconds loses nothing, while a function
 taking `seconds` handed `250ms` does not compile until you write the
-`duration_cast` that admits the truncation. The literals need
+`duration_cast` that admits the truncation. The `static_cast` is also
+where the *range* leaves: a `milliseconds` count is 64 bits wide and the
+vendor's `uint32_t` wraps at forty-nine days, silently, so a wrapper whose
+callers can pass anything long clamps before the cast. The literals need
 `using namespace std::chrono_literals;` in the scope that uses them. Needs
 `<chrono>`, `<cstdint>`.
 

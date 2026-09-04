@@ -10,7 +10,8 @@
 // main() is scaffolding - it asserts that ticks arrive while the timer
 // lives and none after the join, that the scoped timer records on the
 // throwing path too, that the wrapper forwards an lvalue as an lvalue and
-// an rvalue as an rvalue, that the timestamp has the shape and the century
+// an rvalue as an rvalue (judged by a callee overloaded on the value
+// category, so a wrapper that copies or moves everything fails), that the timestamp has the shape and the century
 // it claims, and that a seconds literal reaches the C API multiplied out.
 #include <atomic>
 #include <cassert>
@@ -23,6 +24,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <type_traits>
 #include <utility>
@@ -69,8 +71,8 @@ private:
     std::thread worker_;
 };
 
-// Recipe 28 - using var sw = Stopwatch.StartNew() ... on every exit path,
-// and a wrapper that times one call and hands its result back
+// Recipe 28 - Stopwatch.StartNew() with the stop in a finally, so it runs on
+// every exit path, and a wrapper that times one call and hands its result back
 class ScopedTimer {
 public:
     explicit ScopedTimer(std::chrono::nanoseconds& record)
@@ -91,12 +93,13 @@ auto time_call(std::chrono::nanoseconds& record, F&& f, Args&&... args)
     return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);   // each argument passed on as it arrived
 }
 
-// Recipe 29 - DateTime.UtcNow.ToString("o"), near enough
+// Recipe 29 - DateTime.UtcNow.ToString("o"), to the millisecond rather than the tick
 std::string timestamp_utc() {
     const auto now = std::chrono::system_clock::now();          // the wall clock: the one with a calendar
-    const std::time_t seconds = std::chrono::system_clock::to_time_t(now);
-    const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()) % 1000;
+    const auto since_epoch = now.time_since_epoch();
+    const auto whole = std::chrono::floor<std::chrono::seconds>(since_epoch);   // what to_time_t would give, rounding settled
+    const std::time_t seconds = whole.count();
+    const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(since_epoch - whole);
     std::tm utc{};
 #if defined(_WIN32)
     gmtime_s(&utc, &seconds);              // the thread-safe spellings: never std::gmtime
@@ -127,6 +130,12 @@ int Device_Wait(std::uint32_t timeout_ms) {
 }
 
 int add_one(int x) { return x + 1; }
+
+// Reports the value category it was handed - the judge for std::forward.
+struct Which {
+    const char* operator()(std::string&) const { return "lvalue"; }
+    const char* operator()(std::string&&) const { return "rvalue"; }
+};
 
 int main() {
     report_batch_time();
@@ -175,6 +184,12 @@ int main() {
     const std::string taken = time_call(call, [](std::string s) { return s; }, std::move(given));
     assert(taken == "rvalue");                              // moved through: the cast survived the hop
     static_assert(std::is_same_v<decltype(time_call(call, add_one, 1)), int>);
+    // The two lines above are satisfied by a wrapper that copies, and by one
+    // that std::moves everything; this callee is not - it reports the value
+    // category it was handed, so a wrapper that changed it fails here.
+    std::string probe = "x";
+    assert(std::string_view(time_call(call, Which{}, probe)) == "lvalue");             // std::move would say rvalue
+    assert(std::string_view(time_call(call, Which{}, std::move(probe))) == "rvalue");  // a by-value pass would say lvalue
 
     // Recipe 29: the shape and the century, not the value - the value is
     // whatever now is.
