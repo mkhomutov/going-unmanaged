@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 40 chapters, appendices A–I), indexed by `book/README.md`. The
+(6 parts, 41 chapters, appendices A–I), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
 artifact produced by `scripts/build_book.sh`. Appendices run A–I with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
@@ -54,6 +54,11 @@ stands in for a vendor. Chapter 40 (item 22) is the plug-in's build — a
 MODULE with one exported symbol, a hand-written find-module for an SDK with
 no config package, and the finding that hidden visibility covers what you
 compile and not the archive you link, judged by the export table read back.
+Chapter 41 (item 23) is the working subset of templates — the seam as a
+policy type, Chapter 28's promised compile-time fake — whose lab's broken
+policy CALLS Pump on purpose: a member of a class template is compiled only
+when used, so without that call the missing function would compile clean
+even with the static_assert deleted, and the refusal would prove nothing.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -65,7 +70,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–40, `A-`…`I-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–41, `A-`…`I-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -237,6 +242,17 @@ Chapter 25's Finding 10.
   files are quoted whole in the chapter (FULL pairings in check_verbatim.sh:
   the vendor header, four plug-in files and deplab's mathlib CMakeLists),
   so editing one means editing Chapter 40 in the same commit
+- `exercises/templatelab/` — Chapter 41's lab: `session.h` (a `Session<Sdk>`
+  over a policy, with the detection idiom `HasSdkShape` and a static_assert
+  that names the missing function), `policies.h` (the real device over
+  `../fakedevice/`, linked not copied, and a recording double), `util.h`
+  (`if constexpr`, a fold-expression `Join`, a `Ring<T, N>`) and the judging
+  `main.cpp`. build_all.sh builds and runs it against FakeDevice, then
+  builds it once more with `-DTEMPLATELAB_BROKEN_POLICY` and asserts the
+  build is REFUSED with the static_assert's own text as the first error
+  (the constlab discipline: the diagnostic's message only, path cut away).
+  The three headers are quoted banner-stripped in the chapter (BANNER
+  pairings), so editing one means editing Chapter 41 in the same commit
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
@@ -492,7 +508,7 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 41+, Appendix J+) — no item requires renumbering. Delivered items
+(Chapter 42+, Appendix J+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
@@ -510,7 +526,9 @@ stay on the list marked DONE so item numbers never shift. Short version:
   defaults for a foreign thread now cross-reference each other, which is all
   of the item that is done). Both were sequenced after item 9 (P/Invoke),
   which is **DONE as of 2026-09-02** — Chapter 39 — so both are now
-  unblocked. CMake for the plug-in was item 22 and is now Chapter 40 +
+  unblocked. Templates you will write was item 23 and is now Chapter 41 +
+  `exercises/templatelab/`, the second lab whose judge asserts a build
+  FAILS. CMake for the plug-in was item 22 and is now Chapter 40 +
   `exercises/pluginlab/`. Consolidated const-correctness was item 8 and is now Appendix I
   plus `exercises/constlab/`, the one lab whose judge asserts a build FAILS;
   it builds on item 17 — *Choosing*, now DONE as Appendix H plus the

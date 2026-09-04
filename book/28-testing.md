@@ -298,7 +298,7 @@ Note what `buffer_test` links and what it does not. `Buffer.h` is header-only, s
 
 ### What is genuinely harder than in C#
 
-**Mocking.** C# mocking libraries fabricate an implementation of an interface at runtime, using reflection and code generation. C++ cannot do that; there is nothing to reflect on. So a fake is a class you write, and the seam has to exist in the design *before* you need it — either a pure-virtual interface (Chapter 4) that both the real and fake implementations satisfy, or a template parameter (Chapter 7) that swaps the dependency at compile time with no virtual call.
+**Mocking.** C# mocking libraries fabricate an implementation of an interface at runtime, using reflection and code generation. C++ cannot do that; there is nothing to reflect on. So a fake is a class you write, and the seam has to exist in the design *before* you need it — either a pure-virtual interface (Chapter 4) that both the real and fake implementations satisfy, or a template parameter (Chapter 7) that swaps the dependency at compile time with no virtual call; [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write) builds the second.
 
 You have already seen the answer twice. **FakeSDK and FakeDevice are exactly this pattern**: a stand-in for a vendor dependency, with the same shape as the real thing, that you can build and run on your own machine. That is what testing against an SDK looks like in practice — not a mocking library, but a fake you own.
 
