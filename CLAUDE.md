@@ -129,8 +129,10 @@ Chapter 25's Finding 10.
   is `solutions/device_threaded_solution.cpp`
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
   (files, strings, timing, handles, lookups, paths, async, events, logging,
-  alternatives, errors, expected), each with a `main()` asserting what its
-  recipes claim; build_all.sh builds and runs all twelve. `expected.cpp` is
+  alternatives, errors, expected, json), each with a `main()` asserting what
+  its recipes claim; build_all.sh builds and runs all thirteen. `json.cpp`
+  is the one with a dependency — `exercises/third_party/nlohmann/`, vendored
+  with its version recorded, included with `-isystem`. `expected.cpp` is
   the one cut by standard rather than domain — C++23, Chapter 8's chaining
   listing, its own probe. Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
@@ -404,7 +406,12 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 4. No real vendor/product names in the book's SDK material (the point is
    generality). Open-source ecosystems named as study material are fine
    (libusb, PortAudio, SQLite, Qt, Unreal, STM32 HAL, COM as a technology).
-5. Solutions never use anything beyond the standard library.
+5. Solutions never use anything beyond the standard library. `exercises/`
+   may carry a vendored third-party header under `exercises/third_party/`
+   (today: nlohmann/json, for the cookbook's two JSON recipes), included
+   with `-isystem`, with the version and any patch recorded in that
+   directory's README — Chapter 27's own vendoring rule, applied to the
+   repo.
 6. The single file stays reproducible from `book/`: after ANY change there
    run `./scripts/build_book.sh`, and `--write-nav` too if you added,
    removed, or renamed a chapter file. CI runs both.

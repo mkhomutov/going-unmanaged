@@ -41,6 +41,8 @@ stays right.
 | `int.TryParse` with a reason / a `Result<T>` from a library | `Optional` / `Either` from a library | [Recipe 22 — Return a value or an error](#recipe-22--return-a-value-or-an-error) |
 | `string.IsNullOrEmpty` / `s ?? ""` | `s == null \|\| s.isEmpty()` | [Recipe 23 — Test for an empty string, and for no string at all](#recipe-23--test-for-an-empty-string-and-for-no-string-at-all) |
 | `[Conditional("DEBUG")]` / `#if DEBUG` | `assert` (with `-ea`) | [Recipe 24 — Compile a diagnostic out of Release](#recipe-24--compile-a-diagnostic-out-of-release) |
+| `JsonSerializer.Serialize(record)` | Jackson `writeValueAsString` | [Recipe 25 — Serialize a record to JSON](#recipe-25--serialize-a-record-to-json) |
+| `JsonSerializer.Deserialize<Config>(text)` | Jackson `readValue` | [Recipe 26 — Read a JSON config with defaults](#recipe-26--read-a-json-config-with-defaults) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -945,6 +947,84 @@ so) and why a macro — `#ifdef NDEBUG` / `#define CHECK_CHANNELS(x) ((void)0)`
 
 > [!WARNING]
 > **Trap:** the expression inside `assert` vanishes with it — `assert(bump() == 1)` runs `bump()` in Debug and never in Release, and `exercises/cookbook/logging.cpp` is built both ways to prove it.
+
+### Recipe 25 — Serialize a record to JSON
+
+**In C#:** `var text = JsonSerializer.Serialize(readings, new JsonSerializerOptions { WriteIndented = true });`
+
+**The recipe:**
+
+```cpp
+struct Reading {
+    int sensor;
+    double value;
+    std::string unit;
+};
+
+// Two free functions the library finds by argument-dependent lookup - no
+// attribute, no reflection: this IS the [JsonPropertyName] table, by hand.
+void to_json(json& j, const Reading& r) {
+    j = json{{"sensor", r.sensor}, {"value", r.value}, {"unit", r.unit}};
+}
+
+void from_json(const json& j, Reading& r) {
+    j.at("sensor").get_to(r.sensor);
+    j.at("value").get_to(r.value);
+    j.at("unit").get_to(r.unit);
+}
+
+std::string serialize(const std::vector<Reading>& readings) {
+    return json(readings).dump(2);            // 2 = indent; dump() alone is one line
+}
+```
+
+**Why it looks like this.** The standard library has no JSON
+([Chapter 27](27-dependency-management.md#chapter-27--dependency-management)),
+so this is the cookbook's one recipe on a dependency — nlohmann/json,
+vendored under `exercises/third_party/` exactly as that chapter's first
+strategy says, version recorded beside it. There is no reflection to walk
+your fields, so the mapping is two free functions the library finds by
+argument-dependent lookup (Appendix E's ADL) — write them once per type and
+every `std::vector<Reading>`, `std::map<std::string, Reading>` and nested
+struct converts for free. Keys come out sorted, because the document is a
+map. Needs `<nlohmann/json.hpp>`, `<string>`, `<vector>`, and `using json =
+nlohmann::json;`.
+
+> [!WARNING]
+> **Trap:** `j["missing"]` on a non-const document *inserts* a null for the key — [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)'s map trap in a new coat — so a read that meant to check has changed what you serialize next; `at()` throws instead, and on a `const json` the write does not compile.
+
+### Recipe 26 — Read a JSON config with defaults
+
+**In C#:** `var cfg = JsonSerializer.Deserialize<Config>(text)!;` with `[JsonIgnore]`-and-default fields
+
+**The recipe:**
+
+```cpp
+struct Config {
+    int timeout = 30;
+    std::string name;
+};
+
+Config load_config(std::string_view text) {
+    const json j = json::parse(text);         // junk throws json::parse_error - the event pole
+    Config c;
+    c.timeout = j.value("timeout", c.timeout);      // TryGetValue with a default: absent is fine
+    c.name = j.at("name").get<std::string>();        // at(): required - missing throws out_of_range
+    return c;
+}
+```
+
+**Why it looks like this.** Three outcomes, three spellings, and they are
+[Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
+decision applied to a file: text that is not JSON at all is the event pole
+and `parse` throws; a field that may be absent is not an error, and
+`value(key, default)` is `TryGetValue` with the default in the call; a field
+that must be there is `at()`, which throws `out_of_range` naming the key.
+The document owns its strings — `get<std::string>()` copies out, which is
+the point. Needs `<nlohmann/json.hpp>`, `<string>`, `<string_view>`.
+
+> [!WARNING]
+> **Trap:** a reference into the document — `const auto& s = j.at("name").get_ref<const std::string&>();` — is [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s dangling view the moment `j` goes out of scope; copy the value out, or keep the document alive as long as anything points into it.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

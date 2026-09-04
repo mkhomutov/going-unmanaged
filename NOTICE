@@ -7,7 +7,9 @@ files rather than around them:
   Code — MIT License, see LICENSE.
   Everything under exercises/, solutions/, scripts/ and .github/, AND every
   code sample inside the book text. Paste a snippet from a chapter into your
-  own work freely; no attribution obligation follows it.
+  own work freely; no attribution obligation follows it. The one exception
+  is exercises/third_party/, which carries vendored code under its own
+  licence, named in that directory's README (today: nlohmann/json, MIT).
 
   Book text — Creative Commons Attribution 4.0 International (CC-BY 4.0),
   see LICENSE-CC-BY-4.0 or https://creativecommons.org/licenses/by/4.0/.

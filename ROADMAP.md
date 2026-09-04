@@ -127,10 +127,11 @@ The book's own rule survived intact: the chapter teaches the landscape and adds
 no dependency to the repo, and its exercise has the reader write the dependency
 themselves so it works offline and stdlib-only.
 
-**Still open from this item:** nothing blocking. If the repo ever does take a
-third-party dependency, the vendoring conventions this chapter describes
-(record the version and any local patch next to the code) should become a
-CONTRIBUTING rule rather than only chapter advice.
+**Still open from this item:** nothing. The repo took its first third-party
+dependency on 2026-09-04 — nlohmann/json, vendored under
+`exercises/third_party/` for Appendix F's two JSON recipes — and the
+vendoring conventions this chapter describes are now a CONTRIBUTING rule,
+practised by that directory's README.
 
 ### 3. Testing — DONE
 
