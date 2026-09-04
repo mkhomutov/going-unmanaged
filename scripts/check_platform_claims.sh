@@ -84,6 +84,31 @@ int main() {
 }
 EOF
 
+# Recipe 34 / Appendix E: a frame that does not fit the thread's stack, with
+# the stack sized by hand (pthread, 512 KB) so the overshoot is the same on
+# every platform. Two sizes, because the claim is that AddressSanitizer's
+# NAME for the crash changes with the overshoot: 600 KB overshoots by a
+# little, 4 MB by megabytes.
+for KB in 600 4096; do
+cat > "$OUT/frame_$KB.cpp" <<EOF
+#include <array>
+#include <cstdint>
+#include <cstdio>
+#include <pthread.h>
+struct Big { std::array<std::uint8_t, $KB * 1024> bytes{}; };
+void* worker(void*) { Big b; b.bytes[0] = 1; std::printf("ran %d\\n", b.bytes[0]); return nullptr; }
+int main() {
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setstacksize(&attr, 512 * 1024);
+    pthread_t t;
+    pthread_create(&t, &attr, worker, nullptr);
+    pthread_join(t, nullptr);
+    return 0;
+}
+EOF
+done
+
 cat > "$OUT/race.cpp" <<'EOF'
 #include <thread>
 int g = 0;
@@ -562,13 +587,47 @@ else
     fi
 fi
 
+# --- 8. a frame that does not fit the stack ---------------------------------
+# Recipe 34's trap and Appendix E's stack-overflow entry: the crash is on
+# entry to the function, and AddressSanitizer's name for it changes with the
+# overshoot - "stack-overflow" when the frame overshoots by a little (the fault
+# lands near the stack, where the runtime can attribute it), a bare SEGV or
+# BUS "on unknown address" when it overshoots by megabytes (the first write,
+# from the zeroing routine, lands nowhere near it). Both are nonzero exits;
+# neither is one of Chapter 31's four report shapes.
+echo "== stack overflow report names =="
+if $CXX -std=c++17 -g -fsanitize=address -pthread "$OUT/frame_600.cpp" -o "$OUT/frame_600" 2>/dev/null \
+   && $CXX -std=c++17 -g -fsanitize=address -pthread "$OUT/frame_4096.cpp" -o "$OUT/frame_4096" 2>/dev/null; then
+    RC_S=$(run_rc "$OUT/frame_600" "$OUT/frame_600.log")
+    RC_L=$(run_rc "$OUT/frame_4096" "$OUT/frame_4096.log")
+    if [ "$RC_S" = 0 ] || [ "$RC_L" = 0 ]; then
+        fail "a frame past a 512 KB stack ran to completion ($RC_S / $RC_L); Recipe 34 says it crashes on entry   [Recipe 34]"
+    else
+        pass "both frames crashed, exit $RC_S and $RC_L   [Recipe 34, App E]"
+    fi
+    if grep -q "AddressSanitizer: stack-overflow" "$OUT/frame_600.log"; then
+        pass "600 KB on a 512 KB stack: ASan names it stack-overflow   [Recipe 34, App E]"
+    else
+        fail "600 KB on a 512 KB stack: expected 'stack-overflow', got: $(grep -m1 -oE 'AddressSanitizer: [A-Za-z-]+' "$OUT/frame_600.log" || echo '(no ASan line)')   [Recipe 34]"
+    fi
+    if grep -q "AddressSanitizer: stack-overflow" "$OUT/frame_4096.log"; then
+        fail "4 MB on a 512 KB stack: ASan said stack-overflow; Recipe 34 says a large overshoot is a bare SEGV or BUS   [Recipe 34]"
+    elif grep -qE "AddressSanitizer: (SEGV|BUS)" "$OUT/frame_4096.log"; then
+        pass "4 MB on a 512 KB stack: a bare $(grep -m1 -oE 'AddressSanitizer: (SEGV|BUS)' "$OUT/frame_4096.log" | cut -d' ' -f2), not stack-overflow   [Recipe 34, App E]"
+    else
+        fail "4 MB on a 512 KB stack: expected SEGV or BUS, got: $(grep -m1 -oE 'AddressSanitizer: [A-Za-z-]+' "$OUT/frame_4096.log" || echo '(no ASan line)')   [Recipe 34]"
+    fi
+else
+    skip "AddressSanitizer cannot build the stack-overflow demonstrations with $CXX"
+fi
+
 echo
 if [ "$FAILED" = 0 ]; then
     echo "platform claims OK ($OS/$ARCH, $STDLIB)"
 else
     echo "check_platform_claims.sh: a claim in the book does not hold on" >&2
     echo "  $OS/$ARCH with $CXX. Fix the chapter, not this script - each FAIL" >&2
-    echo "  above names the claim. Sections 1-4 are per-platform, where the" >&2
+    echo "  above names the claim. Sections 1-4 and 8 are per-platform, where the" >&2
     echo "  mistake is one platform's behavior written down as the rule;" >&2
     echo "  sections 5 and 7 are linker claims that hold everywhere alike, so a" >&2
     echo "  failure there means this toolchain differs from the chapter's transcript;" >&2

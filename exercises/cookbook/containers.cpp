@@ -55,7 +55,7 @@ int main() {
     assert(samples.size() == 5);
     assert(samples[0] == 100 && samples[4] == 104);
 
-    // vector(n): both numbers set, every element value-initialised.
+    // vector(n): both numbers set, every element value-initialized.
     const std::vector<double> z = zeroed(4);
     assert(z.size() == 4);
     for (double d : z) {

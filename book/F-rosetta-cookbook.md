@@ -1316,7 +1316,7 @@ is true for every set, exactly as `HasFlag(0)` is. Needs `<cstdint>`.
 
 ### Recipe 33 — Hold an owned object as a field
 
-**In C#:** `private readonly Log _log;` plus `IDisposable`, and the question of who calls `Dispose`
+**In C#:** `private readonly Log _log;` — and, if `Log` is `IDisposable`, an `IDisposable` on the owner whose `Dispose` calls `_log.Dispose()` by hand
 
 **The recipe:**
 
@@ -1352,32 +1352,30 @@ private:
 ```
 
 **Why it looks like this.** The C# question — can a field own something,
-and who disposes it — has a shorter answer here than there: every field
-is destroyed when its owner is, in reverse order of declaration, with
-nothing to write. What is yours to decide is the *shape* of the field,
-and it is [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s
-fourth procedure applied to a single member: by value until something
-forces otherwise, because a `std::string` or `std::vector` field already
-keeps its bulk on the heap and costs the enclosing object only a few
-pointers; behind a `unique_ptr` when the field is a polymorphic base
-([Chapter 2](02-value-semantics.md#chapter-2--value-semantics)'s slicing),
-may be absent, is an incomplete type
+and who disposes it — has a shorter answer here: every field is destroyed
+when its owner is, with nothing to write. What is yours to decide is the
+field's *shape*, and it is
+[Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s
+fourth procedure applied to one member: by value until something forces
+otherwise — a `std::string` or `std::vector` field already keeps its bulk
+on the heap; behind a `unique_ptr` when the type is a polymorphic base
+([Chapter 2](02-value-semantics.md#chapter-2--value-semantics)), may be
+absent, is incomplete
 ([Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s
-PIMPL), or is too big for the object to carry (Recipe 34); behind a
-`shared_ptr` only when the object is genuinely co-owned and the cycle
-question has an answer ([Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)).
-A `unique_ptr` field also decides the class's copies for you —
+PIMPL) or is too big to carry (Recipe 34); behind a `shared_ptr` only when
+co-owned and the cycle question is answered
+([Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)). A
+`unique_ptr` field also settles the class's copies —
 [Chapter 6](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics)'s
-Rule of Zero: copying is deleted, moving is generated, and the harness
-reads both back with `static_assert`. Needs `<memory>`, `<string>`,
-`<vector>`.
+Rule of Zero: copy deleted, move generated, nothing written. Needs
+`<memory>`, `<string>`, `<vector>`.
 
 > [!WARNING]
-> **Trap:** a `unique_ptr<Impl>` field whose `Impl` is only forward-declared compiles until the compiler generates the destructor where `Impl` is still incomplete — Chapter 30's `~Widget();` declared in the header and defined in the `.cpp` is the fix, and it catches everyone exactly once.
+> **Trap:** fields die in reverse *declaration* order, so a field that another field's destructor uses must be declared before it — declare the `Sink` after a `Log` whose destructor writes a last line into it, and that line lands in a dead field; nothing warns, because `-Wreorder` is about the constructor's list, not the class's.
 
 ### Recipe 34 — An object too big for the stack
 
-**In C#:** nothing — a class instance is on the heap whether it is forty bytes or forty megabytes, and no struct is ever that big
+**In C#:** nothing to decide — a class instance is on the heap at forty bytes and at forty megabytes; only a struct or a `stackalloc` sees the stack, and when one of those is too big the runtime at least says `StackOverflowException`
 
 **The recipe:**
 
@@ -1398,11 +1396,11 @@ one owner; this is the third question, and C# never asked it because the
 runtime answered it for every class. A stack frame is small —
 [Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior)'s
 numbers: 1 MB per thread on Windows, 512 KB for a thread you spawn on
-macOS, 8 MB for the main thread on both Unixes — and `sizeof` is
-transitive, so a `std::array` member this size makes every object that
+macOS, 8 MB for the main thread on both Linux and macOS — and `sizeof`
+is transitive, so a `std::array` member this size makes every object that
 holds one, and every function that holds one of those, a stack overflow
-waiting for the driver thread of
-[Chapter 29](29-concurrency.md#chapter-29--concurrency). `make_unique`
+waiting for a thread whose stack you did not size —
+[Chapter 29](29-concurrency.md#chapter-29--concurrency)'s driver thread. `make_unique`
 puts the bytes on the heap and leaves a pointer-sized owner behind, which
 is the same ownership as before at a different address. When the size is
 not a compile-time constant, `std::vector<std::uint8_t>(n)` is the same
@@ -1413,7 +1411,7 @@ judge): a reviewer who changes the array's size meets the sentence.
 Needs `<array>`, `<cstdint>`, `<memory>`.
 
 > [!WARNING]
-> **Trap:** the failure is a crash on *entry* to the function, before its first line runs, and the report is none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s three shapes — AddressSanitizer says `stack-overflow` when the frame overshoots by a little and a bare `SEGV` or `BUS` "on unknown address", the faulting frame inside `memset` zeroing the array, when it overshoots by megabytes; one stack, no allocation site, either way.
+> **Trap:** the failure is a crash on *entry* to the function, before its first line runs, and the report is none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s four shapes — AddressSanitizer's name for it changes with the overshoot, `stack-overflow` for a little and a bare `SEGV` or `BUS` for megabytes, frame #0 in the zeroing routine — and there is no allocation site to read.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

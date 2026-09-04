@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-// Recipe 32 - a field of class type, and who disposes it
+// Recipe 33 - a field of class type, and who disposes it
 class Log {                                  // polymorphic: lives behind a pointer (Chapter 2)
 public:
     virtual ~Log() = default;
@@ -45,7 +45,7 @@ private:
     std::shared_ptr<Sink> sink_;             // co-owned: alive while anyone still holds it
 };   // no Dispose to write: the fields die in reverse order of declaration, then the object
 
-// Recipe 33 - an object too big for the stack
+// Recipe 34 - an object too big for the stack
 struct FrameBuffer {
     std::array<std::uint8_t, 4 * 1024 * 1024> pixels{};   // 4 MB inline: a class this size has no business on a stack
 };
@@ -68,7 +68,7 @@ namespace {
 }
 
 int main() {
-    // Recipe 32: the field that is a unique_ptr dies with the Session; the
+    // Recipe 33: the field that is a unique_ptr dies with the Session; the
     // shared one does not, because someone else still holds it.
     std::vector<std::string> events;
     auto sink = std::make_shared<Sink>();
@@ -93,13 +93,13 @@ int main() {
     static_assert(!std::is_copy_constructible_v<Session>);
     static_assert(std::is_nothrow_move_constructible_v<Session>);
 
-    // Recipe 33: the object is on the heap and the owner is the size of a
+    // Recipe 34: the object is on the heap and the owner is the size of a
     // pointer; a FrameBuffer local in a function running on a macOS worker
     // thread (512 KB of stack, Chapter 3) would not survive its own prologue.
     std::unique_ptr<FrameBuffer> frame = make_frame();
     static_assert(sizeof(frame) == sizeof(void*));
     frame->pixels[0] = 255;
     frame->pixels.back() = 1;
-    assert(frame->pixels[1] == 0);           // make_unique value-initialised the four megabytes
+    assert(frame->pixels[1] == 0);           // make_unique value-initialized the four megabytes
     return 0;
 }
