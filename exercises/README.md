@@ -32,6 +32,7 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [No Repro, Dump Attached](dumplab/TASK.md) | 37 | a ticket with the crash report attached: post-mortem from the paperwork alone | ~60 min | the files themselves: the fixed [session.cpp](dumplab/session.cpp) + [main.cpp](dumplab/main.cpp), green under both device configurations |
 | [The Bridge Lab](bridgelab/TASK.md) | 38 | serving a foreign client: the main-thread queue, refusing work, the bounded wait | ~2 h | the files themselves: [main_thread_queue.h](bridgelab/main_thread_queue.h), [host.h](bridgelab/host.h), [bridge_core.h](bridgelab/bridge_core.h) + the judging [main.cpp](bridgelab/main.cpp), green under both sanitizer builds |
 | [The Interop Lab](interoplab/TASK.md) | 39 | publishing a C surface a managed caller binds by hand | ~2 h | the files themselves: [plugin.h](interoplab/plugin.h) + [plugin.cpp](interoplab/plugin.cpp), judged by [main.cpp](interoplab/main.cpp) through the boundary header alone |
+| [The Plug-in Lab](pluginlab/TASK.md) | 40 | a MODULE with one exported symbol, an SDK located by a hand-written find-module, and a stand-in host that loads the result | ~2 h | the files themselves: [plugin/CMakeLists.txt](pluginlab/plugin/CMakeLists.txt), [plugin/cmake/FindHostSDK.cmake](pluginlab/plugin/cmake/FindHostSDK.cmake), [plugin/monitor.cpp](pluginlab/plugin/monitor.cpp) + the loading [host/host.cpp](pluginlab/host/host.cpp), the export table read back by `build_all.sh` |
 | [The Const Lab](constlab/TASK.md) | Appendix I | const as one subject, judged by five builds that must fail | ~45 min | the files themselves: [counter.h](constlab/counter.h) + [main.cpp](constlab/main.cpp), plus five builds that must be refused |
 
 Chapter 24 (the practice plan) sequences everything above the dependency lab —
@@ -49,8 +50,11 @@ unit whole the pairing is enforced in both directions — Appendix H and
 Chapter 6 for `choosing/`, Chapter 8 for three of `cookbook/`'s). Nothing
 in either to attempt cold.
 
-Twelve directories hold their reference in the open, rather than behind a
-fold. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and
+Fourteen directories hold their reference in the open, rather than behind a
+fold. `pluginlab/` is Chapter 40's: three CMake projects — a vendor-style SDK
+drop, the plug-in, a stand-in host — that `build_all.sh` installs, builds,
+loads and inspects, asserting the module's export table holds the entry
+point and nothing of the plug-in's own or the SDK's. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and
 `dumplab/` are
 the ticket-shaped ones: each TASK.md carries the broken code to work from
 plus the ticket's attached evidence (reportlab's sanitizer report,
@@ -95,7 +99,7 @@ twice proves the *pin* chose the version, and asking merely that the two
 outputs differ would let through a pin that chose the wrong commit. `testlab/`
 holds Chapter 28's harness and suite, which the chapter prints in full anyway,
 and `abilab/` holds Chapter 30's three worked boundaries for the same reason.
-All five are kept green by `scripts/build_all.sh`. Write your own first — in a
+All of them are kept green by `scripts/build_all.sh`. Write your own first — in a
 directory of your own, without reading these.
 
 ## Building your attempt

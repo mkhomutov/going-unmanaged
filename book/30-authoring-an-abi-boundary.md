@@ -184,7 +184,7 @@ The boundary is a promise, so plan for the version-two conversation before you h
 ### In the wild: shipping a plug-in
 
 - **Nothing escapes your entry points.** Every exported function is a try/catch(...) boundary that translates to an error code. This is exactly the trampoline guard of Chapter 18's stretch goal — you were writing it as a consumer, and it is the same guard you owe your host as an author.
-- **Match the host's configuration.** Chapter 26's Debug/Release runtime pitfall is now yours to document for *your* users, because they will hit it and blame you.
+- **Match the host's configuration.** Chapter 26's Debug/Release runtime pitfall is now yours to document for *your* users, because they will hit it and blame you — and [Chapter 40](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in) is where the match is written into the build.
 - **Static initialization across modules is not ordered.** A global in your library and a global in the host have no defined construction order relative to each other. Prefer the function-local static of Chapter 28's registry, which constructs on first use.
 - **Answer Chapter 16's four questions in your own documentation.** Who allocates, who releases and with which function, what the failure contract is, and what thread may call what. You know how much it costs when a vendor leaves one unanswered.
 

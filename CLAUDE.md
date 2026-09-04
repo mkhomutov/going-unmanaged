@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 39 chapters, appendices A–I), indexed by `book/README.md`. The
+(6 parts, 40 chapters, appendices A–I), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
 artifact produced by `scripts/build_book.sh`. Appendices run A–I with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
@@ -50,7 +50,10 @@ by the host's own channel, and the decision table. Chapter 39 (item 9) is
 the publishing half of P/Invoke — one signature written twice in two
 languages and compared by nothing; interoplab judges it with no .NET
 anywhere, because marshal.h stands in for the marshaller the way FakeSDK
-stands in for a vendor.
+stands in for a vendor. Chapter 40 (item 22) is the plug-in's build — a
+MODULE with one exported symbol, a hand-written find-module for an SDK with
+no config package, and the finding that hidden visibility covers what you
+compile and not the archive you link, judged by the export table read back.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -62,7 +65,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–39, `A-`…`I-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–40, `A-`…`I-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -82,8 +85,10 @@ Chapter 25's Finding 10.
   (`add_subdirectory`), fetched (`FetchContent` + a `file://` URL) and found
   (`find_package(mathlib CONFIG)` against an installed prefix) — so the three
   `consume-*/CMakeLists.txt` are the whole lesson and the app cannot tell
-  them apart. Nothing here is quoted in the chapter, so check_verbatim.sh has
-  no pairing to hold. Four rules are load-bearing and easy to undo by
+  them apart. Nothing here is quoted in Chapter 27; `mathlib/CMakeLists.txt`
+  is quoted whole in Chapter 40 (a FULL pairing in check_verbatim.sh), so
+  editing it means editing Chapter 40 in the same commit. Four rules are
+  load-bearing and easy to undo by
   accident. (1) mathlib's install/export half is wrapped in a top-level
   guard: paths 1 and 2 reach it through `add_subdirectory`, which would
   otherwise make those the *consumer's* install rules and publish a private
@@ -213,13 +218,34 @@ Chapter 25's Finding 10.
   documented callback window is asserted instead. The struct-misdeclaration
   judge is the load-bearing one: delete the size-field check and it is an
   ASan stack-buffer-overflow, not a wrong value
+- `exercises/pluginlab/` — Chapter 40's lab: three CMake projects. `sdk/` is a
+  vendor-style drop (header + static helper library, installed to a prefix,
+  deliberately NO config package — vendor code, never edited); `plugin/` is
+  the reference plug-in (a MODULE library, `cmake/FindHostSDK.cmake` writing
+  the imported target by hand, hidden visibility plus one exported symbol,
+  and linker options because hidden covers what you compile and not the
+  static library you link — the chapter's finding); `host/` is a stand-in
+  host that dlopens the module and calls its entry point. build_all.sh
+  installs the drop, builds both, runs the host against the module (twice:
+  the second run passes an older host's shorter table, which the plug-in
+  must refuse), reads the export table back with `nm` — `Plugin_Entry`
+  present, nothing of the SDK's or the plug-in's own; `Describe` has external
+  linkage on purpose so the visibility preset has something to hide — and
+  builds both again with the sanitizer flags injected via CMAKE_CXX_FLAGS,
+  all under the cmake probe; the buildlab-msvc job builds all three under
+  Visual Studio and reads the module's exports and dependents back. Six
+  files are quoted whole in the chapter (FULL pairings in check_verbatim.sh:
+  the vendor header, four plug-in files and deplab's mathlib CMakeLists),
+  so editing one means editing Chapter 40 in the same commit
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
-  Its last four sections may skip: one builds `exercises/deplab/` three ways
+  Its last five sections may skip: one builds `exercises/deplab/` three ways
   (Chapter 27), one configures, builds and runs `exercises/buildlab/`'s
-  CMakeLists, one rebuilds `solutions/device_threaded_solution.cpp` under
+  CMakeLists, one installs `exercises/pluginlab/`'s SDK drop and builds,
+  loads and inspects its plug-in (Chapter 40), one rebuilds
+  `solutions/device_threaded_solution.cpp` under
   `-fsanitize=thread` (a second build, because TSan and ASan do not combine),
   and the last builds `exercises/cookbook/expected.cpp` as C++23.
   Without cmake on PATH, without a git that can clone a `file://` repository
@@ -303,6 +329,8 @@ Chapter 25's Finding 10.
 - `.github/workflows/ci.yml` — runs build_all.sh on every push/PR, plus a
   `platform-claims` job (check_platform_claims.sh on ubuntu and macos), a
   `buildlab-msvc` job (Chapter 26's CMakeLists under MSVC both ways, then
+  Chapter 40's three pluginlab projects with `dumpbin /exports` reading the
+  module's one symbol back, then
   Chapter 14's `/Zc:nrvo` claim: the chapter's own `cl /std:c++17 /W4 /EHsc`
   line must print exactly one extra move-construction in the RVO section, and
   adding `/Zc:nrvo` must print none — it is the one claim in the book resting
@@ -464,7 +492,7 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 40+, Appendix J+) — no item requires renumbering. Delivered items
+(Chapter 41+, Appendix J+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
@@ -482,7 +510,8 @@ stay on the list marked DONE so item numbers never shift. Short version:
   defaults for a foreign thread now cross-reference each other, which is all
   of the item that is done). Both were sequenced after item 9 (P/Invoke),
   which is **DONE as of 2026-09-02** — Chapter 39 — so both are now
-  unblocked. Consolidated const-correctness was item 8 and is now Appendix I
+  unblocked. CMake for the plug-in was item 22 and is now Chapter 40 +
+  `exercises/pluginlab/`. Consolidated const-correctness was item 8 and is now Appendix I
   plus `exercises/constlab/`, the one lab whose judge asserts a build FAILS;
   it builds on item 17 — *Choosing*, now DONE as Appendix H plus the
   copy/move-counting `exercises/choosing/` — and points at that appendix's

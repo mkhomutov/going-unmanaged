@@ -103,6 +103,16 @@ FULL = [
     ('book/37-no-repro-dump-attached.md',         'exercises/dumplab/session.h'),
     ('book/37-no-repro-dump-attached.md',         'exercises/dumplab/session.cpp'),
     ('book/37-no-repro-dump-attached.md',         'exercises/dumplab/main.cpp'),
+    # Chapter 40 quotes its lab's build files whole, comments included - a
+    # CMake file's comments are the listing, not a banner - and deplab's
+    # install/export file, which Chapter 27 pointed at and never showed.
+    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/sdk/include/hostsdk/hostsdk.h'),
+    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/cmake/FindHostSDK.cmake'),
+    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/CMakeLists.txt'),
+    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/CMakePresets.json'),
+    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/monitor_export.h'),
+    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/monitor.cpp'),
+    ('book/40-cmake-for-the-plug-in.md',          'exercises/deplab/mathlib/CMakeLists.txt'),
 ]
 BANNER = [
     ('book/28-testing.md',                  'exercises/testlab/tiny_test.h'),

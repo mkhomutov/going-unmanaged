@@ -45,6 +45,12 @@ One line each. If you can say these fluently and back them with code, the concep
 - "I list source files, never glob them — a file joining the build should be visible in the diff."
 - "I put a define that changes a type's layout PUBLIC on the type's own target and never in a shipped header — two layouts of one struct is an ODR violation the sanitizers see only by luck."
 
+**Building a plug-in**
+
+- "A plug-in is a MODULE library with one exported symbol — hidden by default, and the export table read back after every build, because hidden covers what I compile and not what I link."
+- "The SDK's location is a configure-time input — a prefix path or a preset's environment variable — never a path in the project; and an SDK that ships no config package gets one hand-written find-module, in one file, that the rest of the build links like any other target."
+- "A per-configuration decision is a generator expression, not an if on CMAKE_BUILD_TYPE — under a multi-config generator that variable says nothing about the configuration being built, so the if is silently wrong in one direction or the other."
+
 **Dependencies**
 
 - "C++ libraries ship as source because binary compatibility is per-ecosystem and fragile — it depends on the compiler, the standard library, the configuration and the architecture all agreeing — so I build my dependencies with my toolchain and they match by construction."

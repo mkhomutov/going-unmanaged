@@ -80,6 +80,17 @@ closes the gaps; each appends, and no number moves.
   as `[Conditional("DEBUG")]`, and the side effect that vanishes with it;
   `logging.cpp` is built twice, once under `-DNDEBUG`). **Appendix B** one
   new principle.
+- **Chapter 40 — CMake for the Plug-in** (ROADMAP item 22), and
+  `exercises/pluginlab/`: the plug-in as a MODULE library, the SDK that
+  ships no config package and the hand-written find-module that consumes
+  it, symbol visibility and the export table as the judge — with the
+  chapter's own finding, that hidden visibility covers what you compile and
+  not the static library you link — `CMAKE_MSVC_RUNTIME_LIBRARY`,
+  generator expressions explained once, presets, and deplab's
+  install/export file quoted whole at last. `build_all.sh` installs the
+  drop, builds the module and the host, loads one with the other and reads
+  the export table back; the `buildlab-msvc` job does the same under
+  Visual Studio. **Appendix B** three new principles.
 - **Chapter 1** names custom deleters and `enable_shared_from_this`;
   **Chapter 11** the algorithm-versus-member `find` trap; **Chapter 14** a
   fourth Tracer experiment (a const source moves as a copy); **Appendix I**

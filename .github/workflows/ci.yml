@@ -15,8 +15,9 @@ jobs:
       - uses: actions/checkout@v5
       # The repo invariant: every solution compiles and runs clean under
       # -Wall -Wextra -fsanitize=address,undefined. Must print ALL GREEN.
-      # --require-cmake: the script's two cmake steps - Chapter 27's deplab and
-      # Chapter 26's CMakeLists, configured, built and run three ways - SKIP on a
+      # --require-cmake: the script's three cmake steps - Chapter 27's deplab,
+      # Chapter 26's CMakeLists, configured, built and run three ways, and
+      # Chapter 40's pluginlab - SKIP on a
       # machine without cmake, which is right on a laptop and very wrong here.
       # Both hosted images ship cmake, so the flag only ever fires if that
       # changes.
@@ -146,6 +147,33 @@ jobs:
           sed -n '/--- RVO ---/,/--- vector ---/p' default.log
           [ "$d" = 1 ] || { echo "FAIL: Chapter 14 says the documented cl line shows exactly one extra move-construction here; saw $d"; exit 1; }
           [ "$n" = 0 ] || { echo "FAIL: /Zc:nrvo should elide it entirely; saw $n"; exit 1; }
+
+      # Chapter 40's lab under Visual Studio: the SDK drop installed, the
+      # MODULE built against the prefix, the host loading it both ways - and
+      # the one line in that lab only Windows can check,
+      # CMAKE_MSVC_RUNTIME_LIBRARY: dumpbin /dependents must list ucrtbased.dll,
+      # the debug runtime a Debug plug-in has to share with a Debug host (the
+      # value is MSVC's default too, so this holds the value, not the line).
+      # dumpbin reads the export table back the way nm does on the Unix legs;
+      # it is on PATH here because msvc-dev-cmd ran just above.
+      - name: Chapter 40's pluginlab
+        run: |
+          cmake -S exercises/pluginlab/sdk -B build/pl-sdk -DCMAKE_INSTALL_PREFIX="$(pwd -W)/build/pl-prefix"
+          cmake --build build/pl-sdk --config Debug
+          cmake --install build/pl-sdk --config Debug
+          cmake -S exercises/pluginlab/plugin -B build/pl-plugin -DCMAKE_PREFIX_PATH="$(pwd -W)/build/pl-prefix"
+          cmake --build build/pl-plugin --config Debug
+          cmake -S exercises/pluginlab/host -B build/pl-host -DCMAKE_PREFIX_PATH="$(pwd -W)/build/pl-prefix"
+          cmake --build build/pl-host --config Debug
+          ./build/pl-host/Debug/host.exe build/pl-plugin/Debug/monitor.dll | tee host.log
+          grep -q 'monitor loaded against hostsdk' host.log
+          ./build/pl-host/Debug/host.exe build/pl-plugin/Debug/monitor.dll --older | tee older.log || true
+          grep -q 'plug-in returned -1' older.log
+          MSYS_NO_PATHCONV=1 dumpbin /dependents build/pl-plugin/Debug/monitor.dll | tee deps.log
+          grep -qi 'ucrtbased.dll' deps.log || { echo "FAIL: a Debug monitor.dll should depend on the debug CRT - CMAKE_MSVC_RUNTIME_LIBRARY"; exit 1; }
+          MSYS_NO_PATHCONV=1 dumpbin /exports build/pl-plugin/Debug/monitor.dll | tee exports.log
+          [ "$(grep -c 'Plugin_Entry' exports.log)" = 1 ] || { echo "FAIL: monitor.dll should export exactly one Plugin_Entry"; exit 1; }
+          ! grep -q 'HostSdk_VersionString\|Describe' exports.log || { echo "FAIL: monitor.dll exports a symbol that should be hidden"; exit 1; }
 
       # scripts/check.ps1 is the Windows mirror of check.sh, and the TASK cards
       # point Windows readers at it - so it gets the same treatment as every
