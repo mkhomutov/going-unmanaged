@@ -13,13 +13,15 @@ numbers may still move.
 ## [Unreleased]
 
 - **New: Recipe 27 — Pre-size a collection** (MINOR — an appended recipe).
-  `reserve` was used in five chapters and taught in none; the recipe sets
-  it beside `vector(n)` and `resize` as the `List<T>(capacity)` versus
-  `new T[n]` split, names the deadline-path use, and holds the two traps —
-  writing past size into reserved room (`container-overflow`), and
-  `resize` then `push_back` doubling the data. `exercises/cookbook/containers.cpp`
-  asserts the size and capacity on every path; Appendix E gains a
-  *capacity vs size* entry.
+  `reserve` appeared in three chapters and two appendices and had a page
+  of its own in none; the recipe sets it beside `vector(n)` and `resize`
+  as the `List<T>(capacity)` versus `new T[n]` split, names the
+  deadline-path use, corrects the reserve-in-the-loop instinct, and holds
+  the trap — writing past size into reserved room, a `container-overflow`
+  under libc++. `exercises/cookbook/containers.cpp` asserts size and
+  capacity on every path and counts the reallocations the loop reserve
+  causes; Appendix E gains a *capacity vs size* entry. Chapters 21 and 24
+  now say which standard library reports `container-overflow` by default.
 
 ## [0.9.0] — 2026-09-04
 

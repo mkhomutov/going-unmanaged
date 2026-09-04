@@ -239,8 +239,8 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_events > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_logging > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_logging_nd > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_alternatives > /dev/null
-UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_containers > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_errors > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_containers > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_json > /dev/null
 # Both link orders of the Chapter 32 lab: surviving exit IS the claim here.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_a > /dev/null

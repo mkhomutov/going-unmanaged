@@ -43,7 +43,7 @@ stays right.
 | `[Conditional("DEBUG")]` / `#if DEBUG` | `assert` (with `-ea`) | [Recipe 24 — Compile a diagnostic out of Release](#recipe-24--compile-a-diagnostic-out-of-release) |
 | `JsonSerializer.Serialize` | Jackson `writeValueAsString` | [Recipe 25 — Serialize a record to JSON](#recipe-25--serialize-a-record-to-json) |
 | `JsonSerializer.Deserialize<T>` | Jackson `readValue` | [Recipe 26 — Read a JSON config with defaults](#recipe-26--read-a-json-config-with-defaults) |
-| `new List<T>(capacity)` / `new T[n]` | `new ArrayList<>(n)` / `new T[n]` | [Recipe 27 — Pre-size a collection](#recipe-27--pre-size-a-collection) |
+| `new List<T>(capacity)` / `new T[n]` | `new ArrayList<>(n)` / `new int[n]` | [Recipe 27 — Pre-size a collection](#recipe-27--pre-size-a-collection) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1057,28 +1057,26 @@ std::vector<double> zeroed(std::size_t n) {
 }
 ```
 
-**Why it looks like this.** A vector carries two numbers, and C# only ever
-showed you one. `size()` is `Count`, the elements that exist; `capacity()`
-is the room allocated for them, which `List<T>` keeps as `Capacity` and
-almost nobody reads. `reserve` sets the second and leaves the first alone:
-no element is constructed, the vector is exactly as empty as before, and
-the growth it would have paid for later —
+**Why it looks like this.** A vector carries two numbers and C# showed you
+one: `size()` is `Count`, the elements that exist; `capacity()` is the room
+allocated for them. `reserve` sets the second and leaves the first alone —
+nothing is constructed, and
 [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)'s
-reallocation, every element moved to a bigger block — is paid once, up
-front, at the moment you know the count. `vector(n)` and `resize(n)` set
-*both*: they construct `n` value-initialised elements, zero for a number,
-which is `new T[n]`'s contract and not `List<T>(n)`'s. Reserve once, before
-the loop; a reserve inside it reserves nothing new, and the amortised
-doubling was already doing that job. On
+reallocation is paid once, up front, at the moment you know the count —
+while `vector(n)` and `resize(n)` set both, constructing `n`
+value-initialized elements, which is `new T[n]`'s contract and not
+`List<T>(n)`'s: `resize(n)` followed by `n` calls to `push_back` gives you
+`2n` elements, the first `n` of them zero. Reserve once, before the loop —
+a reserve inside it is either a no-op or, at `size() + 1`, a reallocation
+on every pass, the amortized doubling switched off by hand. On
 [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s
-deadline path, a reserve at setup is how a `push_back` in the callback
-stops being an allocation. And what `reserve` does not do is *pin*:
-[Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)'s
-pitfall stands, and the first growth past the reserve moves everything
-again. Needs `<vector>`.
+deadline path a reserve at setup keeps a `push_back` in the callback from
+allocating, for as long as the count stays inside it; and it does not
+*pin* — [Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)'s
+pitfall stands. Needs `<vector>`.
 
 > [!WARNING]
-> **Trap:** `reserve(n)` then `v[i] = x` compiles and writes into room that holds no element — undefined behavior AddressSanitizer reports as `container-overflow`, Chapter 21's report shape — and `resize(n)` followed by `n` calls to `push_back` gives you `2n` elements, the first `n` of them zero.
+> **Trap:** `reserve(n)` then `v[i] = x` compiles and writes into room that holds no element — undefined behavior that AddressSanitizer names `container-overflow` under libc++ ([Chapter 21](21-exercise-iterator-invalidation.md#chapter-21--exercise-iterator-invalidation)'s report shape) and, under libstdc++, only when `-D_GLIBCXX_SANITIZE_VECTOR` switches the annotations on.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
