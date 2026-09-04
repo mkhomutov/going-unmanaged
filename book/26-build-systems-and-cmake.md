@@ -231,6 +231,38 @@ myplugin/
 
 Each line's chapter is where its reasoning lives; what is stated nowhere else is the project-name subdirectory, which makes every include spell `<myplugin/session.h>` and so cannot collide with a vendor's `session.h`. The SDK is not in the tree on purpose: it is the dependency you do not control, located at configure time. The `include/<name>/` plus `src/` core is what `exercises/deplab/mathlib/` uses, built by CI; the tree above is the one to copy on day one, and the nearest written convention, the "pitchfork" layout, is this tree with `third_party/` spelled `external/` and more rooms.
 
+The tree above is the directories. A project that survives also has a
+handful of files at its root, each read by a tool rather than a person,
+and a C# developer arriving from a `.sln` will not know which are
+load-bearing:
+
+```text
+myplugin/
+  CMakeLists.txt        the root build description (above)
+  CMakePresets.json     the named configurations - Chapter 40's dev preset; what a .sln's Configuration Manager held
+  .clang-format         layout, enforced by a tool: the .editorconfig you know, with opinions (Appendix A.8)
+  .clang-tidy           the checks the team turned on - reserved identifiers, naming, the bugprone-* family
+  .gitignore            build/ and every generated directory; nothing under build/ is ever committed
+  README.md             how to configure, build and run the tests, in the three commands a stranger types first
+  LICENSE               and, if third_party/ carries anyone else's code, the NOTICE that says whose
+```
+
+Two rules ride on the tree that no file states, and both exist so a name
+means the same thing everywhere. **The namespace mirrors the directory:**
+code under `include/myplugin/wire/` lives in `namespace myplugin::wire`,
+so an identifier's home is readable off its qualified name and a
+`#include` path and a `using` never disagree about what a thing is called.
+And **one class, one header pair:** `Session` is declared in `session.h`
+and defined in `session.cpp`, named for the type, lower-case, so a reader
+who meets the type in a review can open its file without a search. Private
+headers — the ones nothing outside `src/` may include — stay in `src/`
+beside the `.cpp` that owns them, and never gain the project-name prefix,
+which is the visible mark of a promise ([Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)).
+Tests sit apart in `tests/`, named for what they test (`session_test.cpp`),
+because a test binary is a second executable with its own `main` and the
+compilation model of [Chapter 28](28-testing.md#chapter-28--testing) does
+not let it share a directory's sources by accident.
+
 ### Pitfalls
 
 - **Globbing sources.** `file(GLOB SOURCES *.cpp)` looks like a labour-saver and is a trap: CMake evaluates it at *configure* time, so a newly added file is invisible until someone re-configures — and the failure lands on whoever pulls your commit, as an unresolved external. `CONFIGURE_DEPENDS` (CMake 3.12+) buys the correctness back by re-globbing on every build, at the price of a directory scan every build — and CMake's own documentation declines to promise it works on every generator, which is a strong hint about how much weight to put on it. List your sources. The diff noise is the point: adding a file to the build should be a visible act.
