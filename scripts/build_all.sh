@@ -112,6 +112,7 @@ run "cb_logging"  $CXX $FLAGS   exercises/cookbook/logging.cpp          -o $OUT/
 run "cb_logging_nd" $CXX $FLAGS -DNDEBUG exercises/cookbook/logging.cpp   -o $OUT/cb_logging_nd
 run "cb_alternatives" $CXX $FLAGS exercises/cookbook/alternatives.cpp   -o $OUT/cb_alternatives
 run "cb_errors"   $CXX $FLAGS   exercises/cookbook/errors.cpp           -o $OUT/cb_errors
+run "cb_containers" $CXX $FLAGS exercises/cookbook/containers.cpp     -o $OUT/cb_containers
 # The one cookbook TU with a dependency. -isystem, not -I: the vendored header
 # is the vendor's, and -Wall -Wextra are for our code (CONTRIBUTING's
 # third-party rule). Two things the rule says that a build alone would not
@@ -238,6 +239,7 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_events > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_logging > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_logging_nd > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_alternatives > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_containers > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_errors > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_json > /dev/null
 # Both link orders of the Chapter 32 lab: surviving exit IS the claim here.

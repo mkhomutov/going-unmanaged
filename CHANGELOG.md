@@ -10,6 +10,17 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [Unreleased]
+
+- **New: Recipe 27 — Pre-size a collection** (MINOR — an appended recipe).
+  `reserve` was used in five chapters and taught in none; the recipe sets
+  it beside `vector(n)` and `resize` as the `List<T>(capacity)` versus
+  `new T[n]` split, names the deadline-path use, and holds the two traps —
+  writing past size into reserved room (`container-overflow`), and
+  `resize` then `push_back` doubling the data. `exercises/cookbook/containers.cpp`
+  asserts the size and capacity on every path; Appendix E gains a
+  *capacity vs size* entry.
+
 ## [0.9.0] — 2026-09-04
 
 The release a list steered. Version 0.8.0 began with eighteen constructed

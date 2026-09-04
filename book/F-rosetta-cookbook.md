@@ -43,6 +43,7 @@ stays right.
 | `[Conditional("DEBUG")]` / `#if DEBUG` | `assert` (with `-ea`) | [Recipe 24 — Compile a diagnostic out of Release](#recipe-24--compile-a-diagnostic-out-of-release) |
 | `JsonSerializer.Serialize` | Jackson `writeValueAsString` | [Recipe 25 — Serialize a record to JSON](#recipe-25--serialize-a-record-to-json) |
 | `JsonSerializer.Deserialize<T>` | Jackson `readValue` | [Recipe 26 — Read a JSON config with defaults](#recipe-26--read-a-json-config-with-defaults) |
+| `new List<T>(capacity)` / `new T[n]` | `new ArrayList<>(n)` / `new T[n]` | [Recipe 27 — Pre-size a collection](#recipe-27--pre-size-a-collection) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1034,6 +1035,50 @@ point. Needs `<nlohmann/json.hpp>` (`-isystem exercises/third_party`),
 
 > [!WARNING]
 > **Trap:** a reference into the document — `const auto& s = j.at("name").get_ref<const std::string&>();` — is [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s dangling view the moment `j` goes out of scope, a heap-use-after-free under ASan; copy the value out, or keep the document alive as long as anything points into it.
+
+### Recipe 27 — Pre-size a collection
+
+**In C#:** `var samples = new List<int>(capacity);` — or `new double[n]`, which is a different thing
+
+**The recipe:**
+
+```cpp
+std::vector<int> read_samples(std::size_t expected) {
+    std::vector<int> samples;
+    samples.reserve(expected);            // List<T>(capacity): room for expected, size still 0
+    for (std::size_t i = 0; i < expected; ++i) {
+        samples.push_back(next_sample());  // size grows; no reallocation until the room runs out
+    }
+    return samples;
+}
+
+std::vector<double> zeroed(std::size_t n) {
+    return std::vector<double>(n);        // new double[n]: n elements, every one 0.0
+}
+```
+
+**Why it looks like this.** A vector carries two numbers, and C# only ever
+showed you one. `size()` is `Count`, the elements that exist; `capacity()`
+is the room allocated for them, which `List<T>` keeps as `Capacity` and
+almost nobody reads. `reserve` sets the second and leaves the first alone:
+no element is constructed, the vector is exactly as empty as before, and
+the growth it would have paid for later —
+[Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)'s
+reallocation, every element moved to a bigger block — is paid once, up
+front, at the moment you know the count. `vector(n)` and `resize(n)` set
+*both*: they construct `n` value-initialised elements, zero for a number,
+which is `new T[n]`'s contract and not `List<T>(n)`'s. Reserve once, before
+the loop; a reserve inside it reserves nothing new, and the amortised
+doubling was already doing that job. On
+[Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s
+deadline path, a reserve at setup is how a `push_back` in the callback
+stops being an allocation. And what `reserve` does not do is *pin*:
+[Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)'s
+pitfall stands, and the first growth past the reserve moves everything
+again. Needs `<vector>`.
+
+> [!WARNING]
+> **Trap:** `reserve(n)` then `v[i] = x` compiles and writes into room that holds no element — undefined behavior AddressSanitizer reports as `container-overflow`, Chapter 21's report shape — and `resize(n)` followed by `n` calls to `push_back` gives you `2n` elements, the first `n` of them zero.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
