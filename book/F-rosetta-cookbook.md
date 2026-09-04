@@ -9,9 +9,9 @@ concept rather than re-teaching it — this page is for looking up, not for
 reading.
 
 Every listing compiles, runs, and holds under the canonical flags — all but
-one, marked where it appears, which is C++23 and builds behind a probe: the
-recipes live as code in `exercises/cookbook/`, and `scripts/build_all.sh`
-asserts what each one claims on every push. Recipe numbers are stable —
+three, marked where they appear, which build behind probes (one is C++23,
+two need libcrypto): the recipes live as code in `exercises/cookbook/`, and
+`scripts/build_all.sh` asserts what each one claims on every push. Recipe numbers are stable —
 recipes append and are never renumbered — so a note that says "Recipe 7"
 stays right.
 
@@ -52,6 +52,8 @@ stays right.
 | a field of class type + `IDisposable` | a field + `AutoCloseable` | [Recipe 33 — Hold an owned object as a field](#recipe-33--hold-an-owned-object-as-a-field) |
 | `new BigThing()` — always on the heap | `new BigThing()` — always on the heap | [Recipe 34 — An object too big for the stack](#recipe-34--an-object-too-big-for-the-stack) |
 | `EnumerateObject` / `TryGetProperty` / `EnumerateArray` | Jackson `JsonNode` — `fields()` / `has` / `elements()` | [Recipe 35 — Walk a JSON document you do not own](#recipe-35--walk-a-json-document-you-do-not-own) |
+| `SHA256.HashData` / `Convert.ToHexString` | `MessageDigest.getInstance("SHA-256")` | [Recipe 36 — Hash bytes](#recipe-36--hash-bytes) |
+| `AesGcm.Encrypt` / `Decrypt` | `Cipher.getInstance("AES/GCM/NoPadding")` | [Recipe 37 — Seal bytes for a reader in C#](#recipe-37--seal-bytes-for-a-reader-in-c) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1487,6 +1489,143 @@ ASan until C++23, so the document is named first. Needs
 
 > [!WARNING]
 > **Trap:** `get<int>()` is a `static_cast` per number kind — on `3.5` it returns `3` and on `3000000000` it wraps, with no error and no sanitizer opinion, while on `1e300` it is undefined behavior that UBSan reports from inside `json.hpp` — so a field that must be an integer is checked for kind with `is_number_integer()` and for range by you, and `is_number()` guards neither.
+
+### Recipe 36 — Hash bytes
+
+**In C#:** `SHA256.HashData(bytes)`, `Convert.ToHexString(hash)`
+
+**The recipe:**
+
+```cpp
+using Bytes = std::vector<std::uint8_t>;
+
+std::string hex(const Bytes& bytes) {                        // Convert.ToHexString, lower-case
+    static constexpr char digits[] = "0123456789abcdef";
+    std::string out;
+    for (const std::uint8_t b : bytes) {
+        out += digits[b >> 4];
+        out += digits[b & 0x0F];
+    }
+    return out;
+}
+
+// Recipe 36 - SHA256.HashData(bytes)
+Bytes sha256(std::string_view data) {
+    Bytes digest(EVP_MAX_MD_SIZE);
+    unsigned int written = 0;
+    if (EVP_Digest(data.data(), data.size(), digest.data(), &written, EVP_sha256(), nullptr) != 1) {
+        throw std::runtime_error("EVP_Digest failed");        // the event pole: the library itself broke
+    }
+    digest.resize(written);                                    // 32 for SHA-256
+    return digest;
+}
+```
+
+**Why it looks like this.** There is no `System.Security.Cryptography`:
+the standard library ships no hash, no cipher and no random source fit
+for a key, which puts every one of them where
+[Chapter 27](27-dependency-management.md#chapter-27--dependency-management)
+put networking — a dependency you choose, add and build, and read as a
+[Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary) shape
+when it arrives. This one is OpenSSL's libcrypto through its EVP
+interface, a Shape 1 C API — an integer status from every call, results
+written through pointers you pass, the algorithm named by a function
+rather than a type — and the alternatives read the same way: libsodium,
+the platform's own (CNG on Windows, CommonCrypto and CryptoKit on Apple's),
+mbedTLS on the Shape 4 targets. The rule is stronger than C#'s, because
+nothing here is in the box: never write a primitive, and prove the one you
+chose against a *published* vector — the harness holds this function to
+FIPS 180-4's digest of `abc` — since a hash that agrees with itself
+proves nothing about whether it agrees with the .NET side. Needs
+`<openssl/evp.h>` and a link against libcrypto (`pkg-config --cflags
+--libs libcrypto`, which `build_all.sh` uses under its probe), `<string>`,
+`<string_view>`, `<vector>`.
+
+> [!WARNING]
+> **Trap:** `sha256(text)` hashes *bytes*, and a C# string is UTF-16 — `SHA256.HashData(Encoding.UTF8.GetBytes(s))` and this function agree, `SHA256.HashData(MemoryMarshal.AsBytes(s.AsSpan()))` does not, and both are correct hashes of different bytes; [Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)'s rule that the encoding is named applies to every byte that is hashed, signed or sealed.
+
+### Recipe 37 — Seal bytes for a reader in C#
+
+**In C#:** `new AesGcm(key, tagSizeInBytes: 16).Encrypt(nonce, plaintext, ciphertext, tag)` — and the layout of the file or message those three buffers go into, which C# never decided for you either
+
+**The recipe:**
+
+```cpp
+using Key   = std::array<std::uint8_t, 32>;                    // AES-256: the key size is the algorithm's name
+using Nonce = std::array<std::uint8_t, 12>;                    // 96 bits: what GCM and AesGcm both expect
+constexpr std::size_t kTagSize = 16;                           // the authentication tag: full length, always
+
+using CipherCtx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>;   // Recipe 7's shape
+
+// The envelope, and the whole of the cross-language contract:
+//   nonce (12 bytes) || ciphertext (plain.size() bytes) || tag (16 bytes)
+// Every reader - C#, Python, the next version of this plug-in - opens it
+// by reading those three lengths back, so the layout is an ICD (Chapter 34).
+Bytes seal(const Key& key, const Nonce& nonce, const Bytes& plain) {
+    CipherCtx ctx(EVP_CIPHER_CTX_new(), &EVP_CIPHER_CTX_free);
+    if (!ctx || EVP_EncryptInit_ex(ctx.get(), EVP_aes_256_gcm(), nullptr, key.data(), nonce.data()) != 1) {
+        throw std::runtime_error("AES-256-GCM init failed");
+    }
+    Bytes out(nonce.begin(), nonce.end());
+    out.resize(nonce.size() + plain.size() + kTagSize);
+    std::uint8_t* const ciphertext = out.data() + nonce.size();
+    int n = 0;
+    if (EVP_EncryptUpdate(ctx.get(), ciphertext, &n, plain.data(), static_cast<int>(plain.size())) != 1 ||
+        EVP_EncryptFinal_ex(ctx.get(), ciphertext + n, &n) != 1 ||                 // GCM: no padding, n is 0 here
+        EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_GET_TAG, kTagSize, ciphertext + plain.size()) != 1) {
+        throw std::runtime_error("AES-256-GCM seal failed");
+    }
+    return out;
+}
+
+// Absence is the verdict: a wrong key, a flipped byte, a truncated envelope
+// all come back as nullopt (Recipe 19), and nothing of the plaintext leaks out
+// on the way - the tag is checked before a byte is trusted.
+std::optional<Bytes> open_sealed(const Key& key, const Bytes& sealed) {
+    if (sealed.size() < std::tuple_size<Nonce>::value + kTagSize) {
+        return std::nullopt;
+    }
+    const std::uint8_t* const nonce      = sealed.data();
+    const std::uint8_t* const ciphertext = nonce + std::tuple_size<Nonce>::value;
+    const std::size_t length = sealed.size() - std::tuple_size<Nonce>::value - kTagSize;
+    std::array<std::uint8_t, kTagSize> tag{};
+    std::copy(sealed.end() - kTagSize, sealed.end(), tag.begin());
+
+    CipherCtx ctx(EVP_CIPHER_CTX_new(), &EVP_CIPHER_CTX_free);
+    Bytes plain(length);
+    int n = 0;
+    if (!ctx || EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_gcm(), nullptr, key.data(), nonce) != 1 ||
+        EVP_DecryptUpdate(ctx.get(), plain.data(), &n, ciphertext, static_cast<int>(length)) != 1 ||
+        EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_SET_TAG, kTagSize, tag.data()) != 1 ||
+        EVP_DecryptFinal_ex(ctx.get(), plain.data() + n, &n) != 1) {       // the tag check lives HERE
+        return std::nullopt;
+    }
+    return plain;
+}
+```
+
+**Why it looks like this.** The cipher is the easy half: AES-256-GCM is
+what `AesGcm` is, and an authenticated cipher means a flipped byte is a
+refusal rather than garbage, so the failure is
+[Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
+value pole and the return is an `optional`. The half nothing decides for
+you is the envelope. `AesGcm.Encrypt` hands the C# side three separate
+buffers and says nothing about how they travel; the moment your bytes
+have to open on another machine, the nonce length, the tag length, and
+the order the three are written in are a wire format in
+[Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
+sense — documented offsets, and a published test vector as the oracle.
+The comment above `seal` is that document, and the harness holds the
+function to the GCM specification's own test cases 13 and 14 (a zero key
+and nonce, no plaintext and then sixteen zero bytes), because a round
+trip proves only that `seal` and `open_sealed` agree with each other.
+What the recipe leaves outside its edge is the key: where it comes from,
+how a passphrase becomes one, where it rests — the next question, and a
+different one. Needs `<openssl/evp.h>` and libcrypto as Recipe 36,
+`<array>`, `<algorithm>`, `<memory>`, `<optional>`.
+
+> [!WARNING]
+> **Trap:** a nonce reused under one key breaks GCM outright — not weakens, breaks — and a counter that restarts at process start, or a `std::rand()` seeded from the clock, will reuse one; the nonce is twelve bytes from the library's own generator (`RAND_bytes`, which the harness uses), travels in the clear at the front of the envelope, and is never a secret and never repeated.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

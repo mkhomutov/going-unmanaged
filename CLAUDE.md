@@ -133,12 +133,17 @@ Chapter 25's Finding 10.
   is `solutions/device_threaded_solution.cpp`
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
   (files, strings, timing, handles, lookups, paths, async, events, logging,
-  alternatives, errors, expected, json, containers, flags, ownership), each with a `main()` asserting what
-  its recipes claim; build_all.sh builds and runs all sixteen. `json.cpp`
+  alternatives, errors, expected, json, containers, flags, ownership,
+  crypto), each with a `main()` asserting what
+  its recipes claim; build_all.sh builds and runs all seventeen. `json.cpp`
   is the one with a dependency — `exercises/third_party/nlohmann/`, vendored
   with its version recorded, included with `-isystem`. `expected.cpp` is
   the one cut by standard rather than domain — C++23, Chapter 8's chaining
-  listing, its own probe. Same sync
+  listing, its own probe. `crypto.cpp` is the second probe: it links the
+  system's libcrypto through `pkg-config` (`--require-openssl` in CI, which
+  sets PKG_CONFIG_PATH on macOS), nothing vendored, and its judge is three
+  published test vectors — a round trip would prove only that seal and open
+  agree with each other. Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
   same commit (the mains are scaffolding and appear in no listing)
@@ -263,20 +268,21 @@ Chapter 25's Finding 10.
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
-  Its last six sections may skip: one builds `exercises/deplab/` three ways
+  Its last seven sections may skip: one builds `exercises/deplab/` three ways
   (Chapter 27), one configures, builds and runs `exercises/buildlab/`'s
   CMakeLists, one installs `exercises/pluginlab/`'s SDK drop and builds,
   loads and inspects its plug-in (Chapter 40), one generates Appendix J's
   runtime-delivery project and installs it with and without a runpath, one rebuilds
   `solutions/device_threaded_solution.cpp` under
   `-fsanitize=thread` (a second build, because TSan and ASan do not combine),
-  and the last builds `exercises/cookbook/expected.cpp` as C++23.
+  one builds `exercises/cookbook/expected.cpp` as C++23, and the last
+  builds `exercises/cookbook/crypto.cpp` against the system's libcrypto.
   Without cmake on PATH, without a git that can clone a `file://` repository
   (deplab's FetchContent path only), without a ThreadSanitizer that can
   compile *and start* a trivial program, or without a compiler that has
-  `<expected>`, each prints SKIPPED and stays green; `--require-cmake`,
-  `--require-git`, `--require-tsan` and `--require-expected` (CI passes all
-  four) refuse to skip
+  `<expected>`, or without a libcrypto that `pkg-config` can find, each prints
+  SKIPPED and stays green; `--require-cmake`, `--require-git`, `--require-tsan`,
+  `--require-expected` and `--require-openssl` (CI passes all five) refuse to skip
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
   flags: one or more .cpp files, compiled in the order written (= link order,
   which Chapter 32's two-order test turns on), then an optional vendor
