@@ -6,12 +6,12 @@ Cookbook*), one translation unit per domain —
 
 | File | Recipes |
 |---|---|
-| `files.cpp` | 1, 9 — read and write a whole file |
+| `files.cpp` | 1, 9, 38 — read and write a whole file; save one without losing the old one (the judge is the inode: a save must replace the file, not rewrite it) |
 | `strings.cpp` | 2–5, 23 — split, join, build, format; the empty string that is not null |
 | `timing.cpp` | 6, 16, 28–30 — time a call; a repeating timer; a scoped timer and a forwarding wrapper; a timestamp for a log line; a timeout handed to a C API |
 | `handles.cpp` | 7 — wrap a C handle so it frees itself |
 | `lookups.cpp` | 8, 18 — look up a key without inserting it; find an element, an index, or a substring |
-| `paths.cpp` | 10–12 — combine, the exists pair, listing |
+| `paths.cpp` | 10–12, 39 — combine, the exists pair, listing; create, copy, move and delete, and a whole tree (the empty-name trap asserted; the cross-volume rename on Linux only, the `u8path` round trip on Windows only, and each says so) |
 | `async.cpp` | 13 — run work on another thread and wait for it |
 | `events.cpp` | 14 — expose an event |
 | `logging.cpp` | 15, 24 — print a diagnostic you will actually see; compile one out of Release (built twice, once with `-DNDEBUG`) |

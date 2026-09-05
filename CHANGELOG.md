@@ -10,6 +10,29 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [Unreleased]
+
+- **New: Recipes 38–39 — save a file without losing the old one; create,
+  copy, move and delete, and a whole tree** (MINOR — two appended recipes).
+  The third coverage review (2026-09-05, thirty-two topics) found the
+  filesystem mostly covered and two gaps a plug-in meets in week one.
+  Recipe 38 is the write-then-rename that `File.Replace` spells: the bytes
+  go to a sibling in the same directory, `rename` moves the name onto them
+  atomically, and a crash before the rename leaves the old file whole;
+  `files.cpp`'s judge is the inode, because a save that rewrote the file in
+  place would pass every other check and still tear. Recipe 39 maps
+  `Directory.CreateDirectory`, `File.Copy`, `File.Move` and
+  `Directory.Delete(recursive)` onto `std::filesystem` and names the three
+  defaults that differ — `copy_file` refuses an existing target,
+  `remove_all` counts zero where C# throws, `last_write_time` cannot be
+  printed — with the empty-name trap asserted: `dir / ""` is `dir/`, so
+  `remove_all` of it takes the directory. Recipe 10 gains the encoding
+  note — a Windows path is `wchar_t`, and only `u8path` reads a
+  `std::string` as UTF-8 — which the `buildlab-msvc` job now asserts by
+  building `paths.cpp`; the cross-volume `rename` refusal is asserted on
+  the Linux leg, where `/dev/shm` is a second volume. Chapter 31's symptom
+  index gains the truncated-save row.
+
 ## [0.10.0] — 2026-09-05
 
 The same instrument, run again. Version 0.9.0 began with sixteen topics a
