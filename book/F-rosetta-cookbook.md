@@ -1801,7 +1801,12 @@ private:
         s.exists = std::filesystem::is_regular_file(p, ec);
         if (s.exists) {
             s.written = std::filesystem::last_write_time(p, ec);
-            s.size = std::filesystem::file_size(p, ec);
+            if (!ec) {
+                s.size = std::filesystem::file_size(p, ec);
+            }
+            if (ec) {
+                s = Stamp{};    // it went away between the calls: absent, not a phantom of min() and -1
+            }
         }
         return s;
     }
@@ -1817,25 +1822,37 @@ private:
 native ones — `inotify` on Linux, FSEvents and `kqueue` on macOS,
 `ReadDirectoryChangesW` on Windows — are three shapes with three
 coalescing rules, which is where `FileSystemWatcher`'s folklore comes
-from and why a plug-in that needs one takes a library (efsw is the small
-portable one) or, better, the host's own change notification if the SDK
-offers it. A poll is the spelling every platform shares: Recipe 16's
-worker thread, a `Stamp` of time, size and presence per interval, and a
-callback delivered *on that thread* — so everything it touches is
+from (two `Changed` events for one save, an `Error` when the buffer
+overflows) and why a plug-in that needs one takes a library (efsw is the
+small portable one) or, better, the host's own change notification if the
+SDK offers it. A poll is the spelling every platform shares: Recipe 16's
+worker thread — and Recipe 16's trap with it, because a
+`FileSystemWatcher` you forgot to dispose kept raising into a target the
+GC kept alive, where a watcher outliving its target here is a callback
+into freed memory, which is what the join in the destructor and the
+harness's silence after the brace are for — a `Stamp` of time, size and
+presence per interval, and a callback delivered *on that thread*, so
+everything it touches is
 [Chapter 29](29-concurrency.md#chapter-29--concurrency)'s shared state,
 and in a plug-in the callback posts to the host's queue
 ([Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out)) rather
 than calling the SDK. Absence is read through
 [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
-`error_code` overloads because a missing file is a state the watcher
-must report, not an exception on a thread with no handler. And the
-comparison is `!=`, not `>`: a backup restored over the file carries an
-*older* time, and a watcher that asked "is it newer?" would sleep through
-it — the harness restores one and asserts the wake. Needs `<atomic>`,
-`<chrono>`, `<cstdint>`, `<filesystem>`, `<functional>`, `<thread>`.
+`error_code` overloads, and *read*, because a file can vanish between the
+three calls and a stamp assembled from their error returns is a change
+that never happened — a missing file is a state the watcher must report,
+not an exception on a thread with no handler. The comparison is `!=`,
+not `>`: a backup restored over the file with its timestamps preserved
+carries an *older* time, and a watcher that asked "is it newer?" would
+sleep through it — the harness restores one and asserts the wake. And a
+poll can still catch a file half-written by an in-place save and report
+one change twice, exactly `FileSystemWatcher`'s double event, so the
+callback should be safe to run twice. Needs `<atomic>`, `<chrono>`,
+`<cstdint>`, `<filesystem>`, `<functional>`, `<system_error>`, `<thread>`,
+`<utility>`.
 
 > [!WARNING]
-> **Trap:** a poll reads the timestamp at the filesystem's resolution, not the clock's — nanoseconds on APFS, ext4 and NTFS, whole seconds on HFS+ and many network shares, two on FAT — so two same-size writes inside one tick are one event or none; and an editor saves by Recipe 38's rename, so a watch on the *descriptor* (what `inotify` hands you for a single file) is watching a ghost after the first save — watch the path, as this one does.
+> **Trap:** a poll reads the timestamp at the filesystem's resolution, not the clock's — nanoseconds on APFS and ext4, hundreds of them on NTFS, whole seconds on HFS+ and many network shares, two on FAT — so two same-size writes inside one tick are one event or none; and many editors save by Recipe 38's rename, so a watch on the *inode* — what `inotify` attaches its watch to, and what `kqueue`'s open descriptor names — is watching a ghost after the first save; watch the path, as this one does.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

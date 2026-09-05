@@ -2,15 +2,22 @@
 //
 // FileWatcher below is quoted VERBATIM in book/F-rosetta-cookbook.md: editing
 // it means editing the appendix in the same commit (the testlab discipline).
-// main() is scaffolding - it asserts that an unchanged file raises nothing,
-// that a rewrite is noticed within a bounded wait (a DEADLINE, never an
+// main() is scaffolding, and every claim the recipe makes has a line here
+// that fails without it (each was run as a mutant): an unchanged file raises
+// nothing; a rewrite of a different size with the SAME timestamp is noticed
+// (so the size field is load-bearing, not the time - the coarse-timestamp
+// trap the recipe names, staged by hand since no harness can wait for a
+// filesystem to be slow); a file restored with an OLDER timestamp is noticed
+// (the != claim: a > sleeps through it); deletion is a change; a change made
+// while the destructor is stopping the worker is NOT delivered (the stop
+// check after the sleep, which "no callback after the join" alone cannot
+// see); a file created and deleted thousands of times under a 1 ms poll
+// never throws on the worker (the error_code overloads: absence is a state);
+// and nothing arrives after the join. Every wait is a DEADLINE, never an
 // unbounded get - Chapter 38's judge, since a watcher that never fires would
-// otherwise hang CI), that a file restored with an OLDER timestamp is still
-// noticed (the != claim: a > would miss it, and the mutant fails here), that
-// deletion is a change, and that no callback arrives after the destructor's
-// join. The rewrite changes the size on purpose, so the assertion does not
-// depend on the filesystem's timestamp resolution - the trap the recipe
-// names and no harness can portably assert.
+// otherwise hang CI rather than fail it. Changes are delivered by Recipe
+// 38's rename, because a truncate-then-write can be polled mid-way and
+// counted twice - measured, not imagined.
 #include <atomic>
 #include <cassert>
 #include <chrono>
@@ -19,6 +26,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <system_error>
 #include <thread>
@@ -70,7 +78,12 @@ private:
         s.exists = std::filesystem::is_regular_file(p, ec);
         if (s.exists) {
             s.written = std::filesystem::last_write_time(p, ec);
-            s.size = std::filesystem::file_size(p, ec);
+            if (!ec) {
+                s.size = std::filesystem::file_size(p, ec);
+            }
+            if (ec) {
+                s = Stamp{};    // it went away between the calls: absent, not a phantom of min() and -1
+            }
         }
         return s;
     }
@@ -88,6 +101,19 @@ static void write(const fs::path& p, const std::string& text) {
     std::ofstream out(p, std::ios::binary);
     out << text;
     out.flush();
+}
+
+// Recipe 38: write beside, then rename over - so the watcher never polls a
+// torn file, and a same-timestamp swap is possible at all.
+static void replace_with(const fs::path& p, const std::string& text,
+                         std::optional<fs::file_time_type> stamp = std::nullopt) {
+    fs::path tmp = p;
+    tmp += ".staged";
+    write(tmp, text);
+    if (stamp) {
+        fs::last_write_time(tmp, *stamp);
+    }
+    fs::rename(tmp, p);
 }
 
 // Wait, with a deadline, for the counter to reach n. Returns whether it did.
@@ -117,15 +143,14 @@ int main() {
         std::this_thread::sleep_for(10 * kInterval);
         assert(changes == 0);
 
-        // A rewrite with a different size is noticed - the size is what makes
-        // this independent of the timestamp's resolution.
-        write(watched, "bb");
+        // A different size with the SAME timestamp: only the size field can
+        // see this one. Delete size from Stamp and this is the line that fails.
+        replace_with(watched, "bb", fs::last_write_time(watched));
         assert(reached(changes, 1, kDeadline));
 
         // A restored backup: same size, OLDER time. Compared with != it is a
-        // change; compared with > it would be missed. The mutant fails here.
-        const auto older = fs::last_write_time(watched) - 24h;
-        fs::last_write_time(watched, older);
+        // change; compared with > it would be missed. The > mutant fails here.
+        fs::last_write_time(watched, fs::last_write_time(watched) - 24h);
         assert(reached(changes, 2, kDeadline));
 
         // Deletion is a change too: the file's absence is a state.
@@ -141,7 +166,37 @@ int main() {
     std::this_thread::sleep_for(10 * kInterval);
     assert(changes == 3);
 
+    // A change made while the watcher is being destroyed is not delivered:
+    // the worker checks stop_ AFTER its sleep, before it polls. With a long
+    // interval the worker is provably asleep when the change lands, so a
+    // watcher missing that check fires once more, and this assertion sees it.
+    std::atomic<int> late{0};
+    {
+        FileWatcher watcher(watched, 100ms, [&late] { ++late; });
+        replace_with(watched, "one change, seen");
+        assert(reached(late, 1, kDeadline));          // the worker has just polled and is asleep
+        replace_with(watched, "a second, never seen");
+    }                                                 // stop_, then join
+    assert(late == 1);
+
+    // Absence mid-poll is a state, not an exception on the worker's thread:
+    // a file that appears and vanishes thousands of times under a 1 ms poll
+    // lands inside the gap between is_regular_file and last_write_time often
+    // enough that the throwing overloads would terminate the program.
+    const fs::path flicker = fs::temp_directory_path() / "cookbook_flicker.txt";
+    fs::remove(flicker);
+    std::atomic<int> flickers{0};
+    {
+        FileWatcher watcher(flicker, 1ms, [&flickers] { ++flickers; });
+        for (int i = 0; i < 3000; ++i) {
+            write(flicker, "x");
+            fs::remove(flicker);
+        }
+    }
+    assert(flickers >= 1);                            // it was there, sometimes, and the worker lived to say so
+
     fs::remove(watched);
-    std::cout << "file watcher ok: 3 changes noticed, none after the join\n";
+    std::cout << "file watcher ok: 3 changes noticed, none after the join, none while stopping, "
+              << flickers << " flickers survived\n";
     return 0;
 }
