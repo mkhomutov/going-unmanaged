@@ -225,6 +225,12 @@ jobs:
           # describes Windows behaviour, so it runs on Windows.
           ./scripts/check.ps1 exercises/cookbook/files.cpp
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          # Recipe 43's Win32 half - CreateFileMapping and MapViewOfFile - is
+          # compiled by no other job. On this platform the harness maps one
+          # object twice in one process; the cross-process half is the
+          # POSIX legs' fork, and the recipe says so.
+          ./scripts/check.ps1 exercises/cookbook/shm.cpp
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           # The SAN/OPT knobs, which Chapter 27's steps 5 and 6 need. Untested
           # they are worse than absent: a reader following the card would get a
           # build that quietly still had the sanitizer in it, and step 6's

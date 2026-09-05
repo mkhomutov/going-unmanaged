@@ -134,8 +134,8 @@ Chapter 25's Finding 10.
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
   (files, strings, timing, handles, lookups, paths, async, events, logging,
   alternatives, errors, expected, json, containers, flags, ownership,
-  crypto, watch, http, database), each with a `main()` asserting what
-  its recipes claim; build_all.sh builds and runs all twenty. `json.cpp`
+  crypto, watch, http, database, shm), each with a `main()` asserting what
+  its recipes claim; build_all.sh builds and runs all twenty-one. `json.cpp`
   is the one with a dependency — `exercises/third_party/nlohmann/`, vendored
   with its version recorded, included with `-isystem`. `expected.cpp` is
   the one cut by standard rather than domain — C++23, Chapter 8's chaining
@@ -146,15 +146,22 @@ Chapter 25's Finding 10.
   agree with each other. `http.cpp` is the third probe, libcurl the same way
   (`--require-curl`), judged with no network: a `file://` fixture runs the
   write callback and the transport's error path exactly as for `https://`,
-  and a forty-line loopback server in the harness (POSIX sockets; the
-  cookbook is not built by the MSVC job) serves a redirect, a 500 and a
+  and a forty-line loopback server in the harness (POSIX sockets;
+  `http.cpp` is not built by the MSVC job) serves a redirect, a 500 and a
   stall, so the server's verdict, the redirect follow and the timeout's
   unit are judged too. `database.cpp` is the fourth probe, sqlite3
   (`--require-sqlite`), judged by an in-memory database — and by
   `sqlite3_close`'s return code, which is `SQLITE_OK` only when every
   statement was finalized, so a leaked statement fails the run the way
   `FakeSdk_LiveAllocations` did. `watch.cpp` owns a
-  thread and is built under TSan as well. Same sync
+  thread and is built under TSan as well. `shm.cpp` is the cookbook's one
+  listing that is platform-split end to end (POSIX and Win32 under `#if`;
+  Recipes 29 and 38 guard one call): no library, `-lrt`
+  on Linux, a fork in the harness so the cross-process claim is real, no
+  TSan build because TSan sees one process, and the `buildlab-msvc` job
+  builds the Win32 half through `check.ps1` (as it does `timing.cpp`,
+  `paths.cpp` and `files.cpp`) mapping one object twice in one process.
+  Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
   same commit (the mains are scaffolding and appear in no listing)
