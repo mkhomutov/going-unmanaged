@@ -119,6 +119,7 @@ run "cb_errors"   $CXX $FLAGS   exercises/cookbook/errors.cpp           -o $OUT/
 run "cb_containers" $CXX $FLAGS exercises/cookbook/containers.cpp     -o $OUT/cb_containers
 run "cb_flags"    $CXX $FLAGS   exercises/cookbook/flags.cpp            -o $OUT/cb_flags
 run "cb_ownership" $CXX $FLAGS  exercises/cookbook/ownership.cpp        -o $OUT/cb_ownership
+run "cb_watch"    $CXX $FLAGS   exercises/cookbook/watch.cpp            -o $OUT/cb_watch
 # The one cookbook TU with a dependency. -isystem, not -I: the vendored header
 # is the vendor's, and -Wall -Wextra are for our code (CONTRIBUTING's
 # third-party rule). Two things the rule says that a build alone would not
@@ -249,6 +250,7 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_errors > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_containers > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_flags > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_ownership > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_watch > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_json > /dev/null
 # Both link orders of the Chapter 32 lab: surviving exit IS the claim here.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_a > /dev/null
@@ -936,6 +938,11 @@ if $CXX $TFLAGS "$OUT/tsan_probe.cpp" -o "$OUT/tsan_probe" > /dev/null 2>&1 \
     $CXX $TFLAGS exercises/bridgelab/main.cpp -o "$OUT/bridgelab_tsan"
     TSAN_OPTIONS=halt_on_error=1 "$OUT/bridgelab_tsan" > /dev/null
     echo "  ok   exercises/bridgelab/main.cpp under -fsanitize=thread"
+    # Recipe 40's watcher owns a thread and delivers on it: Chapter 29's
+    # rule that threaded code needs both builds applies to a recipe too.
+    $CXX $TFLAGS exercises/cookbook/watch.cpp -o "$OUT/cb_watch_tsan"
+    TSAN_OPTIONS=halt_on_error=1 "$OUT/cb_watch_tsan" > /dev/null
+    echo "  ok   exercises/cookbook/watch.cpp under -fsanitize=thread"
 elif [ "$REQUIRE_TSAN" = 1 ]; then
     echo "build_all.sh: ThreadSanitizer cannot build and run a trivial program" >&2
     echo "  with $CXX, and --require-tsan was given. Re-run the probe by hand to" >&2

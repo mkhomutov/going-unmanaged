@@ -12,6 +12,19 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **New: Recipe 40 — notice a file changed** (MINOR — an appended
+  recipe). `FileSystemWatcher` has no standard spelling, and the native
+  ones — `inotify`, FSEvents and `kqueue`, `ReadDirectoryChangesW` — are
+  three shapes with three coalescing rules, so the recipe is the poll every
+  platform shares: Recipe 16's worker thread, a stamp of time, size and
+  presence per interval, and a callback on that thread. The comparison is
+  `!=`, never `>`, because a restored backup is older; `watch.cpp` restores
+  one and asserts the wake, waits with a deadline rather than a `get()`,
+  changes the size on purpose so the assertion is independent of the
+  filesystem's timestamp resolution — the trap the recipe names and no
+  harness can portably assert — and asserts silence after the destructor's
+  join. Built under ThreadSanitizer as well as the canonical flags, since
+  it owns a thread. Chapter 31's symptom index gains the fires-once row.
 - **New: Recipes 38–39 — save a file without losing the old one; create,
   copy, move and delete, and a whole tree** (MINOR — two appended recipes).
   The third coverage review (2026-09-05, thirty-two topics) found the

@@ -57,6 +57,7 @@ stays right.
 | `AesGcm.Encrypt` / `Decrypt` | `Cipher.getInstance("AES/GCM/NoPadding")` | [Recipe 37 — Seal bytes for a reader in C#](#recipe-37--seal-bytes-for-a-reader-in-c) |
 | `File.Replace` / write-then-move by hand | `Files.move(..., ATOMIC_MOVE)` | [Recipe 38 — Save a file without losing the old one](#recipe-38--save-a-file-without-losing-the-old-one) |
 | `Directory.CreateDirectory` / `File.Copy` / `File.Move` / `Directory.Delete(recursive)` | `Files.createDirectories` / `copy` / `move` / `walkFileTree` | [Recipe 39 — Create, copy, move and delete, and a whole tree](#recipe-39--create-copy-move-and-delete-and-a-whole-tree) |
+| `FileSystemWatcher` | `WatchService` | [Recipe 40 — Notice a file changed](#recipe-40--notice-a-file-changed) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1747,6 +1748,94 @@ pair, throwing or `error_code`. Needs `<filesystem>`, `<cstdint>`, and
 
 > [!WARNING]
 > **Trap:** `dir / name` with an empty `name` is `dir/` — the separator and nothing after it — so `remove_all(dir / entry)` where `entry` came back empty from a lookup deletes the *directory itself* and everything in it, not one entry, and compiles clean; `Path.Combine(dir, "")` is `dir` by a shorter spelling and the same deletion, and the harness asserts this one: two files and a subdirectory gone, and the directory with them.
+
+### Recipe 40 — Notice a file changed
+
+**In C#:** `var w = new FileSystemWatcher(dir, "settings.json"); w.Changed += OnChanged; w.EnableRaisingEvents = true;`
+
+**The recipe:**
+
+```cpp
+class FileWatcher {
+public:
+    FileWatcher(std::filesystem::path path, std::chrono::milliseconds interval,
+                std::function<void()> on_change)
+        : path_(std::move(path)),
+          seen_(Snapshot(path_)),
+          worker_([this, interval, on_change = std::move(on_change)] {
+              while (!stop_) {
+                  std::this_thread::sleep_for(interval);     // Recipe 16: a thread you own, blocked
+                  if (stop_) {
+                      break;
+                  }
+                  const Stamp now = Snapshot(path_);
+                  if (now != seen_) {                        // !=, never >: a restored backup is OLDER
+                      seen_ = now;
+                      on_change();                           // on THIS thread - Chapter 29's rules apply
+                  }
+              }
+          }) {}
+
+    ~FileWatcher() {
+        stop_ = true;
+        worker_.join();    // Chapter 29's obligation, and the promise that no callback follows
+    }
+    FileWatcher(const FileWatcher&) = delete;
+    FileWatcher& operator=(const FileWatcher&) = delete;
+
+private:
+    // What "changed" means to a poll: the time, the size, and whether it is
+    // there at all. Absence is a state (Chapter 8's error_code overloads),
+    // not an exception on the watcher's thread.
+    struct Stamp {
+        std::filesystem::file_time_type written{};
+        std::uintmax_t size = 0;
+        bool exists = false;
+        bool operator!=(const Stamp& o) const {
+            return written != o.written || size != o.size || exists != o.exists;
+        }
+    };
+    static Stamp Snapshot(const std::filesystem::path& p) {
+        std::error_code ec;
+        Stamp s;
+        s.exists = std::filesystem::is_regular_file(p, ec);
+        if (s.exists) {
+            s.written = std::filesystem::last_write_time(p, ec);
+            s.size = std::filesystem::file_size(p, ec);
+        }
+        return s;
+    }
+
+    std::filesystem::path path_;
+    Stamp seen_;                        // the worker's alone once it starts
+    std::atomic<bool> stop_{false};     // declared before worker_: initialized first (Recipe 16)
+    std::thread worker_;
+};
+```
+
+**Why it looks like this.** The standard library has no watcher, and the
+native ones — `inotify` on Linux, FSEvents and `kqueue` on macOS,
+`ReadDirectoryChangesW` on Windows — are three shapes with three
+coalescing rules, which is where `FileSystemWatcher`'s folklore comes
+from and why a plug-in that needs one takes a library (efsw is the small
+portable one) or, better, the host's own change notification if the SDK
+offers it. A poll is the spelling every platform shares: Recipe 16's
+worker thread, a `Stamp` of time, size and presence per interval, and a
+callback delivered *on that thread* — so everything it touches is
+[Chapter 29](29-concurrency.md#chapter-29--concurrency)'s shared state,
+and in a plug-in the callback posts to the host's queue
+([Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out)) rather
+than calling the SDK. Absence is read through
+[Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
+`error_code` overloads because a missing file is a state the watcher
+must report, not an exception on a thread with no handler. And the
+comparison is `!=`, not `>`: a backup restored over the file carries an
+*older* time, and a watcher that asked "is it newer?" would sleep through
+it — the harness restores one and asserts the wake. Needs `<atomic>`,
+`<chrono>`, `<cstdint>`, `<filesystem>`, `<functional>`, `<thread>`.
+
+> [!WARNING]
+> **Trap:** a poll reads the timestamp at the filesystem's resolution, not the clock's — nanoseconds on APFS, ext4 and NTFS, whole seconds on HFS+ and many network shares, two on FAT — so two same-size writes inside one tick are one event or none; and an editor saves by Recipe 38's rename, so a watch on the *descriptor* (what `inotify` hands you for a single file) is watching a ghost after the first save — watch the path, as this one does.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
