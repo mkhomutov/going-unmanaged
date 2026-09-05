@@ -12,6 +12,29 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **The third coverage review's decisions** (PATCH — prose and ROADMAP;
+  nothing moves a number). Three subjects the review found absent are
+  answered without code, each with a Deliberately-out-of-scope entry in
+  ROADMAP.md that says why: gRPC listings (Appendix G already prices the
+  transport and now carries one unverified paragraph on what the generated
+  C++ looks like); server databases (Chapter 27's batteries section says
+  where a plug-in's Postgres or SQL Server lives in this book's
+  architecture, names libpq and ODBC as Bestiary shapes Recipe 42's
+  discipline covers, and the driver and the connection string as the two
+  costs no recipe carries); and working with LLMs, in both readings —
+  Appendix C for the tool, Chapter 27 for the call, which is JSON over
+  HTTP run out of process by Chapter 38's invariant, or llama.cpp and ONNX
+  Runtime read as the Bestiary shapes they are.
+- **Recipe 6's clock map; Recipe 25's optional field** (PATCH). Recipe 6
+  opens with the one table that indexes what Recipes 6, 16, 28, 29 and 30
+  teach a row at a time — `Stopwatch`, `TimeSpan`, `DateTime.UtcNow`,
+  time zones, `Task.Delay` — and Recipe 25 says what an
+  `std::optional` member does on the wire (`null`, never an absent key,
+  since nlohmann/json 3.12; back only by hand in the vendored 3.12.0, whose
+  read-side overload sits behind a guard that is never open) and that
+  `WhenWritingNull` has no counterpart; `json.cpp` asserts the `null` out
+  and the `nullopt` back. The clock map sits with the page's index rather
+  than inside Recipe 6's strict shape.
 - **New: Recipe 43 — share a buffer with another process** (MINOR — an
   appended recipe). Appendix G priced the shared-memory lane in one row;
   this is the lane, and the first cookbook listing with no portable
