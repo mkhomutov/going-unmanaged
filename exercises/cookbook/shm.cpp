@@ -11,10 +11,10 @@
 // region twice in ONE process and asserts a write through one view is
 // visible through the other: the mechanism, with the cross-process claim
 // stated as unverified there, as Chapter 40 does for its toolchain file.
-// Two more judges, both scaffolding: a second exclusive create of the live
-// name must be refused by shm_open itself (EEXIST) - on macOS a second
-// ftruncate refuses too, for the wrong reason, and a class without O_EXCL
-// would then unlink a name it never owned - and the lowest free descriptor
+// Two more judges, both scaffolding: a second create of the live name
+// through the class must be refused, and by shm_open itself - on macOS a
+// class without O_EXCL is refused by the second ftruncate instead, for the
+// wrong reason, and then unlinks a name it never owned - and the lowest free descriptor
 // is the same before and after the region lived, so a close left out of the
 // destructor is seen. One failure shape differs by platform: MAP_PRIVATE on
 // a shm object is refused by macOS's mmap outright, where Linux accepts it
@@ -40,7 +40,6 @@
 #include <sys/mman.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <cerrno>
 #endif
 
 // Recipe 43 - MemoryMappedFile.CreateOrOpen + CreateViewAccessor
@@ -199,14 +198,19 @@ int main() {
         SharedRegion region(name, sizeof(Frame), true);
         Frame& frame = *new (region.data()) Frame{};      // zeroed: seq starts at 0
 
-        // O_EXCL, judged at the call that carries it: a second exclusive
-        // create of a live name is refused by shm_open with EEXIST. Not by
-        // the class - on macOS a class WITHOUT O_EXCL is refused one call
-        // later, by ftruncate, and its error path then unlinks a name it
-        // never owned, which is why the flag is not a nicety.
-        errno = 0;
-        const int again = ::shm_open(name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
-        assert(again == -1 && errno == EEXIST);
+        // O_EXCL, judged through the class: a second create of the live name
+        // must be refused, and refused BY shm_open. A class without the flag
+        // is refused one call later on macOS, by ftruncate, and its error
+        // path then unlinks a name it never owned - and on Linux it is not
+        // refused at all - which is why the flag is not a nicety, and why
+        // the assertion reads which call said no.
+        std::string refusal;
+        try {
+            SharedRegion again(name, sizeof(Frame), true);
+        } catch (const std::runtime_error& e) {
+            refusal = e.what();
+        }
+        assert(refusal.rfind("shm_open failed", 0) == 0);
 
         const pid_t child = ::fork();
         assert(child >= 0);
