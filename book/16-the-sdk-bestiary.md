@@ -4,7 +4,7 @@ Native SDKs come in a small number of recurring shapes. Learn to recognize the s
 
 ### Shape 1 — Error codes + out-parameters + owned payloads (desktop-application plug-in SDKs)
 
-Every function returns a status code; results come back through pointers you pass in; some structs carry SDK-allocated payloads with a matching dispose function. This is the classic shape of plug-in APIs for large desktop applications — CAD packages, DAWs, office suites — and of venerable C libraries like **SQLite** and **zlib**, which are worth reading as masterclasses in the style (Recipe 42 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) runs SQLite's, and meets the twist Chapter 8 warns of: two success codes that are not zero). Your job: check every code, zero-init every struct, guard every payload. **Trained in Chapter 17.**
+Every function returns a status code; results come back through pointers you pass in; some structs carry SDK-allocated payloads with a matching dispose function. This is the classic shape of plug-in APIs for large desktop applications — CAD packages, DAWs, office suites — and of venerable C libraries like **SQLite** and **zlib**, which are worth reading as masterclasses in the style (Recipe 42 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) runs SQLite's API and meets the instance Chapter 8 warned of — success is not always zero: `sqlite3_step` has two success codes, neither of them zero). Your job: check every code, zero-init every struct, guard every payload. **Trained in Chapter 17.**
 
 ### Shape 2 — Opaque handles + open/close + callbacks (device and I/O SDKs)
 

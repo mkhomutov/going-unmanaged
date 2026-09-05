@@ -1037,8 +1037,9 @@ if pkg-config --exists libcurl 2> /dev/null; then
     # shellcheck disable=SC2086
     if $CXX $FLAGS ${CURL_FLAGS//-I/-isystem } exercises/cookbook/http.cpp $CURL_LIBS \
             -o "$OUT/cb_http" > "$OUT/http_build.log" 2>&1; then
-        UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_http" > /dev/null
-        echo "  ok   exercises/cookbook/http.cpp against libcurl $(pkg-config --modversion libcurl)"
+        # As for sqlite3 below: the linked library's own version, not the shim's.
+        CURL_SEEN=$(UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_http" | sed -n 's/^http ok (libcurl \([^)]*\)).*/\1/p')
+        echo "  ok   exercises/cookbook/http.cpp against libcurl $CURL_SEEN"
     else
         echo "build_all.sh: pkg-config found libcurl but http.cpp does not build against it:" >&2
         sed 's/^/  /' "$OUT/http_build.log" >&2
@@ -1069,8 +1070,11 @@ if pkg-config --exists sqlite3 2> /dev/null; then
     # shellcheck disable=SC2086
     if $CXX $FLAGS ${SQLITE_FLAGS//-I/-isystem } exercises/cookbook/database.cpp $SQLITE_LIBS \
             -o "$OUT/cb_database" > "$OUT/database_build.log" 2>&1; then
-        UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_database" > /dev/null
-        echo "  ok   exercises/cookbook/database.cpp against sqlite3 $(pkg-config --modversion sqlite3)"
+        # The version the binary reports, not pkg-config's: on macOS Homebrew's
+        # shim .pc for the SDK's sqlite3 carries a hard-coded number that need
+        # not match the header or the dylib the build actually used.
+        SQLITE_SEEN=$(UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_database" | sed -n 's/^sqlite ok: \([^,]*\),.*/\1/p')
+        echo "  ok   exercises/cookbook/database.cpp against sqlite3 $SQLITE_SEEN"
     else
         echo "build_all.sh: pkg-config found sqlite3 but database.cpp does not build against it:" >&2
         sed 's/^/  /' "$OUT/database_build.log" >&2

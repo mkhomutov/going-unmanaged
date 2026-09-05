@@ -1950,6 +1950,7 @@ probe and `check.sh` does not — `<chrono>`, `<memory>`, `<stdexcept>`,
 **The recipe:**
 
 ```cpp
+// Recipe 42 - SqliteConnection, SqliteCommand, ExecuteReader: the C API underneath
 using Db = std::unique_ptr<sqlite3, decltype(&sqlite3_close)>;   // Recipe 7's shape, again
 
 Db open_database(const std::string& path) {                        // ":memory:" is a database too
@@ -1990,7 +1991,8 @@ public:
         const int rc = sqlite3_step(stmt_);
         if (rc == SQLITE_ROW) return true;
         if (rc == SQLITE_DONE) return false;
-        throw std::runtime_error(std::string("step: ") + sqlite3_errmsg(db_));   // SQLITE_BUSY lands here too
+        throw std::runtime_error(std::string("step: ") + sqlite3_errmsg(db_));   // SQLITE_BUSY too: one connection, so
+                                                                                // busy IS exceptional here - see the Why
     }
     int column_int(int i) const { return sqlite3_column_int(stmt_, i); }
     std::string column_text(int i) const {
@@ -1999,7 +2001,8 @@ public:
         const unsigned char* text = sqlite3_column_text(stmt_, i);
         return text ? reinterpret_cast<const char*>(text) : "";   // NULL column: the one null there is
     }
-    void reset() { check(sqlite3_reset(stmt_)); }                 // reuse the plan: bind again, step again
+    void reset() { check(sqlite3_reset(stmt_)); }                 // reuse the plan - and rebind EVERY parameter:
+                                                                  // a reset keeps the old bindings
 
 private:
     void check(int rc) const {
@@ -2033,6 +2036,14 @@ private:
     bool committed_ = false;
 };
 
+// The verdict a deleter cannot report: a unique_ptr's deleter returns
+// nothing, so the shutdown path takes the handle back and closes it by hand.
+// SQLITE_BUSY here is a statement nobody finalized - log it; the handle stays
+// open, which is the leak made visible rather than the leak made worse.
+int close_database(Db db) {
+    return sqlite3_close(db.release());
+}
+
 struct Reading {
     int sensor;
     std::string unit;
@@ -2057,33 +2068,44 @@ and the native default for local storage is SQLite through its C API —
 1 masterclass, which means [Chapter 17](17-exercise-the-fakesdk.md#chapter-17--exercise-the-fakesdk)
 already trained every line above: a status from every call, results
 through pointers, and a matching release for everything you are handed,
-which the three RAII types make structural — `sqlite3_close` for the
-connection, `sqlite3_finalize` for the statement, `ROLLBACK` for the
-transaction nobody committed. Two things the chapter could only foreshadow
-arrive here for real. `sqlite3_step` answers with **100** for a row and
-**101** for done — two successes, neither zero — so
+which three RAII types make structural — one per thing SQLite hands you
+and wants back: `sqlite3_close` for the connection, `sqlite3_finalize`
+for the statement, `ROLLBACK` for the transaction nobody committed. Two
+things the chapter could only foreshadow arrive here for real.
+`sqlite3_step` answers with **100** for a row and **101** for done — two
+successes, neither zero — so
 [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
 warning that "success is usually zero" is not a contract is the shape of
-the loop, and `SQLITE_BUSY` is that chapter's drill scenario 3, a value
-the `throw` in `step` turns into an event for the frame that owns the
-retry. And `sqlite3_column_text` is the loan
+the loop. `SQLITE_BUSY` is that chapter's drill scenario 3 — a documented
+steady-state condition the drill files under *value* — and the recipe
+throws it anyway, deliberately: with one connection and no other process
+on the file, busy is exceptional here; a plug-in sharing the file with a
+host decides the way the drill does, with `sqlite3_busy_timeout` on the
+connection or a retry around `step`, before it reaches for `throw`. And
+`sqlite3_column_text` is the loan
 [Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)
 quoted as its in-the-wild example — good until the next step, reset or
 finalize — so the accessor copies out on the spot; `SQLITE_TRANSIENT` is
 the same question asked in the other direction, whether SQLite may keep
-*your* pointer. A prepared statement is `SqliteCommand.Prepare`, compiled
-once and rebound through `reset`, and the close code at the end is the
-recipe's leak detector: a database with a live statement returns
-`SQLITE_BUSY` from `sqlite3_close`, so the harness's last assertion is
-the job `FakeSdk_LiveAllocations` did in Chapter 17. sqlite_orm and SOCI
-wrap this; most native codebases speak it raw, and reading it is cheaper
-than a wrapper nobody else on the team uses. Needs `<sqlite3.h>` and a
+*your* pointer, and the harness binds a temporary that dies before the
+step to make the answer load-bearing. A prepared statement is what
+`SqliteCommand` builds on every `ExecuteReader` (and `Prepare` builds
+early): compiled once, rebound through `reset` — every parameter, because
+a reset keeps the old bindings. The close code at the end is the recipe's
+leak detector: a database with a live statement returns `SQLITE_BUSY`
+from `sqlite3_close`, the job `FakeSdk_LiveAllocations` did in Chapter 17
+— and a `unique_ptr`'s deleter returns nothing, which is why the listing
+ends with a function that takes the handle back and closes it by hand;
+a product's shutdown path should do the same and log the verdict, or it
+has no leak detector at all. sqlite_orm and SOCI wrap this; most native
+codebases speak it raw, and reading it is cheaper than a wrapper nobody
+else on the team uses. Needs `<sqlite3.h>` and a
 link against libsqlite3 — `pkg-config --cflags --libs sqlite3`, which
 `build_all.sh` adds under its probe and `check.sh` does not — `<memory>`,
 `<stdexcept>`, `<string>`, `<vector>`.
 
 > [!WARNING]
-> **Trap:** `sqlite3_close` returning `SQLITE_BUSY` at shutdown is a statement somebody never finalized — Chapter 35's still-live-at-unload, one library over — and the tempting fix, `sqlite3_close_v2`, does not fix it: it defers the close until the last statement is finalized, which for a leaked one is never, so the handle and its file lock outlive your plug-in in the host's process.
+> **Trap:** `sqlite3_close` returning `SQLITE_BUSY` at shutdown is a statement somebody never finalized — Chapter 35's still-live-at-unload, one library over — and the tempting fix, `sqlite3_close_v2`, does not fix it: it defers the close until the last statement is finalized, which for a leaked one is never, so the handle, its open file and any lock a `SELECT` abandoned mid-rows was holding outlive your plug-in in the host's process; and a second close of the same handle is `SQLITE_MISUSE` returned into a deleter that discards it, read inside a library no sanitizer instruments.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
