@@ -237,12 +237,14 @@ int main() {
     const HttpResult stalled = http_get(server.url("/slow"), 250ms);
     assert(stalled.transport == CURLE_OPERATION_TIMEDOUT);   // milliseconds: 250 of them, not 250 seconds
     assert(!stalled.ok());
-    std::cout << "http ok: " << got.body.size() << " bytes through the callback, the missing file refused as "
+    std::cout << "http ok (libcurl " << curl_version_info(CURLVERSION_NOW)->version << "): " << got.body.size()
+              << " bytes through the callback, the missing file refused as "
               << curl_easy_strerror(missing.transport) << ", " << chunks << " chunks for 200 KB, "
               << "a 302 followed to " << followed.status << ", a " << error_page.status
               << " not ok, a stall cut at 250 ms\n";
 #else
-    std::cout << "http ok: " << got.body.size() << " bytes through the callback, the missing file refused as "
+    std::cout << "http ok (libcurl " << curl_version_info(CURLVERSION_NOW)->version << "): " << got.body.size()
+              << " bytes through the callback, the missing file refused as "
               << curl_easy_strerror(missing.transport) << ", " << chunks << " chunks for 200 KB "
               << "(no loopback server on this platform)\n";
 #endif

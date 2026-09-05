@@ -12,6 +12,34 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **New: Recipe 42 — open a local database and run a query** (MINOR — an
+  appended recipe). Chapter 16 called SQLite a masterclass in Shape 1,
+  Chapter 27 named its prepare/step/finalize, Chapter 33 quoted its
+  `column_text` loan, and nothing ran a query. The recipe is three RAII
+  types over the C API — the connection, the prepared statement and a
+  transaction that rolls back unless committed — and the twist Chapter 8
+  foreshadowed arrives for real: `sqlite3_step` answers 100 for a row and
+  101 for done, two successes that are not zero. `column_text` is copied
+  out on the spot because it is Chapter 33's loan; `SQLITE_TRANSIENT` is
+  the same question asked of the caller's pointer.
+  `exercises/cookbook/database.cpp` is the fourth translation unit behind a
+  probe — sqlite3
+  through `pkg-config`, linked from the system, `--require-sqlite` in CI —
+  and its judge is an in-memory database: the values, the step-code
+  sequence, a rollback on a throw, and `sqlite3_close` returning
+  `SQLITE_OK` at the end, which it does only when every statement was
+  finalized, so a leaked statement fails the run the way
+  `FakeSdk_LiveAllocations` did in Chapter 17 — read through a
+  `close_database` in the listing, because a `unique_ptr`'s deleter cannot
+  report it. The harness also binds a temporary that dies before its step
+  (`SQLITE_TRANSIENT` is load-bearing), fails a `COMMIT` through a deferred
+  foreign key (the destructor still rolls back), judges a failed open by
+  SQLite's own memory counter, inserts out of order so `ORDER BY` earns
+  its place, and counts SQLite's misuse log so a close that closed twice —
+  which no sanitizer sees, inside an uninstrumented library — fails the
+  run. Chapters 16, 27 and 33 point
+  at the recipe; Chapter 31's symptom index gains the busy-at-close row;
+  the Trap says why `sqlite3_close_v2` is not the fix.
 - **New: Recipe 41 — call an HTTP endpoint** (MINOR — an appended recipe).
   There is no `HttpClient` because there are no sockets, and the library
   the ecosystem reaches for is libcurl — Chapter 16's Shape 2 with every
