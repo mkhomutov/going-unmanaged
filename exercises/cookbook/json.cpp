@@ -100,6 +100,23 @@ int main() {
     assert(back.size() == 2 && back[1].sensor == 9 && back[1].unit == "V");
     assert(json(readings[0]).dump() == R"({"sensor":3,"unit":"C","value":21.5})");   // keys sorted
 
+    // Recipe 25's note: an optional member serializes as null, never as an
+    // absent key (the library has written one since 3.12) - and in the
+    // vendored 3.12.0 comes back only by hand, is_null() then get<int>():
+    // the read-side overload sits behind a guard that is never open (fixed
+    // upstream in #4742, unreleased at the time of writing).
+    {
+        const std::optional<int> present = 3;
+        const std::optional<int> absent;
+        assert((json{{"delay_ms", present}}.dump() == "{\"delay_ms\":3}"));
+        assert((json{{"delay_ms", absent}}.dump() == "{\"delay_ms\":null}"));
+        const json back = json::parse("{\"delay_ms\":null}");
+        assert(back.at("delay_ms").is_null());              // null is a value it wrote, not a key it dropped
+        const std::optional<int> read = back.at("delay_ms").is_null()
+            ? std::nullopt : std::optional<int>(back.at("delay_ms").get<int>());
+        assert(read == std::nullopt);
+    }
+
     // Recipe 26: the optional field defaults, the required one throws.
     const Config c = load_config(R"({"name": "bench", "timeout": 5})");
     assert(c.timeout == 5 && c.name == "bench");

@@ -14,7 +14,7 @@ An assistant is better than this book at explaining — more patient, endlessly 
 
 Put it in **review mode**: *critique my attempt against the chapter's pitfalls — do not write the solution.* An assistant that writes the solution has done the retrieval for you, which is to say it has done the learning for you, which is to say nobody did. After your attempt has met its real judges — the compiler, the sanitizers, the reference solution — the assistant is the ideal explainer of whatever gap remains.
 
-The standing habit that goes with it: treat AI-generated C++ as code from a very confident colleague who does not test. It goes through `scripts/check.sh` under the canonical flags before it is believed — exactly the scrutiny Chapter 28 taught you to apply to your own green runs.
+The standing habit that goes with it: treat AI-generated C++ as code from a very confident colleague who does not test. It goes through `scripts/check.sh` under the canonical flags before it is believed — exactly the scrutiny Chapter 28 taught you to apply to your own green runs. (The other reading of "working with LLMs" — a plug-in that *calls* a model — is not a learning question: it is JSON over HTTP, Chapter 27's batteries section says where it runs, and Recipes 25, 26 and 41 are the calls.)
 
 ### Working without one
 

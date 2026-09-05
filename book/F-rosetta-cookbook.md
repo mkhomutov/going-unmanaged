@@ -64,6 +64,17 @@ stays right.
 | `MemoryMappedFile.CreateOrOpen` / `CreateViewAccessor` | `FileChannel.map` (files only) | [Recipe 43 — Share a buffer with another process](#recipe-43--share-a-buffer-with-another-process) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
+**The clocks, by name.** The five things `System` gave you for time, and
+where each lands — the map the timing recipes teach one row at a time:
+
+| In C# | In C++ | Which recipe |
+|---|---|---|
+| `Stopwatch` | two `steady_clock::time_point`s and a `duration` | 6, 28 |
+| `TimeSpan` | `std::chrono::duration` — the unit is in the type, `count()` strips it | 30 |
+| `DateTime.UtcNow` | `system_clock::time_point`, the one clock with a calendar | 29 |
+| `DateTime.Now` / `DateTimeOffset` / time zones | C++20's `zoned_time`, where the standard library ships it; before it, `localtime_r`/`localtime_s` and an offset you read yourself | none — 29's trap only warns |
+| `Task.Delay` / `Thread.Sleep` | `std::this_thread::sleep_for(duration)` | 16 |
+
 ### Recipe 1 — Read a whole file into a string
 
 **In C#:** `var text = File.ReadAllText(path);`
@@ -1026,7 +1037,15 @@ one and the error is [Chapter 41](41-templates-you-will-write.md#chapter-41--tem
 overload-resolution novel, naming neither `from_json` nor `Reading`. Keys
 come out sorted, because the document is a map — unlike `JsonSerializer`,
 which writes properties in declaration order, so never diff the two outputs
-as text. Needs `<nlohmann/json.hpp>` (`-isystem exercises/third_party` on the
+as text. A `std::optional<T>` member serializes as `null` when empty —
+the library has written one since 3.12 — never as a missing key, and in
+the vendored 3.12.0 reads back only by hand (Recipe 35's
+`contains`-then-`at`, with `is_null()` for the value: the read-side
+overload is declared behind a guard that is never open, fixed upstream
+in #4742 and unreleased at the time of writing); there is no
+`JsonIgnoreCondition.WhenWritingNull`, so strip the null before `dump`,
+or accept that absent and null are one word on your wire and write that
+down ([Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)). Needs `<nlohmann/json.hpp>` (`-isystem exercises/third_party` on the
 compile line, which `scripts/check.sh` adds), `<string>`, `<vector>`, and
 `using json = nlohmann::json;`.
 

@@ -1573,6 +1573,75 @@ attempting it would fail this file's own first test — the SDK-work transition
 does not present it in the first months. The C# comparison holds the line
 neatly: this book's reader used `ConcurrentQueue<T>`, they did not write it.
 
+### gRPC listings — the transport Appendix G prices and this book does not build
+
+**Asked for as "gRPC usage and examples" in the third coverage review
+(2026-09-05, thirty-two topics), and answered the other way.** Appendix G
+already carries the entry — the `.proto` contract, generated clients,
+deadlines that propagate, streaming as first-class — and its price: a heavy
+C++ dependency tree with long builds that must be static-linked with
+symbols hidden or it collides with the host's own copies (Chapter 40's
+finding, at library scale). A row of the decision table names when it wins.
+
+**Out of scope as code because the lesson is not in the C++.** The contract
+this book's reader must learn is the `.proto` file, which they already own
+from `Grpc.Net` on the other side; what the generated C++ adds is one
+paragraph, now in Appendix G — a `Service` base class you override
+(Bestiary Shape 5), a `ServerContext`, a `Status` return that is Chapter
+8's value pole, and `context->deadline()` as Chapter 38's bounded wait
+running end to end — stated as unverified prose, because a build tree that
+takes longer than the rest of CI combined is exactly the price the appendix
+exists to state, and paying it to hold one paragraph would teach the wrong
+thing about dependency decisions.
+
+### Server databases — Postgres, MSSQL, and the driver you do not ship
+
+**Asked for as "Postgres" and "MSSQL" in the third coverage review, and
+found absent.** Recipe 42 is the local database; nothing speaks to a server.
+
+**Out of scope as code because the book's own architecture puts the server
+on the other side.** Chapter 38 and Appendix G's Family B place the
+interesting half of a plug-in in a client process — the C# one, where
+ADO.NET and Entity Framework exist — and a plug-in that must reach a server
+database directly does it through a C client library that Recipe 42's
+discipline covers whole: libpq is Bestiary Shape 1 again (`PGconn*` opened
+and closed like a handle, `PQexec` returning a `PGresult*` to null-check,
+`PQresultStatus` to test, `PQclear` because whoever allocates frees), and
+ODBC is handles from `SQLAllocHandle`/`SQLFreeHandle` with a `SQLRETURN`
+tested through `SQL_SUCCEEDED()` — Chapter 8's "not `== 0`" once more.
+Chapter 27's batteries section now says so in one paragraph, and names the
+two costs a plug-in shop meets first and no recipe could carry: a driver
+the customer's machine must have installed, which is the runtime leg of
+Chapter 12's trio delivered by an installer you do not control, and a
+connection string that is a secret at rest, which is the storage question
+ROADMAP item 24 left open.
+
+### Working with LLMs — both readings, neither a chapter
+
+**Asked for as "working with LLMs" in the third coverage review.** Two
+readings, and the book answers both without new code.
+
+**Out of scope as a chapter because neither reading presents new C++.** The
+first is a study habit, and the book's policy on it already exists; the
+second is a transport and two Bestiary shapes the reader can already read.
+
+**As a tool for learning and working:** Appendix C is the page, and its rule
+is the whole policy — review mode, and `scripts/check.sh` before belief,
+because in C++ the plausible-but-wrong answer compiles. **As a thing the
+plug-in calls:** a hosted model is JSON over HTTP — Recipes 25, 26 and 41 —
+and it runs out of process by Chapter 38's invariant, since a model call
+is the long operation that freezes a host's main thread; in process, the
+two libraries a shop meets are C APIs the Bestiary already describes —
+llama.cpp is an opaque-context Shape 2 (`llama_model*` freed by
+`llama_model_free`, `llama_context*` by `llama_free`) and ONNX Runtime
+hands you an `OrtApi` function table, which
+is Chapter 40's `HostApi` shape — each a Chapter 27 dependency decision
+with a large binary and a licence attached. Chapter 27's batteries section
+carries the second reading in one paragraph; Appendix C gains one sentence
+pointing there for the reader who arrived with the first. Naming a vendor's
+endpoint would break invariant 4 (no real product names in SDK material),
+which is one more reason Recipe 41 stays generic.
+
 ---
 
 ## Structural item (not content) — DONE
