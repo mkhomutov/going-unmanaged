@@ -11,7 +11,7 @@ Cookbook*), one translation unit per domain —
 | `timing.cpp` | 6, 16, 28–30 — time a call; a repeating timer; a scoped timer and a forwarding wrapper; a timestamp for a log line; a timeout handed to a C API |
 | `handles.cpp` | 7 — wrap a C handle so it frees itself |
 | `lookups.cpp` | 8, 18 — look up a key without inserting it; find an element, an index, or a substring |
-| `paths.cpp` | 10–12, 39 — combine, the exists pair, listing; create, copy, move and delete, and a whole tree (the empty-name trap asserted; the cross-volume rename on Linux only, the `u8path` round trip on Windows only, and each says so) |
+| `paths.cpp` | 10–12, 39 — combine, the exists pair, listing; create, copy, move and delete, and a whole tree (the empty-name trap asserted; the POSIX libraries' cross-volume rename refusal on Linux only — MSVC copies instead — and the `u8path` round trip on Windows only, and each says so) |
 | `async.cpp` | 13 — run work on another thread and wait for it |
 | `events.cpp` | 14 — expose an event |
 | `logging.cpp` | 15, 24 — print a diagnostic you will actually see; compile one out of Release (built twice, once with `-DNDEBUG`) |

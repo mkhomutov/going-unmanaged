@@ -208,8 +208,12 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           # Recipe 10's u8path round trip is asserted only under _WIN32: it is
           # the one platform where a path is wchar_t and the plain constructor
-          # reads a std::string in the active code page rather than as UTF-8.
+          # reads a std::string in the process's code page rather than as UTF-8.
           ./scripts/check.ps1 exercises/cookbook/paths.cpp
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          # Recipe 38's rename-over-existing is a MoveFileEx here: the recipe
+          # describes Windows behaviour, so it runs on Windows.
+          ./scripts/check.ps1 exercises/cookbook/files.cpp
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           # The SAN/OPT knobs, which Chapter 27's steps 5 and 6 need. Untested
           # they are worse than absent: a reader following the card would get a
