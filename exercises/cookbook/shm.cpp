@@ -11,6 +11,14 @@
 // region twice in ONE process and asserts a write through one view is
 // visible through the other: the mechanism, with the cross-process claim
 // stated as unverified there, as Chapter 40 does for its toolchain file.
+// Two more judges, both scaffolding: a second exclusive create of the live
+// name must be refused by shm_open itself (EEXIST) - on macOS a second
+// ftruncate refuses too, for the wrong reason, and a class without O_EXCL
+// would then unlink a name it never owned - and the lowest free descriptor
+// is the same before and after the region lived, so a close left out of the
+// destructor is seen. One failure shape differs by platform: MAP_PRIVATE on
+// a shm object is refused by macOS's mmap outright, where Linux accepts it
+// and the parent's deadline is what fails.
 //
 // No library: the platform is the dependency. Older glibc (< 2.34) needs
 // -lrt for shm_open, which build_all.sh adds on Linux.
@@ -18,7 +26,6 @@
 #include <cassert>
 #include <chrono>
 #include <cstdint>
-#include <cstring>
 #include <iostream>
 #include <new>
 #include <stdexcept>
@@ -33,6 +40,7 @@
 #include <sys/mman.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <cerrno>
 #endif
 
 // Recipe 43 - MemoryMappedFile.CreateOrOpen + CreateViewAccessor
@@ -52,20 +60,29 @@ static_assert(std::is_standard_layout<Frame>::value, "a shared layout has no vta
 static_assert(std::atomic<std::uint32_t>::is_always_lock_free,
               "a lock-based atomic holds a lock that exists in ONE process");
 static_assert(sizeof(Frame) == 4 + 4 + 4 + 4 + 64, "the layout is the contract; a change here is a version bump");
+// Not is_trivially_copyable: an atomic has no copy at all, and what the trait
+// says about that differs by standard library. And none of the three refuses
+// a pointer or a std::string - both are standard-layout - so that half of
+// the rule is yours to keep; the asserts hold the size, the vtable, the lock.
 
 // One name, one mapping, two handles - the object and the view - released
 // in reverse on every path. Recipe 7's shape, twice, behind one class.
 class SharedRegion {
 public:
     SharedRegion(const std::string& name, std::size_t size, bool create)
-        : name_(name), size_(size) {
+        : size_(size) {
 #if defined(_WIN32)
+        SetLastError(0);
         mapping_ = create
-            ? CreateFileMappingA(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0,
+            ? CreateFileMappingA(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0,   // INVALID_HANDLE_VALUE: the paging file backs it
                                  static_cast<DWORD>(size), name.c_str())
             : OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name.c_str());
         if (mapping_ == nullptr) {
             throw std::runtime_error("file mapping failed: " + name);
+        }
+        if (create && GetLastError() == ERROR_ALREADY_EXISTS) {   // Windows has no O_EXCL: a live name is RETURNED, not refused
+            CloseHandle(mapping_);
+            throw std::runtime_error("file mapping exists: " + name);
         }
         view_ = MapViewOfFile(mapping_, FILE_MAP_ALL_ACCESS, 0, 0, size);
         if (view_ == nullptr) {
@@ -78,7 +95,7 @@ public:
         if (fd_ < 0) {
             throw std::runtime_error("shm_open failed: " + name);
         }
-        if (create && ::ftruncate(fd_, static_cast<off_t>(size)) != 0) {   // once, at creation: macOS refuses a second
+        if (create && ::ftruncate(fd_, static_cast<off_t>(size)) != 0) {   // once, at creation: macOS refuses a second (EINVAL)
             ::close(fd_);
             ::shm_unlink(name.c_str());
             throw std::runtime_error("ftruncate failed: " + name);
@@ -95,7 +112,7 @@ public:
     ~SharedRegion() {
 #if defined(_WIN32)
         UnmapViewOfFile(view_);
-        CloseHandle(mapping_);          // the object dies with its last handle: nothing to unlink
+        CloseHandle(mapping_);          // the object dies with its last handle: nothing to unlink (a FILE-backed mapping leaves its file)
 #else
         ::munmap(view_, size_);
         ::close(fd_);                   // the NAME stays until someone unlinks it - see unlink()
@@ -118,7 +135,6 @@ public:
     void* data() const { return view_; }
 
 private:
-    std::string name_;
     std::size_t size_;
     void* view_ = nullptr;
 #if defined(_WIN32)
@@ -161,7 +177,7 @@ int main() {
     SharedRegion a(name, sizeof(Frame), true);
     SharedRegion b(name, sizeof(Frame), false);          // a second view of the same object
     Frame& fa = *new (a.data()) Frame{};
-    Frame& fb = *static_cast<Frame*>(b.data());
+    Frame& fb = *static_cast<Frame*>(b.data());   // the overlay Chapter 34 bans for a wire - see the Why for why it is the tool here
     write_frame(fa);
     assert(seq_reaches(fb, 1, 1000ms));
     check_frame(fb);
@@ -174,9 +190,23 @@ int main() {
     assert(name.size() <= 31);
     SharedRegion::unlink(name);                           // a previous run that died: start clean
 
+    // The lowest free descriptor, before and after: a close the destructor
+    // forgot would move it. (POSIX: open() returns the lowest free number.)
+    const int fd_before = ::open("/dev/null", O_RDONLY);
+    ::close(fd_before);
+
     {
         SharedRegion region(name, sizeof(Frame), true);
         Frame& frame = *new (region.data()) Frame{};      // zeroed: seq starts at 0
+
+        // O_EXCL, judged at the call that carries it: a second exclusive
+        // create of a live name is refused by shm_open with EEXIST. Not by
+        // the class - on macOS a class WITHOUT O_EXCL is refused one call
+        // later, by ftruncate, and its error path then unlinks a name it
+        // never owned, which is why the flag is not a nicety.
+        errno = 0;
+        const int again = ::shm_open(name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
+        assert(again == -1 && errno == EEXIST);
 
         const pid_t child = ::fork();
         assert(child >= 0);
@@ -199,6 +229,9 @@ int main() {
         SharedRegion still_there(name, sizeof(Frame), false);
         assert(static_cast<Frame*>(still_there.data())->seq.load() == 1);   // ...and still holds the data
     }
+    const int fd_after = ::open("/dev/null", O_RDONLY);
+    ::close(fd_after);
+    assert(fd_after == fd_before);                        // every descriptor the regions opened was closed
     // ...until the creator unlinks it, after which the name is gone.
     SharedRegion::unlink(name);
     bool gone = false;

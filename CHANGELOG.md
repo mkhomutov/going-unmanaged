@@ -14,8 +14,8 @@ numbers may still move.
 
 - **New: Recipe 43 — share a buffer with another process** (MINOR — an
   appended recipe). Appendix G priced the shared-memory lane in one row;
-  this is the lane, and the cookbook's first platform-split listing —
-  POSIX `shm_open` and `mmap`, Win32 `CreateFileMapping` and
+  this is the lane, and the first cookbook listing with no portable
+  spelling at all — POSIX `shm_open` and `mmap`, Win32 `CreateFileMapping` and
   `MapViewOfFile`, behind one class that is Recipe 7's shape twice. The
   lesson is in the struct rather than the class: a shared region is a wire
   format — fixed-width fields, a version first, no pointers, nothing the
@@ -29,7 +29,11 @@ numbers may still move.
   `buildlab-msvc` job builds the Win32 half and maps one object twice in one
   process, the cross-process claim stated as unverified there. The Trap is
   the leak nobody unlinks and the race no sanitizer can see, plus macOS's
-  31-character name limit and its one `ftruncate`. Appendix E gains the
+  31-character name limit and its one `ftruncate`. The Why says why this
+  recipe performs the overlay Chapter 34 bans (the region is the object's
+  storage, and C++23's `start_lifetime_as` is the spelling), what the three
+  `static_assert`s can and cannot refuse, and that Windows has no `O_EXCL`,
+  so the create branch reads `ERROR_ALREADY_EXISTS` back. Appendix E gains the
   term; Appendix G's row and Chapter 31's symptom index point at the recipe.
 - **New: Recipe 42 — open a local database and run a query** (MINOR — an
   appended recipe). Chapter 16 called SQLite a masterclass in Shape 1,

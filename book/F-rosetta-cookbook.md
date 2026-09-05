@@ -2110,7 +2110,7 @@ link against libsqlite3 — `pkg-config --cflags --libs sqlite3`, which
 
 ### Recipe 43 — Share a buffer with another process
 
-**In C#:** `using var mmf = MemoryMappedFile.CreateOrOpen("frames", size); using var view = mmf.CreateViewAccessor(); view.Write(0, ref frame);` — the runtime picks the platform API, keeps the mapping alive, and writes a struct into it as if layout were nobody's problem (and a *named* map is Windows-only in .NET, which is its own hint about how platform-shaped this is)
+**In C#:** `using var mmf = MemoryMappedFile.CreateOrOpen("frames", size); using var view = mmf.CreateViewAccessor(); view.Write(0, ref frame);` — the runtime picks the platform API, keeps the mapping alive, and copies the struct's bytes in exactly as it laid them out, checked against nothing on the other side — which worked, because the other side was usually .NET too (and `CreateOrOpen` is `[SupportedOSPlatform("windows")]`: a *named* map throws `PlatformNotSupportedException` everywhere else, which is its own hint about how platform-shaped this is)
 
 **The recipe:**
 
@@ -2126,20 +2126,29 @@ static_assert(std::is_standard_layout<Frame>::value, "a shared layout has no vta
 static_assert(std::atomic<std::uint32_t>::is_always_lock_free,
               "a lock-based atomic holds a lock that exists in ONE process");
 static_assert(sizeof(Frame) == 4 + 4 + 4 + 4 + 64, "the layout is the contract; a change here is a version bump");
+// Not is_trivially_copyable: an atomic has no copy at all, and what the trait
+// says about that differs by standard library. And none of the three refuses
+// a pointer or a std::string - both are standard-layout - so that half of
+// the rule is yours to keep; the asserts hold the size, the vtable, the lock.
 
 // One name, one mapping, two handles - the object and the view - released
 // in reverse on every path. Recipe 7's shape, twice, behind one class.
 class SharedRegion {
 public:
     SharedRegion(const std::string& name, std::size_t size, bool create)
-        : name_(name), size_(size) {
+        : size_(size) {
 #if defined(_WIN32)
+        SetLastError(0);
         mapping_ = create
-            ? CreateFileMappingA(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0,
+            ? CreateFileMappingA(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0,   // INVALID_HANDLE_VALUE: the paging file backs it
                                  static_cast<DWORD>(size), name.c_str())
             : OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name.c_str());
         if (mapping_ == nullptr) {
             throw std::runtime_error("file mapping failed: " + name);
+        }
+        if (create && GetLastError() == ERROR_ALREADY_EXISTS) {   // Windows has no O_EXCL: a live name is RETURNED, not refused
+            CloseHandle(mapping_);
+            throw std::runtime_error("file mapping exists: " + name);
         }
         view_ = MapViewOfFile(mapping_, FILE_MAP_ALL_ACCESS, 0, 0, size);
         if (view_ == nullptr) {
@@ -2152,7 +2161,7 @@ public:
         if (fd_ < 0) {
             throw std::runtime_error("shm_open failed: " + name);
         }
-        if (create && ::ftruncate(fd_, static_cast<off_t>(size)) != 0) {   // once, at creation: macOS refuses a second
+        if (create && ::ftruncate(fd_, static_cast<off_t>(size)) != 0) {   // once, at creation: macOS refuses a second (EINVAL)
             ::close(fd_);
             ::shm_unlink(name.c_str());
             throw std::runtime_error("ftruncate failed: " + name);
@@ -2169,7 +2178,7 @@ public:
     ~SharedRegion() {
 #if defined(_WIN32)
         UnmapViewOfFile(view_);
-        CloseHandle(mapping_);          // the object dies with its last handle: nothing to unlink
+        CloseHandle(mapping_);          // the object dies with its last handle: nothing to unlink (a FILE-backed mapping leaves its file)
 #else
         ::munmap(view_, size_);
         ::close(fd_);                   // the NAME stays until someone unlinks it - see unlink()
@@ -2192,7 +2201,6 @@ public:
     void* data() const { return view_; }
 
 private:
-    std::string name_;
     std::size_t size_;
     void* view_ = nullptr;
 #if defined(_WIN32)
@@ -2206,24 +2214,41 @@ private:
 **Why it looks like this.** No library, because the platform is the
 dependency: POSIX `shm_open` plus `mmap` on Linux and macOS, a
 pagefile-backed `CreateFileMapping` plus `MapViewOfFile` on Windows, and
-the cookbook's first `#if` inside a listing, since no standard spelling
-exists (Boost.Interprocess is the portable wrapper, and the price of it is
-Boost). The class is Recipe 7 twice — an object handle and a view, each
-released on every path in reverse — and the lesson that makes it this
-book's is in the struct, not the class: **a shared region is a wire
-format**. The bytes are read by a process with its own compiler, its own
-build and its own address space, so
+the first listing in the cookbook with no portable spelling at all —
+Recipes 29 and 38 guard one call, this one guards every call, since no
+standard one exists (Boost.Interprocess is the portable wrapper, and the
+price of it is Boost). The class is Recipe 7 twice — an object handle and
+a view, each released on every path in reverse; Windows has no `O_EXCL`,
+so its create branch reads `ERROR_ALREADY_EXISTS` back to refuse a live
+name the way POSIX's flag does — and the lesson that makes it this book's
+is in the struct, not the class: **a shared region is a wire format**.
+The bytes are read by a process with its own compiler, its own build and
+its own address space, so
 [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s
 one rule applies with
 [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
 extension — fixed-width fields, a version first, no `std::string`, no
-pointer (an address in *your* process), and the three `static_assert`s as
-[Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s
-judge on the layout. The counter is the whole of the synchronization: a
-`std::atomic` that is lock-free on every target here, written with
-release after the payload and read with acquire before it, because an
-atomic that needed a lock would hold one that exists in one process only;
-a process-shared mutex (`pthread_mutexattr_setpshared`, a named Win32
+pointer (an address in *your* process) — and the three `static_assert`s
+are [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s
+judge on what they *can* hold: the size, the absence of a vtable, the
+lock-free atomic. The pointer and the `std::string` they cannot refuse,
+since both are standard-layout, and the fork does not reliably catch them
+either — a child's address read by the parent is garbage, or correct
+until the day the mapping lands elsewhere; that half of the rule is yours
+to keep. (Not `is_trivially_copyable`, which an atomic fails on one
+standard library and passes on two.) This is also the overlay
+[Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)
+bans for a captured wire, and here it is the tool: the region *is* the
+object's storage, the atomic must be operated in place, and the second
+view is read through the cast — the standard has no model of a second
+mapping, C++23's `std::start_lifetime_as` is its spelling for one, and
+the compiler cannot see through `mmap`. The counter is the whole of the
+synchronization: a `std::atomic` that is lock-free on every target here,
+written with release after the payload and read with acquire before it,
+because an atomic that needed a lock would hold one that exists in one
+process only (the standard *recommends* that lock-free also mean
+address-free, which is the property a second process needs); a
+process-shared mutex (`pthread_mutexattr_setpshared`, a named Win32
 mutex) is the next step and not this recipe. The reader's wait is bounded
 ([Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out)'s judge),
 and the harness is the one place in this book that forks: the child maps
@@ -2235,7 +2260,7 @@ unverified there. Needs `<atomic>`, `<cstdint>`, `<string>`,
 `-lrt` before glibc 2.34); `<windows.h>` on Windows.
 
 > [!WARNING]
-> **Trap:** the name outlives every process that mapped it — close every handle, exit, and `/dev/shm/name` is still there holding the last frame, until someone calls `shm_unlink` — and no sanitizer sees any of this: ThreadSanitizer instruments one process, so a race between two is invisible to every tool in the book, Finding 10's family with a process boundary through it. Two smaller ones the harness meets: macOS caps the name at 31 characters and allows `ftruncate` on the object exactly once.
+> **Trap:** the name outlives every process that mapped it — close every handle, exit, and the name is still there holding the last frame, visibly on Linux as `/dev/shm/name` and with no path to list at all on macOS, until someone calls `shm_unlink` (a harness killed on an assertion leaves one behind) — and ThreadSanitizer instruments one process, so a race between two is invisible to every tool in the book, Finding 10's family with a process boundary through it. Two smaller ones the harness meets: macOS caps the name at 31 characters and allows `ftruncate` on the object exactly once (a second returns `EINVAL`).
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

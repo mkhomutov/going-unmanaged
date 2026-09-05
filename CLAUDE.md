@@ -155,7 +155,8 @@ Chapter 25's Finding 10.
   statement was finalized, so a leaked statement fails the run the way
   `FakeSdk_LiveAllocations` did. `watch.cpp` owns a
   thread and is built under TSan as well. `shm.cpp` is the cookbook's one
-  platform-split listing (POSIX and Win32 under `#if`): no library, `-lrt`
+  listing that is platform-split end to end (POSIX and Win32 under `#if`;
+  Recipes 29 and 38 guard one call): no library, `-lrt`
   on Linux, a fork in the harness so the cross-process claim is real, no
   TSan build because TSan sees one process, and the `buildlab-msvc` job
   builds the Win32 half through `check.ps1` (as it does `timing.cpp`,
