@@ -13,6 +13,8 @@
 #                                             C++23 <expected> (CI)
 #   scripts/build_all.sh --require-openssl  -> also fail if pkg-config cannot find
 #                                             libcrypto for Recipes 36-37 (CI)
+#   scripts/build_all.sh --require-curl     -> also fail if pkg-config cannot find
+#                                             libcurl for Recipe 41 (CI)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -21,6 +23,7 @@ REQUIRE_TSAN=0
 REQUIRE_GIT=0
 REQUIRE_EXPECTED=0
 REQUIRE_OPENSSL=0
+REQUIRE_CURL=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --require-cmake)    REQUIRE_CMAKE=1;    shift ;;
@@ -28,6 +31,7 @@ while [ $# -gt 0 ]; do
         --require-git)      REQUIRE_GIT=1;      shift ;;
         --require-expected) REQUIRE_EXPECTED=1; shift ;;
         --require-openssl)  REQUIRE_OPENSSL=1;  shift ;;
+        --require-curl)     REQUIRE_CURL=1;     shift ;;
         *) echo "build_all.sh: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -1010,6 +1014,39 @@ elif [ "$REQUIRE_OPENSSL" = 1 ]; then
     exit 1
 else
     echo "  SKIPPED - no libcrypto via pkg-config here (CI runs this for real)"
+fi
+
+# Recipe 41 needs libcurl - the third cookbook TU behind a probe, and the
+# second library the repository links from the system rather than vendors
+# (CLAUDE.md invariant 5). Same bargain as libcrypto: pkg-config must answer
+# for libcurl, and the TU must then build AND run. CI passes --require-curl
+# on both platforms; the macOS SDK ships libcurl with its pkg-config file,
+# and the Ubuntu runner installs libcurl4-openssl-dev first. The judge needs
+# no network: the harness writes a fixture and fetches it through file://,
+# the one URL scheme with nothing behind it, so the callback path and the
+# transport's error path are exercised offline and the server's verdict is
+# stated in the recipe as the half no offline judge can reach.
+echo "== cookbook http (libcurl) =="
+if pkg-config --exists libcurl 2> /dev/null; then
+    CURL_FLAGS=$(pkg-config --cflags libcurl)
+    CURL_LIBS=$(pkg-config --libs libcurl)
+    # shellcheck disable=SC2086
+    if $CXX $FLAGS ${CURL_FLAGS//-I/-isystem } exercises/cookbook/http.cpp $CURL_LIBS \
+            -o "$OUT/cb_http" > "$OUT/http_build.log" 2>&1; then
+        UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_http" > /dev/null
+        echo "  ok   exercises/cookbook/http.cpp against libcurl $(pkg-config --modversion libcurl)"
+    else
+        echo "build_all.sh: pkg-config found libcurl but http.cpp does not build against it:" >&2
+        sed 's/^/  /' "$OUT/http_build.log" >&2
+        exit 1
+    fi
+elif [ "$REQUIRE_CURL" = 1 ]; then
+    echo "build_all.sh: pkg-config cannot find libcurl, and --require-curl was given." >&2
+    echo "  On macOS the SDK's libcurl answers to pkg-config; on Debian/Ubuntu:" >&2
+    echo "  apt-get install libcurl4-openssl-dev pkg-config" >&2
+    exit 1
+else
+    echo "  SKIPPED - pkg-config cannot find libcurl (CI runs this for real)"
 fi
 
 echo "ALL GREEN"

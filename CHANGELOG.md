@@ -12,6 +12,29 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **New: Recipe 41 — call an HTTP endpoint** (MINOR — an appended recipe).
+  There is no `HttpClient` because there are no sockets, and the library
+  the ecosystem reaches for is libcurl — Chapter 16's Shape 2 with every
+  idiom intact, the write callback being the trampoline Chapter 18 built,
+  called once per chunk. The recipe keeps both verdicts as data: the
+  transport's `CURLcode` and the server's status, because `CURLE_OK` with
+  a 500 is a successful transfer of an error page, which is the Trap.
+  `exercises/cookbook/http.cpp` is the cookbook's third translation unit
+  behind a probe — libcurl located through `pkg-config`, linked from the
+  system, `--require-curl` in CI on both platforms — and its judge needs no
+  network: a `file://` fixture exercises the callback path and the
+  transport's error path (`CURLE_FILE_COULDNT_READ_FILE`), a 200 KB fixture
+  proves the many-chunks claim through the recipe's own callback, and a
+  forty-line loopback server in the harness serves a redirect the recipe
+  follows (`CURLOPT_FOLLOWLOCATION`, as `HttpClient` does by default), a
+  500 whose body is an error page, and a stall the 250 ms deadline cuts —
+  so a `getinfo` left out or a timeout set in seconds fails the run. The
+  fixture path is percent-encoded through curl's URL API, so a temp
+  directory with a space in it is not a malformed URL. CLAUDE.md's invariant 5 and
+  CONTRIBUTING's ground rules now define the system-linked category once —
+  judged against an oracle that needs no network and no state outside the
+  run — rather than per library. Chapter 27's batteries section points at
+  the recipe; Chapter 31's symptom index gains the error-page row.
 - **New: Recipe 40 — notice a file changed** (MINOR — an appended
   recipe). `FileSystemWatcher` has no standard spelling, and the native
   ones — `inotify`, FSEvents and `kqueue`, `ReadDirectoryChangesW` — are

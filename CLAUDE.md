@@ -134,8 +134,8 @@ Chapter 25's Finding 10.
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
   (files, strings, timing, handles, lookups, paths, async, events, logging,
   alternatives, errors, expected, json, containers, flags, ownership,
-  crypto), each with a `main()` asserting what
-  its recipes claim; build_all.sh builds and runs all seventeen. `json.cpp`
+  crypto, watch, http), each with a `main()` asserting what
+  its recipes claim; build_all.sh builds and runs all nineteen. `json.cpp`
   is the one with a dependency — `exercises/third_party/nlohmann/`, vendored
   with its version recorded, included with `-isystem`. `expected.cpp` is
   the one cut by standard rather than domain — C++23, Chapter 8's chaining
@@ -143,7 +143,14 @@ Chapter 25's Finding 10.
   system's libcrypto through `pkg-config` (`--require-openssl` in CI, which
   sets PKG_CONFIG_PATH on macOS), nothing vendored, and its judge is four
   published test vectors — a round trip would prove only that seal and open
-  agree with each other. Same sync
+  agree with each other. `http.cpp` is the third probe, libcurl the same way
+  (`--require-curl`), judged with no network: a `file://` fixture runs the
+  write callback and the transport's error path exactly as for `https://`,
+  and a forty-line loopback server in the harness (POSIX sockets; the
+  cookbook is not built by the MSVC job) serves a redirect, a 500 and a
+  stall, so the server's verdict, the redirect follow and the timeout's
+  unit are judged too. `watch.cpp` owns a
+  thread and is built under TSan as well. Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
   same commit (the mains are scaffolding and appear in no listing)
@@ -268,21 +275,23 @@ Chapter 25's Finding 10.
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
-  Its last seven sections may skip: one builds `exercises/deplab/` three ways
+  Its last eight sections may skip: one builds `exercises/deplab/` three ways
   (Chapter 27), one configures, builds and runs `exercises/buildlab/`'s
   CMakeLists, one installs `exercises/pluginlab/`'s SDK drop and builds,
   loads and inspects its plug-in (Chapter 40), one generates Appendix J's
   runtime-delivery project and installs it with and without a runpath, one rebuilds
   `solutions/device_threaded_solution.cpp` under
   `-fsanitize=thread` (a second build, because TSan and ASan do not combine),
-  one builds `exercises/cookbook/expected.cpp` as C++23, and the last
-  builds `exercises/cookbook/crypto.cpp` against the system's libcrypto.
+  one builds `exercises/cookbook/expected.cpp` as C++23, one builds
+  `exercises/cookbook/crypto.cpp` against the system's libcrypto, and the
+  last builds `exercises/cookbook/http.cpp` against the system's libcurl.
   Without cmake on PATH, without a git that can clone a `file://` repository
   (deplab's FetchContent path only), without a ThreadSanitizer that can
   compile *and start* a trivial program, or without a compiler that has
-  `<expected>`, or without a libcrypto that `pkg-config` can find, each prints
-  SKIPPED and stays green; `--require-cmake`, `--require-git`, `--require-tsan`,
-  `--require-expected` and `--require-openssl` (CI passes all five) refuse to skip
+  `<expected>`, or without a libcrypto or a libcurl that `pkg-config` can
+  find, each prints SKIPPED and stays green; `--require-cmake`,
+  `--require-git`, `--require-tsan`, `--require-expected`, `--require-openssl`
+  and `--require-curl` (CI passes all six) refuse to skip
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
   flags: one or more .cpp files, compiled in the order written (= link order,
   which Chapter 32's two-order test turns on), then an optional vendor
@@ -422,12 +431,17 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
    (today: nlohmann/json, for the cookbook's three JSON recipes), included
    with `-isystem`, with the version and any patch recorded in that
    directory's README — Chapter 27's own vendoring rule, applied to the
-   repo. A second category, today only `exercises/cookbook/crypto.cpp`: a
-   library the system provides and the repository links but never copies
-   in (Chapter 27's fourth strategy) — located through `pkg-config`, built
-   behind a probe with a `--require-<lib>` flag CI passes, judged against
-   published vectors, reachable from the cookbook only, and nothing for
-   NOTICE, since nothing is redistributed.
+   repo. A second category — a library the system provides and the
+   repository links but never copies in (Chapter 27's fourth strategy):
+   located through `pkg-config`, built behind a probe with a
+   `--require-<lib>` flag CI passes, judged against an oracle that needs no
+   network and no state outside the run — published vectors for libcrypto
+   (`crypto.cpp`); a `file://` fixture and a loopback server of the
+   harness's own for libcurl (`http.cpp`) — reachable
+   from the cookbook only, and nothing for NOTICE, since nothing is
+   redistributed. A network in CI is not an oracle: a recipe whose only
+   judge is a server somewhere is a recipe nobody checks the day the server
+   is down.
 6. The single file stays reproducible from `book/`: after ANY change there
    run `./scripts/build_book.sh`, and `--write-nav` too if you added,
    removed, or renamed a chapter file. CI runs both.

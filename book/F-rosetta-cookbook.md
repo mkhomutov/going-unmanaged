@@ -9,8 +9,9 @@ concept rather than re-teaching it — this page is for looking up, not for
 reading.
 
 Every listing compiles, runs, and holds under the canonical flags — all but
-one, which is C++23; that one and the two that need libcrypto build behind
-probes, and say so where they appear. The recipes live as code in
+one, which is C++23; that one, the two that need libcrypto and the one that
+needs libcurl build behind probes, and say so where they appear. The recipes
+live as code in
 `exercises/cookbook/`, and `scripts/build_all.sh` asserts what each one
 claims on every push. Recipe numbers are stable —
 recipes append and are never renumbered — so a note that says "Recipe 7"
@@ -58,6 +59,7 @@ stays right.
 | `File.Replace` / write-then-move by hand | `Files.move(..., ATOMIC_MOVE)` | [Recipe 38 — Save a file without losing the old one](#recipe-38--save-a-file-without-losing-the-old-one) |
 | `Directory.CreateDirectory` / `File.Copy` / `File.Move` / `Directory.Delete(recursive)` | `Files.createDirectories` / `copy` / `move` / `walkFileTree` | [Recipe 39 — Create, copy, move and delete, and a whole tree](#recipe-39--create-copy-move-and-delete-and-a-whole-tree) |
 | `FileSystemWatcher` | `WatchService` | [Recipe 40 — Notice a file changed](#recipe-40--notice-a-file-changed) |
+| `HttpClient.GetStringAsync` | `HttpClient.send` | [Recipe 41 — Call an HTTP endpoint](#recipe-41--call-an-http-endpoint) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1853,6 +1855,92 @@ callback should be safe to run twice. Needs `<atomic>`, `<chrono>`,
 
 > [!WARNING]
 > **Trap:** a poll reads the timestamp at the filesystem's resolution, not the clock's — nanoseconds on APFS and ext4, hundreds of them on NTFS, whole seconds on HFS+ and many network shares, two on FAT — so two same-size writes inside one tick are one event or none; and many editors save by Recipe 38's rename, so a watch on the *inode* — what `inotify` attaches its watch to, and what `kqueue`'s open descriptor names — is watching a ghost after the first save; watch the path, as this one does.
+
+### Recipe 41 — Call an HTTP endpoint
+
+**In C#:** `var text = await http.GetStringAsync(url);` — one call, and one `HttpRequestException` for the transport's failures and the server's non-success codes alike (the timeout alone arrives as a `TaskCanceledException`)
+
+**The recipe:**
+
+```cpp
+// Recipe 41 - HttpClient.GetStringAsync, through the C API the ecosystem uses
+// (curl_global_init(CURL_GLOBAL_DEFAULT) runs once per process before this,
+// on the thread that starts the others - see the Why.)
+using Easy = std::unique_ptr<CURL, decltype(&curl_easy_cleanup)>;   // Recipe 7's shape: the cleanup is the type
+
+// Two verdicts, both kept: the transport's (did the bytes arrive?) and the
+// server's (are they the answer?). HttpClient folded them into one
+// exception; here each is data, and ok() is the question most callers ask.
+struct HttpResult {
+    CURLcode transport = CURLE_OK;    // DNS, connect, TLS, timeout: the wire's opinion
+    long status = 0;                  // the server's opinion; 0 when there was no server (file://)
+    std::string body;
+    bool ok() const { return transport == CURLE_OK && status < 400; }
+};
+
+// The trampoline (Chapter 18): libcurl calls this with the void* it was
+// handed - once per CHUNK, many times per response, never once.
+static std::size_t append_chunk(char* data, std::size_t size, std::size_t count, void* userdata) {
+    static_cast<std::string*>(userdata)->append(data, size * count);
+    return size * count;    // anything less tells libcurl to abort the transfer
+}
+
+HttpResult http_get(const std::string& url, std::chrono::milliseconds timeout) {
+    Easy easy(curl_easy_init(), &curl_easy_cleanup);
+    if (!easy) {
+        throw std::runtime_error("curl_easy_init failed");    // the library itself: Chapter 8's event pole
+    }
+    HttpResult r;
+    // setopt's own return is unchecked on purpose: the options below fail
+    // only for a build that lacks them, and a URL it cannot parse is
+    // refused by perform, where the verdict is read anyway.
+    curl_easy_setopt(easy.get(), CURLOPT_URL, url.c_str());
+    curl_easy_setopt(easy.get(), CURLOPT_WRITEFUNCTION, &append_chunk);
+    curl_easy_setopt(easy.get(), CURLOPT_WRITEDATA, &r.body);
+    curl_easy_setopt(easy.get(), CURLOPT_FOLLOWLOCATION, 1L);   // HttpClient's default: a 3xx is followed, not returned
+    curl_easy_setopt(easy.get(), CURLOPT_TIMEOUT_MS, static_cast<long>(timeout.count()));   // Recipe 30's hand-off
+    r.transport = curl_easy_perform(easy.get());              // blocks: this IS the await, spelled as a call
+    curl_easy_getinfo(easy.get(), CURLINFO_RESPONSE_CODE, &r.status);
+    return r;
+}
+```
+
+**Why it looks like this.** There is no `HttpClient` because there are no
+sockets ([Chapter 27](27-dependency-management.md#chapter-27--dependency-management)),
+and the library the ecosystem reaches for is libcurl — which arrives as
+[Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary)'s Shape 2
+with every idiom intact: an opaque `CURL*` from `curl_easy_init` that
+`curl_easy_cleanup` must reach exactly once, options set one call at a
+time, an integer status from `curl_easy_perform`, and the write callback
+carrying the `void*` you handed it, which is the trampoline
+[Chapter 18](18-exercise-the-device-sdk.md#chapter-18--exercise-the-device-sdk)
+built — called once per chunk, so it appends and never assigns. The two
+verdicts are the part `GetStringAsync` hid: `CURLcode` says whether the
+wire delivered anything (a name that did not resolve, a timeout, a
+certificate it would not trust), and `CURLINFO_RESPONSE_CODE` is what the
+server thought of the request — `CURLE_OK` with a 500 is a *successful*
+transfer of an error page, and `ok()` reads both; `CURLOPT_FOLLOWLOCATION`
+is there because without it a 301 is a *successful* transfer of a redirect
+page, where `HttpClient` follows by default. The `.count()` is Recipe
+30's: the duration becomes libcurl's bare integer on the one line next to
+the `_MS` option. `curl_global_init` runs once per process before any
+thread exists — the init entry point in a plug-in, never a static
+initializer ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit))
+— and a POST is the same handle with `CURLOPT_POSTFIELDS` and a
+`curl_slist` under `CURLOPT_HTTPHEADER`, a second Recipe 7 type with
+`curl_slist_free_all` as its deleter. The harness needs no network and
+has two halves: a `file://` fixture, the one URL scheme with nothing
+behind it, exercises the callback and the transport's error path, and a
+loopback server of forty lines — POSIX sockets, since the standard library
+has none — answers with a redirect to follow, a 500 whose body is an error
+page, and a stall the deadline cuts short, so both verdicts are judged and
+the timeout's unit with them. Needs `<curl/curl.h>` and a link against libcurl —
+`pkg-config --cflags --libs libcurl`, which `build_all.sh` adds under its
+probe and `check.sh` does not — `<chrono>`, `<memory>`, `<stdexcept>`,
+`<string>`.
+
+> [!WARNING]
+> **Trap:** a green `CURLcode` says the bytes arrived, not that they are the answer — the body of a 404 is an HTML page that parses as JSON about as well as it reads, and a caller that checked only `perform`'s return will feed it to Recipe 26 and file the resulting `parse_error` under "the server is flaky".
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
