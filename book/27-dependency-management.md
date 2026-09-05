@@ -85,6 +85,32 @@ So your first real dependency is very likely one of these, and the ecosystem has
 
 The same shift covers data. There is no Entity Framework and no ADO.NET; the native default for local storage is **SQLite**, consumed through its C API — prepare, step, finalize; opaque handles; an error code from every call. That is Bestiary Shape 1 in production, which means Chapter 17 already trained you for it without saying so: the discipline is identical, only the header changes. C++ wrappers exist (**sqlite_orm**, **SOCI**), but most native codebases speak the raw API, and reading it is cheaper than learning a wrapper nobody else on the team uses — Recipe 42 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) is that API, wrapped once in the three RAII types it needs.
 
+The same shift covers the server database, with one difference the local
+one does not have: the book's own architecture puts it on the other side.
+Chapter 38 and Appendix G leave the interesting half of a plug-in in a
+client process — the C# one, where ADO.NET and Entity Framework are in the
+box — and a plug-in that must reach Postgres or SQL Server directly does
+it through a C client library Recipe 42's discipline already covers:
+**libpq** is Shape 2 (`PGconn*`, `PQexec`, a `PQresultStatus` to test,
+`PQclear` because whoever allocates frees), and **ODBC** is handles from
+`SQLAllocHandle` and `SQLFreeHandle` with a `SQLRETURN` you test through
+`SQL_SUCCEEDED()`, never against zero. Two costs arrive with either that
+no recipe can carry: a driver the customer's machine must have installed —
+the runtime half of Chapter 12's trio, delivered by an installer you do
+not control — and a connection string that is a secret at rest.
+
+And the box's newest battery is missing too: there is no client for a
+language model, because there is no `HttpClient` — a hosted model is JSON
+over HTTP, Recipes 25, 26 and 41, and it runs *out of process* by Chapter
+38's invariant, since a model call is exactly the long operation that
+freezes a host's main thread. In process, the two libraries a shop meets
+are C APIs the Bestiary already describes — llama.cpp is an opaque-context
+Shape 2, and ONNX Runtime hands you an `OrtApi` function table, Chapter
+40's `HostApi` shape — each a dependency decision under the strategies
+above, with a binary measured in hundreds of megabytes and a licence
+attached. (Using a model to *write* the C++ is Appendix C's subject, and
+its one rule.)
+
 The same shift reaches the part of the box nobody thinks of as a battery until it is missing: there is no `System.Security.Cryptography`. No hash, no cipher, no signature, no random source guaranteed fit for a key (`std::random_device` promises nothing) — every one is a dependency under the strategies above, and the rule that comes with it is harder than C#'s, because nothing is in the box to fall back on: never write a primitive. The library the ecosystem reaches for is **OpenSSL**'s libcrypto, a Shape 1 C API through its `EVP_` interface — an integer status from every operation, results through pointers, the algorithm named by a function — with **libsodium** as the smaller, more opinionated alternative; the platform's own (CNG on Windows, CommonCrypto on Apple's, CryptoKit behind a Swift shim) where the product already speaks to the OS; and **mbedTLS** on the Shape 4 targets.
 
 What none of them decides for you is the half this book's reader meets first: the bytes your plug-in seals must open under `AesGcm` on the C# side, and algorithm, mode, key size, nonce and tag lengths, and the order they are written in are a wire format in [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s sense, with a published test vector as the oracle. Recipes 36 and 37 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) are the two calls and that envelope, held to FIPS 180-4's and the GCM specification's own vectors by `build_all.sh` — behind a probe, since libcrypto is a library the repository links rather than vendors; the licence question (Apache 2.0 for OpenSSL 3, ISC for libsodium) is the first thing to settle, as the first bullet of *the dependency you do not control* below says.

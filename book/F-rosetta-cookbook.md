@@ -226,6 +226,17 @@ speak it natively). Needs `<sstream>` and `<iomanip>`, or `<cstdio>`.
 
 **In C#:** `var sw = Stopwatch.StartNew(); ... sw.ElapsedMilliseconds`
 
+The five clocks and spans you know, and where each lands — the map the
+timing recipes (6, 16, 28, 29, 30) teach one row at a time:
+
+| In C# | In C++ | Which recipe |
+|---|---|---|
+| `Stopwatch` | two `steady_clock::time_point`s and a `duration` | 6, 28 |
+| `TimeSpan` | `std::chrono::duration` — the unit is in the type, `count()` strips it | 30 |
+| `DateTime.UtcNow` | `system_clock::time_point`, the one clock with a calendar | 29 |
+| `DateTime.Now` / `DateTimeOffset` / time zones | C++20's `<chrono>` calendar and `zoned_time`; in C++17, the platform's `localtime_r` and its offset | 29's trap |
+| `Task.Delay` / `Thread.Sleep` | `std::this_thread::sleep_for(duration)` | 16 |
+
 **The recipe:**
 
 ```cpp
@@ -1026,7 +1037,16 @@ one and the error is [Chapter 41](41-templates-you-will-write.md#chapter-41--tem
 overload-resolution novel, naming neither `from_json` nor `Reading`. Keys
 come out sorted, because the document is a map — unlike `JsonSerializer`,
 which writes properties in declaration order, so never diff the two outputs
-as text. Needs `<nlohmann/json.hpp>` (`-isystem exercises/third_party` on the
+as text. One field shape needs a decision C# made with an attribute: a
+`std::optional<T>` member serializes — the library has accepted one since
+3.12 — as `null` when it is empty, never as a missing key, and comes back
+only by hand, `is_null()` then `get<T>()` (there is no `get<optional<T>>`;
+Recipe 35's `contains`-then-`at` is the same test for an absent key).
+There is no `JsonIgnoreCondition.WhenWritingNull` counterpart, so strip
+the null yourself before `dump`, or accept that absent and null are one
+word on your wire and write that down
+([Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)).
+The harness asserts the `null` out and the `nullopt` back. Needs `<nlohmann/json.hpp>` (`-isystem exercises/third_party` on the
 compile line, which `scripts/check.sh` adds), `<string>`, `<vector>`, and
 `using json = nlohmann::json;`.
 
