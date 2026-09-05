@@ -12,6 +12,24 @@ numbers may still move.
 
 ## [Unreleased]
 
+- **New: Recipe 41 — call an HTTP endpoint** (MINOR — an appended recipe).
+  There is no `HttpClient` because there are no sockets, and the library
+  the ecosystem reaches for is libcurl — Chapter 16's Shape 2 with every
+  idiom intact, the write callback being the trampoline Chapter 18 built,
+  called once per chunk. The recipe keeps both verdicts as data: the
+  transport's `CURLcode` and the server's status, because `CURLE_OK` with
+  a 500 is a successful transfer of an error page, which is the Trap.
+  `exercises/cookbook/http.cpp` is the cookbook's third translation unit
+  behind a probe — libcurl located through `pkg-config`, linked from the
+  system, `--require-curl` in CI on both platforms — and its judge needs no
+  network: a `file://` fixture exercises the callback path and the
+  transport's error path (`CURLE_FILE_COULDNT_READ_FILE`), a 200 KB fixture
+  proves the many-chunks claim, and the server's verdict is stated in the
+  recipe as the half no offline judge reaches. CLAUDE.md's invariant 5 and
+  CONTRIBUTING's ground rules now define the system-linked category once —
+  judged against an oracle that needs no network and no state outside the
+  run — rather than per library. Chapter 27's batteries section points at
+  the recipe; Chapter 31's symptom index gains the error-page row.
 - **New: Recipe 40 — notice a file changed** (MINOR — an appended
   recipe). `FileSystemWatcher` has no standard spelling, and the native
   ones — `inotify`, FSEvents and `kqueue`, `ReadDirectoryChangesW` — are

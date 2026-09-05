@@ -38,9 +38,16 @@ jobs:
       # --require-openssl: Recipes 36-37 link the system's libcrypto through
       # pkg-config; on macOS the runner's OpenSSL is keg-only, so the path is
       # pointed at it first. SKIPPED on a laptop without it; never here.
+      # --require-curl: Recipe 41 links the system's libcurl the same way. The
+      # macOS SDK ships it and Homebrew's pkg-config shim answers for it (the
+      # keg-only curl is added to the path as a fallback); Ubuntu needs the
+      # -dev package, installed here. Its judge is a file:// fixture, so no
+      # network is involved.
       - run: |
           if [ "$(uname -s)" = Darwin ]; then export PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"; fi
-          ./scripts/build_all.sh --require-cmake --require-git --require-tsan --require-expected --require-openssl
+          if [ "$(uname -s)" = Darwin ] && ! pkg-config --exists libcurl; then export PKG_CONFIG_PATH="$(brew --prefix curl)/lib/pkgconfig:$PKG_CONFIG_PATH"; fi
+          if [ "$(uname -s)" = Linux ]; then sudo apt-get update -qq && sudo apt-get install -y -qq libcurl4-openssl-dev pkg-config; fi
+          ./scripts/build_all.sh --require-cmake --require-git --require-tsan --require-expected --require-openssl --require-curl
 
   # The book states sanitizer behavior that differs between the maintainer's
   # macOS/arm64 machine and Linux - exit codes, leak detection, whether a frame
