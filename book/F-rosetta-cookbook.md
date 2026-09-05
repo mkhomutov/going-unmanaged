@@ -55,6 +55,8 @@ stays right.
 | `EnumerateObject` / `TryGetProperty` / `EnumerateArray` | Jackson `JsonNode` — `fields()` / `has` / `elements()` | [Recipe 35 — Walk a JSON document you do not own](#recipe-35--walk-a-json-document-you-do-not-own) |
 | `SHA256.HashData` / `Convert.ToHexString` | `MessageDigest.getInstance("SHA-256")` | [Recipe 36 — Hash bytes](#recipe-36--hash-bytes) |
 | `AesGcm.Encrypt` / `Decrypt` | `Cipher.getInstance("AES/GCM/NoPadding")` | [Recipe 37 — Seal bytes for a reader in C#](#recipe-37--seal-bytes-for-a-reader-in-c) |
+| `File.Replace` / write-then-move by hand | `Files.move(..., ATOMIC_MOVE)` | [Recipe 38 — Save a file without losing the old one](#recipe-38--save-a-file-without-losing-the-old-one) |
+| `Directory.CreateDirectory` / `File.Copy` / `File.Move` / `Directory.Delete(recursive)` | `Files.createDirectories` / `copy` / `move` / `walkFileTree` | [Recipe 39 — Create, copy, move and delete, and a whole tree](#recipe-39--create-copy-move-and-delete-and-a-whole-tree) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -64,10 +66,10 @@ stays right.
 **The recipe:**
 
 ```cpp
-std::string read_all_text(const std::string& path) {
+std::string read_all_text(const std::filesystem::path& path) {
     std::ifstream in(path, std::ios::binary);
     if (!in) {
-        throw std::runtime_error("cannot open: " + path);
+        throw std::runtime_error("cannot open: " + path.string());
     }
     std::ostringstream buffer;
     buffer << in.rdbuf();    // one streamed read; no line loop to get wrong
@@ -83,7 +85,11 @@ the function, the throw included. `rdbuf()` hands the whole file to the
 string stream in one operation, the closest thing iostreams have to a
 one-liner. And `std::ios::binary` reads the bytes as they are; without it,
 Windows translates `\r\n` on the way through and the "same" file compares
-differently per platform. Needs `<fstream>`, `<sstream>`, `<stdexcept>`.
+differently per platform. The parameter is a `std::filesystem::path`
+rather than a `std::string`, because on Windows a path is not made of
+`char` (Recipe 10) and the stream constructors have taken a `path` since
+C++17 — a string argument still converts. Needs `<filesystem>`,
+`<fstream>`, `<sstream>`, `<stdexcept>`.
 
 > [!WARNING]
 > **Trap:** a stream that failed to open does not throw — every read on it quietly produces nothing, so without the `if (!in)` check a missing file becomes an empty string and no error. That check is the part `File.ReadAllText` did for you.
@@ -302,14 +308,14 @@ identical.
 **The recipe:**
 
 ```cpp
-void write_all_text(const std::string& path, const std::string& text) {
+void write_all_text(const std::filesystem::path& path, const std::string& text) {
     std::ofstream out(path, std::ios::binary);
     if (!out) {
-        throw std::runtime_error("cannot create: " + path);
+        throw std::runtime_error("cannot create: " + path.string());
     }
     out << text;
     if (!out.flush()) {
-        throw std::runtime_error("write failed: " + path);
+        throw std::runtime_error("write failed: " + path.string());
     }
 }
 ```
@@ -322,7 +328,8 @@ the buffer flushes — and the destructor's close, which also flushes, cannot
 report it, because destructors do not throw. The explicit `flush()` before
 scope end is therefore the one place the failure can become an exception
 instead of silence. `std::ios::binary` for the same reason as Recipe 1:
-bytes as written, no platform newline translation. Needs `<fstream>`,
+bytes as written, no platform newline translation — and the parameter is a
+`path` for Recipe 1's reason. Needs `<filesystem>`, `<fstream>`,
 `<stdexcept>`.
 
 > [!WARNING]
@@ -347,7 +354,18 @@ behind. It is a real type, not a string convention: `.filename()`,
 `.extension()` and `.parent_path()` replace the `Path.Get*` family. And one
 C# rule ports exactly: an absolute right-hand side replaces everything to
 its left, just as it does in `Path.Combine` — that reflex survives the move.
-Needs `<filesystem>`.
+One thing `Path.Combine` never made you ask is what a path is *made of*:
+`path::value_type` is `wchar_t` on Windows and `char` everywhere else, and a
+`std::string` handed to the constructor is read in the platform's native
+narrow encoding — on Windows the process's code page, which is UTF-8 only
+if the process opted in — so a UTF-8
+name from a JSON file or Recipe 17 arrives on disk as
+[Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)'s
+mojibake. `std::filesystem::u8path(s)` says the string is UTF-8 (C++17;
+C++20 deprecates it for `path(u8"...")` with `char8_t`), and `p.u8string()`
+is the way back — a `std::string` in C++17, a `std::u8string` in C++20;
+the `buildlab-msvc` job asserts the round trip, because Windows is the one
+platform where the two constructors differ. Needs `<filesystem>`.
 
 > [!WARNING]
 > **Trap:** `p += "logs"` compiles and glues — `+=` is string concatenation with no separator, so one character separates `dir/logs` from `dirlogs`; the separator-aware append is `/=` (or `/`).
@@ -1634,6 +1652,101 @@ is the first suspect. Needs `<openssl/evp.h>` and libcrypto as Recipe
 
 > [!WARNING]
 > **Trap:** a nonce reused under one key breaks GCM outright — not weakens, breaks — and a counter that restarts at process start, or a `std::rand()` seeded from the clock, will reuse one; the nonce is twelve bytes from the library's own generator (`RAND_bytes`, which the harness uses), travels in the clear at the front of the envelope, and is never a secret and never repeated — and nothing will tell you when it was.
+
+### Recipe 38 — Save a file without losing the old one
+
+**In C#:** `File.Move(tmp, path, overwrite: true)` (.NET Core 3.0+), or `File.Replace(tmp, path, null)` once `path` exists — the write-then-move everyone ends up writing by hand around `File.WriteAllText`, once a customer has sent in a half-written preferences file
+
+**The recipe:**
+
+```cpp
+void save_file(const std::filesystem::path& path, const std::string& text) {
+    std::filesystem::path tmp = path;
+    tmp += ".tmp";                           // += on purpose: a suffix, not a segment - same directory, same volume
+    write_all_text(tmp, text);               // Recipe 9: flushed and checked, or it threw and path is untouched
+    std::filesystem::rename(tmp, path);      // one atomic step: a reader sees the old file or the new, never half
+}
+```
+
+**Why it looks like this.** Recipe 9 writes in place, which is fine until
+the process dies halfway — a crash, a host that kills the plug-in — and
+leaves a file that is neither the old one nor the new one. The fix is two
+files and one step: the bytes go to a sibling in the same directory,
+flushed and checked, and `rename` moves the name onto them in one step
+that POSIX `rename(2)` promises is atomic over an existing file (on
+Windows the same call is a replace-existing `MoveFileEx`, which every
+atomic-save library there relies on without the documentation saying the
+word) — so any reader sees the old contents or the new, never a torn
+middle, and a crash before the rename leaves the old file whole and a
+`.tmp` beside it that the next save overwrites (unlike `File.Replace`,
+this also works when there is no old file yet). That covers the process
+dying; a power cut is one step further, because the operating system may
+still hold the temp file's bytes in memory when the rename lands, and the
+`fsync` that pins them to disk first has no standard-library spelling —
+POSIX `fsync`, Windows `FlushFileBuffers` — so this recipe is crash-safe
+and one call short of power-safe. Two smaller things Recipe 9 supplies:
+its checked `flush` is why the bytes are complete, and its `ofstream`
+closing itself at the end of the call
+([Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)) is
+why the handle is gone before `rename` runs — on Windows a file you still
+hold open cannot be renamed. *Same directory* is load-bearing: a `rename`
+across volumes is a copy that is not atomic, and the two POSIX standard
+libraries report it as `std::errc::cross_device_link` rather than doing it
+quietly (the harness asserts that on Linux, where the CI runner has a
+second volume to try) — while MSVC's does the opposite, passing
+`MOVEFILE_COPY_ALLOWED` so that across volumes it copies and deletes,
+silently and non-atomically. Same directory is how you never find out
+which you got. Needs `<filesystem>`, `<string>`, and Recipe 9.
+
+> [!WARNING]
+> **Trap:** the rename gives the *name* a new file, so anything holding the old one open keeps the old one — on POSIX a stale inode no path reaches any more; on Windows the rename itself fails while a reader holds the target open without `FILE_SHARE_DELETE`, which a default `FileStream` does not — and the harness's own judge is that inode: a save that rewrote the file in place would pass every other check and still tear.
+
+### Recipe 39 — Create, copy, move and delete, and a whole tree
+
+**In C#:** `Directory.CreateDirectory(dir)`, `File.Copy(src, dst, overwrite: true)`, `File.Move(src, dst)`, `Directory.Delete(dir, recursive: true)`
+
+**The recipe:**
+
+```cpp
+void rotate_export(const fs::path& export_dir, const fs::path& fresh_report) {
+    fs::create_directories(export_dir / "archive");           // parents included; already there is not an error
+    const fs::path current = export_dir / "report.txt";
+    if (fs::exists(current)) {
+        fs::copy_file(current, export_dir / "archive" / "previous.txt",
+                      fs::copy_options::overwrite_existing);  // File.Copy(overwrite: true): both defaults refuse
+    }
+    fs::rename(fresh_report, current);                        // File.Move onto the name - which REPLACES here, and throws in C#
+}
+
+std::uintmax_t purge(const fs::path& dir) {
+    return fs::remove_all(dir);    // Directory.Delete(recursive: true): the count removed, 0 if nothing was there
+}
+```
+
+**Why it looks like this.** Four calls, four C# names, and two places
+the defaults differ — in opposite directions. `create_directories` is
+`Directory.CreateDirectory` exactly: parents made, an existing directory
+not an error. `copy_file` is `File.Copy`, defaults included: with no
+options it refuses an existing target, throwing `filesystem_error` with
+`errc::file_exists`, and `overwrite_existing` is the line C# spells
+`overwrite: true`. `rename` is `File.Move` with the *opposite* default:
+an existing target is replaced — Recipe 38's atomic replace — where
+`File.Move` throws `IOException` until you pass `overwrite: true`, so the
+one call that quietly destroys a file here is the one that would have
+thrown in C#. `remove_all` is `Directory.Delete(..., recursive: true)`
+and `File.Delete` in one — it returns the count, and where
+`Directory.Delete` throws for a path that was never there, it returns
+zero. The rest of the family maps by name: `file_size`,
+`temp_directory_path`, and `last_write_time`, which hands back a
+`file_time_type` that C++17 cannot portably print or convert — compare
+two of them, and leave formatting to C++20's `clock_cast` or the
+platform. Every one ships as
+[Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
+pair, throwing or `error_code`. Needs `<filesystem>`, `<cstdint>`, and
+`namespace fs = std::filesystem;`.
+
+> [!WARNING]
+> **Trap:** `dir / name` with an empty `name` is `dir/` — the separator and nothing after it — so `remove_all(dir / entry)` where `entry` came back empty from a lookup deletes the *directory itself* and everything in it, not one entry, and compiles clean; `Path.Combine(dir, "")` is `dir` by a shorter spelling and the same deletion, and the harness asserts this one: two files and a subdirectory gone, and the directory with them.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

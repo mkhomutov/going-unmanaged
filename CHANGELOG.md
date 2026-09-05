@@ -10,6 +10,35 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [Unreleased]
+
+- **New: Recipes 38–39 — save a file without losing the old one; create,
+  copy, move and delete, and a whole tree** (MINOR — two appended recipes).
+  The third coverage review (2026-09-05, thirty-two topics) found the
+  filesystem mostly covered and two gaps a plug-in meets in week one.
+  Recipe 38 is the write-then-rename that `File.Replace` spells: the bytes
+  go to a sibling in the same directory, `rename` moves the name onto them
+  atomically, and a crash before the rename leaves the old file whole —
+  crash-safe, and said to be one `fsync` short of power-safe; `files.cpp`'s
+  judge is the inode, because a save that rewrote the file in place would
+  pass every other check and still tear, and the saved file lives one
+  directory below the temp directory so a temp put in the wrong place
+  cannot pass either. Recipe 39 maps `Directory.CreateDirectory`,
+  `File.Copy`, `File.Move` and `Directory.Delete(recursive)` onto
+  `std::filesystem` and names the two defaults that differ — `rename`
+  replaces where `File.Move` throws, `remove_all` counts zero where
+  `Directory.Delete` throws — and the `file_time_type` C++17 cannot
+  portably print, with the empty-name trap asserted: `dir / ""` is `dir/`,
+  so `remove_all` of it takes the directory. Recipes 1 and 9 now take a
+  `std::filesystem::path`, so a name outside the Windows code page survives
+  the save. Recipe 10 gains the encoding note — a Windows path is
+  `wchar_t`, and only `u8path` reads a `std::string` as UTF-8 — which the
+  `buildlab-msvc` job now asserts by building `paths.cpp` (and `files.cpp`)
+  through `check.ps1`; the POSIX libraries' cross-volume `rename` refusal
+  is asserted on the Linux leg, where `/dev/shm` is a second volume, and
+  the recipe says that MSVC's copies instead. Chapter 31's symptom index
+  gains the truncated-save row.
+
 ## [0.10.0] — 2026-09-05
 
 The same instrument, run again. Version 0.9.0 began with sixteen topics a
