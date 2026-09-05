@@ -968,6 +968,55 @@ decision so the tutorial request does not arrive twice.
 
 **Still open from this item:** nothing.
 
+### 24. Cryptography, and ciphertext a C# reader can open — DONE (Recipes 36–37)
+
+**Missing:** the whole subject. The word did not occur: no hash, no cipher, no
+"there is no `System.Security.Cryptography`" beside Chapter 27's "there
+is no `HttpClient`", and no answer to the compatibility question that is
+this book's whole spine — the bytes your plug-in seals must open under
+the runtime the reader came from.
+
+**Evidence:** the second coverage review (2026-09-04, twenty-four topics,
+the day after the sixteen-topic one items 22 and 23 cite; read against
+every page) asked for "encryption/decryption of data and
+compatibility with other programming languages" and found zero mentions.
+The gate — does the job present it — passes on three shapes a plug-in
+shop meets in its first year: a licence key or activation token to
+verify, a credential or a cached token at rest, and telemetry signed or
+sealed for a C# backend. Each is a Chapter 27 dependency decision with
+a licence question attached, and each is a wire-format decision in
+Chapter 34's sense: algorithm, mode, key size, nonce length and
+placement, tag length, padding, key derivation and text encoding are a
+document, and a published test vector is the oracle, exactly as the
+hand-decoded capture was.
+
+**Delivered:** Recipes 36 and 37 in Appendix F — hash bytes, and seal
+bytes for a reader in C# — plus a paragraph in Chapter 27's batteries
+section that says what the standard library does not ship and which
+libraries the ecosystem reaches for, each read as a Bestiary shape:
+OpenSSL's libcrypto and libsodium (C APIs with handles and error codes),
+the platform's own (CNG, CommonCrypto and, behind a Swift shim, CryptoKit), mbedTLS for Shape 4
+targets. The recipes use OpenSSL's EVP interface, and the cookbook TU
+that holds them, `exercises/cookbook/crypto.cpp`, is the second file
+built behind a probe: `build_all.sh` locates libcrypto through
+`pkg-config`, prints SKIPPED without it, and refuses to skip under
+`--require-openssl`, which CI passes on both platforms. The judge is
+four published vectors — NIST's SHA-256 of `abc` and of nothing, and the
+GCM specification's test cases 13 and 14 — because a round trip proves only
+that the two halves agree with each other, and the ticket is whether
+they agree with `AesGcm` in .NET. The rule the recipes carry, harder than
+C#'s: never write a primitive, and never invent the envelope — the layout
+`nonce ‖ ciphertext ‖ tag` with a 12-byte nonce and a 16-byte tag is
+stated as an ICD because it is one.
+
+Filed here by number beside items 22 and 23; its subject is Tier 3's, ciphertext a C# reader can open.
+
+**Still open from this item:** key management — where the key comes from,
+how it is derived from a passphrase, and how it is stored — is named as
+the next question and not answered; a signature (ECDSA, Ed25519) for the
+licence-key shape is the natural Recipe 38, and TLS stays out of scope
+because Appendix G already places the bridge on loopback with a token.
+
 ## Tier 3 — distinctive to this handbook
 
 Material no general C++ book would carry, which is precisely why it belongs

@@ -11,6 +11,8 @@
 #                                             unusable here (CI)
 #   scripts/build_all.sh --require-expected -> also fail if the compiler has no
 #                                             C++23 <expected> (CI)
+#   scripts/build_all.sh --require-openssl  -> also fail if pkg-config cannot find
+#                                             libcrypto for Recipes 36-37 (CI)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -18,12 +20,14 @@ REQUIRE_CMAKE=0
 REQUIRE_TSAN=0
 REQUIRE_GIT=0
 REQUIRE_EXPECTED=0
+REQUIRE_OPENSSL=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --require-cmake)    REQUIRE_CMAKE=1;    shift ;;
         --require-tsan)     REQUIRE_TSAN=1;     shift ;;
         --require-git)      REQUIRE_GIT=1;      shift ;;
         --require-expected) REQUIRE_EXPECTED=1; shift ;;
+        --require-openssl)  REQUIRE_OPENSSL=1;  shift ;;
         *) echo "build_all.sh: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -962,6 +966,43 @@ elif [ "$REQUIRE_EXPECTED" = 1 ]; then
     exit 1
 else
     echo "  SKIPPED - $CXX cannot build the C++23 listing here (CI runs this for real)"
+fi
+
+# Recipes 36 and 37 need libcrypto, which is not part of the toolchain the
+# rest of this script needs - the second cookbook TU behind a probe, after
+# expected.cpp. The probe DOES the thing rather than looking for the tool:
+# pkg-config must answer for libcrypto, and the TU must then build AND run,
+# because a header without its library, or a library from one OpenSSL beside
+# a header from another, both stop at the link or at the first EVP call.
+# CI passes --require-openssl, which refuses to skip, on both platforms; on
+# macOS the runner's OpenSSL is keg-only, so the workflow points
+# PKG_CONFIG_PATH at it first. The judge inside the binary is four published
+# vectors (NIST's SHA-256 of "abc" and of nothing; the GCM specification's
+# test cases 13 and 14), which is the only way a listing can claim to agree with .NET's
+# AesGcm rather than merely with itself.
+echo "== cookbook crypto (libcrypto) =="
+if pkg-config --exists libcrypto 2> /dev/null; then
+    CRYPTO_FLAGS=$(pkg-config --cflags libcrypto)
+    CRYPTO_LIBS=$(pkg-config --libs libcrypto)
+    # -isystem for the same reason json.cpp uses it: the headers are the
+    # vendor's, and -Wall -Wextra are for our code.
+    # shellcheck disable=SC2086
+    if $CXX $FLAGS ${CRYPTO_FLAGS//-I/-isystem } exercises/cookbook/crypto.cpp $CRYPTO_LIBS \
+            -o "$OUT/cb_crypto" > "$OUT/crypto_build.log" 2>&1; then
+        UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_crypto" > /dev/null
+        echo "  ok   exercises/cookbook/crypto.cpp against $(pkg-config --modversion libcrypto)"
+    else
+        echo "build_all.sh: pkg-config found libcrypto but crypto.cpp does not build against it:" >&2
+        sed 's/^/  /' "$OUT/crypto_build.log" >&2
+        exit 1
+    fi
+elif [ "$REQUIRE_OPENSSL" = 1 ]; then
+    echo "build_all.sh: pkg-config cannot find libcrypto, and --require-openssl was given." >&2
+    echo "  On macOS: export PKG_CONFIG_PATH=\"\$(brew --prefix openssl@3)/lib/pkgconfig\"" >&2
+    echo "  On Debian/Ubuntu: apt-get install libssl-dev pkg-config" >&2
+    exit 1
+else
+    echo "  SKIPPED - no libcrypto via pkg-config here (CI runs this for real)"
 fi
 
 echo "ALL GREEN"

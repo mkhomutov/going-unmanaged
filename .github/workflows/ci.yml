@@ -35,7 +35,12 @@ jobs:
       # is a listing nobody checks. Both hosted images ship a compiler with
       # <expected>; the flag exists so a runner image that stops doing so
       # fails loudly rather than skipping quietly.
-      - run: ./scripts/build_all.sh --require-cmake --require-git --require-tsan --require-expected
+      # --require-openssl: Recipes 36-37 link the system's libcrypto through
+      # pkg-config; on macOS the runner's OpenSSL is keg-only, so the path is
+      # pointed at it first. SKIPPED on a laptop without it; never here.
+      - run: |
+          if [ "$(uname -s)" = Darwin ]; then export PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"; fi
+          ./scripts/build_all.sh --require-cmake --require-git --require-tsan --require-expected --require-openssl
 
   # The book states sanitizer behavior that differs between the maintainer's
   # macOS/arm64 machine and Linux - exit codes, leak detection, whether a frame

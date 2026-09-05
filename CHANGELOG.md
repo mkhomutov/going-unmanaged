@@ -131,6 +131,23 @@ numbers may still move.
   heredoc and refuses any cpp fence on the page. Appendix letters now
   run A–J with no gap.
 
+- **New: Recipes 36–37 — Hash bytes; seal bytes for a reader in C#**
+  (MINOR — two appended recipes; closes ROADMAP item 24). The book had no
+  word on cryptography, and no answer to the question this book's reader
+  meets first: whether the bytes a plug-in seals open under `AesGcm`.
+  Recipe 36 is SHA-256 through OpenSSL's EVP interface; Recipe 37 is
+  AES-256-GCM with the envelope stated as an ICD and absence as the
+  verdict. Chapter 27's batteries section names what the standard library
+  does not ship. The repository's first system-linked dependency, and
+  CLAUDE.md and CONTRIBUTING now name that category.
+  `exercises/cookbook/crypto.cpp` is the cookbook's second TU behind a
+  probe — libcrypto located through `pkg-config`, `--require-openssl` in
+  CI — and its judge is four published vectors (NIST's SHA-256 of `abc`
+  and of nothing; the GCM specification's test cases 13 and 14),
+  because a round trip would prove only that seal and open agree with
+  each other. ROADMAP item 24 records the scope decision and what stays
+  open (keys, signatures).
+
 ## [0.9.0] — 2026-09-04
 
 The release a list steered. Version 0.8.0 began with eighteen constructed
