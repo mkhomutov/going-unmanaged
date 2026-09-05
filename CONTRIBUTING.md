@@ -313,9 +313,10 @@ everything the header exists to hide.
   PR — it must print `ALL GREEN`. If you add a solution, add it to that script
   in the same PR. (The exceptions build as their own probes in
   `build_all.sh`: `exercises/cookbook/expected.cpp`, Chapter 8's
-  `std::expected` listing, which is C++23, and `exercises/cookbook/crypto.cpp`
-  and `http.cpp`, which link a library the system provides — a further such
-  file needs the same probe and the same argument, not a quiet copy.)
+  `std::expected` listing, which is C++23, and `exercises/cookbook/crypto.cpp`,
+  `http.cpp` and `database.cpp`, which link a library the system provides —
+  a further such file needs the same probe and the same argument, not a
+  quiet copy.)
 - **A third-party dependency lives under `exercises/third_party/`**, with its
   version and any local patch recorded in that directory's README (Chapter
   27's rule), is included with `-isystem`, and is never reached from
@@ -323,11 +324,12 @@ everything the header exists to hide.
   recipes; the bar for a second is the same as for a recipe — a task the
   first months present, that no standard-library spelling serves. A library
   the system provides may instead be linked and never copied in — libcrypto
-  for the cryptography recipes, libcurl for the HTTP one — located through
-  `pkg-config`, behind a probe CI refuses to skip, and judged against an
-  oracle that needs no network and no state outside the run (published
-  vectors; a `file://` fixture and a loopback server the harness runs
-  itself); nothing in NOTICE, since nothing is
+  for the cryptography recipes, libcurl for the HTTP one, sqlite3 for the
+  database one — located through `pkg-config`, behind a probe CI refuses
+  to skip, and judged against an oracle that needs no network and no state
+  outside the run (published vectors; a `file://` fixture and a loopback
+  server the harness runs itself; an in-memory database); nothing in
+  NOTICE, since nothing is
   redistributed.
 - **Vendor code is frozen.** `exercises/fakesdk/FakeSDK.h|.cpp` and
   `exercises/fakedevice/FakeDevice.h|.cpp` are "vendor code": their public

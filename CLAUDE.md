@@ -134,8 +134,8 @@ Chapter 25's Finding 10.
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
   (files, strings, timing, handles, lookups, paths, async, events, logging,
   alternatives, errors, expected, json, containers, flags, ownership,
-  crypto, watch, http), each with a `main()` asserting what
-  its recipes claim; build_all.sh builds and runs all nineteen. `json.cpp`
+  crypto, watch, http, database), each with a `main()` asserting what
+  its recipes claim; build_all.sh builds and runs all twenty. `json.cpp`
   is the one with a dependency — `exercises/third_party/nlohmann/`, vendored
   with its version recorded, included with `-isystem`. `expected.cpp` is
   the one cut by standard rather than domain — C++23, Chapter 8's chaining
@@ -149,7 +149,11 @@ Chapter 25's Finding 10.
   and a forty-line loopback server in the harness (POSIX sockets; the
   cookbook is not built by the MSVC job) serves a redirect, a 500 and a
   stall, so the server's verdict, the redirect follow and the timeout's
-  unit are judged too. `watch.cpp` owns a
+  unit are judged too. `database.cpp` is the fourth probe, sqlite3
+  (`--require-sqlite`), judged by an in-memory database — and by
+  `sqlite3_close`'s return code, which is `SQLITE_OK` only when every
+  statement was finalized, so a leaked statement fails the run the way
+  `FakeSdk_LiveAllocations` did. `watch.cpp` owns a
   thread and is built under TSan as well. Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
@@ -275,7 +279,7 @@ Chapter 25's Finding 10.
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
-  Its last eight sections may skip: one builds `exercises/deplab/` three ways
+  Its last nine sections may skip: one builds `exercises/deplab/` three ways
   (Chapter 27), one configures, builds and runs `exercises/buildlab/`'s
   CMakeLists, one installs `exercises/pluginlab/`'s SDK drop and builds,
   loads and inspects its plug-in (Chapter 40), one generates Appendix J's
@@ -283,15 +287,17 @@ Chapter 25's Finding 10.
   `solutions/device_threaded_solution.cpp` under
   `-fsanitize=thread` (a second build, because TSan and ASan do not combine),
   one builds `exercises/cookbook/expected.cpp` as C++23, one builds
-  `exercises/cookbook/crypto.cpp` against the system's libcrypto, and the
-  last builds `exercises/cookbook/http.cpp` against the system's libcurl.
-  Without cmake on PATH, without a git that can clone a `file://` repository
-  (deplab's FetchContent path only), without a ThreadSanitizer that can
-  compile *and start* a trivial program, or without a compiler that has
-  `<expected>`, or without a libcrypto or a libcurl that `pkg-config` can
-  find, each prints SKIPPED and stays green; `--require-cmake`,
-  `--require-git`, `--require-tsan`, `--require-expected`, `--require-openssl`
-  and `--require-curl` (CI passes all six) refuse to skip
+  `exercises/cookbook/crypto.cpp` against the system's libcrypto, one
+  builds `exercises/cookbook/http.cpp` against the system's libcurl, and
+  the last builds `exercises/cookbook/database.cpp` against the system's
+  sqlite3. Without cmake on PATH, without a git that can clone a `file://`
+  repository (deplab's FetchContent path only), without a ThreadSanitizer
+  that can compile *and start* a trivial program, or without a compiler
+  that has `<expected>`, or without a libcrypto, a libcurl or a sqlite3
+  that `pkg-config` can find, each prints SKIPPED and stays green;
+  `--require-cmake`, `--require-git`, `--require-tsan`, `--require-expected`,
+  `--require-openssl`, `--require-curl` and `--require-sqlite` (CI passes
+  all seven) refuse to skip
 - `scripts/check.sh` — builds/runs a learner's own attempt under the canonical
   flags: one or more .cpp files, compiled in the order written (= link order,
   which Chapter 32's two-order test turns on), then an optional vendor
@@ -437,7 +443,8 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
    `--require-<lib>` flag CI passes, judged against an oracle that needs no
    network and no state outside the run — published vectors for libcrypto
    (`crypto.cpp`); a `file://` fixture and a loopback server of the
-   harness's own for libcurl (`http.cpp`) — reachable
+   harness's own for libcurl (`http.cpp`); an in-memory database for
+   sqlite3 (`database.cpp`) — reachable
    from the cookbook only, and nothing for NOTICE, since nothing is
    redistributed. A network in CI is not an oracle: a recipe whose only
    judge is a server somewhere is a recipe nobody checks the day the server

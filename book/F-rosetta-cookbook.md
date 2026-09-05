@@ -9,9 +9,9 @@ concept rather than re-teaching it — this page is for looking up, not for
 reading.
 
 Every listing compiles, runs, and holds under the canonical flags — all but
-one, which is C++23; that one, the two that need libcrypto and the one that
-needs libcurl build behind probes, and say so where they appear. The recipes
-live as code in
+one, which is C++23; that one, the two that need libcrypto, the one that
+needs libcurl and the one that needs sqlite3 build behind probes, and say so
+where they appear. The recipes live as code in
 `exercises/cookbook/`, and `scripts/build_all.sh` asserts what each one
 claims on every push. Recipe numbers are stable —
 recipes append and are never renumbered — so a note that says "Recipe 7"
@@ -60,6 +60,7 @@ stays right.
 | `Directory.CreateDirectory` / `File.Copy` / `File.Move` / `Directory.Delete(recursive)` | `Files.createDirectories` / `copy` / `move` / `walkFileTree` | [Recipe 39 — Create, copy, move and delete, and a whole tree](#recipe-39--create-copy-move-and-delete-and-a-whole-tree) |
 | `FileSystemWatcher` | `WatchService` | [Recipe 40 — Notice a file changed](#recipe-40--notice-a-file-changed) |
 | `HttpClient.GetStringAsync` | `HttpClient.send` | [Recipe 41 — Call an HTTP endpoint](#recipe-41--call-an-http-endpoint) |
+| `SqliteConnection` / `SqliteCommand.ExecuteReader` | `DriverManager.getConnection` / `PreparedStatement` | [Recipe 42 — Open a local database and run a query](#recipe-42--open-a-local-database-and-run-a-query) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -1941,6 +1942,148 @@ probe and `check.sh` does not — `<chrono>`, `<memory>`, `<stdexcept>`,
 
 > [!WARNING]
 > **Trap:** a green `CURLcode` says the bytes arrived, not that they are the answer — the body of a 404 is an HTML page that parses as JSON about as well as it reads, and a caller that checked only `perform`'s return will feed it to Recipe 26 and file the resulting `parse_error` under "the server is flaky".
+
+### Recipe 42 — Open a local database and run a query
+
+**In C#:** `using var conn = new SqliteConnection("Data Source=cache.db"); conn.Open(); using var cmd = conn.CreateCommand(); cmd.CommandText = "SELECT ..."; cmd.Parameters.AddWithValue("$t", 1); using var reader = cmd.ExecuteReader(); while (reader.Read()) ...` — Microsoft.Data.Sqlite, or Dapper over it
+
+**The recipe:**
+
+```cpp
+using Db = std::unique_ptr<sqlite3, decltype(&sqlite3_close)>;   // Recipe 7's shape, again
+
+Db open_database(const std::string& path) {                        // ":memory:" is a database too
+    sqlite3* raw = nullptr;
+    const int rc = sqlite3_open_v2(path.c_str(), &raw, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
+    Db db(raw, &sqlite3_close);                                     // own it BEFORE checking: a failed open still allocates
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("cannot open " + path + ": " + sqlite3_errmsg(raw));
+    }
+    return db;
+}
+
+// A prepared statement: SqliteCommand with its parameters, owned so that
+// finalize runs on every path - and it must, because a database with a live
+// statement refuses to close.
+class Statement {
+public:
+    Statement(sqlite3* db, const char* sql) : db_(db) {
+        if (sqlite3_prepare_v2(db, sql, -1, &stmt_, nullptr) != SQLITE_OK) {
+            throw std::runtime_error(std::string("prepare: ") + sqlite3_errmsg(db));
+        }
+    }
+    ~Statement() { sqlite3_finalize(stmt_); }                      // null-safe by the SDK's contract
+    Statement(const Statement&) = delete;
+    Statement& operator=(const Statement&) = delete;
+
+    void bind(int index, int value) { check(sqlite3_bind_int(stmt_, index, value)); }
+    void bind(int index, const std::string& value) {
+        // SQLITE_TRANSIENT: copy the bytes now. SQLITE_STATIC would be a loan
+        // (Appendix H) that must outlive every step - the recipe does not
+        // make that promise on the caller's behalf.
+        check(sqlite3_bind_text(stmt_, index, value.c_str(), -1, SQLITE_TRANSIENT));
+    }
+
+    // One row, or done. The two codes are 100 and 101: successes that are not
+    // zero, which is Chapter 8's "usually zero is not a contract" in production.
+    bool step() {
+        const int rc = sqlite3_step(stmt_);
+        if (rc == SQLITE_ROW) return true;
+        if (rc == SQLITE_DONE) return false;
+        throw std::runtime_error(std::string("step: ") + sqlite3_errmsg(db_));   // SQLITE_BUSY lands here too
+    }
+    int column_int(int i) const { return sqlite3_column_int(stmt_, i); }
+    std::string column_text(int i) const {
+        // A LOAN (Chapter 33): valid until the next step, reset or finalize.
+        // Copied out on the spot, so no caller keeps a pointer into the row.
+        const unsigned char* text = sqlite3_column_text(stmt_, i);
+        return text ? reinterpret_cast<const char*>(text) : "";   // NULL column: the one null there is
+    }
+    void reset() { check(sqlite3_reset(stmt_)); }                 // reuse the plan: bind again, step again
+
+private:
+    void check(int rc) const {
+        if (rc != SQLITE_OK) throw std::runtime_error(std::string("sqlite: ") + sqlite3_errmsg(db_));
+    }
+    sqlite3* db_;
+    sqlite3_stmt* stmt_ = nullptr;
+};
+
+// One statement with no rows to read: CREATE, INSERT, BEGIN.
+void execute(sqlite3* db, const char* sql) {
+    Statement s(db, sql);
+    while (s.step()) {}
+}
+
+// A transaction that rolls back unless told otherwise: Chapter 1's shape
+// over Chapter 8's unwinding, so a throw between BEGIN and commit() leaves
+// the database as it was.
+class Transaction {
+public:
+    explicit Transaction(sqlite3* db) : db_(db) { execute(db_, "BEGIN"); }
+    ~Transaction() {
+        if (!committed_) sqlite3_exec(db_, "ROLLBACK", nullptr, nullptr, nullptr);   // no throw in a destructor
+    }
+    void commit() { execute(db_, "COMMIT"); committed_ = true; }
+    Transaction(const Transaction&) = delete;
+    Transaction& operator=(const Transaction&) = delete;
+
+private:
+    sqlite3* db_;
+    bool committed_ = false;
+};
+
+struct Reading {
+    int sensor;
+    std::string unit;
+};
+
+// SELECT with a parameter, the rows copied out row by row.
+std::vector<Reading> readings_above(sqlite3* db, int threshold) {
+    Statement q(db, "SELECT sensor, unit FROM readings WHERE sensor > ?1 ORDER BY sensor");
+    q.bind(1, threshold);
+    std::vector<Reading> out;
+    while (q.step()) {
+        out.push_back({q.column_int(0), q.column_text(1)});
+    }
+    return out;
+}
+```
+
+**Why it looks like this.** There is no ADO.NET
+([Chapter 27](27-dependency-management.md#chapter-27--dependency-management)),
+and the native default for local storage is SQLite through its C API —
+[Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary)'s Shape
+1 masterclass, which means [Chapter 17](17-exercise-the-fakesdk.md#chapter-17--exercise-the-fakesdk)
+already trained every line above: a status from every call, results
+through pointers, and a matching release for everything you are handed,
+which the three RAII types make structural — `sqlite3_close` for the
+connection, `sqlite3_finalize` for the statement, `ROLLBACK` for the
+transaction nobody committed. Two things the chapter could only foreshadow
+arrive here for real. `sqlite3_step` answers with **100** for a row and
+**101** for done — two successes, neither zero — so
+[Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
+warning that "success is usually zero" is not a contract is the shape of
+the loop, and `SQLITE_BUSY` is that chapter's drill scenario 3, a value
+the `throw` in `step` turns into an event for the frame that owns the
+retry. And `sqlite3_column_text` is the loan
+[Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)
+quoted as its in-the-wild example — good until the next step, reset or
+finalize — so the accessor copies out on the spot; `SQLITE_TRANSIENT` is
+the same question asked in the other direction, whether SQLite may keep
+*your* pointer. A prepared statement is `SqliteCommand.Prepare`, compiled
+once and rebound through `reset`, and the close code at the end is the
+recipe's leak detector: a database with a live statement returns
+`SQLITE_BUSY` from `sqlite3_close`, so the harness's last assertion is
+the job `FakeSdk_LiveAllocations` did in Chapter 17. sqlite_orm and SOCI
+wrap this; most native codebases speak it raw, and reading it is cheaper
+than a wrapper nobody else on the team uses. Needs `<sqlite3.h>` and a
+link against libsqlite3 — `pkg-config --cflags --libs sqlite3`, which
+`build_all.sh` adds under its probe and `check.sh` does not — `<memory>`,
+`<stdexcept>`, `<string>`, `<vector>`.
+
+> [!WARNING]
+> **Trap:** `sqlite3_close` returning `SQLITE_BUSY` at shutdown is a statement somebody never finalized — Chapter 35's still-live-at-unload, one library over — and the tempting fix, `sqlite3_close_v2`, does not fix it: it defers the close until the last statement is finalized, which for a leaked one is never, so the handle and its file lock outlive your plug-in in the host's process.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

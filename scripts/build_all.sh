@@ -15,6 +15,8 @@
 #                                             libcrypto for Recipes 36-37 (CI)
 #   scripts/build_all.sh --require-curl     -> also fail if pkg-config cannot find
 #                                             libcurl for Recipe 41 (CI)
+#   scripts/build_all.sh --require-sqlite   -> also fail if pkg-config cannot find
+#                                             sqlite3 for Recipe 42 (CI)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -24,6 +26,7 @@ REQUIRE_GIT=0
 REQUIRE_EXPECTED=0
 REQUIRE_OPENSSL=0
 REQUIRE_CURL=0
+REQUIRE_SQLITE=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --require-cmake)    REQUIRE_CMAKE=1;    shift ;;
@@ -32,6 +35,7 @@ while [ $# -gt 0 ]; do
         --require-expected) REQUIRE_EXPECTED=1; shift ;;
         --require-openssl)  REQUIRE_OPENSSL=1;  shift ;;
         --require-curl)     REQUIRE_CURL=1;     shift ;;
+        --require-sqlite)   REQUIRE_SQLITE=1;   shift ;;
         *) echo "build_all.sh: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -1047,6 +1051,38 @@ elif [ "$REQUIRE_CURL" = 1 ]; then
     exit 1
 else
     echo "  SKIPPED - pkg-config cannot find libcurl (CI runs this for real)"
+fi
+
+# Recipe 42 needs sqlite3 - the fourth cookbook TU behind a probe, and the
+# third library the repository links from the system (CLAUDE.md invariant
+# 5). pkg-config must answer for sqlite3 and the TU must build AND run; CI
+# passes --require-sqlite on both platforms (the macOS SDK ships libsqlite3
+# and Homebrew's pkg-config shim answers for it; the Ubuntu runner installs
+# libsqlite3-dev first). The judge is an in-memory database: no file, no
+# network, nothing outside the run - and sqlite3_close's return code at
+# the end, which is SQLITE_OK only when every statement was finalized, so
+# a leaked statement fails the run the way FakeSdk_LiveAllocations did.
+echo "== cookbook database (sqlite3) =="
+if pkg-config --exists sqlite3 2> /dev/null; then
+    SQLITE_FLAGS=$(pkg-config --cflags sqlite3)
+    SQLITE_LIBS=$(pkg-config --libs sqlite3)
+    # shellcheck disable=SC2086
+    if $CXX $FLAGS ${SQLITE_FLAGS//-I/-isystem } exercises/cookbook/database.cpp $SQLITE_LIBS \
+            -o "$OUT/cb_database" > "$OUT/database_build.log" 2>&1; then
+        UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_database" > /dev/null
+        echo "  ok   exercises/cookbook/database.cpp against sqlite3 $(pkg-config --modversion sqlite3)"
+    else
+        echo "build_all.sh: pkg-config found sqlite3 but database.cpp does not build against it:" >&2
+        sed 's/^/  /' "$OUT/database_build.log" >&2
+        exit 1
+    fi
+elif [ "$REQUIRE_SQLITE" = 1 ]; then
+    echo "build_all.sh: pkg-config cannot find sqlite3, and --require-sqlite was given." >&2
+    echo "  On macOS Homebrew's pkg-config answers for the SDK's libsqlite3; on Debian/Ubuntu:" >&2
+    echo "  apt-get install libsqlite3-dev pkg-config" >&2
+    exit 1
+else
+    echo "  SKIPPED - pkg-config cannot find sqlite3 (CI runs this for real)"
 fi
 
 echo "ALL GREEN"
