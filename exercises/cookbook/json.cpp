@@ -101,8 +101,10 @@ int main() {
     assert(json(readings[0]).dump() == R"({"sensor":3,"unit":"C","value":21.5})");   // keys sorted
 
     // Recipe 25's note: an optional member serializes as null, never as an
-    // absent key (the library has accepted one since 3.12) - and comes back
-    // only by hand, is_null() then get<int>(): there is no get<optional<T>>.
+    // absent key (the library has written one since 3.12) - and in the
+    // vendored 3.12.0 comes back only by hand, is_null() then get<int>():
+    // the read-side overload sits behind a guard that is never open (fixed
+    // upstream in #4742, unreleased at the time of writing).
     {
         const std::optional<int> present = 3;
         const std::optional<int> absent;

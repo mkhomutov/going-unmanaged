@@ -1604,21 +1604,26 @@ on the other side.** Chapter 38 and Appendix G's Family B place the
 interesting half of a plug-in in a client process — the C# one, where
 ADO.NET and Entity Framework exist — and a plug-in that must reach a server
 database directly does it through a C client library that Recipe 42's
-discipline covers whole: libpq is Bestiary Shape 2 (`PGconn*`, `PQexec`, a
+discipline covers whole: libpq is Bestiary Shape 1 again (`PGconn*` opened
+and closed like a handle, `PQexec` returning a `PGresult*` to null-check,
 `PQresultStatus` to test, `PQclear` because whoever allocates frees), and
 ODBC is handles from `SQLAllocHandle`/`SQLFreeHandle` with a `SQLRETURN`
 tested through `SQL_SUCCEEDED()` — Chapter 8's "not `== 0`" once more.
 Chapter 27's batteries section now says so in one paragraph, and names the
 two costs a plug-in shop meets first and no recipe could carry: a driver
-the customer's machine must have installed, which is the runtime half of
+the customer's machine must have installed, which is the runtime leg of
 Chapter 12's trio delivered by an installer you do not control, and a
-connection string that is a secret at rest, which is ROADMAP item 24's open
-half.
+connection string that is a secret at rest, which is the storage question
+ROADMAP item 24 left open.
 
 ### Working with LLMs — both readings, neither a chapter
 
 **Asked for as "working with LLMs" in the third coverage review.** Two
 readings, and the book answers both without new code.
+
+**Out of scope as a chapter because neither reading presents new C++.** The
+first is a study habit, and the book's policy on it already exists; the
+second is a transport and two Bestiary shapes the reader can already read.
 
 **As a tool for learning and working:** Appendix C is the page, and its rule
 is the whole policy — review mode, and `scripts/check.sh` before belief,
@@ -1627,8 +1632,9 @@ plug-in calls:** a hosted model is JSON over HTTP — Recipes 25, 26 and 41 —
 and it runs out of process by Chapter 38's invariant, since a model call
 is the long operation that freezes a host's main thread; in process, the
 two libraries a shop meets are C APIs the Bestiary already describes —
-llama.cpp is an opaque-context Shape 2 (`llama_model*`, `llama_context*`,
-`llama_free`) and ONNX Runtime hands you an `OrtApi` function table, which
+llama.cpp is an opaque-context Shape 2 (`llama_model*` freed by
+`llama_model_free`, `llama_context*` by `llama_free`) and ONNX Runtime
+hands you an `OrtApi` function table, which
 is Chapter 40's `HostApi` shape — each a Chapter 27 dependency decision
 with a large binary and a licence attached. Chapter 27's batteries section
 carries the second reading in one paragraph; Appendix C gains one sentence

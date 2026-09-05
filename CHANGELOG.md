@@ -30,9 +30,11 @@ numbers may still move.
   teach a row at a time — `Stopwatch`, `TimeSpan`, `DateTime.UtcNow`,
   time zones, `Task.Delay` — and Recipe 25 says what an
   `std::optional` member does on the wire (`null`, never an absent key,
-  since nlohmann/json 3.12; back only by hand, since there is no
-  `get<optional<T>>`) and that `WhenWritingNull` has no counterpart;
-  `json.cpp` asserts the `null` out and the `nullopt` back.
+  since nlohmann/json 3.12; back only by hand in the vendored 3.12.0, whose
+  read-side overload sits behind a guard that is never open) and that
+  `WhenWritingNull` has no counterpart; `json.cpp` asserts the `null` out
+  and the `nullopt` back. The clock map sits with the page's index rather
+  than inside Recipe 6's strict shape.
 - **New: Recipe 43 — share a buffer with another process** (MINOR — an
   appended recipe). Appendix G priced the shared-memory lane in one row;
   this is the lane, and the first cookbook listing with no portable
