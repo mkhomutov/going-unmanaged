@@ -976,9 +976,9 @@ fi
 # a header from another, both stop at the link or at the first EVP call.
 # CI passes --require-openssl, which refuses to skip, on both platforms; on
 # macOS the runner's OpenSSL is keg-only, so the workflow points
-# PKG_CONFIG_PATH at it first. The judge inside the binary is three published
-# vectors (FIPS 180-4's SHA-256 of "abc"; the GCM specification's test cases
-# 13 and 14), which is the only way a listing can claim to agree with .NET's
+# PKG_CONFIG_PATH at it first. The judge inside the binary is four published
+# vectors (NIST's SHA-256 of "abc" and of nothing; the GCM specification's
+# test cases 13 and 14), which is the only way a listing can claim to agree with .NET's
 # AesGcm rather than merely with itself.
 echo "== cookbook crypto (libcrypto) =="
 if pkg-config --exists libcrypto 2> /dev/null; then

@@ -141,7 +141,7 @@ Chapter 25's Finding 10.
   the one cut by standard rather than domain — C++23, Chapter 8's chaining
   listing, its own probe. `crypto.cpp` is the second probe: it links the
   system's libcrypto through `pkg-config` (`--require-openssl` in CI, which
-  sets PKG_CONFIG_PATH on macOS), nothing vendored, and its judge is three
+  sets PKG_CONFIG_PATH on macOS), nothing vendored, and its judge is four
   published test vectors — a round trip would prove only that seal and open
   agree with each other. Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the

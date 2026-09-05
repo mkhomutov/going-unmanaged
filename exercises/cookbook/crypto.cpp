@@ -7,11 +7,12 @@
 // CipherCtx, seal() and open_sealed() are quoted VERBATIM in
 // book/F-rosetta-cookbook.md: editing one means editing the appendix in the
 // same commit (the testlab discipline). main() is scaffolding - it holds the
-// listings to PUBLISHED test vectors (FIPS 180-4's SHA-256 of "abc" and of
+// listings to PUBLISHED test vectors (NIST's SHA-256 of "abc" and of
 // nothing; the GCM specification's test cases 13 and 14), because a round
 // trip proves only that the two halves agree with each other, and the
 // question is whether they agree with .NET's AesGcm. Then a round trip with
 // a random nonce, and the tamper that must fail.
+#include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
@@ -28,7 +29,7 @@
 
 using Bytes = std::vector<std::uint8_t>;
 
-std::string hex(const Bytes& bytes) {                        // Convert.ToHexString, lower-case
+std::string hex(const Bytes& bytes) {                        // Convert.ToHexStringLower (.NET 9); ToHexString is UPPER-case
     static constexpr char digits[] = "0123456789abcdef";
     std::string out;
     for (const std::uint8_t b : bytes) {
@@ -78,8 +79,9 @@ Bytes seal(const Key& key, const Nonce& nonce, const Bytes& plain) {
 }
 
 // Absence is the verdict: a wrong key, a flipped byte, a truncated envelope
-// all come back as nullopt (Recipe 19), and nothing of the plaintext leaks out
-// on the way - the tag is checked before a byte is trusted.
+// all come back as nullopt (Recipe 19), and no unauthenticated byte leaves this
+// function - DecryptUpdate fills the buffer, DecryptFinal_ex checks the tag, and
+// the buffer is returned only past that check, and wiped when it fails.
 std::optional<Bytes> open_sealed(const Key& key, const Bytes& sealed) {
     if (sealed.size() < std::tuple_size<Nonce>::value + kTagSize) {
         return std::nullopt;
@@ -97,13 +99,14 @@ std::optional<Bytes> open_sealed(const Key& key, const Bytes& sealed) {
         EVP_DecryptUpdate(ctx.get(), plain.data(), &n, ciphertext, static_cast<int>(length)) != 1 ||
         EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_SET_TAG, kTagSize, tag.data()) != 1 ||
         EVP_DecryptFinal_ex(ctx.get(), plain.data() + n, &n) != 1) {       // the tag check lives HERE
+        OPENSSL_cleanse(plain.data(), plain.size());                       // what AesGcm.Decrypt does before it throws
         return std::nullopt;
     }
     return plain;
 }
 
 int main() {
-    // Recipe 36 against FIPS 180-4's own vectors: the digest of "abc", and
+    // Recipe 36 against NIST's published vectors: the digest of "abc", and
     // of nothing at all - the second is the one every codebase meets by
     // hashing an empty buffer.
     assert(hex(sha256("abc")) == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");

@@ -144,8 +144,8 @@ numbers may still move.
   does not ship and which libraries the ecosystem reaches for.
   `exercises/cookbook/crypto.cpp` is the cookbook's second TU behind a
   probe — libcrypto located through `pkg-config`, `--require-openssl` in
-  CI — and its judge is three published vectors (FIPS 180-4's SHA-256 of
-  `abc` and of nothing; the GCM specification's test cases 13 and 14),
+  CI — and its judge is four published vectors (NIST's SHA-256 of `abc`
+  and of nothing; the GCM specification's test cases 13 and 14),
   because a round trip would prove only that seal and open agree with
   each other. ROADMAP item 24 records the scope decision and what stays
   open (keys, signatures).

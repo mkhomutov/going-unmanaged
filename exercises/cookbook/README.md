@@ -19,7 +19,7 @@ Cookbook*), one translation unit per domain —
 | `errors.cpp` | 21–22 — an exception type of your own; a value or an error, on C++17 |
 | `expected.cpp` | Chapter 8's chaining listing — `std::expected`, the one C++23 TU, built as its own probe |
 | `json.cpp` | 25–26, 35 — serialize a record, read a config, walk a document you do not own; the one TU with a dependency, `exercises/third_party/nlohmann/`, included with `-isystem` |
-| `crypto.cpp` | 36–37 — hash bytes; seal bytes for a reader in C#: the second TU behind a probe, it links the system's libcrypto through `pkg-config` (nothing vendored) and is held to FIPS 180-4's and the GCM specification's own test vectors |
+| `crypto.cpp` | 36–37 — hash bytes; seal bytes for a reader in C#: the second TU behind a probe, it links the system's libcrypto through `pkg-config` (nothing vendored) and is held to NIST's and the GCM specification's own test vectors |
 | `containers.cpp` | 27 — pre-size a collection: `reserve` against `vector(n)` and `resize` |
 | `flags.cpp` | 31–32 — a feature flag read once and kept as a member; a `[Flags]` enum as an `enum class` with its operators |
 | `ownership.cpp` | 33–34 — an owned object as a field, and who disposes it; an object too big for the stack |

@@ -1499,7 +1499,7 @@ ASan until C++23, so the document is named first. Needs
 ```cpp
 using Bytes = std::vector<std::uint8_t>;
 
-std::string hex(const Bytes& bytes) {                        // Convert.ToHexString, lower-case
+std::string hex(const Bytes& bytes) {                        // Convert.ToHexStringLower (.NET 9); ToHexString is UPPER-case
     static constexpr char digits[] = "0123456789abcdef";
     std::string out;
     for (const std::uint8_t b : bytes) {
@@ -1531,15 +1531,17 @@ when it arrives. This one is OpenSSL's libcrypto through its EVP
 interface, a Shape 1 C API — an integer status from every call, results
 written through pointers you pass, the algorithm named by a function
 rather than a type — and the alternatives read the same way: libsodium,
-the platform's own (CNG on Windows, CommonCrypto and CryptoKit on Apple's),
+the platform's own (CNG on Windows, CommonCrypto on Apple's, CryptoKit behind a Swift shim),
 mbedTLS on the Shape 4 targets. The rule is stronger than C#'s, because
 nothing here is in the box: never write a primitive, and prove the one you
 chose against a *published* vector — the harness holds this function to
-FIPS 180-4's digest of `abc` — since a hash that agrees with itself
-proves nothing about whether it agrees with the .NET side. Needs
+NIST's published digest of `abc` — since a hash that agrees with itself
+proves nothing about whether it agrees with the .NET side. And compare
+the bytes, not the strings: `Convert.ToHexString` is upper-case, this
+`hex` is lower-case, and `ToHexStringLower` arrived in .NET 9. Needs
 `<openssl/evp.h>` and a link against libcrypto (`pkg-config --cflags
---libs libcrypto`, which `build_all.sh` uses under its probe), `<string>`,
-`<string_view>`, `<vector>`.
+--libs libcrypto`, which `build_all.sh` uses under its probe),
+`<cstdint>`, `<stdexcept>`, `<string>`, `<string_view>`, `<vector>`.
 
 > [!WARNING]
 > **Trap:** `sha256(text)` hashes *bytes*, and a C# string is UTF-16 — `SHA256.HashData(Encoding.UTF8.GetBytes(s))` and this function agree, `SHA256.HashData(MemoryMarshal.AsBytes(s.AsSpan()))` does not, and both are correct hashes of different bytes; [Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)'s rule that the encoding is named applies to every byte that is hashed, signed or sealed.
@@ -1579,8 +1581,9 @@ Bytes seal(const Key& key, const Nonce& nonce, const Bytes& plain) {
 }
 
 // Absence is the verdict: a wrong key, a flipped byte, a truncated envelope
-// all come back as nullopt (Recipe 19), and nothing of the plaintext leaks out
-// on the way - the tag is checked before a byte is trusted.
+// all come back as nullopt (Recipe 19), and no unauthenticated byte leaves this
+// function - DecryptUpdate fills the buffer, DecryptFinal_ex checks the tag, and
+// the buffer is returned only past that check, and wiped when it fails.
 std::optional<Bytes> open_sealed(const Key& key, const Bytes& sealed) {
     if (sealed.size() < std::tuple_size<Nonce>::value + kTagSize) {
         return std::nullopt;
@@ -1598,6 +1601,7 @@ std::optional<Bytes> open_sealed(const Key& key, const Bytes& sealed) {
         EVP_DecryptUpdate(ctx.get(), plain.data(), &n, ciphertext, static_cast<int>(length)) != 1 ||
         EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_SET_TAG, kTagSize, tag.data()) != 1 ||
         EVP_DecryptFinal_ex(ctx.get(), plain.data() + n, &n) != 1) {       // the tag check lives HERE
+        OPENSSL_cleanse(plain.data(), plain.size());                       // what AesGcm.Decrypt does before it throws
         return std::nullopt;
     }
     return plain;
@@ -1615,7 +1619,9 @@ have to open on another machine, the nonce length, the tag length, and
 the order the three are written in are a wire format in
 [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
 sense — documented offsets, and a published test vector as the oracle.
-The comment above `seal` is that document, and the harness holds the
+The comment above `seal` is that document — the 16-byte tag is one of its
+rows, so the C# side hands `Decrypt` a 16-byte tag span, which the .NET 8
+constructor's `tagSizeInBytes` fixes — and the harness holds the
 function to the GCM specification's own test cases 13 and 14 (a zero key
 and nonce, no plaintext and then sixteen zero bytes), because a round
 trip proves only that `seal` and `open_sealed` agree with each other.

@@ -994,14 +994,14 @@ bytes for a reader in C# — plus a paragraph in Chapter 27's batteries
 section that says what the standard library does not ship and which
 libraries the ecosystem reaches for, each read as a Bestiary shape:
 OpenSSL's libcrypto and libsodium (C APIs with handles and error codes),
-the platform's own (CNG, CommonCrypto and CryptoKit), mbedTLS for Shape 4
+the platform's own (CNG, CommonCrypto and, behind a Swift shim, CryptoKit), mbedTLS for Shape 4
 targets. The recipes use OpenSSL's EVP interface, and the cookbook TU
 that holds them, `exercises/cookbook/crypto.cpp`, is the second file
 built behind a probe: `build_all.sh` locates libcrypto through
 `pkg-config`, prints SKIPPED without it, and refuses to skip under
 `--require-openssl`, which CI passes on both platforms. The judge is
-three published vectors — FIPS 180-4's SHA-256 of `abc`, and the GCM
-specification's test cases 13 and 14 — because a round trip proves only
+four published vectors — NIST's SHA-256 of `abc` and of nothing, and the
+GCM specification's test cases 13 and 14 — because a round trip proves only
 that the two halves agree with each other, and the ticket is whether
 they agree with `AesGcm` in .NET. The rule the recipes carry, harder than
 C#'s: never write a primitive, and never invent the envelope — the layout
