@@ -10,143 +10,160 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
-## [Unreleased]
+## [0.10.0] — 2026-09-05
 
-- **New: Recipe 27 — Pre-size a collection** (MINOR — an appended recipe).
-  `reserve` appeared in three chapters and two appendices and had a page
-  of its own in none; the recipe sets it beside `vector(n)` and `resize`
-  as the `List<T>(capacity)` versus `new T[n]` split, names the
-  deadline-path use, corrects the reserve-in-the-loop instinct, and holds
-  the trap — writing past size into reserved room, a `container-overflow`
-  under libc++. `exercises/cookbook/containers.cpp` asserts size and
-  capacity on every path and counts the reallocations the loop reserve
-  causes; Appendix E gains a *capacity vs size* entry. Chapters 21 and 24
-  now say which standard library reports `container-overflow` by default.
+The same instrument, run again. Version 0.9.0 began with sixteen topics a
+reader named and read against every page; this one began with the next
+twenty-four, asked the day after. The verdict flipped: eleven came back
+covered outright, because 0.9.0 had done that work — ownership,
+`std::variant`, naming, const, the header/`.cpp` split, exceptions with
+`std::expected`, the empty string, `decltype`, `std::find`,
+`std::optional`, value categories. What was left was not a topic missing a
+page. It was a page missing an entry point.
 
-- **New: Recipes 28–30 — a scoped timer and a forwarding wrapper, a
-  timestamp for a log line, a timeout handed to a C API** (MINOR — three
-  appended recipes). Recipe 6 was the whole of `<chrono>` on the page;
-  these add the `finally`-shaped timer whose destructor is the stop, the
-  `time_call` wrapper that hands its arguments on through a forwarding
-  reference, the `system_clock`-to-text path with its thread-safe `gmtime`
-  spelling, and the `.count()` hand-off where a duration becomes the
-  vendor's integer, with the parameter type putting the thousand in.
-  `exercises/cookbook/timing.cpp` asserts the throwing-path record, an
-  lvalue forwarded as an lvalue and an rvalue as an rvalue, the
-  timestamp's shape, and a seconds literal arriving multiplied out.
-  Appendix E gains a *forwarding reference* entry and Chapter 6's coda
-  points at the recipe.
+That is the *scattered* diagnosis one level down, and it reads the same way
+every time it appears. `reserve` was used in three chapters and two
+appendices and taught on none of them. `std::forward` was explained in
+Chapter 6's coda as a thing the reader would meet before writing, and the
+book never wrote one. The field-level question — can a field be a smart
+pointer, and who disposes it — was answered in Chapters 6, 29, 30 and 37
+and in one place nowhere. A reader who arrives holding the C# name
+(`List<T>(capacity)`, `Stopwatch` in a `finally`, `IDisposable` on the
+owner, `[Flags]`, `DateTime.UtcNow`, `TimeSpan.FromSeconds`) had nowhere
+to land, and the cookbook is precisely the page where a name you already
+have becomes a spelling. So this release is eleven recipes rather than a
+chapter. Two topics were genuinely absent. Nobody had said how a profile
+is *taken*, though Chapter 36 spends itself reading one. And cryptography
+did not occur in the book at all — which forced the decision JSON forced
+in 0.9.0, one step further out: the repository now links a library the
+system provides, once, never copying it in, and CLAUDE.md's invariants and
+CONTRIBUTING name that category rather than leaving it to precedent.
 
-- **New: Recipes 31–32 — Read a feature flag once; combine flags as an
-  enum class** (MINOR — two appended recipes). Chapter 26 ranked the
-  runtime flag first among its four switches and the phrase "feature flag"
-  occurred once in the book; Recipe 31 is the shape — a struct whose
-  defaults are the off state, filled once at startup from whatever channel
-  the plug-in has and kept as a member, junk in the source leaving the
-  default in place — and its trap is the read at the point of use on the
-  deadline path, which nothing names. Recipe 32 is the `[Flags]` attribute
-  C++ does not have: an `enum class` with `|`, `&` and a `has` written
-  once, and the overlap test that reads as `HasFlag` and is wrong for a
-  combined flag. `exercises/cookbook/flags.cpp` asserts the branch, the
-  read-once (the environment changes afterwards and the member does not),
-  the junk parse, and the bit arithmetic at compile time. Appendix E gains
-  a *feature flag* entry; Chapter 26 points at Recipe 31.
+The additions were reviewed against the code before they merged, and the
+finding worth recording is a judge that could not fail — 0.9.0 had two,
+this release had three, and the best of them is in the script that exists
+to prevent exactly that mistake. Section 8 of `check_platform_claims.sh`
+was added to hold Recipe 34's claim about what AddressSanitizer calls a
+frame that does not fit its thread's stack. Its first draft wrote this
+machine's answer down as the rule; CI's Linux leg then answered the same
+binary three different ways in three runs, because the name depends on
+whether the faulting write lands within 64 KB of the stack pointer — a
+fact about what happens to be mapped below the stack, not about the
+platform or the overshoot. The section now asserts only what every run
+shares. The other two were harness assertions that a broken implementation
+satisfied: a forwarding wrapper's test that a `std::move` of everything
+passed, and a destruction-order test that passed with the two fields
+swapped. Each is load-bearing now, and each was verified by running the
+broken version and watching it fail.
 
-- **New: Recipes 33–34 — Hold an owned object as a field; an object too
-  big for the stack** (MINOR — two appended recipes). The field-level
-  question a C# developer asks — can a field be a smart pointer, and who
-  disposes it — was answered in Chapters 6, 29, 30 and 37 and in one
-  place nowhere; Recipe 33 is that place, Appendix H's fourth procedure
-  applied to a single member, with the destruction order asserted by a
-  log that reports its own death. Recipe 34 is the third question
-  Chapter 1's decision never asked, because C# answered it for every
-  class: an object that does not fit a frame goes behind `make_unique`,
-  with a `static_assert` as the size budget. Chapter 1's first flowchart
-  gains that branch, Chapter 3 the paragraph behind it, Chapter 31's
-  symptom index the crash-on-entry row, and Appendix E a *stack overflow*
-  entry that says what AddressSanitizer calls it — `stack-overflow` when
-  the fault lands within 64 KB of the stack pointer, a bare `SEGV`/`BUS`
-  otherwise, and which one is not stable even between runs. Section 8 of
-  `check_platform_claims.sh` holds the three things every run shares (a
-  nonzero exit, one of those two names, no allocation stack) under a
-  bounded runner; its first draft had
-  written the maintainer's macOS answer down as the rule, and CI's Linux
-  leg answered the same binary three different ways in three runs, which
-  is the exact mistake that script exists to catch. The Recipe 16 harness
-  no longer sleeps a fixed 120 ms and hopes for two ticks, which a loaded
-  runner had just proved it could fail to see.
+MINOR: eleven recipes, an appendix, two chapter additions and four cookbook
+translation units appended, plus the repository's first system-linked
+dependency; no existing chapter, Finding, Recipe or appendix letter changed
+meaning.
 
-- **New: Recipe 35 — Walk a JSON document you do not own** (MINOR — an
-  appended recipe). Recipes 25 and 26 mapped a document onto a type you
-  own; this is the other case, the host's project file or a vendor's
-  telemetry, where you walk what is there: `items()` as
-  `EnumerateObject`, `contains` plus `at` as `TryGetProperty`, an absent
-  field landing in an `optional`, and the generic recursive walk with the
-  `is_structured()` guard that stops a scalar from being iterated as a
-  one-element sequence of itself. The trap is `get<int>()` on `3.5`
-  returning `3` without a word. `exercises/cookbook/json.cpp` asserts the
-  walk, the sorted key order, the scalar guard, the silent truncation, and
-  `items()` on an array handing back index keys — the document named
-  first, because the view does not keep a temporary alive.
 
-- **New section: Chapter 31 — The profiler, where it differs from C#**
-  (MINOR — an appended section). Chapter 36 taught how to read a profile
-  and no page said how to take one. The section names the tools per
-  platform (`perf`; `sample` and Instruments; Visual Studio's profiler),
-  the three things to arrange before the first sample (an optimized build
-  with its names kept, frame pointers, the inlining to expect), attaching
-  to the host, which instrument answers which complaint — a sampler for
-  the mean, because it records weight rather than duration, a counter or a
-  trace for the tail — and the discipline around Recipe 28's stopwatch.
-  Stated as prose the repository does not check, in the pattern Chapter
-  40 uses for its custom commands; the Try it gains a step that takes
-  Chapter 36's profile from perflab, the symptom index a row for the
-  wrong-build profile, Chapter 36's stretch a route here, and one key
-  principle joins Appendix B.
-
-- **Chapter 26 — the root files, and two layout rules** (MINOR — an
-  appended passage). "A layout that survives" drew the directories and
-  stopped; a C# developer arriving from a `.sln` does not know which root
-  files are load-bearing. The section now lists them — presets,
-  `.clang-format`, `.clang-tidy`, `.gitignore` with `build/`, the README's
-  three commands, the licence and the NOTICE — and states the two rules the
-  tree implies and no file does: the namespace mirrors the directory, and
-  one class is one header pair named for the type, private headers beside
-  their `.cpp` and never under the project-name prefix.
-
+- **New: Recipes 27–35 — the cookbook's missing entry points** (MINOR —
+  nine appended recipes). Each is a mechanism the book already used and
+  never gathered. **27** sets `reserve` beside `vector(n)` and `resize` as
+  the `List<T>(capacity)` versus `new T[n]` split, and corrects the
+  reserve-in-the-loop instinct that turns amortized growth into a
+  reallocation per push. **28** is the `finally`-shaped `ScopedTimer` whose
+  destructor is the stop, and the `time_call` wrapper that hands its
+  arguments on through a forwarding reference — the `std::forward` Chapter
+  6 explained and the book had never written. **29** is the
+  `system_clock`-to-text path with its thread-safe `gmtime` spelling;
+  **30** the `.count()` hand-off where a duration becomes a vendor's
+  integer, with the wrapper's parameter type putting the thousand in.
+  **31** is a feature flag read once at startup and kept as a member;
+  **32** the `[Flags]` attribute C++ does not have, an `enum class` with
+  its two operators and a `has` that compares against the flag rather than
+  testing for overlap. **33** answers the field question — Appendix H's
+  fourth procedure applied to one member, with the destruction order
+  asserted by a log that records the sink's owner count as it dies; **34**
+  the question Chapter 1's decision never asked, because C# answered it for
+  every class: an object that does not fit a frame goes behind
+  `make_unique`, with a `static_assert` as the reason for the heap written
+  down. **35** walks a JSON document whose shape belongs to somebody else.
+  Three new translation units — `containers.cpp`, `flags.cpp`,
+  `ownership.cpp` — plus additions to `timing.cpp` and `json.cpp` assert
+  what each claims, including two traps that had to be run to be stated: a
+  range-`for` over `json::parse(text).items()` is a `stack-use-after-scope`
+  in C++17, and a wrapper that `std::move`s its arguments fails a callee
+  overloaded on value category. Appendix E gains *capacity vs size*,
+  *forwarding reference*, *feature flag* and *stack overflow*; Chapter 1's
+  first flowchart gains the too-big-for-a-frame branch and Chapter 3 the
+  paragraph behind it; Chapters 6 and 26 gain terminal pointers; Chapter
+  31's symptom index gains the crash-on-entry row.
+- **New: Recipes 36–37 — Hash bytes; seal bytes for a reader in C#**
+  (MINOR — two appended recipes; closes ROADMAP item 24). The book had no
+  word on cryptography, and no answer to the question its reader meets
+  first: whether the bytes a plug-in seals open under `AesGcm`. Recipe 36
+  is SHA-256 through OpenSSL's EVP interface, read as a Bestiary shape;
+  Recipe 37 is AES-256-GCM with the envelope — nonce, ciphertext, tag —
+  stated as an ICD in Chapter 34's sense, absence as the verdict on a
+  tampered or wrong-key open, and nonce reuse as the trap nothing will
+  report. Chapter 27's batteries section names what the standard library
+  does not ship and how the libraries that do read as Chapter 16 shapes.
+  `exercises/cookbook/crypto.cpp` is the cookbook's second translation
+  unit behind a probe — libcrypto located through `pkg-config` and linked
+  from the system, `--require-openssl` in CI on both platforms — and its
+  judge is four published vectors (NIST's SHA-256 of `abc` and of nothing;
+  the GCM specification's test cases 13 and 14), because a round trip
+  proves only that `seal` and `open_sealed` agree with each other. This is
+  the repository's first dependency it links rather than vendors, so
+  CLAUDE.md's invariant 5 and CONTRIBUTING's ground rules now name that
+  category: located at configure time, behind a probe CI refuses to skip,
+  judged against published vectors, and nothing for NOTICE because nothing
+  is redistributed.
 - **New: Appendix J — The CMake Catalogue** (MINOR — an appended
   appendix). The lookup half of Chapters 26, 27 and 40, in the shape
   Appendix G is to Chapter 38: a table of every verb those chapters teach
   and the page that owns it, then the tools none of them needed — the
   runtime reaching the loader (`INSTALL_RPATH`, `$ORIGIN` and
-  `@loader_path`, the DLL copy step Windows needs instead), precompiled
+  `@loader_path`, the copy step Windows needs instead), precompiled
   headers, link-time optimization and its ABI hazard, `ExternalProject`
   against `FetchContent`, CTest's environment and timeout properties,
-  CPack, unity builds and a compiler cache, and how to read a configure
-  you did not write — each priced, with a decision table. One entry is
-  verified: `build_all.sh` generates the runtime-delivery project, installs
-  it, runs the executable from a directory that is not the prefix, then
-  installs it again without a runpath and asserts the same run fails to
-  load; `check_verbatim.sh` pins the page's one cmake fence to that
-  heredoc and refuses any cpp fence on the page. Appendix letters now
-  run A–J with no gap.
-
-- **New: Recipes 36–37 — Hash bytes; seal bytes for a reader in C#**
-  (MINOR — two appended recipes; closes ROADMAP item 24). The book had no
-  word on cryptography, and no answer to the question this book's reader
-  meets first: whether the bytes a plug-in seals open under `AesGcm`.
-  Recipe 36 is SHA-256 through OpenSSL's EVP interface; Recipe 37 is
-  AES-256-GCM with the envelope stated as an ICD and absence as the
-  verdict. Chapter 27's batteries section names what the standard library
-  does not ship. The repository's first system-linked dependency, and
-  CLAUDE.md and CONTRIBUTING now name that category.
-  `exercises/cookbook/crypto.cpp` is the cookbook's second TU behind a
-  probe — libcrypto located through `pkg-config`, `--require-openssl` in
-  CI — and its judge is four published vectors (NIST's SHA-256 of `abc`
-  and of nothing; the GCM specification's test cases 13 and 14),
-  because a round trip would prove only that seal and open agree with
-  each other. ROADMAP item 24 records the scope decision and what stays
-  open (keys, signatures).
+  CPack, unity builds and a compiler cache, and how to read a configure you
+  did not write — each priced, with a decision table. One entry is
+  verified rather than described: `build_all.sh` generates the
+  runtime-delivery project, installs it, runs the executable from a
+  directory that is not the prefix, then installs it again without a
+  runpath and asserts the same run fails to load. `check_verbatim.sh` pins
+  the page's one cmake fence to that heredoc — the arrangement Chapter 27's
+  ODR headers use — and refuses any cpp fence on the page, as it does for
+  Appendix G. Appendix letters now run A–J with no gap.
+- **New: taking a profile, and the files at a project's root** (MINOR — an
+  appended section and an appended passage). **Chapter 31** gains *The profiler,
+  where it differs from C#*, beside the debugger section it mirrors:
+  the tools per platform, the three things to arrange before the first
+  sample lands (an optimized build with its names kept, frame pointers,
+  the inlining to expect), attaching to the host, and which instrument
+  answers which complaint — a sampler for the mean, because it records
+  weight rather than duration and never sees a thread waiting off the CPU;
+  a counter or a trace for the tail. Its Try it gains a step that takes
+  Chapter 36's profile from `exercises/perflab/` and then removes the frame
+  pointers to meet the wrong-build tell. **Chapter 26**'s *A layout that
+  survives* gains the root files a tool reads rather than a person —
+  presets, `.clang-format`, `.clang-tidy`, `.gitignore`, the README's three
+  commands, the licence and the NOTICE — and the two rules the tree implies
+  and no file states: the namespace mirrors the directory, and one class is
+  one header pair named for the type, with private headers in `src/` and
+  never under the project-name prefix.
+- **Tooling and corrections.** `check_platform_claims.sh` gains section 8,
+  which runs a frame past a 512 KB thread stack under AddressSanitizer and
+  asserts the three things every platform and every run share — a nonzero
+  exit, one of the two report names, no allocation stack — under a bounded
+  runner, because a frame that walks far below the stack can hang the
+  runtime mid-report and a hung check stops a job rather than failing it;
+  the `platform-claims` job gains a fifteen-minute timeout for the same
+  reason. `build_all.sh` gains `--require-openssl`, and the macOS leg
+  points `PKG_CONFIG_PATH` at its keg-only OpenSSL. The `buildlab-msvc` job
+  now compiles `exercises/cookbook/timing.cpp`, whose `gmtime_s` branch was
+  built by nothing. Recipe 16's harness no longer sleeps a fixed 120 ms and
+  hopes for two ticks, which a loaded runner proved it could fail to see.
+  Chapters 21 and 24 now say which standard library reports
+  `container-overflow` by default, and which needs
+  `-D_GLIBCXX_SANITIZE_VECTOR` to say anything at all.
 
 ## [0.9.0] — 2026-09-04
 
