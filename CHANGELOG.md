@@ -10,7 +10,54 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
-## [Unreleased]
+## [0.11.0] — 2026-09-06
+
+The same instrument, run a third time. Version 0.9.0 began with sixteen
+topics, 0.10.0 with the next twenty-four; this one began with thirty-two,
+and twenty-three came back covered outright, because the two releases
+before it had done that work — a reader asking about ownership, `variant`,
+const, `decltype`, `std::forward`, `reserve`, profiling or cryptography now
+lands on a page with a judge behind it. Templates were closed by decision
+in 0.9.0 and stayed closed. What was left was not a scattered subject this
+time. It was one theme, and the book already knew it: the plug-in talks to
+something outside its process, and not one line of code in the book did.
+Chapter 27 named libcurl and SQLite, Appendix G priced HTTP, gRPC and a
+shared-memory lane, Chapter 33 quoted `sqlite3_column_text`'s loan — all
+prose. So this release is six recipes (38–43) rather than a chapter, and
+three recorded decisions for the subjects that fail the gate as code:
+gRPC listings, server databases, and working with LLMs, each answered
+with what already covers the reader.
+
+The recipes are the ones a plug-in meets in its first months, each with
+an offline oracle CI can judge: a file saved by write-then-rename with the
+inode as the judge; a file watcher that owns a thread; an HTTP call whose
+two verdicts — the transport's and the server's — are judged by a
+`file://` fixture and a forty-line loopback server in the harness; a
+SQLite query judged by an in-memory database and by `sqlite3_close`'s
+return code, which is the leak detector; and a shared-memory region whose
+layout is a wire format, judged by a fork. The dependency category 0.10.0
+created for one library now holds three, defined once in CLAUDE.md and
+CONTRIBUTING: located through `pkg-config`, behind a probe CI refuses to
+skip, judged against an oracle that needs no network and no state outside
+the run.
+
+The reviews found what they always find, and this time twice in the C#
+column: Recipe 39's comparison was inverted — `File.Copy` refuses an
+existing target exactly as `copy_file` does, and the call that differs is
+`rename`, which replaces where `File.Move` throws — and Recipe 41's
+timeout is a `TaskCanceledException`, not the `HttpRequestException` the
+line claimed. Eleven judges that could not fail were made load-bearing,
+among them the temp file that could not be told from one in the wrong
+directory because the saved file lived there too, the `size` field of a
+watcher's stamp that nanosecond timestamps never exercised, and an
+`O_EXCL` whose first judge tested the operating system rather than the
+recipe. And one claim a Mac cannot make was caught by reading the MSVC
+STL: its `rename` passes `MOVEFILE_COPY_ALLOWED`, so across volumes it
+copies and deletes where the POSIX libraries refuse.
+
+MINOR: six recipes and six cookbook translation units appended, two of
+them behind new probes, plus three Deliberately-out-of-scope entries; no
+existing chapter, Finding, Recipe or appendix letter changed meaning.
 
 - **The third coverage review's decisions** (PATCH — prose and ROADMAP;
   nothing moves a number). Three subjects the review found absent are
