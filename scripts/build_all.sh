@@ -128,6 +128,16 @@ run "cb_containers" $CXX $FLAGS exercises/cookbook/containers.cpp     -o $OUT/cb
 run "cb_flags"    $CXX $FLAGS   exercises/cookbook/flags.cpp            -o $OUT/cb_flags
 run "cb_ownership" $CXX $FLAGS  exercises/cookbook/ownership.cpp        -o $OUT/cb_ownership
 run "cb_watch"    $CXX $FLAGS   exercises/cookbook/watch.cpp            -o $OUT/cb_watch
+# Recipe 43 is the platform, not a library: POSIX shm_open/mmap here, Win32
+# under check.ps1 in the buildlab-msvc job. glibc before 2.34 keeps
+# shm_open in librt, and -lrt is harmless on every glibc, so Linux gets it
+# unconditionally; macOS has no librt. The harness forks, which is why it
+# has no TSan build: ThreadSanitizer sees one process, and the recipe's
+# Trap says so.
+SHM_LIBS=""
+[ "$(uname -s)" = Linux ] && SHM_LIBS="-lrt"
+# shellcheck disable=SC2086
+run "cb_shm"      $CXX $FLAGS   exercises/cookbook/shm.cpp              -o $OUT/cb_shm $SHM_LIBS
 # The one cookbook TU with a dependency. -isystem, not -I: the vendored header
 # is the vendor's, and -Wall -Wextra are for our code (CONTRIBUTING's
 # third-party rule). Two things the rule says that a build alone would not
@@ -259,6 +269,7 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_containers > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_flags > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_ownership > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_watch > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_shm > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_json > /dev/null
 # Both link orders of the Chapter 32 lab: surviving exit IS the claim here.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_a > /dev/null

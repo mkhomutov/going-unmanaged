@@ -61,6 +61,7 @@ stays right.
 | `FileSystemWatcher` | `WatchService` | [Recipe 40 — Notice a file changed](#recipe-40--notice-a-file-changed) |
 | `HttpClient.GetStringAsync` | `HttpClient.send` | [Recipe 41 — Call an HTTP endpoint](#recipe-41--call-an-http-endpoint) |
 | `SqliteConnection` / `SqliteCommand.ExecuteReader` | `DriverManager.getConnection` / `PreparedStatement` | [Recipe 42 — Open a local database and run a query](#recipe-42--open-a-local-database-and-run-a-query) |
+| `MemoryMappedFile.CreateOrOpen` / `CreateViewAccessor` | `FileChannel.map` (files only) | [Recipe 43 — Share a buffer with another process](#recipe-43--share-a-buffer-with-another-process) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 ### Recipe 1 — Read a whole file into a string
@@ -2106,6 +2107,135 @@ link against libsqlite3 — `pkg-config --cflags --libs sqlite3`, which
 
 > [!WARNING]
 > **Trap:** `sqlite3_close` returning `SQLITE_BUSY` at shutdown is a statement somebody never finalized — Chapter 35's still-live-at-unload, one library over — and the tempting fix, `sqlite3_close_v2`, does not fix it: it defers the close until the last statement is finalized, which for a leaked one is never, so the handle, its open file and any lock a `SELECT` abandoned mid-rows was holding outlive your plug-in in the host's process; and a second close of the same handle is `SQLITE_MISUSE` returned into a deleter that discards it, read inside a library no sanitizer instruments.
+
+### Recipe 43 — Share a buffer with another process
+
+**In C#:** `using var mmf = MemoryMappedFile.CreateOrOpen("frames", size); using var view = mmf.CreateViewAccessor(); view.Write(0, ref frame);` — the runtime picks the platform API, keeps the mapping alive, and writes a struct into it as if layout were nobody's problem (and a *named* map is Windows-only in .NET, which is its own hint about how platform-shaped this is)
+
+**The recipe:**
+
+```cpp
+struct Frame {
+    std::uint32_t version;              // sizeof(Frame): a reader built against an older layout can tell
+    std::atomic<std::uint32_t> seq;     // bumped by the writer AFTER the payload: the reader's "is it there yet"
+    std::uint32_t width;
+    std::uint32_t height;
+    std::uint8_t  pixels[64];
+};
+static_assert(std::is_standard_layout<Frame>::value, "a shared layout has no vtable and no surprises");
+static_assert(std::atomic<std::uint32_t>::is_always_lock_free,
+              "a lock-based atomic holds a lock that exists in ONE process");
+static_assert(sizeof(Frame) == 4 + 4 + 4 + 4 + 64, "the layout is the contract; a change here is a version bump");
+
+// One name, one mapping, two handles - the object and the view - released
+// in reverse on every path. Recipe 7's shape, twice, behind one class.
+class SharedRegion {
+public:
+    SharedRegion(const std::string& name, std::size_t size, bool create)
+        : name_(name), size_(size) {
+#if defined(_WIN32)
+        mapping_ = create
+            ? CreateFileMappingA(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0,
+                                 static_cast<DWORD>(size), name.c_str())
+            : OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name.c_str());
+        if (mapping_ == nullptr) {
+            throw std::runtime_error("file mapping failed: " + name);
+        }
+        view_ = MapViewOfFile(mapping_, FILE_MAP_ALL_ACCESS, 0, 0, size);
+        if (view_ == nullptr) {
+            CloseHandle(mapping_);
+            throw std::runtime_error("MapViewOfFile failed: " + name);
+        }
+#else
+        const int flags = create ? (O_RDWR | O_CREAT | O_EXCL) : O_RDWR;   // EXCL: a stale name is an error, not a reuse
+        fd_ = ::shm_open(name.c_str(), flags, 0600);
+        if (fd_ < 0) {
+            throw std::runtime_error("shm_open failed: " + name);
+        }
+        if (create && ::ftruncate(fd_, static_cast<off_t>(size)) != 0) {   // once, at creation: macOS refuses a second
+            ::close(fd_);
+            ::shm_unlink(name.c_str());
+            throw std::runtime_error("ftruncate failed: " + name);
+        }
+        view_ = ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
+        if (view_ == MAP_FAILED) {
+            ::close(fd_);
+            if (create) ::shm_unlink(name.c_str());
+            throw std::runtime_error("mmap failed: " + name);
+        }
+#endif
+    }
+
+    ~SharedRegion() {
+#if defined(_WIN32)
+        UnmapViewOfFile(view_);
+        CloseHandle(mapping_);          // the object dies with its last handle: nothing to unlink
+#else
+        ::munmap(view_, size_);
+        ::close(fd_);                   // the NAME stays until someone unlinks it - see unlink()
+#endif
+    }
+    SharedRegion(const SharedRegion&) = delete;
+    SharedRegion& operator=(const SharedRegion&) = delete;
+
+    // The creator's last duty: without it the region outlives every process
+    // that mapped it (Appendix G's price), and the next create fails on the
+    // stale name. Windows has no such step and no such leak.
+    static void unlink(const std::string& name) {
+#if !defined(_WIN32)
+        ::shm_unlink(name.c_str());
+#else
+        (void)name;
+#endif
+    }
+
+    void* data() const { return view_; }
+
+private:
+    std::string name_;
+    std::size_t size_;
+    void* view_ = nullptr;
+#if defined(_WIN32)
+    HANDLE mapping_ = nullptr;
+#else
+    int fd_ = -1;
+#endif
+};
+```
+
+**Why it looks like this.** No library, because the platform is the
+dependency: POSIX `shm_open` plus `mmap` on Linux and macOS, a
+pagefile-backed `CreateFileMapping` plus `MapViewOfFile` on Windows, and
+the cookbook's first `#if` inside a listing, since no standard spelling
+exists (Boost.Interprocess is the portable wrapper, and the price of it is
+Boost). The class is Recipe 7 twice — an object handle and a view, each
+released on every path in reverse — and the lesson that makes it this
+book's is in the struct, not the class: **a shared region is a wire
+format**. The bytes are read by a process with its own compiler, its own
+build and its own address space, so
+[Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s
+one rule applies with
+[Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
+extension — fixed-width fields, a version first, no `std::string`, no
+pointer (an address in *your* process), and the three `static_assert`s as
+[Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s
+judge on the layout. The counter is the whole of the synchronization: a
+`std::atomic` that is lock-free on every target here, written with
+release after the payload and read with acquire before it, because an
+atomic that needed a lock would hold one that exists in one process only;
+a process-shared mutex (`pthread_mutexattr_setpshared`, a named Win32
+mutex) is the next step and not this recipe. The reader's wait is bounded
+([Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out)'s judge),
+and the harness is the one place in this book that forks: the child maps
+by name, writes, bumps, and leaves, and the parent asserts the frame — on
+Windows the `buildlab-msvc` job maps one object twice in one process,
+which proves the mechanism and states the cross-process half as
+unverified there. Needs `<atomic>`, `<cstdint>`, `<string>`,
+`<type_traits>`; `<sys/mman.h>`, `<fcntl.h>`, `<unistd.h>` on POSIX (and
+`-lrt` before glibc 2.34); `<windows.h>` on Windows.
+
+> [!WARNING]
+> **Trap:** the name outlives every process that mapped it — close every handle, exit, and `/dev/shm/name` is still there holding the last frame, until someone calls `shm_unlink` — and no sanitizer sees any of this: ThreadSanitizer instruments one process, so a race between two is invisible to every tool in the book, Finding 10's family with a process boundary through it. Two smaller ones the harness meets: macOS caps the name at 31 characters and allows `ftruncate` on the object exactly once.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
