@@ -23,6 +23,7 @@ Cookbook*), one translation unit per domain —
 | `containers.cpp` | 27 — pre-size a collection: `reserve` against `vector(n)` and `resize` |
 | `flags.cpp` | 31–32 — a feature flag read once and kept as a member; a `[Flags]` enum as an `enum class` with its operators |
 | `ownership.cpp` | 33–34 — an owned object as a field, and who disposes it; an object too big for the stack |
+| `watch.cpp` | 40 — notice a file changed: the polling watcher, judged by a bounded wait, a restored-older-timestamp change, and silence after the join; built under TSan as well, since it owns a thread |
 
 — each with a `main()` that asserts what its recipes claim.
 `scripts/build_all.sh` builds and runs all of them on every push, so a recipe
