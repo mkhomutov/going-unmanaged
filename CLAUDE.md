@@ -144,10 +144,12 @@ Chapter 25's Finding 10.
   sets PKG_CONFIG_PATH on macOS), nothing vendored, and its judge is four
   published test vectors — a round trip would prove only that seal and open
   agree with each other. `http.cpp` is the third probe, libcurl the same way
-  (`--require-curl`), judged offline through a `file://` fixture: the write
-  callback and the transport's error path run exactly as for `https://`,
-  and the server's verdict — which `file://` cannot produce — is stated in
-  the recipe as the half no offline judge reaches. `watch.cpp` owns a
+  (`--require-curl`), judged with no network: a `file://` fixture runs the
+  write callback and the transport's error path exactly as for `https://`,
+  and a forty-line loopback server in the harness (POSIX sockets; the
+  cookbook is not built by the MSVC job) serves a redirect, a 500 and a
+  stall, so the server's verdict, the redirect follow and the timeout's
+  unit are judged too. `watch.cpp` owns a
   thread and is built under TSan as well. Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
@@ -434,7 +436,8 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
    located through `pkg-config`, built behind a probe with a
    `--require-<lib>` flag CI passes, judged against an oracle that needs no
    network and no state outside the run — published vectors for libcrypto
-   (`crypto.cpp`), a `file://` fixture for libcurl (`http.cpp`) — reachable
+   (`crypto.cpp`); a `file://` fixture and a loopback server of the
+   harness's own for libcurl (`http.cpp`) — reachable
    from the cookbook only, and nothing for NOTICE, since nothing is
    redistributed. A network in CI is not an oracle: a recipe whose only
    judge is a server somewhere is a recipe nobody checks the day the server

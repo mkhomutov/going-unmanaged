@@ -326,7 +326,8 @@ everything the header exists to hide.
   for the cryptography recipes, libcurl for the HTTP one — located through
   `pkg-config`, behind a probe CI refuses to skip, and judged against an
   oracle that needs no network and no state outside the run (published
-  vectors; a `file://` fixture); nothing in NOTICE, since nothing is
+  vectors; a `file://` fixture and a loopback server the harness runs
+  itself); nothing in NOTICE, since nothing is
   redistributed.
 - **Vendor code is frozen.** `exercises/fakesdk/FakeSDK.h|.cpp` and
   `exercises/fakedevice/FakeDevice.h|.cpp` are "vendor code": their public

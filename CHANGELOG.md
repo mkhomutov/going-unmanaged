@@ -24,8 +24,13 @@ numbers may still move.
   system, `--require-curl` in CI on both platforms — and its judge needs no
   network: a `file://` fixture exercises the callback path and the
   transport's error path (`CURLE_FILE_COULDNT_READ_FILE`), a 200 KB fixture
-  proves the many-chunks claim, and the server's verdict is stated in the
-  recipe as the half no offline judge reaches. CLAUDE.md's invariant 5 and
+  proves the many-chunks claim through the recipe's own callback, and a
+  forty-line loopback server in the harness serves a redirect the recipe
+  follows (`CURLOPT_FOLLOWLOCATION`, as `HttpClient` does by default), a
+  500 whose body is an error page, and a stall the 250 ms deadline cuts —
+  so a `getinfo` left out or a timeout set in seconds fails the run. The
+  fixture path is percent-encoded through curl's URL API, so a temp
+  directory with a space in it is not a malformed URL. CLAUDE.md's invariant 5 and
   CONTRIBUTING's ground rules now define the system-linked category once —
   judged against an oracle that needs no network and no state outside the
   run — rather than per library. Chapter 27's batteries section points at

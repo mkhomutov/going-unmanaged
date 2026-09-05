@@ -1858,11 +1858,14 @@ callback should be safe to run twice. Needs `<atomic>`, `<chrono>`,
 
 ### Recipe 41 — Call an HTTP endpoint
 
-**In C#:** `var text = await http.GetStringAsync(url);` — one call, and one `HttpRequestException` for anything that went wrong, the transport's failures and the server's non-success codes alike
+**In C#:** `var text = await http.GetStringAsync(url);` — one call, and one `HttpRequestException` for the transport's failures and the server's non-success codes alike (the timeout alone arrives as a `TaskCanceledException`)
 
 **The recipe:**
 
 ```cpp
+// Recipe 41 - HttpClient.GetStringAsync, through the C API the ecosystem uses
+// (curl_global_init(CURL_GLOBAL_DEFAULT) runs once per process before this,
+// on the thread that starts the others - see the Why.)
 using Easy = std::unique_ptr<CURL, decltype(&curl_easy_cleanup)>;   // Recipe 7's shape: the cleanup is the type
 
 // Two verdicts, both kept: the transport's (did the bytes arrive?) and the
@@ -1888,9 +1891,13 @@ HttpResult http_get(const std::string& url, std::chrono::milliseconds timeout) {
         throw std::runtime_error("curl_easy_init failed");    // the library itself: Chapter 8's event pole
     }
     HttpResult r;
+    // setopt's own return is unchecked on purpose: the options below fail
+    // only for a build that lacks them, and a URL it cannot parse is
+    // refused by perform, where the verdict is read anyway.
     curl_easy_setopt(easy.get(), CURLOPT_URL, url.c_str());
     curl_easy_setopt(easy.get(), CURLOPT_WRITEFUNCTION, &append_chunk);
     curl_easy_setopt(easy.get(), CURLOPT_WRITEDATA, &r.body);
+    curl_easy_setopt(easy.get(), CURLOPT_FOLLOWLOCATION, 1L);   // HttpClient's default: a 3xx is followed, not returned
     curl_easy_setopt(easy.get(), CURLOPT_TIMEOUT_MS, static_cast<long>(timeout.count()));   // Recipe 30's hand-off
     r.transport = curl_easy_perform(easy.get());              // blocks: this IS the await, spelled as a call
     curl_easy_getinfo(easy.get(), CURLINFO_RESPONSE_CODE, &r.status);
@@ -1912,20 +1919,22 @@ verdicts are the part `GetStringAsync` hid: `CURLcode` says whether the
 wire delivered anything (a name that did not resolve, a timeout, a
 certificate it would not trust), and `CURLINFO_RESPONSE_CODE` is what the
 server thought of the request — `CURLE_OK` with a 500 is a *successful*
-transfer of an error page, and `ok()` reads both. The `.count()` is Recipe
+transfer of an error page, and `ok()` reads both; `CURLOPT_FOLLOWLOCATION`
+is there because without it a 301 is a *successful* transfer of a redirect
+page, where `HttpClient` follows by default. The `.count()` is Recipe
 30's: the duration becomes libcurl's bare integer on the one line next to
 the `_MS` option. `curl_global_init` runs once per process before any
 thread exists — the init entry point in a plug-in, never a static
 initializer ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit))
 — and a POST is the same handle with `CURLOPT_POSTFIELDS` and a
-`curl_slist` of headers, which is a second Recipe 7 type with
-`curl_slist_free_all` as its deleter; cpr is the C++ wrapper that hides
-all of this, and TLS is libcurl's job, not yours. The harness fetches a
-`file://` fixture, because that is the one URL scheme with no network
-behind it: the callback runs the same way, the missing-file case comes
-back as the transport's verdict, and the server's verdict is the half no
-offline judge can reach — the prose says so instead of the harness
-pretending. Needs `<curl/curl.h>` and a link against libcurl —
+`curl_slist` under `CURLOPT_HTTPHEADER`, a second Recipe 7 type with
+`curl_slist_free_all` as its deleter. The harness needs no network and
+has two halves: a `file://` fixture, the one URL scheme with nothing
+behind it, exercises the callback and the transport's error path, and a
+loopback server of forty lines — POSIX sockets, since the standard library
+has none — answers with a redirect to follow, a 500 whose body is an error
+page, and a stall the deadline cuts short, so both verdicts are judged and
+the timeout's unit with them. Needs `<curl/curl.h>` and a link against libcurl —
 `pkg-config --cflags --libs libcurl`, which `build_all.sh` adds under its
 probe and `check.sh` does not — `<chrono>`, `<memory>`, `<stdexcept>`,
 `<string>`.
