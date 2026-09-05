@@ -9,9 +9,10 @@ concept rather than re-teaching it — this page is for looking up, not for
 reading.
 
 Every listing compiles, runs, and holds under the canonical flags — all but
-three, marked where they appear, which build behind probes (one is C++23,
-two need libcrypto): the recipes live as code in `exercises/cookbook/`, and
-`scripts/build_all.sh` asserts what each one claims on every push. Recipe numbers are stable —
+one, which is C++23; that one and the two that need libcrypto build behind
+probes, and say so where they appear. The recipes live as code in
+`exercises/cookbook/`, and `scripts/build_all.sh` asserts what each one
+claims on every push. Recipe numbers are stable —
 recipes append and are never renumbered — so a note that says "Recipe 7"
 stays right.
 
@@ -1522,26 +1523,24 @@ Bytes sha256(std::string_view data) {
 ```
 
 **Why it looks like this.** There is no `System.Security.Cryptography`:
-the standard library ships no hash, no cipher and no random source fit
-for a key, which puts every one of them where
+the standard library ships no hash, no cipher and no random source
+guaranteed fit for a key, which puts every one of them where
 [Chapter 27](27-dependency-management.md#chapter-27--dependency-management)
 put networking — a dependency you choose, add and build, and read as a
 [Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary) shape
-when it arrives. This one is OpenSSL's libcrypto through its EVP
-interface, a Shape 1 C API — an integer status from every call, results
-written through pointers you pass, the algorithm named by a function
-rather than a type — and the alternatives read the same way: libsodium,
-the platform's own (CNG on Windows, CommonCrypto on Apple's, CryptoKit behind a Swift shim),
-mbedTLS on the Shape 4 targets. The rule is stronger than C#'s, because
-nothing here is in the box: never write a primitive, and prove the one you
-chose against a *published* vector — the harness holds this function to
-NIST's published digest of `abc` — since a hash that agrees with itself
-proves nothing about whether it agrees with the .NET side. And compare
-the bytes, not the strings: `Convert.ToHexString` is upper-case, this
-`hex` is lower-case, and `ToHexStringLower` arrived in .NET 9. Needs
-`<openssl/evp.h>` and a link against libcrypto (`pkg-config --cflags
---libs libcrypto`, which `build_all.sh` uses under its probe),
-`<cstdint>`, `<stdexcept>`, `<string>`, `<string_view>`, `<vector>`.
+when it arrives; this one is OpenSSL's libcrypto through its EVP
+interface, a Shape 1 C API with an integer status from every operation,
+and Chapter 27 names the alternatives. The rule is Chapter 27's, and
+harder than C#'s because nothing is in the box: never write a primitive,
+and prove the one you chose against a *published* vector — the harness
+holds this function to NIST's digest of `abc` — since a hash that agrees
+with itself proves nothing about whether it agrees with the .NET side.
+Compare the bytes, not the strings: `Convert.ToHexString` is upper-case,
+this `hex` is lower-case, and `ToHexStringLower` arrived in .NET 9. Needs
+`<openssl/evp.h>` and a link against libcrypto — `pkg-config --cflags
+--libs libcrypto`, which `build_all.sh` adds under its probe and
+`check.sh` does not — `<cstdint>`, `<stdexcept>`, `<string>`,
+`<string_view>`, `<vector>`.
 
 > [!WARNING]
 > **Trap:** `sha256(text)` hashes *bytes*, and a C# string is UTF-16 — `SHA256.HashData(Encoding.UTF8.GetBytes(s))` and this function agree, `SHA256.HashData(MemoryMarshal.AsBytes(s.AsSpan()))` does not, and both are correct hashes of different bytes; [Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)'s rule that the encoding is named applies to every byte that is hashed, signed or sealed.
@@ -1595,10 +1594,12 @@ std::optional<Bytes> open_sealed(const Key& key, const Bytes& sealed) {
     std::copy(sealed.end() - kTagSize, sealed.end(), tag.begin());
 
     CipherCtx ctx(EVP_CIPHER_CTX_new(), &EVP_CIPHER_CTX_free);
+    if (!ctx || EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_gcm(), nullptr, key.data(), nonce) != 1) {
+        throw std::runtime_error("AES-256-GCM init failed");           // the library, not the envelope: the event pole
+    }
     Bytes plain(length);
     int n = 0;
-    if (!ctx || EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_gcm(), nullptr, key.data(), nonce) != 1 ||
-        EVP_DecryptUpdate(ctx.get(), plain.data(), &n, ciphertext, static_cast<int>(length)) != 1 ||
+    if (EVP_DecryptUpdate(ctx.get(), plain.data(), &n, ciphertext, static_cast<int>(length)) != 1 ||
         EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_SET_TAG, kTagSize, tag.data()) != 1 ||
         EVP_DecryptFinal_ex(ctx.get(), plain.data() + n, &n) != 1) {       // the tag check lives HERE
         OPENSSL_cleanse(plain.data(), plain.size());                       // what AesGcm.Decrypt does before it throws
@@ -1608,30 +1609,31 @@ std::optional<Bytes> open_sealed(const Key& key, const Bytes& sealed) {
 }
 ```
 
-**Why it looks like this.** The cipher is the easy half: AES-256-GCM is
-what `AesGcm` is, and an authenticated cipher means a flipped byte is a
-refusal rather than garbage, so the failure is
+**Why it looks like this.** The cipher is the easy half — `AesGcm` with
+a 32-byte key is AES-256-GCM, and authenticated means a flipped byte is
+a refusal rather than garbage,
 [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
-value pole and the return is an `optional`. The half nothing decides for
-you is the envelope. `AesGcm.Encrypt` hands the C# side three separate
-buffers and says nothing about how they travel; the moment your bytes
-have to open on another machine, the nonce length, the tag length, and
-the order the three are written in are a wire format in
+value pole, so the return is an `optional` (a library that cannot even
+start is the event pole, and throws, as in Recipe 36). The half nothing
+decides for you is the envelope: `AesGcm.Encrypt` hands the C# side
+three separate buffers and says nothing about how they travel, and the
+moment your bytes must open on another machine, the nonce length, the
+tag length and the order the three are written in are a wire format in
 [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
 sense — documented offsets, and a published test vector as the oracle.
-The comment above `seal` is that document — the 16-byte tag is one of its
-rows, so the C# side hands `Decrypt` a 16-byte tag span, which the .NET 8
-constructor's `tagSizeInBytes` fixes — and the harness holds the
-function to the GCM specification's own test cases 13 and 14 (a zero key
-and nonce, no plaintext and then sixteen zero bytes), because a round
-trip proves only that `seal` and `open_sealed` agree with each other.
-What the recipe leaves outside its edge is the key: where it comes from,
-how a passphrase becomes one, where it rests — the next question, and a
-different one. Needs `<openssl/evp.h>` and libcrypto as Recipe 36,
-`<array>`, `<algorithm>`, `<memory>`, `<optional>`.
+The comment above `seal` is that document — the 16-byte tag is one of
+its rows, so the C# side hands `Decrypt` a 16-byte tag span, which the
+.NET 8 constructor's `tagSizeInBytes` fixes — and the harness holds the
+function to the GCM specification's own test cases 13 and 14, because a
+round trip proves only that `seal` and `open_sealed` agree with each
+other. When the envelope is wrong, the C# side's refusal is
+`AuthenticationTagMismatchException` (.NET 8; a bare
+`CryptographicException` before), and it names nothing — the envelope
+is the first suspect. Needs `<openssl/evp.h>` and libcrypto as Recipe
+36, `<array>`, `<algorithm>`, `<memory>`, `<optional>`.
 
 > [!WARNING]
-> **Trap:** a nonce reused under one key breaks GCM outright — not weakens, breaks — and a counter that restarts at process start, or a `std::rand()` seeded from the clock, will reuse one; the nonce is twelve bytes from the library's own generator (`RAND_bytes`, which the harness uses), travels in the clear at the front of the envelope, and is never a secret and never repeated.
+> **Trap:** a nonce reused under one key breaks GCM outright — not weakens, breaks — and a counter that restarts at process start, or a `std::rand()` seeded from the clock, will reuse one; the nonce is twelve bytes from the library's own generator (`RAND_bytes`, which the harness uses), travels in the clear at the front of the envelope, and is never a secret and never repeated — and nothing will tell you when it was.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

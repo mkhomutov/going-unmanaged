@@ -970,14 +970,15 @@ decision so the tutorial request does not arrive twice.
 
 ### 24. Cryptography, and ciphertext a C# reader can open — DONE (Recipes 36–37)
 
-**Missing:** nothing. The word did not occur: no hash, no cipher, no
+**Missing:** the whole subject. The word did not occur: no hash, no cipher, no
 "there is no `System.Security.Cryptography`" beside Chapter 27's "there
 is no `HttpClient`", and no answer to the compatibility question that is
 this book's whole spine — the bytes your plug-in seals must open under
 the runtime the reader came from.
 
-**Evidence:** the 2026-09-04 coverage review (twenty-four topics, read
-against every page) asked for "encryption/decryption of data and
+**Evidence:** the second coverage review (2026-09-04, twenty-four topics,
+the day after the sixteen-topic one items 22 and 23 cite; read against
+every page) asked for "encryption/decryption of data and
 compatibility with other programming languages" and found zero mentions.
 The gate — does the job present it — passes on three shapes a plug-in
 shop meets in its first year: a licence key or activation token to
@@ -1007,6 +1008,8 @@ they agree with `AesGcm` in .NET. The rule the recipes carry, harder than
 C#'s: never write a primitive, and never invent the envelope — the layout
 `nonce ‖ ciphertext ‖ tag` with a 12-byte nonce and a 16-byte tag is
 stated as an ICD because it is one.
+
+Filed here by number beside items 22 and 23; its subject is Tier 3's, ciphertext a C# reader can open.
 
 **Still open from this item:** key management — where the key comes from,
 how it is derived from a passphrase, and how it is stored — is named as

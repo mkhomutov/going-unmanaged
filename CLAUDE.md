@@ -419,10 +419,15 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
    (libusb, PortAudio, SQLite, Qt, Unreal, STM32 HAL, COM as a technology).
 5. Solutions never use anything beyond the standard library. `exercises/`
    may carry a vendored third-party header under `exercises/third_party/`
-   (today: nlohmann/json, for the cookbook's two JSON recipes), included
+   (today: nlohmann/json, for the cookbook's three JSON recipes), included
    with `-isystem`, with the version and any patch recorded in that
    directory's README — Chapter 27's own vendoring rule, applied to the
-   repo.
+   repo. A second category, today only `exercises/cookbook/crypto.cpp`: a
+   library the system provides and the repository links but never copies
+   in (Chapter 27's fourth strategy) — located through `pkg-config`, built
+   behind a probe with a `--require-<lib>` flag CI passes, judged against
+   published vectors, reachable from the cookbook only, and nothing for
+   NOTICE, since nothing is redistributed.
 6. The single file stays reproducible from `book/`: after ANY change there
    run `./scripts/build_book.sh`, and `--write-nav` too if you added,
    removed, or renamed a chapter file. CI runs both.

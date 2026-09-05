@@ -93,10 +93,12 @@ std::optional<Bytes> open_sealed(const Key& key, const Bytes& sealed) {
     std::copy(sealed.end() - kTagSize, sealed.end(), tag.begin());
 
     CipherCtx ctx(EVP_CIPHER_CTX_new(), &EVP_CIPHER_CTX_free);
+    if (!ctx || EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_gcm(), nullptr, key.data(), nonce) != 1) {
+        throw std::runtime_error("AES-256-GCM init failed");           // the library, not the envelope: the event pole
+    }
     Bytes plain(length);
     int n = 0;
-    if (!ctx || EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_gcm(), nullptr, key.data(), nonce) != 1 ||
-        EVP_DecryptUpdate(ctx.get(), plain.data(), &n, ciphertext, static_cast<int>(length)) != 1 ||
+    if (EVP_DecryptUpdate(ctx.get(), plain.data(), &n, ciphertext, static_cast<int>(length)) != 1 ||
         EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_SET_TAG, kTagSize, tag.data()) != 1 ||
         EVP_DecryptFinal_ex(ctx.get(), plain.data() + n, &n) != 1) {       // the tag check lives HERE
         OPENSSL_cleanse(plain.data(), plain.size());                       // what AesGcm.Decrypt does before it throws

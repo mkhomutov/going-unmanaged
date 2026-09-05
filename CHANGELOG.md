@@ -133,15 +133,13 @@ numbers may still move.
 
 - **New: Recipes 36–37 — Hash bytes; seal bytes for a reader in C#**
   (MINOR — two appended recipes; closes ROADMAP item 24). The book had no
-  word on cryptography — no "there is no `System.Security.Cryptography`"
-  beside Chapter 27's "there is no `HttpClient`" — and no answer to the
-  question this book's reader meets first: whether the bytes a plug-in
-  seals open under `AesGcm`. Recipe 36 is SHA-256 through OpenSSL's EVP
-  interface, read as a Bestiary shape; Recipe 37 is AES-256-GCM with the
-  envelope stated as an ICD (nonce, ciphertext, tag), absence as the
-  verdict on a tampered or wrong-key open, and the nonce rule as the
-  trap. Chapter 27's batteries section names what the standard library
-  does not ship and which libraries the ecosystem reaches for.
+  word on cryptography, and no answer to the question this book's reader
+  meets first: whether the bytes a plug-in seals open under `AesGcm`.
+  Recipe 36 is SHA-256 through OpenSSL's EVP interface; Recipe 37 is
+  AES-256-GCM with the envelope stated as an ICD and absence as the
+  verdict. Chapter 27's batteries section names what the standard library
+  does not ship. The repository's first system-linked dependency, and
+  CLAUDE.md and CONTRIBUTING now name that category.
   `exercises/cookbook/crypto.cpp` is the cookbook's second TU behind a
   probe — libcrypto located through `pkg-config`, `--require-openssl` in
   CI — and its judge is four published vectors (NIST's SHA-256 of `abc`
