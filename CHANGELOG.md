@@ -16,15 +16,15 @@ numbers may still move.
 
 - **Appendix K — The Standards Catalogue** (MINOR). The fourth coverage
   review (2026-09-07, thirty-five topics against 0.11.0) found the C++
-  standards story present forty times and collected nowhere: every
-  chapter flags the newer spelling where it teaches the C++17 one, and no
+  standards story present forty times and collected nowhere: chapter
+  after chapter flags the newer spelling where it teaches the C++17 one, and no
   page says which standard a toolchain is speaking or how to ask. The
   appendix is Appendix J's shape for the standard: how to ask
   (`__cplusplus`, `_MSVC_LANG` and MSVC's `/Zc:__cplusplus` default, and
   the feature-test macros through `<version>` — the library's answer,
   which lags the switch), every feature the book names by the standard it
   arrived in with the newer spelling beside the taught one and its macro,
-  the six standards in one sitting, and a decision table for moving a
+  the standards in one sitting, and a decision table for moving a
   codebase past the floor. Its probe, `exercises/cookbook/standard.cpp`,
   is built by `build_all.sh` at C++17 and C++20 with its readings
   asserted, at C++23 under the `expected.cpp` probe, and refused at C++14

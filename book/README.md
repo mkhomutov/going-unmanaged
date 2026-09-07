@@ -83,7 +83,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 - H. [Choosing: Signatures, Containers, and Storage](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage) — the four decisions in every signature: which container, how to take a parameter, what to return, and what goes inside the collection
 - I. [Const-Correctness](I-const.md#appendix-i--const-correctness) — const as one subject: a path rather than an object, the interface it splits in two, and what retrofitting it costs
 - J. [The CMake Catalogue](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue) — Chapters 26, 27 and 40's lookup half: every verb they teach and the page that owns it, then the handful none of them needed, priced, with the decision table
-- K. [The Standards Catalogue](K-the-standards-catalogue.md#appendix-k--the-standards-catalogue) — which standard a toolchain is speaking and how to ask it, every feature the book names by the standard it arrived in with the newer spelling beside the one taught, and the six standards in one sitting
+- K. [The Standards Catalogue](K-the-standards-catalogue.md#appendix-k--the-standards-catalogue) — which standard a toolchain is speaking and how to ask it, every feature the book names by the standard it arrived in with the newer spelling beside the one taught, and the standards in one sitting
 
 *License:* this text is © 2026 Maksim Khomutov and licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) — share and adapt it with attribution to "Going Unmanaged — A Hands-On C++ Handbook for C# Developers" and a link to [the repository](https://github.com/mkhomutov/going-unmanaged). The code is MIT, including every code sample below: paste it into your own work freely.
 

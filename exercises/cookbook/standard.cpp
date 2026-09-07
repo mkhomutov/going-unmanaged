@@ -136,10 +136,5 @@ int main() {
 #else
     report("__cpp_lib_move_only_function", 0);
 #endif
-#ifdef __cpp_lib_optional_ref
-    report("__cpp_lib_optional_ref", __cpp_lib_optional_ref);
-#else
-    report("__cpp_lib_optional_ref", 0);
-#endif
     return 0;
 }

@@ -1,8 +1,8 @@
 ## Appendix K — The Standards Catalogue
 
-The book pins `-std=c++17` and says why in [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency): vendor-SDK work inherits its host's toolset, and C++17 is what that world lets you rely on. Then, forty times across the chapters, it flags a newer spelling — `jthread` for thread-plus-join, `format` for the stream dance, `expected` for the hand-rolled `Result` — each where the C++17 form is taught. That is the right place for the flag and the wrong place to look one up. This page is the lookup: which standard a feature arrived in, the spelling this book teaches, the spelling a newer codebase uses, and the page that owns it; then the history in one sitting, for the reader who wants to know what "modern C++" is modern *than*; and first, because it decides everything else, how to find out which standard a toolchain is actually speaking.
+The book pins `-std=c++17` and says why in [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency): vendor-SDK work inherits its host's toolset, and C++17 is what that world lets you rely on. Then, forty times across the chapters, it flags a newer spelling — `jthread` for thread-plus-join, `format` for the stream dance, `expected` for the hand-rolled `Result` — each where the C++17 form is taught. That is the right place for the flag and the wrong place to look one up. This page is the lookup: which standard a feature arrived in, the spelling this book teaches, the spelling a newer codebase uses, and the page that owns it; then the history in one sitting, for the reader who wants to know what "modern C++" is modern *relative to*; and first, because it decides everything else, how to find out which standard a toolchain is actually speaking.
 
-It is [Appendix G](G-the-bridge-catalogue.md#appendix-g--the-bridge-catalogue) and [Appendix J](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue)'s shape — lookup material — with one difference: its claims about a toolchain are checked. `exercises/cookbook/standard.cpp` is the probe, built by `build_all.sh` at three standards and refused at a fourth, and by the `buildlab-msvc` job with and without the switch the first section is about.
+It is [Appendix G](G-the-bridge-catalogue.md#appendix-g--the-bridge-catalogue) and [Appendix J](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue)'s shape — lookup material — with one difference: what a probe can ask, a probe asks. `exercises/cookbook/standard.cpp` is built by `build_all.sh` at three standards and refused at a fourth, and by the `buildlab-msvc` job with and without the switch the first section is about. What no probe asks — the default each compiler picks when nobody writes a switch, and which release of a library first shipped a header — is stated from the vendors' documentation, and re-checks itself only on the day you rely on it.
 
 ### Which standard am I on
 
@@ -22,6 +22,9 @@ In C# the language version is a line in the project file, `<LangVersion>`, and t
 ```
 
 `__cplusplus` is the year and month of the standard the compiler was asked for — `201703` for C++17, `202002` for C++20, `202302` for C++23 — and the first trap is that MSVC reports `199711` for all of them unless you pass `/Zc:__cplusplus`, because too much old code tested the macro against that number for Microsoft to change the default. `_MSVC_LANG` carries the honest value on MSVC either way; a header that must know asks both. The `buildlab-msvc` job builds the probe twice and asserts both readings, because a vendor default is a fact that can change under a book without telling anyone.
+
+> [!WARNING]
+> **Trap:** `#if __cplusplus >= 201703L` around a C++17 path builds and runs on MSVC with `/Zc:__cplusplus` off — and takes the other branch, every time, with nothing to report. Guard on the feature's own macro, or on `_MSVC_LANG` as well; the probe shows the two disagreeing.
 
 The second half of the probe asks the library, and it is the half that matters more:
 
@@ -50,7 +53,7 @@ __cpp_lib_span                   202002
 __cpp_lib_expected               202211
 ```
 
-Three spellings for the same switch, and one CMake line that produces all of them: `-std=c++17` on clang and GCC, `/std:c++17` on MSVC, and `set(CMAKE_CXX_STANDARD 17)` with `CMAKE_CXX_EXTENSIONS OFF` ([Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)), which writes `-std=c++17` rather than the `gnu++17` dialect. The defaults, when nobody writes a switch: GCC 11 through 15 default to `gnu++17` and GCC 16 to `gnu++20`; clang has defaulted to `gnu++17` since clang 16; MSVC defaults to `/std:c++14`. Which is the whole argument for writing the switch down: a codebase that relies on the default is on a standard chosen by whichever compiler the next person installs.
+Three spellings for the same switch, and one CMake pair that produces all of them: `-std=c++17` on clang and GCC, `/std:c++17` on MSVC, and `set(CMAKE_CXX_STANDARD 17)` with `CMAKE_CXX_EXTENSIONS OFF` ([Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)), which writes `-std=c++17` rather than the `gnu++17` dialect. The defaults, when nobody writes a switch: GCC 11 through 15 default to `gnu++17` and GCC 16 to `gnu++20`; clang has defaulted to `gnu++17` since clang 16; MSVC defaults to `/std:c++14`. Which is the whole argument for writing the switch down: a codebase that relies on the default is on a standard chosen by whichever compiler the next person installs.
 
 > [!TIP]
 > **Key principle:** "The standard a codebase speaks is a line in its build description, not a fact about its compiler — and whether a feature is there is its feature-test macro's answer, not `__cplusplus`'s, because the library ships behind the language."
@@ -109,7 +112,7 @@ The spelling this book teaches is the C++17 one, and the *newer spelling* column
 |---|---|---|---|
 | a `std::thread` joined by hand, or in a destructor | `std::jthread`, `std::stop_token` | `__cpp_lib_jthread` | [Chapter 29](29-concurrency.md#chapter-29--concurrency), Recipe 16 |
 | the erase-remove idiom | `std::erase_if` | `__cpp_lib_erase_if` | [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
-| `m.find(k) != m.end()` | `m.contains(k)` | none of its own — test `__cplusplus >= 202002L` | [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
+| `m.find(k) != m.end()` | `m.contains(k)` | — (no macro; test the year, `>= 202002L`, through `_MSVC_LANG` on MSVC) | [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 | streams and `snprintf` | `std::format` | `__cpp_lib_format` | Recipes 5, 29 |
 | a pointer plus a length | `std::span` | `__cpp_lib_span` | [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency), [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage) |
 | `find_if` with a lambda, the map-to-vector dance | ranges and views | `__cpp_lib_ranges` | [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency), [Chapter 19](19-exercise-the-word-counter.md#chapter-19--exercise-the-word-counter) |
@@ -118,13 +121,13 @@ The spelling this book teaches is the C++17 one, and the *newer spelling* column
 | shifts at documented offsets | `std::endian`, `std::bit_cast` — the advice does not change | `__cpp_lib_endian`, `__cpp_lib_bit_cast` | [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture) |
 | `size_t` loops and `<` comparisons | `std::ssize`, `std::cmp_less` | `__cpp_lib_ssize`, `__cpp_lib_integer_comparison_functions` | [Appendix A](A-fundamentals-refresher.md#appendix-a--fundamentals-refresher) |
 | `u8path` | `path(u8"...")` with `char8_t` | `__cpp_char8_t` | Recipe 10 |
-| `localtime_r` and an offset you read yourself | `std::chrono::zoned_time`, `clock_cast` | `__cpp_lib_chrono` | Recipes 29, 39 |
-| `#include` | modules (`import`) — headers everywhere in SDK work regardless | `__cpp_modules` | [Chapter 12](12-the-compilation-model.md#chapter-12--the-compilation-model) |
+| `localtime_r` and an offset you read yourself | `std::chrono::zoned_time`, `clock_cast` | `__cpp_lib_chrono` at `201907` or later — every C++17 library defines it at `201611`, so its presence says nothing | Recipes 6, 29, 39 |
+| `#include` | modules (`import`) — headers everywhere in SDK work regardless | `__cpp_modules` (which clang does not define, and GCC only under `-fmodules`) | [Chapter 12](12-the-compilation-model.md#chapter-12--the-compilation-model) |
 | a queue and a thread | coroutines — a library on top before they are usable | `__cpp_impl_coroutine` | [Chapter 29](29-concurrency.md#chapter-29--concurrency) |
 | hand-written `==` and `<` | `operator<=>`, defaulted comparisons | `__cpp_impl_three_way_comparison` | — |
 | `Config c; c.timeout = 30;` | designated initializers, `Config{.timeout = 30}` | `__cpp_designated_initializers` | — |
 
-**C++23 — the ones the book names, each as "check your standard first".**
+**C++23 — the ones the book names, each with a check-your-standard flag.**
 
 | The book teaches | The C++23 spelling | Macro | Owned by |
 |---|---|---|---|
@@ -134,26 +137,25 @@ The spelling this book teaches is the C++17 one, and the *newer spelling* column
 | `text.find(word) != npos` | `text.contains(word)` | `__cpp_lib_string_contains` | Recipe 18 |
 | a cast over a mapped region | `std::start_lifetime_as` | `__cpp_lib_start_lifetime_as` | Recipe 43 |
 | `dependent_false_v<T>` | `static_assert(false)` in a discarded branch | — (language; clang 17, GCC 13) | [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write) |
-| `std::cout <<` | `std::print`, `std::println` | `__cpp_lib_print` | Recipe 15 |
-| — | `std::stacktrace`, `std::flat_map`, `std::mdspan`, deducing `this` | `__cpp_lib_stacktrace`, `__cpp_lib_flat_map`, `__cpp_lib_mdspan`, `__cpp_explicit_this_parameter` | — |
+| — | `std::print` and `std::println`, `std::stacktrace`, `std::flat_map`, `std::mdspan`, deducing `this` | `__cpp_lib_print`, `__cpp_lib_stacktrace`, `__cpp_lib_flat_map`, `__cpp_lib_mdspan`, `__cpp_explicit_this_parameter` | — |
 
-**C++26 — in flight as this is written.** Two rows the book already cites: hardened library preconditions, the standardised form of [Chapter 13](13-toolchain-quick-reference.md#chapter-13--toolchain-quick-reference)'s `_LIBCPP_HARDENING_MODE` and `_GLIBCXX_ASSERTIONS`, and `std::optional<T&>` ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency); the probe's last line, `__cpp_lib_optional_ref`). The headline features — static reflection, contracts, `std::execution` — none of which this book leans on, arrive in compilers piecemeal over the next several releases, which is the paragraph below in miniature.
+**C++26 — in flight as this is written.** Two rows the book already cites: hardened library preconditions, the standardised form of [Chapter 13](13-toolchain-quick-reference.md#chapter-13--toolchain-quick-reference)'s `_LIBCPP_HARDENING_MODE` and `_GLIBCXX_ASSERTIONS`, and `std::optional<T&>` ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency); no macro of its own — `__cpp_lib_optional` at `202506` or later, the probe's `__cpp_lib_optional` line read for its value). The headline features — static reflection, contracts, `std::execution` — none of which this book leans on, arrive in compilers piecemeal over the next several releases, which is the paragraph below in miniature.
 
-### Six standards in one sitting
+### The standards in one sitting
 
 C# ships a language, a compiler and a runtime together, roughly yearly, and the version you are on is the SDK you installed. C++ is an ISO standard with a three-year cadence since 2011, implemented by three compilers and three standard libraries on their own schedules — so "C++20" names a document, and *whether you can use it* is a fact about the toolchain in front of you.
 
 **C++98 and C++03.** The first standard, and a 2003 corrigendum that changed almost nothing a user would notice. This is the C++ a returning developer remembers: `new` and `delete` by hand, `auto_ptr` as the only smart pointer and a broken one, no lambdas, no `auto`, `NULL`, and iterators spelled out in full. Code written for it still exists in every vendor SDK older than a decade, and the Bestiary's C-flavoured shapes ([Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary)) are partly a legacy of an era when the language offered nothing better across a binary boundary.
 
-**C++11 — the watershed.** Delayed so long it was called C++0x through most of its development, and the release "modern C++" is modern relative to: move semantics, `unique_ptr` and `shared_ptr`, lambdas, `auto`, range-`for`, `nullptr`, `constexpr`, threads and atomics in the standard library, and a memory model that made [Chapter 29](29-concurrency.md#chapter-29--concurrency)'s data race a defined concept at all. Nearly every rule in [Appendix B](B-core-principles.md#appendix-b--core-principles-cheat-sheet) is a C++11 rule. A codebase that predates it is a different language wearing the same syntax, and modernising one is a subject of its own rather than this page's.
+**C++11 — the watershed.** Delayed so long it was called C++0x through most of its development, and the release "modern C++" is modern relative to: move semantics, `unique_ptr` and `shared_ptr`, lambdas, `auto`, range-`for`, `nullptr`, `constexpr`, threads and atomics in the standard library, and a memory model that made [Chapter 29](29-concurrency.md#chapter-29--concurrency)'s data race a defined concept at all. Most of [Appendix B](B-core-principles.md#appendix-b--core-principles-cheat-sheet) is spelled in C++11. A codebase that predates it is a different language wearing the same syntax, and modernising one is a subject of its own rather than this page's.
 
 **C++14.** The bug-fix release: `make_unique` (forgotten in C++11), generic lambdas, init-captures, relaxed `constexpr`. Small enough that "C++11/14" is one era in conversation.
 
-**C++17 — this book's floor.** `optional`, `variant`, `string_view`, `filesystem`, structured bindings, `if constexpr`, guaranteed elision, inline variables: the release after which everyday code stopped needing Boost for the basics. The floor for the reason [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency) gives — the oldest thing you must link against sets it, and a vendor SDK's pinned toolchain is that thing — and the floor every maintained SDK now also states, which is why the pin is a policy rather than a compromise.
+**C++17 — this book's floor.** `optional`, `variant`, `string_view`, `filesystem`, structured bindings, `if constexpr`, guaranteed elision, inline variables: the release after which everyday code stopped needing Boost for the basics. The floor for the reason [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency) gives — the oldest thing you must link against sets it, and a vendor SDK's pinned toolchain is that thing — and the floor most maintained SDKs now state themselves, which is why the pin is a policy rather than a compromise.
 
 **C++20 — the big one after 11.** Concepts, ranges, coroutines, modules, `format`, `span`, `jthread`, `<=>`, and the feature-test macros standardised in `<version>`. Complete in all three compilers for years now, and the default dialect of GCC 16 — but coroutines need a library on top and modules need build-system support that is still arriving, so "on C++20" usually means the library half and concepts, not the whole document.
 
-**C++23.** `expected`, `print`, monadic `optional`, `flat_map`, `mdspan`, deducing `this`, and `std::start_lifetime_as`. Published in 2024, and the library half is where a toolchain lags most visibly: a compiler accepting `-std=c++23` and a library missing `<expected>` is a normal state of affairs, which is why `build_all.sh` probes for the header rather than the switch.
+**C++23.** `expected`, `print`, monadic `optional`, `flat_map`, `mdspan`, deducing `this`, and `std::start_lifetime_as`. Published in 2024, and the library half is where a toolchain lags most visibly: a compiler accepting `-std=c++23` and a library missing `<expected>` is a normal state of affairs, which is why the probe above asks the library rather than the switch.
 
 **C++26.** Being finalised as this book is written. Static reflection and contracts are the headline; the hardened library is the row a plug-in author meets first. Nothing here changes a lesson in this book; the spellings will move again, and a reader on a C++26 toolchain in 2029 reads the C++17 forms here the way a reader today reads `auto_ptr` — recognisable, superseded, and still in the vendor's sample code.
 
