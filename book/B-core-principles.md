@@ -122,6 +122,10 @@ One line each. If you can say these fluently and back them with code, the concep
 - "A const violation is a compile error, never a runtime one — so const-correctness costs nothing at the start of a class and twenty errors in year three, and I pay it at the start."
 - "`mutable` is for members that are not part of the value — a cache, a memo, a mutex — and never for anything a caller can observe."
 
+**Parsing user-typed text**
+
+- "User-typed text is data until my parser says so — tokens I own, a tree of a closed set of kinds, evaluation through a provider the caller injects, a bounded depth, and an error that carries a position rather than a throw."
+
 **Modern C++**
 
 - "Capture by copy when a lambda outlives its scope; by reference dangles."

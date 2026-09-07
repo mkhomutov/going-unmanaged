@@ -87,6 +87,25 @@ numbers may still move.
   about agreeing with .NET's; then the refusals: a wrong count, a wrong
   `info`, a flipped tag byte, a wrong key, a changed message, a short
   tag.
+- **Chapter 42 — The Formula Field, and `exercises/exprlab/`** (MINOR —
+  an appended chapter; ROADMAP item 25). The fourth coverage review's one
+  absent topic: string parsing was covered in pieces and nothing parsed
+  structure — no tokenizer, no grammar, no tree, no evaluator, and no seam
+  between an expression and the objects it names. The chapter is the
+  formula field a plug-in is asked for in month three, built from
+  chapters the book already has: tokens as a variant that own their text
+  (Chapter 10's view trap), `from_chars` for numbers because `strtod`
+  reads the host's locale, a tree of a closed set of node kinds behind
+  `unique_ptr` (Appendix H's one structural reason to box), recursive
+  descent with a value-or-error at every level (Chapter 8's value pole;
+  a loop where the natural right recursion gives 7 for `8 - 3 - 2` and
+  passes every one-operator test), an RAII depth guard against text that
+  sizes the host's stack, and an `ISymbols` seam whose dot belongs to the
+  provider, so `wall.width` runs against a live document or a map. The
+  judge is a value table worked out by hand, error positions, the depth
+  limit at N and N + 1, and a German locale switched on where the
+  machine has it. Appendix B gains the principle, Appendix E three
+  entries, Chapter 31 two rows.
 
 ## [0.11.0] — 2026-09-06
 

@@ -196,5 +196,5 @@ Layout has a tool and names mostly do not. `.clang-format` at the repository roo
 
 
 <!-- nav:begin -->
-[← Chapter 41 — Templates You Will Write](41-templates-you-will-write.md) · [Contents](README.md) · [Appendix B — Core Principles (Cheat Sheet) →](B-core-principles.md)
+[← Chapter 42 — The Formula Field](42-the-formula-field.md) · [Contents](README.md) · [Appendix B — Core Principles (Cheat Sheet) →](B-core-principles.md)
 <!-- nav:end -->

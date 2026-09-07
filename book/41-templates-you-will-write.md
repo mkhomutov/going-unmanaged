@@ -267,5 +267,5 @@ The lab is `exercises/templatelab/` — the task card walks the same road as thi
 
 
 <!-- nav:begin -->
-[← Chapter 40 — CMake for the Plug-in](40-cmake-for-the-plug-in.md) · [Contents](README.md) · [Appendix A — Fundamentals Refresher →](A-fundamentals-refresher.md)
+[← Chapter 40 — CMake for the Plug-in](40-cmake-for-the-plug-in.md) · [Contents](README.md) · [Chapter 42 — The Formula Field →](42-the-formula-field.md)
 <!-- nav:end -->
