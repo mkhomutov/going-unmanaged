@@ -1,0 +1,27 @@
+# The analyzers and their severities (Chapter 26's root files). Names are
+# checked here, where clang-format cannot: this project spells types and
+# functions in PascalCase, members with a trailing underscore, constants
+# with a k prefix (Appendix A.8's Google dialect), and an identifier that
+# starts with an underscore and a capital, or holds a double underscore, is
+# reserved to the implementation - bugprone-reserved-identifier is the check
+# a team turns on, and it is on here.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  modernize-use-override,
+  modernize-use-nullptr,
+  performance-*,
+  readability-identifier-naming
+WarningsAsErrors: '*'
+CheckOptions:
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.FunctionCase: CamelCase
+  readability-identifier-naming.MethodCase: CamelCase
+  readability-identifier-naming.PrivateMemberSuffix: _
+  readability-identifier-naming.ProtectedMemberSuffix: _
+  readability-identifier-naming.ConstexprVariablePrefix: k
+  readability-identifier-naming.ConstexprVariableCase: CamelCase
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE

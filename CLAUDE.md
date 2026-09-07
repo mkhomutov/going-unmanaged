@@ -213,6 +213,25 @@ Chapter 25's Finding 10.
   with NRVO on a returned temporary and a returned named local both
   measure zero and the page's guaranteed-vs-permitted distinction is
   never exercised
+- `exercises/skeleton/` — Chapter 26's project layout as a directory to
+  copy, the third non-exercise directory: `CMakeLists.txt` (root, `src/`,
+  `tests/`), `CMakePresets.json` (`dev`, `release`), `.clang-format`
+  (Google-based, 4-space, 120 columns), `.clang-tidy` (bugprone, performance,
+  `readability-identifier-naming` with the book's PascalCase/`name_`/`k`
+  rules, `WarningsAsErrors: '*'`), `include/myplugin/session.h`,
+  `src/session.cpp`, `tests/session_test.cpp`, and READMEs in `cmake/` and
+  `third_party/` saying what goes there. build_all.sh runs its README's
+  three commands literally (`cmake --preset dev`, build, `ctest`) under the
+  cmake probe, reads `-fsanitize=address` back from the compile database,
+  and removes `exercises/skeleton/build/` afterwards. CI's `skeleton-style`
+  job is the style half: `clang-format --dry-run --Werror` and `clang-tidy`
+  over the skeleton's sources with pip-pinned tool versions (format output
+  moves between clang-format majors), plus a negative test that rewrites
+  `count_` to `_Count` and requires tidy to refuse it naming both
+  `reserved-identifier` and `identifier-naming`. It is the ONLY directory the
+  repository formats by machine: the labs keep hand-aligned trailing comments
+  the chapters quote verbatim, and a formatter over them would break every
+  verbatim pairing at once
 - `exercises/exitlab/` — Chapter 32's ticket lab. TASK.md carries the broken
   2.4.1 listings (book-only, they exist to fail); the committed files are
   the FIXED state, quoted verbatim in the chapter's fix section, and

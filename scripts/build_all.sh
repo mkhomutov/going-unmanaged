@@ -983,6 +983,38 @@ else
     echo "  SKIPPED - cmake not installed (CI runs this for real)"
 fi
 
+# Chapter 26's tree as a directory to copy: exercises/skeleton/, the root
+# files in place. Its README promises three commands work on day one, so
+# the three commands are what runs - the dev preset (Debug, sanitizers on,
+# compile database), not a spelled-out equivalent - and the sanitizer
+# switch is read back from the compile database, Chapter 26's proof of a
+# define's reach applied to a flag. The preset builds in-tree under
+# exercises/skeleton/build/, the one directory the README says rm -rf may
+# touch, and it is removed at the end so the tree is left as it was found.
+# The style half - clang-format and clang-tidy over the same files - is
+# CI's skeleton-style job: those tools are not part of this script's
+# toolchain, and a style check that skipped here would say nothing.
+echo "== skeleton cmake =="
+if command -v cmake > /dev/null 2>&1; then
+    SK=exercises/skeleton
+    rm -rf "$SK/build"
+    (cd "$SK" && cmake --preset dev > /dev/null && cmake --build --preset dev > /dev/null)
+    if ! (cd "$SK" && ctest --preset dev > "$OUT/skeleton_ctest.log" 2>&1); then
+        cat "$OUT/skeleton_ctest.log"
+        echo "build_all.sh: the skeleton's tests failed" >&2
+        exit 1
+    fi
+    grep -q 'fsanitize=address' "$SK/build/dev/compile_commands.json" || {
+        echo "build_all.sh: MYPLUGIN_SANITIZE did not reach the skeleton's compile lines" >&2; exit 1; }
+    rm -rf "$SK/build"
+    echo "  ok   skeleton: cmake --preset dev, built, ctest green, sanitizers in the compile database"
+elif [ "$REQUIRE_CMAKE" = 1 ]; then
+    echo "build_all.sh: cmake not found, and --require-cmake was given" >&2
+    exit 1
+else
+    echo "  SKIPPED - cmake not installed (CI runs this for real)"
+fi
+
 # Chapter 29's lab under the third sanitizer. TSan cannot be combined with ASan,
 # so this is a second build of the same source rather than a longer flag list -
 # which is the chapter's point about them made structurally.

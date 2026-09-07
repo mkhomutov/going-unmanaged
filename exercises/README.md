@@ -50,7 +50,11 @@ cannot rot — Appendix F's recipes and Appendix H's cost measurements
 respectively (each README has the sync rule, and where a chapter quotes a
 unit whole the pairing is enforced in both directions — Appendix H and
 Chapter 6 for `choosing/`, Chapter 8 for three of `cookbook/`'s). Nothing
-in either to attempt cold.
+in either to attempt cold. `skeleton/` is the third: not an exercise but a
+starter — Chapter 26's project layout as a directory to copy, with the root
+files (`CMakeLists.txt`, `CMakePresets.json`, `.clang-format`,
+`.clang-tidy`) in place, which `build_all.sh` builds and tests through its
+own preset and CI holds to its own format and tidy rules.
 
 Fifteen directories hold their reference in the open, rather than behind a
 fold. `templatelab/` is Chapter 41's: one `Session<Sdk>` compiled against

@@ -1,0 +1,14 @@
+# Layout, enforced by a tool: the .editorconfig you know (Appendix A.8).
+# clang-format -i rewrites whitespace and line breaks and never names;
+# CI runs it with --dry-run --Werror over this project.
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 120
+AccessModifierOffset: -4
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+DerivePointerAlignment: false
+PointerAlignment: Left
+IncludeBlocks: Preserve
+SortIncludes: false
