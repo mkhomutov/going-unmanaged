@@ -218,9 +218,9 @@ appendix section should have an answer to each; where the honest answer is
 
 The book is one file per chapter under [book/](book/README.md):
 `01-ownership-and-raii.md` … `41-templates-you-will-write.md`, then
-`A-`…`J-<slug>.md` for the appendices (A–J, no gap — E is the
+`A-`…`K-<slug>.md` for the appendices (A–K, no gap — E is the
 glossary, G the bridge catalogue, H the choosing procedures, I
-const-correctness, J the CMake catalogue), with
+const-correctness, J the CMake catalogue, K the standards catalogue), with
 `book/README.md` carrying the
 front matter and the Contents. Concretely, for a contributor:
 

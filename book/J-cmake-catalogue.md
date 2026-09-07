@@ -105,5 +105,5 @@ install(TARGETS telemetry report
 | To know why configure did what it did | `--trace-expand`, `-LAH`, `--graphviz` | editing `CMakeCache.txt` |
 
 <!-- nav:begin -->
-[← Appendix I — Const-Correctness](I-const.md) · [Contents](README.md)
+[← Appendix I — Const-Correctness](I-const.md) · [Contents](README.md) · [Appendix K — The Standards Catalogue →](K-the-standards-catalogue.md)
 <!-- nav:end -->

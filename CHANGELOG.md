@@ -10,6 +10,30 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [Unreleased]
+
+### Added
+
+- **Appendix K — The Standards Catalogue** (MINOR). The fourth coverage
+  review (2026-09-07, thirty-five topics against 0.11.0) found the C++
+  standards story present forty times and collected nowhere: every
+  chapter flags the newer spelling where it teaches the C++17 one, and no
+  page says which standard a toolchain is speaking or how to ask. The
+  appendix is Appendix J's shape for the standard: how to ask
+  (`__cplusplus`, `_MSVC_LANG` and MSVC's `/Zc:__cplusplus` default, and
+  the feature-test macros through `<version>` — the library's answer,
+  which lags the switch), every feature the book names by the standard it
+  arrived in with the newer spelling beside the taught one and its macro,
+  the six standards in one sitting, and a decision table for moving a
+  codebase past the floor. Its probe, `exercises/cookbook/standard.cpp`,
+  is built by `build_all.sh` at C++17 and C++20 with its readings
+  asserted, at C++23 under the `expected.cpp` probe, and refused at C++14
+  by its own `static_assert` (constlab's message-only grep); the
+  `buildlab-msvc` job builds it with and without `/Zc:__cplusplus` and
+  asserts both readings. Chapter 10 closes on the appendix, Chapter 31's
+  symptom index and Appendix E gain a row and an entry, and Appendix B
+  the principle.
+
 ## [0.11.0] — 2026-09-06
 
 The same instrument, run a third time. Version 0.9.0 began with sixteen

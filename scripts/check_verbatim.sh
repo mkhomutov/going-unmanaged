@@ -186,6 +186,17 @@ for i, block in enumerate(ch39_fences, 1):
         first = block.strip().split('\n')[0]
         failures.append(f"book/39-the-round-trip-home.md cpp fence #{i} ({first!r}) is in no exercises/interoplab/ file")
 
+# Appendix K quotes its probe by excerpt, the Chapter 39 way: every cpp fence
+# on the page must be byte-identical to something in the one file
+# build_all.sh builds at three standards. Nothing on that page is quoted
+# from nowhere, and a probe line that changes must change on the page too.
+standard = open('exercises/cookbook/standard.cpp').read()
+k_fences = cpp_fences('book/K-the-standards-catalogue.md')
+for i, block in enumerate(k_fences, 1):
+    if block.rstrip('\n') not in standard:
+        first = block.strip().split('\n')[0]
+        failures.append(f"book/K-the-standards-catalogue.md cpp fence #{i} ({first!r}) is not in exercises/cookbook/standard.cpp")
+
 # Appendix H quotes exercises/choosing/ by excerpt, so it takes the same
 # both-directions rule as Chapter 38. Forward: every cpp fence on the page
 # must be byte-identical to something the build actually compiles.
@@ -326,5 +337,6 @@ print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
       f"{len(f_blocks)} cookbook fences, {len(TICKETS)} cards, "
       f"{len(ch38_fences)} ch38 fences, {len(ch39_fences)} ch39 fences, "
       f"{len(h_fences)} appH fences + "
-      f"{len(UNITS)} whole units on {len(pages)} pages, {gen_pairs} generated, {len(j_cmake)} J cmake, G and J cpp-free)")
+      f"{len(UNITS)} whole units on {len(pages)} pages, {gen_pairs} generated, {len(j_cmake)} J cmake, "
+      f"{len(k_fences)} appK fences, G and J cpp-free)")
 PYEOF
