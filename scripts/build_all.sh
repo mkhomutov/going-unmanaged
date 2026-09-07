@@ -12,7 +12,7 @@
 #   scripts/build_all.sh --require-expected -> also fail if the compiler has no
 #                                             C++23 <expected> (CI)
 #   scripts/build_all.sh --require-openssl  -> also fail if pkg-config cannot find
-#                                             libcrypto for Recipes 36-37 (CI)
+#                                             libcrypto for Recipes 36-37 and 47-48 (CI)
 #   scripts/build_all.sh --require-curl     -> also fail if pkg-config cannot find
 #                                             libcurl for Recipe 41 (CI)
 #   scripts/build_all.sh --require-sqlite   -> also fail if pkg-config cannot find

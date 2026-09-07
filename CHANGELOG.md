@@ -70,8 +70,9 @@ numbers may still move.
   and names no vendor. `http.cpp` gains the vendored JSON as a second
   dependency; Chapter 27, Appendix C and Chapter 31's index point at it.
 - **Appendix F: Recipes 47–48 — derive a key; sign and verify bytes**
-  (MINOR). Recipes 36–37 took a `Key` and never said where one comes
-  from, and ROADMAP item 24 recorded that half as open. Recipe 47 is the
+  (MINOR — two appended recipes; closes the key half ROADMAP item 24 left
+  open). The fourth coverage review found that Recipes 36–37 took a
+  `Key` and never said where one comes from. Recipe 47 is the
   two answers, chosen by the input: PBKDF2-HMAC-SHA-256 for a password
   (time spent on purpose) and HKDF-SHA-256 for a secret that already has
   entropy (stretched and separated by `info`), the second through the
@@ -85,7 +86,7 @@ numbers may still move.
   cases — because a derivation that agrees with itself proves nothing
   about agreeing with .NET's; then the refusals: a wrong count, a wrong
   `info`, a flipped tag byte, a wrong key, a changed message, a short
-  tag. Item 24 closes.
+  tag.
 
 ## [0.11.0] — 2026-09-06
 

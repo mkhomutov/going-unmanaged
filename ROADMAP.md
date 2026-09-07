@@ -968,7 +968,7 @@ decision so the tutorial request does not arrive twice.
 
 **Still open from this item:** nothing.
 
-### 24. Cryptography, and ciphertext a C# reader can open — DONE (Recipes 36–37)
+### 24. Cryptography, and ciphertext a C# reader can open — DONE (Recipes 36–37, 47–48)
 
 **Missing:** the whole subject. The word did not occur: no hash, no cipher, no
 "there is no `System.Security.Cryptography`" beside Chapter 27's "there
@@ -1011,14 +1011,15 @@ stated as an ICD because it is one.
 
 Filed here by number beside items 22 and 23; its subject is Tier 3's, ciphertext a C# reader can open.
 
-**Still open from this item:** closed on 2026-09-07 by Recipes 47–48 (the
-fourth coverage review): Recipe 47 derives the key — PBKDF2-HMAC-SHA-256
-from a password, HKDF-SHA-256 from a secret with entropy — and Recipe 48
-signs and verifies with HMAC-SHA-256 and a constant-time compare, each
-held to its RFC's vectors. What stays open is smaller than the entry
-above named: an asymmetric signature (Ed25519) for the case where the
-reader must not be able to sign, which Recipe 48's Trap names and no
-recipe builds; key *storage* (the platform's keychain or DPAPI) stays a
+**Still open from this item:** the signature only. Recipes 47–48
+(2026-09-07, the fourth coverage review) closed the key: Recipe 47
+derives it — PBKDF2-HMAC-SHA-256 from a password, HKDF-SHA-256 from a
+secret with entropy — and Recipe 48 signs and verifies with HMAC-SHA-256
+and a constant-time compare, each held to its RFC's vectors. What stays
+open: the licence-key shape the Evidence paragraph names, which needs an
+asymmetric signature (Ed25519) because the verifier on the customer's
+machine must not be able to sign — Recipe 48's Trap says so, and no
+recipe builds it; key *storage* (the platform's keychain or DPAPI) is a
 platform-API question outside the cookbook; and TLS stays out of scope
 because Appendix G already places the bridge on loopback with a token.
 

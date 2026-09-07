@@ -65,7 +65,7 @@ stays right.
 | `Regex.IsMatch` / `Match(...).Groups[1]` / `Regex.Replace` | `Pattern.compile` / `Matcher.group(1)` / `replaceAll` | [Recipe 44 — Match a pattern](#recipe-44--match-a-pattern) |
 | `Trim` / `Equals(OrdinalIgnoreCase)` / `StartsWith` / `EndsWith` | `strip` / `equalsIgnoreCase` / `startsWith` / `endsWith` | [Recipe 45 — Trim, compare ignoring case, prefix and suffix](#recipe-45--trim-compare-ignoring-case-prefix-and-suffix) |
 | `PostAsJsonAsync` / `ReadFromJsonAsync<T>` | `BodyPublishers.ofString(mapper.writeValueAsString(r))` / Jackson `readValue` | [Recipe 46 — Post a JSON body and read a JSON reply](#recipe-46--post-a-json-body-and-read-a-json-reply) |
-| `Rfc2898DeriveBytes.Pbkdf2` / `HKDF.DeriveKey` | `PBKDF2WithHmacSHA256` via `SecretKeyFactory` / Bouncy Castle `HKDFBytesGenerator` | [Recipe 47 — Derive a key](#recipe-47--derive-a-key) |
+| `Rfc2898DeriveBytes.Pbkdf2` / `HKDF.DeriveKey` | `SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")` / `KDF.getInstance("HKDF-SHA256")` (JDK 25) | [Recipe 47 — Derive a key](#recipe-47--derive-a-key) |
 | `HMACSHA256.HashData` / `CryptographicOperations.FixedTimeEquals` | `Mac.getInstance("HmacSHA256")` / `MessageDigest.isEqual` | [Recipe 48 — Sign and verify bytes](#recipe-48--sign-and-verify-bytes) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
@@ -2538,29 +2538,40 @@ Key key_from_secret(const Bytes& secret, const Bytes& salt, const Bytes& info) {
 one comes from; these are the two answers, and which one is a question
 about the input rather than the output. A password has almost no
 entropy, so PBKDF2 spends *time* on it — `iterations` rounds of
-HMAC-SHA-256, hundreds of thousands in current guidance — to make each
-guess cost the attacker what it cost you; a secret that already has
+HMAC-SHA-256, the count chosen so one derivation costs tens of
+milliseconds on the machine that will run it rather than chosen as a
+number, since any figure quoted today is too few in a few years — to
+make each guess cost the attacker what it cost you; a secret that already has
 entropy (a key agreed elsewhere, a master key from the platform's store)
 only needs *stretching and separating*, and HKDF does that in a few
 hashes, with `info` naming the purpose so one secret yields different
 keys for different jobs. The two shapes are two ages of the same
 library: `PKCS5_PBKDF2_HMAC` is one call in the old style, and HKDF is
-the `EVP_PKEY` derivation context — a [Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary)
+the `EVP_PKEY` derivation context, the spelling that still builds on
+1.1.1 (OpenSSL 3 also fetches a KDF by name, the way Recipe 48 fetches
+its MAC) — a [Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary)
 Shape 2 handle, set up one option at a time, with a status from every
-call and one `Release`, which is why the chain of `!= 1` reads the way
-Recipe 41's `setopt` calls do. Salt, iteration count and `info` are not
+call and one free, which is why the chain of `!= 1` reads the way
+Recipe 37's `seal` does: one `||` per call, the first failure ending
+the chain. The reflex to check at the door is C#'s defaults: the older
+`new Rfc2898DeriveBytes(password, salt)` chose SHA-1 and 1000
+iterations for you, which is where a drifted count on the C# side
+usually comes from, and the C++ call has no defaults at all — every
+parameter is yours to write down. Salt, iteration count and `info` are not
 secrets, and they travel: a key that must be re-derived on the C# side
 needs the same three, so they are a wire format in
 [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
 sense, written down next to the envelope of Recipe 37. The harness
 holds both functions to published vectors — RFC 7914's PBKDF2-HMAC-SHA-256
 cases and RFC 5869's first HKDF case — because a derivation that agrees
-with itself proves nothing about whether it agrees with .NET's. Needs
+with itself proves nothing about whether it agrees with .NET's — and
+then the Trap as a value: the same password one iteration off, and
+Recipe 37 refuses to open. Needs
 `<openssl/evp.h>`, `<openssl/kdf.h>` and libcrypto as Recipe 36,
 `<array>`, `<memory>`, `<string_view>`, `<vector>`.
 
 > [!WARNING]
-> **Trap:** the iteration count is part of the key — change it on one side, or let a config default drift, and the two sides derive different keys from the same password with no error anywhere, only Recipe 37's `open_sealed` returning `nullopt`; store the count and the salt beside the ciphertext, and never a password in place of the key.
+> **Trap:** the iteration count is part of the key — change it on one side, or let a config default drift, and the two sides derive different keys from the same password with no error anywhere, only Recipe 37's `open_sealed` returning `nullopt`; store the count and the salt beside the ciphertext, as part of the envelope.
 
 ### Recipe 48 — Sign and verify bytes
 
@@ -2600,8 +2611,9 @@ bool verify_hmac_sha256(const Bytes& key, const Bytes& data, const Bytes& tag) {
 **Why it looks like this.** An HMAC is the answer to a question Recipe
 37 does not ask — *did the bytes I can read come from someone holding
 the key?* — for the file or the message that is not secret but must not
-be forged: a licence blob, a settings file the host must trust, a
-request between two processes of yours. `EVP_MAC` is OpenSSL 3's
+be forged: a settings file the plug-in wrote and must trust on re-read,
+telemetry for a backend of your own, a request between two processes of
+yours. `EVP_MAC` is OpenSSL 3's
 spelling: fetch the algorithm by name, make a context, initialise it with
 the key and a parameter list naming the digest — the `OSSL_PARAM` array
 is the C API's way of passing options without a function per option,
@@ -2619,7 +2631,7 @@ changed message and a short tag all refuse. Needs `<openssl/evp.h>`,
 libcrypto 3 as Recipe 36, `<memory>`, `<vector>`.
 
 > [!WARNING]
-> **Trap:** the tag proves who wrote the bytes, not who is reading them — an HMAC key is shared, so the C# side that verifies can also forge; when the reader must not be able to sign, the answer is a signature (Ed25519, `EVP_DigestSign` with a private key), and that is a different recipe with a different key shape.
+> **Trap:** `verify_hmac_sha256` on a licence blob compiles, runs and verifies — and the key that verifies is the key that signs, so the plug-in checking the licence on the customer's machine carries everything needed to forge one; when the verifier must not be able to sign, that is a signature (Ed25519, `EVP_DigestSign` with a private key), a different recipe with a different key shape.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
