@@ -151,9 +151,10 @@ Chapter 25's Finding 10.
   the one cut by standard rather than domain — C++23, Chapter 8's chaining
   listing, its own probe. `crypto.cpp` is the second probe: it links the
   system's libcrypto through `pkg-config` (`--require-openssl` in CI, which
-  sets PKG_CONFIG_PATH on macOS), nothing vendored, and its judge is four
-  published test vectors — a round trip would prove only that seal and open
-  agree with each other. `http.cpp` is the third probe, libcurl the same way
+  sets PKG_CONFIG_PATH on macOS), nothing vendored, and its judge is
+  published test vectors — NIST's, the GCM specification's, and for Recipes
+  47–48 RFC 7914's, 5869's and 4231's — because a round trip would prove
+  only that seal and open agree with each other. `http.cpp` is the third probe, libcurl the same way
   (`--require-curl`), judged with no network: a `file://` fixture runs the
   write callback and the transport's error path exactly as for `https://`,
   and a loopback server in the harness (POSIX sockets;

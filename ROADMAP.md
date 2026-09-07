@@ -1011,10 +1011,15 @@ stated as an ICD because it is one.
 
 Filed here by number beside items 22 and 23; its subject is Tier 3's, ciphertext a C# reader can open.
 
-**Still open from this item:** key management — where the key comes from,
-how it is derived from a passphrase, and how it is stored — is named as
-the next question and not answered; a signature (ECDSA, Ed25519) for the
-licence-key shape is the natural Recipe 38, and TLS stays out of scope
+**Still open from this item:** closed on 2026-09-07 by Recipes 47–48 (the
+fourth coverage review): Recipe 47 derives the key — PBKDF2-HMAC-SHA-256
+from a password, HKDF-SHA-256 from a secret with entropy — and Recipe 48
+signs and verifies with HMAC-SHA-256 and a constant-time compare, each
+held to its RFC's vectors. What stays open is smaller than the entry
+above named: an asymmetric signature (Ed25519) for the case where the
+reader must not be able to sign, which Recipe 48's Trap names and no
+recipe builds; key *storage* (the platform's keychain or DPAPI) stays a
+platform-API question outside the cookbook; and TLS stays out of scope
 because Appendix G already places the bridge on loopback with a token.
 
 ## Tier 3 — distinctive to this handbook

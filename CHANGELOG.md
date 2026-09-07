@@ -69,6 +69,23 @@ numbers may still move.
   shape of a hosted-model call, which the recipe says in one sentence
   and names no vendor. `http.cpp` gains the vendored JSON as a second
   dependency; Chapter 27, Appendix C and Chapter 31's index point at it.
+- **Appendix F: Recipes 47–48 — derive a key; sign and verify bytes**
+  (MINOR). Recipes 36–37 took a `Key` and never said where one comes
+  from, and ROADMAP item 24 recorded that half as open. Recipe 47 is the
+  two answers, chosen by the input: PBKDF2-HMAC-SHA-256 for a password
+  (time spent on purpose) and HKDF-SHA-256 for a secret that already has
+  entropy (stretched and separated by `info`), the second through the
+  `EVP_PKEY` derivation context — a Bestiary Shape 2 handle, one option
+  per call — and its Trap the iteration count as part of the key, drifting
+  silently into `open_sealed`'s `nullopt`. Recipe 48 is HMAC-SHA-256
+  through OpenSSL 3's `EVP_MAC` and a verifier that compares with
+  `CRYPTO_memcmp`, never `==`, with the Trap that a shared key lets the
+  reader forge. Both held to published vectors in `crypto.cpp` — RFC 7914's
+  PBKDF2 cases, RFC 5869's first HKDF case, RFC 4231's first two HMAC
+  cases — because a derivation that agrees with itself proves nothing
+  about agreeing with .NET's; then the refusals: a wrong count, a wrong
+  `info`, a flipped tag byte, a wrong key, a changed message, a short
+  tag. Item 24 closes.
 
 ## [0.11.0] — 2026-09-06
 
