@@ -52,6 +52,23 @@ numbers may still move.
   (`ü` and `Ü` differ, asserted) stated where `Trim` and
   `OrdinalIgnoreCase` never had to. Both in `cookbook/strings.cpp`;
   Chapter 31's symptom index gains the row.
+- **Appendix F: Recipe 46 — post a JSON body and read a JSON reply**
+  (MINOR). The fourth coverage review found JSON and HTTP each covered
+  and never combined: Recipe 41 was a GET, and a POST was one sentence of
+  prose. Recipe 46 is Recipe 41 turned around with Recipe 25 on both ends
+  — a header list as a second C handle with its matching free, the
+  serialized body NAMED because `CURLOPT_POSTFIELDS` borrows the bytes
+  until `perform` returns (the Trap: a temporary that dies at the
+  semicolon), and the reply judged three times, the transport's verdict,
+  the server's, and whether the bytes are JSON at all, the third a value
+  rather than a throw because a maintenance page with a 200 on it is an
+  answer the server gave. The harness's loopback server now reads a
+  request whole and echoes the body and its `Content-Type` back as JSON,
+  so the round trip is judged on what the server received, then answers
+  a 400, a 200 that is HTML, and JSON without the key. This is also the
+  shape of a hosted-model call, which the recipe says in one sentence
+  and names no vendor. `http.cpp` gains the vendored JSON as a second
+  dependency; Chapter 27, Appendix C and Chapter 31's index point at it.
 
 ## [0.11.0] — 2026-09-06
 

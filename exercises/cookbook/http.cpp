@@ -1,27 +1,35 @@
-// Appendix F, Recipe 41 - call an HTTP endpoint.
+// Appendix F, Recipes 41 and 46 - call an HTTP endpoint; post a JSON body
+// and read a JSON reply.
 //
-// Easy, HttpResult, append_chunk() and http_get() are quoted VERBATIM in
-// book/F-rosetta-cookbook.md: editing one means editing the appendix in the
-// same commit (the testlab discipline). main() is scaffolding, and its
-// oracle needs no network. Two halves: a file:// fixture, the one URL
-// scheme with nothing behind it, exercises the write callback (a 200 KB
-// fixture arrives in many chunks, so an append that assigned would lose
-// all but the last) and the transport's error path (a missing file is
-// CURLE_FILE_COULDNT_READ_FILE, and response code 0 because there was no
-// server); and a loopback server of forty lines - POSIX sockets, because
-// the standard library has none (Chapter 27) - answers with a redirect to
-// follow, a 500 whose body is an error page, and a stall the client's
-// deadline must cut short. Every wait is bounded: the server closes each
-// connection after one canned reply, so a mutant that waits in seconds
-// where the recipe waits in milliseconds gets "server returned nothing",
-// never a hang. The harness's server is POSIX-only; the cookbook is not
-// built by the MSVC job.
+// Easy, HttpResult, append_chunk(), http_get(), HeaderList, http_post_json()
+// and json_reply() are quoted VERBATIM in book/F-rosetta-cookbook.md:
+// editing one means editing the appendix in the same commit (the testlab
+// discipline). main() is scaffolding, and its oracle needs no network. Two
+// halves: a file:// fixture, the one URL scheme with nothing behind it,
+// exercises the write callback (a 200 KB fixture arrives in many chunks, so
+// an append that assigned would lose all but the last) and the transport's
+// error path (a missing file is CURLE_FILE_COULDNT_READ_FILE, and response
+// code 0 because there was no server); and a small loopback server - POSIX
+// sockets, because the standard library has none (Chapter 27) - answers
+// with a redirect to follow, a 500 whose body is an error page, a stall
+// the client's deadline must cut short, and, for Recipe 46, an echo of the
+// request body and its Content-Type as JSON, so the POST is judged on what
+// the server RECEIVED, plus a 400 whose body is JSON (so only the status
+// refuses it), a 200 that is HTML, and a 200 whose JSON lacks the key the
+// caller needs. Every wait is bounded: the
+// server closes each connection after one canned reply, so a mutant that
+// waits in seconds where the recipe waits in milliseconds gets "server
+// returned nothing", never a hang. The harness's server is POSIX-only; the
+// cookbook is not built by the MSVC job.
 //
 // This TU is the cookbook's third behind a probe: build_all.sh locates
 // libcurl through pkg-config and links it from the system - a dependency
 // the repository links and never copies in (Chapter 27's fourth strategy,
-// CLAUDE.md invariant 5) - and CI passes --require-curl.
+// CLAUDE.md invariant 5) - and CI passes --require-curl. Recipe 46 gives it
+// a second dependency, the vendored nlohmann/json of Recipe 25, included
+// with -isystem as json.cpp is.
 #include <curl/curl.h>
+#include <nlohmann/json.hpp>
 
 #include <cassert>
 #include <chrono>
@@ -30,6 +38,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -40,6 +49,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #endif
+
+using json = nlohmann::json;
 
 // Recipe 41 - HttpClient.GetStringAsync, through the C API the ecosystem uses
 // (curl_global_init(CURL_GLOBAL_DEFAULT) runs once per process before this,
@@ -82,6 +93,46 @@ HttpResult http_get(const std::string& url, std::chrono::milliseconds timeout) {
     return r;
 }
 
+// Recipe 46 - PostAsJsonAsync, then ReadFromJsonAsync<T>
+using HeaderList = std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)>;   // Recipe 7's shape: a second handle type
+
+HttpResult http_post_json(const std::string& url, const json& body, std::chrono::milliseconds timeout) {
+    Easy easy(curl_easy_init(), &curl_easy_cleanup);
+    if (!easy) {
+        throw std::runtime_error("curl_easy_init failed");
+    }
+    HeaderList headers(curl_slist_append(nullptr, "Content-Type: application/json"), &curl_slist_free_all);
+    if (!headers) {
+        throw std::runtime_error("curl_slist_append failed");   // a null list means "no custom headers": a silent form post
+    }
+    const std::string payload = body.dump();        // NAMED: libcurl borrows these bytes until perform returns
+    HttpResult r;
+    curl_easy_setopt(easy.get(), CURLOPT_URL, url.c_str());
+    curl_easy_setopt(easy.get(), CURLOPT_HTTPHEADER, headers.get());
+    curl_easy_setopt(easy.get(), CURLOPT_POSTFIELDS, payload.c_str());          // a loan, not a copy (Chapter 33)
+    curl_easy_setopt(easy.get(), CURLOPT_POSTFIELDSIZE, static_cast<long>(payload.size()));
+    curl_easy_setopt(easy.get(), CURLOPT_WRITEFUNCTION, &append_chunk);
+    curl_easy_setopt(easy.get(), CURLOPT_WRITEDATA, &r.body);
+    curl_easy_setopt(easy.get(), CURLOPT_TIMEOUT_MS, static_cast<long>(timeout.count()));
+    r.transport = curl_easy_perform(easy.get());
+    curl_easy_getinfo(easy.get(), CURLINFO_RESPONSE_CODE, &r.status);
+    return r;
+}
+
+// The third verdict, after the transport's and the server's: are the bytes
+// JSON at all? A 200 whose body is an HTML page is a value here, not a
+// throw - the caller asked a server a question and got a non-answer.
+std::optional<json> json_reply(const HttpResult& r) {
+    if (!r.ok()) {
+        return std::nullopt;                        // the wire or the server said no: the body is not the answer
+    }
+    json parsed = json::parse(r.body, nullptr, false);   // false: no exceptions - junk is a value here
+    if (parsed.is_discarded()) {
+        return std::nullopt;
+    }
+    return parsed;
+}
+
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;
 
@@ -111,6 +162,9 @@ static std::size_t count_chunk(char*, std::size_t size, std::size_t count, void*
 // on a loopback port the kernel picks, then it stops. "stall" means hold the
 // connection past the client's deadline and close it - so a client that
 // waits in the wrong unit is refused by the close, never left hanging.
+// "echo" means answer with what arrived: the body, parsed, and the
+// Content-Type header, as one JSON object - Recipe 46's round trip judged
+// on the server's side of the wire.
 class CannedServer {
 public:
     explicit CannedServer(std::vector<std::string> replies) : replies_(std::move(replies)) {
@@ -131,10 +185,12 @@ public:
                 if (client < 0) {
                     return;
                 }
-                char request[4096];
-                (void)::read(client, request, sizeof request);    // one GET, unread
+                const std::string request = ReadRequest(client);  // headers, then Content-Length bytes of body
                 if (reply == "stall") {
                     std::this_thread::sleep_for(600ms);           // past the client's 250 ms, then hang up
+                } else if (reply == "echo") {
+                    const std::string out = Echo(request);
+                    (void)::write(client, out.data(), out.size());
                 } else {
                     (void)::write(client, reply.data(), reply.size());
                 }
@@ -152,6 +208,45 @@ public:
     std::string url(const char* path) const { return "http://127.0.0.1:" + std::to_string(port_) + path; }
 
 private:
+    // One request, whole: read until the blank line, then until Content-Length
+    // bytes of body have arrived - a POST body can land in a second read.
+    static std::string ReadRequest(int client) {
+        std::string request;
+        char buf[4096];
+        std::size_t body_start = std::string::npos;
+        std::size_t want = 0;
+        for (;;) {
+            const auto n = ::read(client, buf, sizeof buf);
+            if (n <= 0) break;
+            request.append(buf, static_cast<std::size_t>(n));
+            if (body_start == std::string::npos) {
+                const auto end = request.find("\r\n\r\n");
+                if (end == std::string::npos) continue;
+                body_start = end + 4;
+                const std::string length = HeaderOf(request, "Content-Length");
+                want = length.empty() ? 0 : std::stoul(length);
+            }
+            if (request.size() - body_start >= want) break;
+        }
+        return request;
+    }
+    // A header's value, or "": libcurl sends the names as given, so the
+    // lookup is exact - this is the harness, not an HTTP parser.
+    static std::string HeaderOf(const std::string& request, const std::string& name) {
+        const auto pos = request.find("\r\n" + name + ": ");
+        if (pos == std::string::npos) return "";
+        const auto from = pos + 2 + name.size() + 2;
+        return request.substr(from, request.find("\r\n", from) - from);
+    }
+    static std::string Echo(const std::string& request) {
+        json seen;
+        seen["received"] = json::parse(request.substr(request.find("\r\n\r\n") + 4), nullptr, false);
+        seen["content_type"] = HeaderOf(request, "Content-Type");
+        const std::string text = seen.dump();
+        return "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " +
+               std::to_string(text.size()) + "\r\nConnection: close\r\n\r\n" + text;
+    }
+
     std::vector<std::string> replies_;
     int fd_ = -1;
     int port_ = 0;
@@ -220,6 +315,10 @@ int main() {
         reply("200 OK", "{\"ok\": 1}", "Content-Type: application/json\r\n"),
         reply("500 Internal Server Error", "<html>Internal Server Error</html>"),
         "stall",
+        "echo",                                                     // Recipe 46, from here
+        reply("400 Bad Request", "{\"error\": \"bad request\"}", "Content-Type: application/json\r\n"),
+        reply("200 OK", "<html>Maintenance</html>", "Content-Type: text/html\r\n"),
+        reply("200 OK", "{\"id\": 7}", "Content-Type: application/json\r\n"),
     });
 
     const HttpResult followed = http_get(server.url("/old"), 2000ms);
@@ -237,11 +336,45 @@ int main() {
     const HttpResult stalled = http_get(server.url("/slow"), 250ms);
     assert(stalled.transport == CURLE_OPERATION_TIMEDOUT);   // milliseconds: 250 of them, not 250 seconds
     assert(!stalled.ok());
+
+    // Recipe 46. The echo judges the round trip on what the server RECEIVED:
+    // the object, parsed back from the bytes on the wire, and the header
+    // that named them - a payload that died before perform, or a request
+    // sent without its Content-Type, fails here and nowhere else.
+    const json body = {{"sensor", 3}, {"unit", "centi-\xc2\xb0" "C"}, {"values", {1.5, 2.5}}};
+    const HttpResult echoed = http_post_json(server.url("/readings"), body, 2000ms);
+    assert(echoed.ok());
+    const std::optional<json> seen = json_reply(echoed);
+    assert(seen);
+    assert(seen->at("received") == body);                       // what the server got IS the object
+    assert(seen->at("content_type") == "application/json");     // and it was told what the bytes were
+    // The three verdicts, one refusal each: the server's no - a 400 whose
+    // body is perfectly parseable JSON, so only the status can refuse it,
+    // which is what makes the ok() gate in json_reply load-bearing - a 200
+    // that is not JSON, and JSON that parses but lacks the key - Recipe 26's
+    // at(), throwing out_of_range by name.
+    const HttpResult refused = http_post_json(server.url("/readings"), body, 2000ms);
+    assert(refused.transport == CURLE_OK && refused.status == 400);
+    assert(!json_reply(refused));
+    const HttpResult page = http_post_json(server.url("/readings"), body, 2000ms);
+    assert(page.ok());                                           // bytes arrived, status 200...
+    assert(!json_reply(page));                                   // ...and they are not the answer
+    const HttpResult partial = http_post_json(server.url("/readings"), body, 2000ms);
+    const std::optional<json> answer = json_reply(partial);
+    assert(answer && answer->at("id") == 7);
+    bool missing_key = false;
+    try {
+        (void)answer->at("token");
+    } catch (const json::out_of_range&) {
+        missing_key = true;
+    }
+    assert(missing_key);
     std::cout << "http ok (libcurl " << curl_version_info(CURLVERSION_NOW)->version << "): " << got.body.size()
               << " bytes through the callback, the missing file refused as "
               << curl_easy_strerror(missing.transport) << ", " << chunks << " chunks for 200 KB, "
               << "a 302 followed to " << followed.status << ", a " << error_page.status
-              << " not ok, a stall cut at 250 ms\n";
+              << " not ok, a stall cut at 250 ms, a JSON body echoed back whole with its "
+              << seen->at("content_type").get<std::string>() << "\n";
 #else
     std::cout << "http ok (libcurl " << curl_version_info(CURLVERSION_NOW)->version << "): " << got.body.size()
               << " bytes through the callback, the missing file refused as "
