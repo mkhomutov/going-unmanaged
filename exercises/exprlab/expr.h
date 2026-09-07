@@ -36,8 +36,9 @@ public:
 
 // A formula parsed once and evaluated many times - the shape of a computed
 // column: the text is checked when the user types it, and the tree is
-// walked per row. Parsing is bounded (max_depth) because the text is the
-// user's and the stack is the host's.
+// walked per row. Both are bounded by max_depth - the nesting the parser
+// recurses through and the height of the tree the evaluator walks - because
+// the text is the user's and the stack is the host's.
 class Formula {
 public:
     static std::variant<Formula, Error> Parse(std::string_view text, int max_depth = 64);

@@ -99,7 +99,7 @@ The spelling this book teaches is the C++17 one, and the *newer spelling* column
 | `if constexpr`, fold expressions, class template argument deduction, `std::void_t` | [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write) |
 | `inline` variables and `inline static` members | [Chapter 12](12-the-compilation-model.md#chapter-12--the-compilation-model), [Chapter 14](14-exercise-the-lifetime-tracer.md#chapter-14--exercise-the-lifetime-tracer) |
 | mandatory copy elision for a returned temporary | [Chapter 6](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics), [Chapter 14](14-exercise-the-lifetime-tracer.md#chapter-14--exercise-the-lifetime-tracer) |
-| `std::from_chars` / `std::to_chars` | Recipe 19 |
+| `std::from_chars` / `std::to_chars` | Recipe 19; the `double` overloads came later to every library — libstdc++ 11, MSVC 2019 16.4, libc++ 20, and on Apple's libc++ only for a deployment target of macOS 26 or later — so [Chapter 42](42-the-formula-field.md#chapter-42--the-formula-field)'s number parse carries an `#if` |
 | `std::invoke`, `std::invoke_result_t` | Recipe 28, [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out) |
 | `std::scoped_lock`, `std::shared_mutex` | [Chapter 29](29-concurrency.md#chapter-29--concurrency) |
 | `[[maybe_unused]]`, `[[nodiscard]]`, `[[fallthrough]]` | Recipe 24 |

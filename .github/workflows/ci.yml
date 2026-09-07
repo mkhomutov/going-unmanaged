@@ -46,10 +46,14 @@ jobs:
       # --require-sqlite: Recipe 42 links the system's sqlite3 the same way
       # (the SDK ships it on macOS; libsqlite3-dev on Ubuntu). Its judge is
       # an in-memory database.
+      # locale-gen de_DE.UTF-8: Chapter 42's judge switches LC_NUMERIC to a
+      # German locale to prove the number parse asks none; macOS ships the
+      # locale and a stock Ubuntu image does not, so without this line the
+      # Linux leg would skip the one row that tells from_chars from strtod.
       - run: |
           if [ "$(uname -s)" = Darwin ]; then export PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"; fi
           if [ "$(uname -s)" = Darwin ] && ! pkg-config --exists libcurl; then export PKG_CONFIG_PATH="$(brew --prefix curl)/lib/pkgconfig:$PKG_CONFIG_PATH"; fi
-          if [ "$(uname -s)" = Linux ]; then sudo apt-get update -qq && sudo apt-get install -y -qq libcurl4-openssl-dev libsqlite3-dev pkg-config; fi
+          if [ "$(uname -s)" = Linux ]; then sudo apt-get update -qq && sudo apt-get install -y -qq libcurl4-openssl-dev libsqlite3-dev pkg-config && sudo locale-gen de_DE.UTF-8; fi
           ./scripts/build_all.sh --require-cmake --require-git --require-tsan --require-expected --require-openssl --require-curl --require-sqlite
 
   # The book states sanitizer behavior that differs between the maintainer's

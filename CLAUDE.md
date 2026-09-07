@@ -316,7 +316,19 @@ Chapter 25's Finding 10.
   sources (the Chapter 39 direction). build_all.sh builds the two TUs
   under the canonical flags and runs the judge; `from_chars` for numbers
   is load-bearing — `strtod` reads the locale, and the judge switches to
-  `de_DE` where the machine has it
+  `de_DE` where the machine has it (CI's Linux job generates the locale;
+  the judge prints which it used, or that it skipped). Two rules are
+  load-bearing and easy to undo by accident. (1) `max_depth` bounds BOTH
+  the parser's recursion (the `Depth` guard in `Unary`) and the tree's
+  height (checked in `Build`, where every node is made): a flat `1+1+…`
+  never nests in the parser and still builds a spine the evaluator and
+  the destructor recurse through — two hundred terms overflow a 512 KB
+  thread with the guard alone. (2) The number parse has two spellings
+  under one `#if`: `from_chars` where the library has the `double`
+  overload, `strtod_l` with a `"C"` locale where it does not — Apple's
+  libc++ has it only for a deployment target of macOS 26 or later — and
+  build_all.sh builds the lab a second time on macOS with
+  `-mmacosx-version-min=15.0` so the `#else` branch is judged too
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)

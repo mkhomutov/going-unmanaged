@@ -6,6 +6,7 @@
 // the bench. Quoted by excerpt in the chapter.
 #include "expr.h"
 
+#include <algorithm>
 #include <clocale>
 #include <cmath>
 #include <cstdio>
@@ -49,7 +50,7 @@ private:
 };
 
 // The judge: counts failures and sets the exit code - never assert, which a
-// Release build compiles away (Appendix H's rule for a harness).
+// Release build compiles away (the CHECK Appendix H's measurements use).
 static int g_failures = 0;
 #define CHECK(cond)                                                          \
     do {                                                                     \
@@ -67,6 +68,28 @@ static bool ValueIs(const std::variant<double, Error>& r, double expected) {
 static bool ErrorAt(const std::variant<double, Error>& r, std::size_t pos) {
     const Error* e = std::get_if<Error>(&r);
     return e != nullptr && e->pos == pos;
+}
+
+// A table row that fails names itself: the reader whose own parser is under
+// this judge needs the WHICH, not a line number shared by fifteen rows.
+static void CheckRow(const ISymbols& host, const char* text, double expected) {
+    const auto r = Evaluate(text, host);
+    if (ValueIs(r, expected)) return;
+    if (const double* v = std::get_if<double>(&r)) {
+        std::printf("FAILED row \"%s\": expected %g, got %g\n", text, expected, *v);
+    } else {
+        const Error& e = std::get<Error>(r);
+        std::printf("FAILED row \"%s\": expected %g, got error at %zu: %s\n", text, expected, e.pos, e.what.c_str());
+    }
+    ++g_failures;
+}
+
+// "1+1+...+1" with n terms: never nests in the parser, and folds into a
+// tree n levels tall - the hostile input the depth guard alone would miss.
+static std::string Chain(int terms) {
+    std::string s = "1";
+    for (int i = 1; i < terms; ++i) s += "+1";
+    return s;
 }
 
 int main() {
@@ -94,9 +117,7 @@ int main() {
         {" 2  +  2 ", 4},                        // whitespace anywhere
         {"min(1, 2) == 1", 1},
     };
-    for (const auto& [text, expected] : table) {
-        CHECK(ValueIs(Evaluate(text, host), expected));
-    }
+    for (const auto& [text, expected] : table) CheckRow(host, text, expected);
 
     // Errors carry the byte offset of the culprit, not "syntax error".
     CHECK(ErrorAt(Evaluate("1 + * 2", host), 4));             // '*' where a value should be
@@ -109,13 +130,23 @@ int main() {
     CHECK(ErrorAt(Evaluate("3 $ 4", host), 2));               // a character that is nothing
     CHECK(ErrorAt(Evaluate("", host), 0));                    // no text at all
     CHECK(ErrorAt(Evaluate("1..2", host), 0));                // not a number
+    CHECK(ErrorAt(Evaluate("1 < 2 < 3", host), 6));           // a comparison takes two operands, not a chain
 
     // The comma is never a decimal separator: "1,5" is 1, then a stray ','.
-    // Under a German locale strtod would have read one and a half; the
-    // number scan uses from_chars and never asks the locale. Asserted twice,
-    // the second time with the locale actually switched where the machine has it.
+    // Under a German locale strtod would have read one and a half - and, the
+    // row that actually catches a strtod, stopped at the dot of "1.5" and
+    // returned one. Asserted with the locale actually switched where the
+    // machine has it (macOS ships de_DE; CI's Linux job generates it), and
+    // the judge SAYS which, because a check that silently skipped is a
+    // check nobody ran. The scan only ever hands digits and dots to the
+    // number parse, so the comma row passes with strtod too; "1.5 * 2"
+    // under de_DE is the discriminating row.
     CHECK(ErrorAt(Evaluate("1,5", host), 1));
-    if (std::setlocale(LC_NUMERIC, "de_DE.UTF-8") != nullptr) {
+    const char* locale_used = nullptr;
+    for (const char* name : {"de_DE.UTF-8", "de_DE.utf8", "de_DE"}) {
+        if (std::setlocale(LC_NUMERIC, name) != nullptr) { locale_used = name; break; }
+    }
+    if (locale_used != nullptr) {
         CHECK(ErrorAt(Evaluate("1,5", host), 1));
         CHECK(ValueIs(Evaluate("1.5 * 2", host), 3));
         std::setlocale(LC_NUMERIC, "C");
@@ -129,9 +160,16 @@ int main() {
     CHECK(ValueIs(Evaluate(deep + "1" + std::string(limit - 1, ')'), host, limit), 1));
     CHECK(ErrorAt(Evaluate(deep + "(1" + std::string(limit, ')'), host, limit), static_cast<std::size_t>(limit)));
     // And the hostile input: a thousand opening parens is refused at the
-    // limit, in microseconds, without a stack frame per byte.
+    // limit, before the stack is touched, without a stack frame per byte.
     CHECK(ErrorAt(Evaluate(std::string(1000, '('), host, limit), static_cast<std::size_t>(limit)));
     CHECK(ErrorAt(Evaluate(std::string(1000, '-') + "1", host, limit), static_cast<std::size_t>(limit)));
+    // The other hostile input: a flat sum never recurses in the parser, but
+    // the tree it builds is as tall as the text and the evaluator walks it.
+    // N terms is a tree N deep: accepted at the limit, refused one past it
+    // at the '+' that made it too tall, and a thousand terms likewise.
+    CHECK(ValueIs(Evaluate(Chain(limit), host, limit), limit));
+    CHECK(ErrorAt(Evaluate(Chain(limit + 1), host, limit), static_cast<std::size_t>(2 * limit - 1)));
+    CHECK(ErrorAt(Evaluate(Chain(1000), host, limit), static_cast<std::size_t>(2 * limit - 1)));
 
     // Parse once, evaluate per row: the computed column.
     auto parsed = Formula::Parse("wall.width * wall.height > 8");
@@ -143,10 +181,17 @@ int main() {
     }
     // A parse error is reported once, at parse time, before any row is touched.
     CHECK(std::holds_alternative<Error>(Formula::Parse("wall.width +")));
+    // A moved-from Formula answers with an Error, not a null dereference.
+    if (auto* f = std::get_if<Formula>(&parsed)) {
+        Formula moved = std::move(*f);
+        CHECK(std::holds_alternative<Error>(f->Evaluate(host)));
+        CHECK(ValueIs(moved.Evaluate(host), 0));
+    }
 
     if (g_failures == 0) {
-        std::printf("formula ok: %zu values, the error positions, the depth limit at %d, the locale\n",
-                    table.size(), limit);
+        std::printf("formula ok: %zu values, the error positions, the depth limit at %d, the locale %s\n",
+                    table.size(), limit,
+                    locale_used != nullptr ? locale_used : "SKIPPED (no de_DE on this machine)");
     }
     return g_failures == 0 ? 0 : 1;
 }

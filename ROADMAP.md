@@ -1039,10 +1039,10 @@ with objects injection"; Recipes 44–45 answered the string half, and this
 item is the other. The gate is met on the book's own pages: the pitfalls
 the job walks into here are all taught chapters apart and never together
 — a view into a dead string (Chapter 10), a recursion the user's text
-sizes (Chapter 3), a locale-dependent number parse (Recipe 19 warns,
+sizes (Chapter 3), a locale-dependent number parse (Recipe 19 mentions,
 nothing demonstrates), a provider stored as a raw pointer (Chapter 33's
-loan), and the two seams of Chapters 28 and 41 with no worked case of
-choosing between them.
+loan), and the two seams of Chapters 28 and 41 with no worked case where
+the run-time seam is the right answer.
 
 **Delivered:** Chapter 42 — *The Formula Field* — and `exercises/exprlab/`:
 `expr.h` (an `Error` with a position, the `ISymbols` provider seam whose

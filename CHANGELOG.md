@@ -100,12 +100,19 @@ numbers may still move.
   descent with a value-or-error at every level (Chapter 8's value pole;
   a loop where the natural right recursion gives 7 for `8 - 3 - 2` and
   passes every one-operator test), an RAII depth guard against text that
-  sizes the host's stack, and an `ISymbols` seam whose dot belongs to the
+  sizes the host's stack — and a height check on every node built, because
+  a flat `1+1+…` never nests in the parser and still overflows the
+  evaluator — and an `ISymbols` seam whose dot belongs to the
   provider, so `wall.width` runs against a live document or a map. The
   judge is a value table worked out by hand, error positions, the depth
-  limit at N and N + 1, and a German locale switched on where the
-  machine has it. Appendix B gains the principle, Appendix E three
-  entries, Chapter 31 two rows.
+  limit at N and N + 1 (nested and flat), and a German locale switched
+  on where the machine has it — CI's Linux job now generates it, and the
+  judge says when it skipped. The number parse carries an `#if`: the
+  `double` overload of `from_chars` is missing from Apple's libc++ for a
+  deployment target before macOS 26, and the fallback (`strtod_l` with a
+  `"C"` locale of its own) is built and judged on macOS too. Appendix B
+  gains the principle, Appendix E three entries, Chapter 31 a row and a
+  cross-reference, Appendix K the availability note.
 
 ## [0.11.0] — 2026-09-06
 

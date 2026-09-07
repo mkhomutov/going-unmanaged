@@ -2,7 +2,7 @@
 
 Somewhere in month three a request arrives that is not about the SDK at all. The dashboard wants a *computed column*: the user types `wall.width * 2 > door.offset + 1` into a box, and every row shows the result. Or the export filter wants an expression. Or the alarm threshold wants to be a formula over the sensor's own properties rather than a number. The request is always described as small, and in C# it was: `DataTable.Compute` took a string, `System.Linq.Expressions` built a tree the runtime compiled, Roslyn scripting ran a line of C# against your objects, and if none of those fit there was a NuGet package for it. Someone else parsed it.
 
-Here nobody does. There is no compiler in the process, no reflection to bind `wall.width` to a property, and a parsing library is a [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) decision with a licence attached and a build to keep green. So the formula field is, more often than a C# developer expects, code you write — and it is worth writing once with care, because it is the one place in a plug-in where *user-typed text* decides what the program does next. Every pitfall in it is a pitfall this book has already taught, arriving together: a view into a string that died ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)), a recursion the user's text sizes ([Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior)), a number that parses differently on a German machine, and a seam between the formula and the objects it names that decides whether any of it can be tested without the host ([Chapter 28](28-testing.md#chapter-28--testing)). The lab is `exercises/exprlab/`: a tokenizer, a recursive-descent parser, a tree, an evaluator, and a judge that holds all four to a table of values worked out by hand.
+Here nobody does. There is no compiler in the process, no reflection, before C++26, to bind `wall.width` to a property, and a parsing library is a [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) decision with a licence attached and a build to keep green. So the formula field is, more often than not, code you write — and it is worth writing once with care, because it is the one place in a plug-in where *user-typed text* decides what the program does next. Every pitfall in it is a pitfall this book has already taught, arriving together: a view into a string that died ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)), a recursion that runs on a thread stack [Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior) measured, a number that parses differently on a German machine, and a seam between the formula and the objects it names that decides whether any of it can be tested without the host ([Chapter 28](28-testing.md#chapter-28--testing)). The lab is `exercises/exprlab/`: a tokenizer, a recursive-descent parser, a tree, an evaluator, and a judge that holds all four to a table of values worked out by hand.
 
 ### The shape of the job
 
@@ -42,8 +42,9 @@ public:
 
 // A formula parsed once and evaluated many times - the shape of a computed
 // column: the text is checked when the user types it, and the tree is
-// walked per row. Parsing is bounded (max_depth) because the text is the
-// user's and the stack is the host's.
+// walked per row. Both are bounded by max_depth - the nesting the parser
+// recurses through and the height of the tree the evaluator walks - because
+// the text is the user's and the stack is the host's.
 class Formula {
 public:
     static std::variant<Formula, Error> Parse(std::string_view text, int max_depth = 64);
@@ -71,12 +72,12 @@ Notice also what the header does not promise: `Evaluate` takes the provider on e
 
 ### Tokens: the closed set
 
-The tokenizer turns bytes into a vector of tokens, each a closed set of kinds and each carrying the byte offset it began at:
+The tokenizer — the lexer, in the compiler books — turns bytes into a vector of tokens, each a closed set of kinds and each carrying the byte offset it began at:
 
 ```cpp
 struct Number { double value; };
 struct Ident  { std::string name; };      // "wall.width": the dot is part of the name
-struct Op     { char c; };                // + - * / < > = ! , and the two-character forms below
+struct Op     { char c; };                // + - * / < > , (the two-character comparisons are Compare, below)
 struct Compare { std::string op; };       // "<=", ">=", "==", "!="
 struct LParen {};
 struct RParen {};
@@ -88,34 +89,42 @@ struct Token {
 };
 ```
 
-A `std::variant`, because the set is closed and the compiler can then refuse a `visit` that forgets a kind ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)); a `std::string` inside `Ident` rather than a `string_view`, because the tokens outlive the call that tokenized — they sit in the parser while the caller's text may not — and a view into a temporary is the Chapter 10 trap in its most common disguise. `Ident` also settles the injected-object question at the cheapest point: `wall.width` is one identifier, dot included, and what the dot means is the provider's decision, not the parser's. The parser has no idea there are objects. The provider does.
+A `std::variant`, because the set is closed and every access to it is typed — the parser reads tokens through `get_if`, and a kind it did not ask about cannot be mistaken for one it did ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)); a `std::string` inside `Ident` rather than a `string_view`, because the tokens outlive the call that tokenized — they sit in the parser while the caller's text may not — and a view into a temporary is the Chapter 10 trap in its most common disguise. `Ident` also settles the injected-object question at the cheapest point: `wall.width` is one identifier, dot included, and what the dot means is the provider's decision, not the parser's. The parser has no idea there are objects. The provider does.
 
-The number scan is one function, and its one decision is the chapter's second trap:
+The scan takes the longest run of digits and dots and hands it to one function, whose one decision is the chapter's second trap:
 
 ```cpp
-// The number scan. from_chars, never strtod: strtod reads the C locale's
+// The number parse. from_chars, never strtod: strtod reads the C locale's
 // decimal separator, so on a German machine "1,5" parses as one and a half
 // and "1.5" stops at the dot - the bug that works on the bench. from_chars
-// knows one spelling, the wire's, on every machine.
-Token ScanNumber(std::string_view text, std::size_t& i) {
-    const std::size_t start = i;
-    while (i < text.size() && (IsDigit(text[i]) || text[i] == '.')) ++i;
-    double value = 0.0;
-    const auto [end, ec] = std::from_chars(text.data() + start, text.data() + i, value);
-    if (ec != std::errc{} || end != text.data() + i) {
-        i = start;                                // let the caller report "not a number" at start
-        return Token{start, End{}};
-    }
-    return Token{start, Number{value}};
+// knows one spelling, the wire's, on every machine. Where the library has
+// no from_chars for double, the same one spelling comes from strtod handed
+// a "C" locale of the parser's own, which asks the process's locale nothing.
+// Returns where the number ended, or nullptr if [first, last) is not one.
+const char* ParseNumber(const char* first, const char* last, double& value) {
+#ifdef FORMULA_HAS_FROM_CHARS_DOUBLE
+    const auto [end, ec] = std::from_chars(first, last, value);
+    return ec == std::errc{} ? end : nullptr;
+#else
+    static const locale_t c_locale = newlocale(LC_NUMERIC_MASK, "C", static_cast<locale_t>(nullptr));
+    const std::string copy(first, last);          // strtod wants a terminator
+    char* stop = nullptr;
+    value = strtod_l(copy.c_str(), &stop, c_locale);
+    return stop == copy.c_str() ? nullptr : first + (stop - copy.c_str());
+#endif
 }
 ```
 
-`std::strtod`, `std::stod` and `atof` read the decimal separator from the process's C locale, and a plug-in does not own its process's locale: the host, or a library the host loaded, may have called `setlocale` for its own reasons. On such a machine `1,5` is one and a half and `1.5` is one — silently, with the formula's own tests green on every developer's laptop, because every developer's laptop is in the C locale. `std::from_chars` (Recipe 19 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook)) knows one spelling and reads the same bytes the same way everywhere, which is [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s wire discipline applied to a number in a text box. The judge switches the process to `de_DE` where the machine has it and asserts nothing changed.
+`std::strtod`, `std::stod` and `atof` read the decimal separator from the process's C locale, and a plug-in does not own its process's locale: the host, or a library the host loaded, may have called `setlocale` for its own reasons. On such a machine `1,5` is one and a half and `1.5` is one — silently, with the formula's own tests green on every developer's machine, because a process starts in the C locale wherever it runs and only the host's `setlocale` changes that. `std::from_chars` (Recipe 19 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook)) knows one spelling and reads the same bytes the same way everywhere, which is [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s wire discipline applied to a number in a text box. The judge switches the process to `de_DE` where the machine has it, asserts nothing changed, and says which it did: macOS ships the locale and CI's Linux job generates it, so a skip is a line in the log rather than a silence.
+
+The `#else` branch is [Appendix K](K-the-standards-catalogue.md#appendix-k--the-standards-catalogue)'s kind of caveat. The `double` overload of `from_chars` arrived later than the integer one — libstdc++ 11, MSVC 2019 16.4, libc++ 20 — and Apple's libc++ ships it in the system library, so for a deployment target older than macOS 26 it does not exist, and a plug-in's deployment target is the host's oldest supported OS. The feature-test macro is the switch, as that appendix says, and the fallback is `strtod` handed a `"C"` locale of the parser's own through `strtod_l`, which asks the process's locale nothing either. `build_all.sh` builds the lab both ways on macOS and runs the judge against each.
 
 > [!WARNING]
 > **Trap:** `std::stod("1,5")` returns one on the bench and one and a half on a customer's machine whose host set a German locale — no error, no warning, and a formula that "works" for every developer; parse numbers with `from_chars`, which asks no locale.
 
 ### The tree: a closed set of node kinds, behind one pointer
+
+The tree — the abstract syntax tree, AST, of the compiler books — is one struct:
 
 ```cpp
 struct Formula::Node {
@@ -124,13 +133,15 @@ struct Formula::Node {
     struct Negate   { std::unique_ptr<Node> operand; };
     struct Binary   { std::string op; std::unique_ptr<Node> lhs, rhs; };
     struct CallExpr { std::string name; std::vector<std::unique_ptr<Node>> args; };
+    using Kind = std::variant<Literal, Name, Negate, Binary, CallExpr>;
 
     std::size_t pos;                              // where this node's text began: the error's caret
-    std::variant<Literal, Name, Negate, Binary, CallExpr> kind;
+    int height;                                   // of this subtree: what Eval and the destructor recurse through
+    Kind kind;
 };
 ```
 
-Two of [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s decisions in one struct. The node *kinds* are a closed set nobody extends from outside, so they are a variant by value — no base class, no virtual `Eval`, and a `visit` that will not compile if a kind is missing. The *children* sit behind `unique_ptr`, and here the appendix's fourth procedure has its one structural answer rather than a preference: a `Node` cannot hold a `Node` by value, because the type would contain itself, so a tree boxes its edges whether or not anything else argues for it. The C# reflex — a `Node` class hierarchy with a virtual `Evaluate` — is not wrong here; it is the open-set shape, and the set is closed. A reader who wants the hierarchy anyway has Chapter 5's rules to obey and gains nothing for it.
+Two of [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s decisions in one struct. The node *kinds* are a closed set nobody extends from outside, so they are a variant by value — no base class, no virtual `Eval`, and a `visit` whose last branch is a `static_assert`, so a kind with no branch does not compile. The *children* sit behind `unique_ptr`, and here the appendix's fourth procedure has its one structural answer rather than a preference: a `Node` cannot hold a `Node` by value, because the type would contain itself, so every edge goes through an indirection — a `unique_ptr` here, or a `std::vector<Node>`, which C++17 lets name an incomplete element type and which is the same box with a count on it. The `height` is the depth guard's other half, below. The C# reflex — a `Node` class hierarchy with a virtual `Evaluate` — is not wrong here; it is the open-set shape, and the set is closed. A reader who wants the hierarchy anyway has Chapter 5's rules to obey and gains nothing for it.
 
 ### The parser: one function per precedence level
 
@@ -146,6 +157,8 @@ Recursive descent is the technique of writing the grammar down as functions, one
 // Left-associative by construction: additive LOOPS over its operands, so
 // 8 - 3 - 2 is (8 - 3) - 2. A version that recursed on the right instead
 // would give 8 - (3 - 2) = 7, and pass every test with one operator in it.
+// A comparison takes exactly two operands: 1 < 2 < 3 is refused at the
+// second '<', not read as (1 < 2) < 3.
 ```
 
 The whole of precedence is that `Term` is called *from* `Additive`, so a `*` is consumed before the `+` around it ever sees its operands. And the whole of associativity is in the shape of one function:
@@ -160,15 +173,16 @@ The whole of precedence is that `Term` is called *from* `Additive`, so a `*` is 
             if (TakeOp('+')) c = '+'; else if (TakeOp('-')) c = '-'; else break;
             auto rhs = Term();
             if (std::holds_alternative<Error>(rhs)) return rhs;
-            lhs = std::make_unique<Node>(Node{pos, Node::Binary{std::string(1, c), std::move(std::get<NodePtr>(lhs)), std::move(std::get<NodePtr>(rhs))}});
+            lhs = Build(pos, Node::Binary{std::string(1, c), std::move(std::get<NodePtr>(lhs)), std::move(std::get<NodePtr>(rhs))});
+            if (std::holds_alternative<Error>(lhs)) return lhs;
         }
         return lhs;
     }
 ```
 
-A loop, folding each new operand into the tree on the left. The version that reads more naturally from the grammar — `additive := term ('+' additive)?`, recursing on the right — is the chapter's wrong-that-looks-like-working: it parses `8 - 3 - 2` as `8 - (3 - 2)` and returns 7, and every test with one operator in it passes, and so does every test with two operators of different precedence. Only `a - b - c` with the same operator twice tells the two apart, which is why the judge's table has that row and the `16 / 4 / 2` row beside it. This is [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s lesson about oracles: no sanitizer knows that 7 is wrong. A value table worked out by hand is the only judge there is, and the rows in it are chosen for the mistakes they can catch.
+A loop, folding each new operand into the tree on the left. The version that reads more naturally from the grammar — `additive := term ('+' additive)?`, recursing on the right — is the chapter's wrong-that-looks-like-working: it parses `8 - 3 - 2` as `8 - (3 - 2)` and returns 7, and every test with one operator in it passes, and so does every test with two operators of different precedence. Only two operators of the same precedence with `-` or `/` first tell the two apart — `8 - 3 - 2`, `16 / 4 / 2`, `8 - 3 + 2` — which is why the judge's table has the first two of those. This is [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s lesson about oracles: no sanitizer knows that 7 is wrong. A value table worked out by hand is the only judge there is, and the rows in it are chosen for the mistakes they can catch.
 
-The error handling is [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s value pole in every function: each level returns a `variant<NodePtr, Error>`, and a failure below is handed up unchanged, position and all, until `Parse` returns it. It is the error-code shape — a check after every call — and the chapter chose it over a `throw` caught in `Parse` for the reason that chapter gives: the failure here is the common case, and a formula being retyped fires it on every keystroke.
+The error handling is [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s value pole in every function: each level returns a `variant<NodePtr, Error>`, and a failure below is handed up unchanged, position and all, until `Parse` returns it. It is the error-code shape — a check after every call. That chapter's table files *parse failed* under value, and its other legitimate shape — throw inside, one `catch` at `Parse` — was not chosen because every level needs the position as data anyway, and a value carries it for free.
 
 ### The depth guard
 
@@ -195,13 +209,28 @@ Every `(` and every unary `-` recurses one level deeper, which means the user's 
         if (TakeOp('-')) {
             auto operand = Unary();
             if (std::holds_alternative<Error>(operand)) return operand;
-            return std::make_unique<Node>(Node{pos, Node::Negate{std::move(std::get<NodePtr>(operand))}});
+            return Build(pos, Node::Negate{std::move(std::get<NodePtr>(operand))});
         }
         return Primary();
     }
 ```
 
-A thousand opening parentheses pasted into the box is a thousand nested calls, and each is several frames deep through `Comparison`, `Additive`, `Term` and `Unary`; on [Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior)'s 512 KB worker-thread stack that is a crash on some frame's entry, with none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s report shapes and no line of the formula's code in the report — Recipe 34's failure, delivered by a text box. The guard is [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)'s RAII counting depth on the way in and out, and the refusal is a value with the position where the level too deep begins. Sixty-four is a limit no human formula reaches and every hostile one does; the judge accepts sixty-four levels, refuses sixty-five with the position, and refuses a thousand parentheses and a thousand minus signs in microseconds.
+A few hundred nested parentheses pasted into the box are a few hundred nested calls, each several frames deep through `Comparison`, `Additive`, `Term` and `Unary`; on [Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior)'s 512 KB macOS worker-thread stack that is a crash on some frame's entry. In the shipped build it is a bare `SEGV` or `BUS`, none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s report shapes and no frame of yours; under the canonical flags ASan names it `stack-overflow` and lists `Primary`, `Unary`, `Term`, `Additive` and `Comparison` a hundred times over, which tells you the crime and not the missing limit — Recipe 34's failure, delivered by a text box. On your own machine the main thread has 8 MB, so the same paste parses clean there: the demonstration needs the worker thread, or ten times the text. The guard is [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)'s RAII counting depth on the way in and out, and the refusal is a value with the position where the level too deep begins.
+
+That bounds what the parser recurses through, and it is only half. A flat sum — `1+1+1+…` for two hundred terms — never nests in the parser at all, because `Additive` loops; but each turn of the loop folds the sum so far under a new node, the tree grows one level taller per term, and `Eval` and the destructor recurse through that spine. Measured on the lab, two hundred terms overflow the 512 KB worker with the guard in place. So every node is built through one function that knows the limit:
+
+```cpp
+    // Every node is built here, so the tree's height is checked once for all
+    // kinds: the guard above bounds what the parser recurses through, this
+    // bounds what the evaluator will. One limit serves both.
+    std::variant<NodePtr, Error> Build(std::size_t pos, Node::Kind kind) {
+        const int height = HeightOf(kind);
+        if (height > max_depth_) return Error{pos, "expression is too deep to evaluate"};
+        return std::make_unique<Node>(Node{pos, height, std::move(kind)});
+    }
+```
+
+One limit serves both: the nesting the parser recurses through and the height the evaluator walks. Sixty-four is deeper than anything a person types and, measured on this lab under the canonical flags on macOS/arm64, still short of where the worker's stack runs out — about ninety levels of parser recursion; a generator that needs more raises `max_depth`, which is why it is a parameter. The judge accepts sixty-four levels, refuses sixty-five with the position, and refuses a thousand parentheses, a thousand minus signs and a thousand terms before the stack is touched.
 
 ### The evaluator: the injected object answers
 
@@ -255,18 +284,22 @@ Four things are asserted, because four things could be wrong in a way no tool re
     };
 ```
 
-**Values, worked out by hand** — the oracle of [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture), and every row chosen for a mistake it can catch: the third row is the associativity bug, the fifth and sixth the unary minus, the seventh the injection. **Error positions**, not error presence — `1 + * 2` fails at 4, `wall.depth` at 0, `1 / (2 - 2)` at 2 — because a parser judged on "returned an error" would pass with `pos` always zero. **The depth limit** at exactly N and N + 1, and then at a thousand. And **the locale**:
+**Values, worked out by hand** — the oracle of [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture), and every row chosen for a mistake it can catch: the third row is the associativity bug, the fifth and sixth the unary minus, the seventh the injection. **Error positions**, not error presence — `1 + * 2` fails at 4, `wall.depth` at 0, `1 / (2 - 2)` at 2 — because a parser judged on "returned an error" would pass with `pos` always zero. **The depth limit** at exactly N and N + 1, and then at a thousand — nested, and flat. And **the locale**:
 
 ```cpp
     CHECK(ErrorAt(Evaluate("1,5", host), 1));
-    if (std::setlocale(LC_NUMERIC, "de_DE.UTF-8") != nullptr) {
+    const char* locale_used = nullptr;
+    for (const char* name : {"de_DE.UTF-8", "de_DE.utf8", "de_DE"}) {
+        if (std::setlocale(LC_NUMERIC, name) != nullptr) { locale_used = name; break; }
+    }
+    if (locale_used != nullptr) {
         CHECK(ErrorAt(Evaluate("1,5", host), 1));
         CHECK(ValueIs(Evaluate("1.5 * 2", host), 3));
         std::setlocale(LC_NUMERIC, "C");
     }
 ```
 
-The judge is a `CHECK` that counts and sets the exit code, never `assert` — [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s rule for a harness, since a Release build compiles `assert` away and a judge that vanishes is worse than none. `build_all.sh` builds the two translation units under the canonical flags and runs it on every push; the sanitizers watch the tree's pointers, and the table watches the arithmetic, and neither could do the other's job — Finding 10 of [Chapter 25](25-findings-from-practice.md#chapter-25--findings-from-practice-a-living-log), one more time.
+The second row inside the switch is the one that catches a `strtod`: the scan hands the number parse digits and dots only, so `1,5` is refused by the tokenizer whichever parse sits behind it, and it is `1.5` stopping at the dot under `de_DE` that tells the two apart. The judge is a `CHECK` that counts and sets the exit code, never `assert` — the `CHECK` [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s measurements use, since `NDEBUG` compiles `assert` away in a Release build and a judge that vanishes is worse than none. `build_all.sh` builds the two translation units under the canonical flags and runs it on every push; the sanitizers watch the tree's pointers, and the table watches the arithmetic, and neither could do the other's job — Finding 10 of [Chapter 25](25-findings-from-practice.md#chapter-25--findings-from-practice-a-living-log), one more time.
 
 > [!TIP]
 > **Key principle:** "User-typed text is data until my parser says so — tokens I own, a tree of a closed set of kinds, evaluation through a provider the caller injects, a bounded depth, and an error that carries a position rather than a throw."
@@ -282,9 +315,9 @@ The judge is a `CHECK` that counts and sets the exit code, never `assert` — [A
 
 - **Tokens as views into the text.** A `string_view` in `Ident` is zero copies until the caller passes a temporary — `Evaluate(line.substr(5), host)` — and then the parser reads a string that died at the semicolon. The lab's tokens own their names; the price is a few short-string copies per parse, and parsing happens once per formula, not once per row.
 - **Right recursion for a left-associative operator.** The grammar reads more naturally that way, every one-operator test passes, and `8 - 3 - 2` is 7. The loop in `Additive` is the fix and the `8 - 3 - 2` row is the judge.
-- **`std::stod`.** Locale-dependent, and the locale is the host's. `from_chars`, always; and a test that switches the locale, or the bug ships.
-- **No depth limit.** The parser is correct for every formula a human types and crashes the host on the first hostile one — from a pasted file, a fuzzer, or a customer's macro that generates formulas. Bound the recursion and refuse with a position.
-- **Throwing for a parse error.** [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s hot-loop trap in its purest form: the box is retyped a hundred times a minute, and each keystroke is a throw. The error is the common case here; it is a value.
+- **`std::stod`.** Locale-dependent, and the locale is the host's. `from_chars`, always — and where the library has no `double` overload, which is Apple's libc++ for any deployment target before macOS 26, `strtod_l` with a `"C"` locale of your own, never the process's. And a test that switches the locale, or the bug ships.
+- **No depth limit.** The parser is correct for every formula a human types and crashes the host on the first hostile one — from a pasted file, a fuzzer, or a customer's macro that generates formulas. Bound the recursion *and* the tree's height, and refuse with a position: a flat sum never nests in the parser and still overflows the evaluator.
+- **Throwing for an error.** [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s table files *parse failed* under value, and an evaluation error — an unknown name on row 412,809 of a filter — is that chapter's hot-loop case. A `throw` inside the parser caught once at `Parse` is a legitimate shape; it was not chosen because every level needs the position as data anyway, and a value carries it for free.
 - **Storing the provider in the tree.** A `const ISymbols*` member of `Formula` reads as convenience and is [Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)'s loan with no term: the document closes, the column is still bound to the formula, and the next refresh dereferences a dead adapter. The provider is a parameter of `Evaluate`, per call.
 - **Evaluating against the host off the main thread.** The parser is pure and thread-agnostic; the provider is not. A formula evaluated for a client on a transport thread must ride [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out)'s queue.
 
@@ -295,8 +328,8 @@ The lab is `exercises/exprlab/` — the task card walks the same road as this ch
 1. **Write the tokenizer** for numbers, dotted names, the operators, parentheses and the comma, each token carrying its byte offset; refuse the first byte that is nothing, with its position. Parse numbers with `from_chars`.
 2. **Write the parser** as one function per precedence level, returning a value-or-error at every level, and make `8 - 3 - 2` come out 3 before adding anything else.
 3. **Write the provider seam** — `Value` and `Call` over a `string_view` name — and a fake over a map of objects; make `wall.width * 2` evaluate.
-4. **Add the depth guard**, then paste a thousand parentheses and confirm you get a position, not a signal. Remove the guard once, run the same input under the canonical flags, and read what the sanitizer does and does not say.
-5. **Write the judge**: the value table by hand first, the error positions, the depth limit at N and N + 1, and the locale switch. `scripts/check.sh expr.cpp main.cpp` is the one-line build.
+4. **Add the depth guard**, then paste a thousand parentheses and confirm you get a position, not a signal. Remove the guard once and run the same input under the canonical flags — on a thread with a 512 KB stack, or with ten thousand parentheses on the main thread's 8 MB — and read what the sanitizer does and does not say: `stack-overflow` and a hundred of your frames, and no byte of the text. Then bound the tree's height too, and paste a thousand terms of `1+1+…`.
+5. **Write the judge**: the value table by hand first, the error positions, the depth limit at N and N + 1, and the locale switch. `../../scripts/check.sh expr.cpp main.cpp` from the lab directory is the one-line build.
 6. **Stretch:** string literals and a `contains` function over them; a `Formula::Names()` that lists the identifiers a formula references, so the host can subscribe to exactly those properties; the seam as a template policy ([Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)), and a sentence on why the run-time provider was the right default.
 
 ---

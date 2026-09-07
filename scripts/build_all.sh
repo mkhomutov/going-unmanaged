@@ -342,8 +342,19 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/dumplab 0 > /dev/null
 # refusal path is genuinely exercised, not just compiled.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/bridgelab > /dev/null
 # The Chapter 42 lab: the judge inside the binary (values, positions, depth,
-# locale), the sanitizers around it.
-UBSAN_OPTIONS=halt_on_error=1 $OUT/exprlab > /dev/null
+# locale), the sanitizers around it. The judge's last line says which German
+# locale it switched to, or that it skipped: a locale check that skipped in
+# silence is one nobody ran (CI's Linux job generates de_DE first).
+UBSAN_OPTIONS=halt_on_error=1 $OUT/exprlab | sed -n 's/^formula ok: .*the locale /  ok   exprlab: locale /p'
+# The lab's number parse has two spellings under one #if: from_chars where
+# the library has the double overload, strtod_l with a "C" locale where it
+# does not. Apple's libc++ has the overload only for a deployment target of
+# macOS 26 or later, so on macOS an older target selects the fallback: built
+# and judged too, or the #else branch is a listing nobody checks.
+if [ "$(uname -s)" = Darwin ]; then
+    run "exprlab (macOS 15 target: the strtod_l fallback)" $CXX $FLAGS -mmacosx-version-min=15.0 exercises/exprlab/expr.cpp exercises/exprlab/main.cpp -o $OUT/exprlab_fallback
+    UBSAN_OPTIONS=halt_on_error=1 $OUT/exprlab_fallback > /dev/null
+fi
 # The Chapter 39 lab: five value assertions across the boundary, so a UBSan
 # finding that printed and exited 0 would leave the section green.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/interoplab > /dev/null
