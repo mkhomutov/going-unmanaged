@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 41 chapters, appendices A–K), indexed by `book/README.md`. The
+(6 parts, 42 chapters, appendices A–K), indexed by `book/README.md`. The
 single-file `going-unmanaged.md` is no longer checked in: it is a build
 artifact produced by `scripts/build_book.sh`. Appendices run A–K with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
@@ -73,6 +73,14 @@ policy type, Chapter 28's promised compile-time fake — whose lab's broken
 policy CALLS Pump on purpose: a member of a class template is compiled only
 when used, so without that call the missing function would compile clean
 even with the static_assert deleted, and the refusal would prove nothing.
+Chapter 42 (item 25) is the formula field — user-typed text evaluated
+against injected objects: tokens as a variant that own their text, a
+tree of a closed set of node kinds behind `unique_ptr`, recursive descent
+with a value-or-error at every level (a loop where right recursion gives
+7 for `8 - 3 - 2`), an RAII depth guard, and a provider seam whose dot
+belongs to the provider; exprlab's judge is a hand-computed value table,
+error positions, the depth limit at N and N+1, and a German locale
+switched on where the machine has it.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -84,7 +92,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–41, `A-`…`K-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–42, `A-`…`K-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
@@ -299,6 +307,28 @@ Chapter 25's Finding 10.
   (the constlab discipline: the diagnostic's message only, path cut away).
   The three headers are quoted banner-stripped in the chapter (BANNER
   pairings), so editing one means editing Chapter 41 in the same commit
+- `exercises/exprlab/` — Chapter 42's lab: `expr.h` (an `Error` with a
+  position, the `ISymbols` provider seam, a `Formula` parsed once and
+  evaluated per row, `max_depth`), `expr.cpp` (tokenizer, recursive-descent
+  parser, the tree, the evaluator) and the judging `main.cpp`, plus a
+  TASK.md that carries no listing. `expr.h` is quoted whole (a BANNER
+  pairing); every other cpp fence in the chapter must be in the lab's
+  sources (the Chapter 39 direction). build_all.sh builds the two TUs
+  under the canonical flags and runs the judge; `from_chars` for numbers
+  is load-bearing — `strtod` reads the locale, and the judge switches to
+  `de_DE` where the machine has it (CI's Linux job generates the locale;
+  the judge prints which it used, or that it skipped). Two rules are
+  load-bearing and easy to undo by accident. (1) `max_depth` bounds BOTH
+  the parser's recursion (the `Depth` guard in `Unary`) and the tree's
+  height (checked in `Build`, where every node is made): a flat `1+1+…`
+  never nests in the parser and still builds a spine the evaluator and
+  the destructor recurse through — two hundred terms overflow a 512 KB
+  thread with the guard alone. (2) The number parse has two spellings
+  under one `#if`: `from_chars` where the library has the `double`
+  overload, `strtod_l` with a `"C"` locale where it does not — Apple's
+  libc++ has it only for a deployment target of macOS 26 or later — and
+  build_all.sh builds the lab a second time on macOS with
+  `-mmacosx-version-min=15.0` so the `#else` branch is judged too
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
@@ -576,7 +606,7 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 42+, Appendix L+) — no item requires renumbering. Delivered items
+(Chapter 43+, Appendix L+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now

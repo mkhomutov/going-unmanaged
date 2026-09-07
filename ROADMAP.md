@@ -1023,6 +1023,44 @@ recipe builds it; key *storage* (the platform's keychain or DPAPI) is a
 platform-API question outside the cookbook; and TLS stays out of scope
 because Appendix G already places the bridge on loopback with a token.
 
+### 25. The formula field — user-typed text against injected objects — DONE (Chapter 42)
+
+**Missing:** the whole subject. String parsing was covered in pieces —
+Recipe 2's split, Recipe 19's `from_chars`, Chapter 19's word counter,
+Chapter 34's bytes — and nothing parsed *structure*: no tokenizer, no
+grammar, no tree, no evaluator, and no seam between an expression and
+the objects it names. The C# reader's reflex for "the user types a
+formula" is `DataTable.Compute`, `System.Linq.Expressions` or Roslyn
+scripting — someone else parses it — and none of those exist here.
+
+**Evidence:** the fourth coverage review (2026-09-07, thirty-five topics)
+asked for "string parsing recipes and building an expression processor
+with objects injection"; Recipes 44–45 answered the string half, and this
+item is the other. The gate is met on the book's own pages: the pitfalls
+the job walks into here are all taught chapters apart and never together
+— a view into a dead string (Chapter 10), a recursion the user's text
+sizes (Chapter 3), a locale-dependent number parse (Recipe 19 mentions,
+nothing demonstrates), a provider stored as a raw pointer (Chapter 33's
+loan), and the two seams of Chapters 28 and 41 with no worked case where
+the run-time seam is the right answer.
+
+**Delivered:** Chapter 42 — *The Formula Field* — and `exercises/exprlab/`:
+`expr.h` (an `Error` with a position, the `ISymbols` provider seam whose
+dot belongs to the provider, a `Formula` parsed once and evaluated per
+row, a `max_depth`), `expr.cpp` (tokens as a variant that own their text,
+`from_chars` for numbers, a tree of a closed set of node kinds behind
+`unique_ptr`, recursive descent with a value-or-error at every level and
+a loop where right recursion would give 7 for `8 - 3 - 2`, an RAII depth
+guard, one `std::visit` to evaluate) and a judge that holds it to a value
+table worked out by hand, to error positions, to the depth limit at N and
+N + 1, and to a German locale switched on where the machine has it.
+`build_all.sh` runs it on every push; `check_verbatim.sh` holds the
+header whole and every other fence in the chapter to the lab.
+
+**Still open from this item:** nothing. String literals, a `Names()`
+listing, and the seam as a template policy are the card's stretch goals,
+not gaps.
+
 ## Tier 3 — distinctive to this handbook
 
 Material no general C++ book would carry, which is precisely why it belongs

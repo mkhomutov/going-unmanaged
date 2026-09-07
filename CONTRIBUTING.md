@@ -217,7 +217,7 @@ appendix section should have an answer to each; where the honest answer is
 ## Where the book lives
 
 The book is one file per chapter under [book/](book/README.md):
-`01-ownership-and-raii.md` … `41-templates-you-will-write.md`, then
+`01-ownership-and-raii.md` … `42-the-formula-field.md`, then
 `A-`…`K-<slug>.md` for the appendices (A–K, no gap — E is the
 glossary, G the bridge catalogue, H the choosing procedures, I
 const-correctness, J the CMake catalogue, K the standards catalogue), with

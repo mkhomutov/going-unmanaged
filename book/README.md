@@ -70,6 +70,7 @@ You have spent years in managed code — the runtime tracked your objects, the G
 39. [The Round Trip Home](39-the-round-trip-home.md#chapter-39--the-round-trip-home) — P/Invoke from the native side: a signature written twice in two languages, and the four things nothing checks
 40. [CMake for the Plug-in](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in) — a MODULE with one exported symbol, an SDK that ships no config package, and the build decisions Chapter 26 never had to make
 41. [Templates You Will Write](41-templates-you-will-write.md#chapter-41--templates-you-will-write) — the working subset: the seam as a template parameter, static_assert as the judge, the three utilities, and how to read the error
+42. [The Formula Field](42-the-formula-field.md#chapter-42--the-formula-field) — user-typed text evaluated against the host's objects: tokens as a closed set, a tree behind unique_ptr, recursive descent with a value at every level, the provider seam, and a judge whose oracle is a table worked out by hand
 
 **[Appendices](A-fundamentals-refresher.md#appendices)**
 
