@@ -9,13 +9,14 @@
 // exercises the write callback (a 200 KB fixture arrives in many chunks, so
 // an append that assigned would lose all but the last) and the transport's
 // error path (a missing file is CURLE_FILE_COULDNT_READ_FILE, and response
-// code 0 because there was no server); and a loopback server of sixty lines
-// - POSIX sockets, because the standard library has none (Chapter 27) -
-// answers with a redirect to follow, a 500 whose body is an error page, a
-// stall the client's deadline must cut short, and, for Recipe 46, an echo
-// of the request body and its Content-Type as JSON, so the POST is judged
-// on what the server RECEIVED, plus a 400, a 200 that is HTML, and a 200
-// whose JSON lacks the key the caller needs. Every wait is bounded: the
+// code 0 because there was no server); and a small loopback server - POSIX
+// sockets, because the standard library has none (Chapter 27) - answers
+// with a redirect to follow, a 500 whose body is an error page, a stall
+// the client's deadline must cut short, and, for Recipe 46, an echo of the
+// request body and its Content-Type as JSON, so the POST is judged on what
+// the server RECEIVED, plus a 400 whose body is JSON (so only the status
+// refuses it), a 200 that is HTML, and a 200 whose JSON lacks the key the
+// caller needs. Every wait is bounded: the
 // server closes each connection after one canned reply, so a mutant that
 // waits in seconds where the recipe waits in milliseconds gets "server
 // returned nothing", never a hang. The harness's server is POSIX-only; the
@@ -101,6 +102,9 @@ HttpResult http_post_json(const std::string& url, const json& body, std::chrono:
         throw std::runtime_error("curl_easy_init failed");
     }
     HeaderList headers(curl_slist_append(nullptr, "Content-Type: application/json"), &curl_slist_free_all);
+    if (!headers) {
+        throw std::runtime_error("curl_slist_append failed");   // a null list means "no custom headers": a silent form post
+    }
     const std::string payload = body.dump();        // NAMED: libcurl borrows these bytes until perform returns
     HttpResult r;
     curl_easy_setopt(easy.get(), CURLOPT_URL, url.c_str());
@@ -312,7 +316,7 @@ int main() {
         reply("500 Internal Server Error", "<html>Internal Server Error</html>"),
         "stall",
         "echo",                                                     // Recipe 46, from here
-        reply("400 Bad Request", "<html>Bad Request</html>", "Content-Type: text/html\r\n"),
+        reply("400 Bad Request", "{\"error\": \"bad request\"}", "Content-Type: application/json\r\n"),
         reply("200 OK", "<html>Maintenance</html>", "Content-Type: text/html\r\n"),
         reply("200 OK", "{\"id\": 7}", "Content-Type: application/json\r\n"),
     });
@@ -344,9 +348,11 @@ int main() {
     assert(seen);
     assert(seen->at("received") == body);                       // what the server got IS the object
     assert(seen->at("content_type") == "application/json");     // and it was told what the bytes were
-    // The three verdicts, one refusal each: the server's no (a 400 with an
-    // HTML body), a 200 that is not JSON, and JSON that parses but lacks
-    // the key - Recipe 26's at(), throwing out_of_range by name.
+    // The three verdicts, one refusal each: the server's no - a 400 whose
+    // body is perfectly parseable JSON, so only the status can refuse it,
+    // which is what makes the ok() gate in json_reply load-bearing - a 200
+    // that is not JSON, and JSON that parses but lacks the key - Recipe 26's
+    // at(), throwing out_of_range by name.
     const HttpResult refused = http_post_json(server.url("/readings"), body, 2000ms);
     assert(refused.transport == CURLE_OK && refused.status == 400);
     assert(!json_reply(refused));

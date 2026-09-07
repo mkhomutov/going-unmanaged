@@ -156,7 +156,7 @@ Chapter 25's Finding 10.
   agree with each other. `http.cpp` is the third probe, libcurl the same way
   (`--require-curl`), judged with no network: a `file://` fixture runs the
   write callback and the transport's error path exactly as for `https://`,
-  and a forty-line loopback server in the harness (POSIX sockets;
+  and a loopback server in the harness (POSIX sockets;
   `http.cpp` is not built by the MSVC job) serves a redirect, a 500 and a
   stall, so the server's verdict, the redirect follow and the timeout's
   unit are judged too. Recipe 46 (post a JSON body, read a JSON reply)
@@ -164,7 +164,8 @@ Chapter 25's Finding 10.
   nlohmann/json with `-isystem`; for it the harness's server reads a
   request whole and echoes the body and its Content-Type back as JSON, so
   the round trip is judged on what the server received, then answers a
-  400, a 200 that is HTML, and JSON without the key. `database.cpp` is the fourth probe, sqlite3
+  400 whose body is JSON (so only the status refuses it), a 200 that is
+  HTML, and JSON without the key. `database.cpp` is the fourth probe, sqlite3
   (`--require-sqlite`), judged by an in-memory database — and by
   `sqlite3_close`'s return code, which is `SQLITE_OK` only when every
   statement was finalized, so a leaked statement fails the run the way

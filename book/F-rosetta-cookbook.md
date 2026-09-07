@@ -64,7 +64,7 @@ stays right.
 | `MemoryMappedFile.CreateOrOpen` / `CreateViewAccessor` | `FileChannel.map` (files only) | [Recipe 43 — Share a buffer with another process](#recipe-43--share-a-buffer-with-another-process) |
 | `Regex.IsMatch` / `Match(...).Groups[1]` / `Regex.Replace` | `Pattern.compile` / `Matcher.group(1)` / `replaceAll` | [Recipe 44 — Match a pattern](#recipe-44--match-a-pattern) |
 | `Trim` / `Equals(OrdinalIgnoreCase)` / `StartsWith` / `EndsWith` | `strip` / `equalsIgnoreCase` / `startsWith` / `endsWith` | [Recipe 45 — Trim, compare ignoring case, prefix and suffix](#recipe-45--trim-compare-ignoring-case-prefix-and-suffix) |
-| `PostAsJsonAsync` / `ReadFromJsonAsync<T>` | `HttpRequest.BodyPublishers.ofString` + Jackson | [Recipe 46 — Post a JSON body and read a JSON reply](#recipe-46--post-a-json-body-and-read-a-json-reply) |
+| `PostAsJsonAsync` / `ReadFromJsonAsync<T>` | `BodyPublishers.ofString(mapper.writeValueAsString(r))` / Jackson `readValue` | [Recipe 46 — Post a JSON body and read a JSON reply](#recipe-46--post-a-json-body-and-read-a-json-reply) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 **The clocks, by name.** The five things `System` gave you for time, and
@@ -1950,12 +1950,11 @@ page, where `HttpClient` follows by default. The `.count()` is Recipe
 the `_MS` option. `curl_global_init` runs once per process before any
 thread exists — the init entry point in a plug-in, never a static
 initializer ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit))
-— and a POST is the same handle with `CURLOPT_POSTFIELDS` and a
-`curl_slist` under `CURLOPT_HTTPHEADER`, a second Recipe 7 type with
-`curl_slist_free_all` as its deleter. The harness needs no network and
+— and a POST is the same handle turned around, Recipe 46. The harness
+needs no network and
 has two halves: a `file://` fixture, the one URL scheme with nothing
 behind it, exercises the callback and the transport's error path, and a
-loopback server of forty lines — POSIX sockets, since the standard library
+small loopback server — POSIX sockets, since the standard library
 has none — answers with a redirect to follow, a 500 whose body is an error
 page, and a stall the deadline cuts short, so both verdicts are judged and
 the timeout's unit with them. Needs `<curl/curl.h>` and a link against libcurl —
@@ -2410,7 +2409,7 @@ analyzers nag about. Needs `<cctype>`, `<string_view>`.
 
 ### Recipe 46 — Post a JSON body and read a JSON reply
 
-**In C#:** `var resp = await http.PostAsJsonAsync(url, reading); resp.EnsureSuccessStatusCode(); var reply = await resp.Content.ReadFromJsonAsync<Reply>();`
+**In C#:** `var resp = await http.PostAsJsonAsync(url, body); resp.EnsureSuccessStatusCode(); var reply = await resp.Content.ReadFromJsonAsync<Reply>();`
 
 **The recipe:**
 
@@ -2423,6 +2422,9 @@ HttpResult http_post_json(const std::string& url, const json& body, std::chrono:
         throw std::runtime_error("curl_easy_init failed");
     }
     HeaderList headers(curl_slist_append(nullptr, "Content-Type: application/json"), &curl_slist_free_all);
+    if (!headers) {
+        throw std::runtime_error("curl_slist_append failed");   // a null list means "no custom headers": a silent form post
+    }
     const std::string payload = body.dump();        // NAMED: libcurl borrows these bytes until perform returns
     HttpResult r;
     curl_easy_setopt(easy.get(), CURLOPT_URL, url.c_str());
@@ -2457,33 +2459,42 @@ Recipe 25 on both ends of it. The header list is one more C handle with
 a matching free — `curl_slist_free_all`, Recipe 7's shape for the
 second time on one page — and `CURLOPT_POSTFIELDS` is the reason the
 serialized body has a name: libcurl keeps the *pointer*, not a copy, and
-reads the bytes during `perform`, so a temporary from `body.dump()` on
-that line would be gone before the request left
+reads the bytes during `perform`
 ([Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)'s
 loan, with the SDK on the borrowing side). `PostAsJsonAsync` set the
 content type for you; here it is the one header the list carries,
-because a server that reads it (the echo server in the harness does)
-sees a string body otherwise. The reply is
+because without it libcurl's default is
+`application/x-www-form-urlencoded`, and a JSON body under that header
+is a form with one nonsense field to any server that decodes forms. A
+body of a megabyte or more also gets `Expect: 100-continue`, and a
+server that never answers it costs a one-second wait per request —
+`curl_slist_append(headers, "Expect:")` removes it. The reply is
 [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
 decision made three times: the transport's verdict and the server's are
 Recipe 41's two, and the third — is this JSON at all — is a value too,
 because a maintenance page with a 200 on it is an answer the server
 gave, not an event; so `json_reply` parses with exceptions off and
-returns `nullopt`, where Recipe 26's `parse` throws because *its* junk
-was a broken file. What comes back is Recipe 26's document, and the
+returns `nullopt`, where Recipe 26's `parse` throws because
+`load_config` is the deepest frame and a broken config abandons the
+whole load — `json_reply` stands at the edge, where Chapter 8 turns a
+throw into a value. What comes back is Recipe 26's document, and the
 required key is still `at()`, which throws `out_of_range` naming it.
-`EnsureSuccessStatusCode` and `ReadFromJsonAsync` folded all three
-verdicts into two exception types; `HttpResult` and the `optional` keep
-them apart, and `ok()` plus a check is the everyday call. It is also,
-to the byte, the shape of a call to a hosted language model — JSON in,
-JSON out, a vendor's endpoint in the URL and its schema in the body,
-nothing else — and [Chapter 27](27-dependency-management.md#chapter-27--dependency-management)
+`EnsureSuccessStatusCode` and `ReadFromJsonAsync` folded the three
+verdicts into `HttpRequestException` for the first two and
+`JsonException` for the third (with Recipe 41's `TaskCanceledException`
+for the timeout); `HttpResult` keeps the first two apart and the
+`optional` carries the third, so the everyday call is `r.ok()`, then
+`json_reply(r)`, and the reason for a `nullopt` is still in `r`. It is
+also the shape of a call to a hosted language model — JSON in, JSON
+out, a vendor's endpoint in the URL, its schema in the body and its
+credential as one more entry on the header list — and
+[Chapter 27](27-dependency-management.md#chapter-27--dependency-management)
 says where in a plug-in such a call runs. Needs
 `<curl/curl.h>` and libcurl as Recipe 41, `<nlohmann/json.hpp>` as
 Recipe 25, `<chrono>`, `<memory>`, `<optional>`, `<string>`.
 
 > [!WARNING]
-> **Trap:** `curl_easy_setopt(easy, CURLOPT_POSTFIELDS, body.dump().c_str())` compiles, and the temporary dies at the semicolon — libcurl reads freed memory during `perform`, a `heap-use-after-free` under ASan and, without it, a request body of whatever the allocator left there; name the string, and keep it alive until `perform` returns.
+> **Trap:** `curl_easy_setopt(easy, CURLOPT_POSTFIELDS, body.dump().c_str())` compiles, and the temporary dies at the semicolon — libcurl reads dead memory during `perform`: a `heap-use-after-free` under ASan, or `stack-use-after-scope` for a body short enough to fit the small-string buffer, which is also the body that *works* without ASan until the payload grows; name the string, and keep it alive until `perform` returns.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

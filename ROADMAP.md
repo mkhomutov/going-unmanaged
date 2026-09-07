@@ -1640,7 +1640,7 @@ with a large binary and a licence attached. Chapter 27's batteries section
 carries the second reading in one paragraph; Appendix C gains one sentence
 pointing there for the reader who arrived with the first. Naming a vendor's
 endpoint would break invariant 4 (no real product names in SDK material),
-which is one more reason Recipe 41 stays generic.
+which is one more reason Recipes 41 and 46 stay generic.
 
 ---
 
