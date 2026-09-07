@@ -96,7 +96,8 @@ Chapter 25's Finding 10.
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point
-- `exercises/` — one directory per exercise, each with a TASK.md task card;
+- `exercises/` — one directory per exercise, each with a TASK.md task card
+  (three non-exercise directories aside: `cookbook/`, `choosing/`, `skeleton/`);
   `exercises/README.md` is the index (exercise ↔ chapter ↔ solution)
 - `exercises/fakesdk/`, `exercises/fakedevice/` — also carry vendor-style code
   users must NOT edit (contracts quoted verbatim in chapters 17/18)
@@ -213,6 +214,35 @@ Chapter 25's Finding 10.
   with NRVO on a returned temporary and a returned named local both
   measure zero and the page's guaranteed-vs-permitted distinction is
   never exercised
+- `exercises/skeleton/` — Chapter 26's project layout as a directory to
+  copy, the third non-exercise directory: `CMakeLists.txt` (root, `src/`,
+  `tests/`), `CMakePresets.json` (`dev`, `release`), `.clang-format`
+  (Google-based, 4-space, 120 columns), `.clang-tidy` (bugprone, performance,
+  `readability-identifier-naming` with the book's PascalCase/`name_`/`k`
+  rules, `WarningsAsErrors: '*'`), `include/myplugin/session.h`,
+  `src/session.cpp`, `tests/session_test.cpp`, and READMEs in `cmake/` and
+  `third_party/` saying what goes there. build_all.sh runs its README's
+  three commands literally (`cmake --preset dev`, build, `ctest`) under the
+  cmake probe, reads `-fsanitize=address` back from the compile database,
+  and removes `exercises/skeleton/build/` afterwards. CI's `skeleton-style`
+  job is the style half: `clang-format --dry-run --Werror` and `clang-tidy`
+  over the skeleton's sources with pip-pinned tool versions (format output
+  moves between clang-format majors), plus a negative test that rewrites
+  `count_` to `_Count` and requires tidy to refuse it naming both
+  `reserved-identifier` and `identifier-naming` (two grep statements, not one
+  `&&` list: under `bash -e` a failure inside `&&` is ignored unless last).
+  The buildlab-msvc job builds it under Visual Studio with the sanitizer on
+  and runs its test through CTest. It is the ONLY directory the repository
+  formats by machine: the labs' layout — one-line structs, aligned trailing
+  comments, a short body on the line that declares it — is what the chapters
+  quote verbatim, and a formatter over them would break every verbatim
+  pairing at once. Two rules are load-bearing: the test binary links the
+  sanitizer target BY NAME as well as inheriting it through the library, and
+  build_all.sh reads the flag back per translation unit — a grep for the
+  flag anywhere passes with the library instrumented and the test not; and
+  `MYPLUGIN_BUILD_TESTS` defaults to ON only at top level, because
+  `enable_testing()` registers tests for its own directory and below, never
+  for a consumer's root
 - `exercises/exitlab/` — Chapter 32's ticket lab. TASK.md carries the broken
   2.4.1 listings (book-only, they exist to fail); the committed files are
   the FIXED state, quoted verbatim in the chapter's fix section, and

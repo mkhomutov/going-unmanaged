@@ -56,6 +56,44 @@ jobs:
           if [ "$(uname -s)" = Linux ]; then sudo apt-get update -qq && sudo apt-get install -y -qq libcurl4-openssl-dev libsqlite3-dev pkg-config && sudo locale-gen de_DE.UTF-8; fi
           ./scripts/build_all.sh --require-cmake --require-git --require-tsan --require-expected --require-openssl --require-curl --require-sqlite
 
+  # Chapter 26's root files, held to their own tools. exercises/skeleton/ is
+  # the one directory the repository formats by machine - the labs keep
+  # hand-aligned trailing comments the tool would fold - so clang-format
+  # --dry-run --Werror runs over it, then clang-tidy against the compile
+  # database, names included (.clang-tidy turns readability-identifier-naming
+  # and bugprone-reserved-identifier into errors). The labs are not
+  # formatted because their layout - one-line structs, aligned comments, a
+  # short body on the line that declares it - is what the chapters quote. Both tools are pinned by
+  # version through pip, because clang-format's idea of Google style moves
+  # between major versions and a format check must agree with the machine
+  # that formatted the files. And a negative test, because a style check
+  # that cannot fail is not a check: a reserved identifier, written into the
+  # header and the source, must be refused and named.
+  skeleton-style:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: pip install clang-format==23.1.0 clang-tidy==22.1.8
+      - run: |
+          cd exercises/skeleton
+          clang-format --version
+          clang-format --dry-run --Werror src/*.cpp include/myplugin/*.h tests/*.cpp
+          cmake -S . -B build/ci -DCMAKE_BUILD_TYPE=Debug > /dev/null
+          clang-tidy --version
+          clang-tidy -p build/ci src/session.cpp tests/session_test.cpp
+      - run: |
+          cd exercises/skeleton
+          sed -i 's/count_/_Count/g' include/myplugin/session.h src/session.cpp
+          if clang-tidy -p build/ci src/session.cpp > tidy.log 2>&1; then
+            echo "FAIL: clang-tidy accepted a reserved identifier"; cat tidy.log; exit 1
+          fi
+          # Two statements, not one && list: under bash -e a failing command
+          # inside && is ignored unless it is the last, and both must hold.
+          grep -q "reserved-identifier" tidy.log
+          grep -q "identifier-naming" tidy.log
+          echo "refused, and named both checks"
+          git checkout -- .
+
   # The book states sanitizer behavior that differs between the maintainer's
   # macOS/arm64 machine and Linux - exit codes, leak detection, whether a frame
   # carries a column number - and an audit found several places where one
@@ -128,6 +166,18 @@ jobs:
           cmake --build build/msvc-asan --config Debug
           asan_dll=$(ls "/c/Program Files/Microsoft Visual Studio"/*/*/VC/Tools/MSVC/*/bin/Hostx64/x64/clang_rt.asan_dynamic-x86_64.dll | tail -1)
           PATH="$(dirname "$asan_dll"):$PATH" ./build/msvc-asan/Debug/greet.exe
+      # Chapter 26's tree as a directory (exercises/skeleton/): its MSVC
+      # branches are the same shape as buildlab's, and a branch nothing builds
+      # is a branch nobody is checking. Built under Visual Studio with the
+      # sanitizer on and its test run through CTest, the ASan runtime on PATH
+      # as above; the dev preset is not used here because a multi-config
+      # generator ignores the CMAKE_BUILD_TYPE it pins.
+      - name: Skeleton (MYPLUGIN_SANITIZE=ON)
+        run: |
+          cmake -S exercises/skeleton -B build/msvc-skeleton -DMYPLUGIN_SANITIZE=ON
+          cmake --build build/msvc-skeleton --config Debug
+          asan_dll=$(ls "/c/Program Files/Microsoft Visual Studio"/*/*/VC/Tools/MSVC/*/bin/Hostx64/x64/clang_rt.asan_dynamic-x86_64.dll | tail -1)
+          PATH="$(dirname "$asan_dll"):$PATH" ctest --test-dir build/msvc-skeleton -C Debug --output-on-failure
 
       # cl is not on PATH in this shell; the steps above never needed it because
       # cmake locates the toolchain itself. Deliberately placed AFTER them, so

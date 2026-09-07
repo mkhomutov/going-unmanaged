@@ -113,6 +113,22 @@ numbers may still move.
   `"C"` locale of its own) is built and judged on macOS too. Appendix B
   gains the principle, Appendix E three entries, Chapter 31 a row and a
   cross-reference, Appendix K the availability note.
+- **`exercises/skeleton/` — Chapter 26's tree as a directory to copy**
+  (MINOR — an appended directory). The chapter described a layout and
+  two root files and said, in as many words, that nothing in the
+  repository checked either. Now something does: the tree with its root
+  `CMakeLists.txt`, `CMakePresets.json`, `.clang-format` and
+  `.clang-tidy` in place, a library and a test that is also the header's
+  one consumer, and READMEs in `cmake/` and `third_party/` saying what
+  goes there. `build_all.sh` runs the README's three commands under the cmake
+  probe and reads the sanitizer switch back from the compile database;
+  a new CI job, `skeleton-style`, holds the sources to `clang-format
+  --dry-run --Werror` and `clang-tidy` with the book's naming rules as
+  errors, tool versions pinned, and refuses a reserved identifier on
+  purpose so the check is known to be able to fail; the MSVC job builds
+  it under Visual Studio with the sanitizer on. Chapter 26, Appendix A.8
+  and Appendix J point at it; the labs beside it stay unformatted by
+  machine, because their layout is what the chapters quote.
 
 ## [0.11.0] — 2026-09-06
 
