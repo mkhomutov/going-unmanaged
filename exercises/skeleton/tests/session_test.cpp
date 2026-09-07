@@ -1,7 +1,10 @@
 // The test binary: a second main (Chapter 28), so it can never be a source of
 // the library. CHECK counts failures and sets the exit code - not assert,
 // which a Release build compiles away (Appendix H).
-#include "myplugin/session.h"
+// Angle brackets: this file is a consumer, and the header arrives on the
+// include path the library exports - the spelling that cannot collide
+// with a vendor's session.h.
+#include <myplugin/session.h>
 
 #include <cstdio>
 

@@ -1,8 +1,10 @@
 # Exercises — the index
 
-Every exercise is stated in full in the book; each directory here holds a task
-card (`TASK.md`) — and, for the SDK labs, the vendor code — so you can
-attempt everything cold, without the book's reference solution on the next screen.
+Every exercise is stated in full in the book; each exercise directory here
+holds a task card (`TASK.md`) — and, for the SDK labs, the vendor code — so
+you can attempt everything cold, without the book's reference solution on
+the next screen. Three directories are not exercises, and the paragraph
+after the table says which.
 
 The rule that makes it work (Chapter 24): **do the exercises cold** — compiler,
 debugger, sanitizer, and offline docs as your only feedback loops. Read the

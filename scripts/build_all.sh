@@ -1004,8 +1004,13 @@ if command -v cmake > /dev/null 2>&1; then
         echo "build_all.sh: the skeleton's tests failed" >&2
         exit 1
     fi
-    grep -q 'fsanitize=address' "$SK/build/dev/compile_commands.json" || {
-        echo "build_all.sh: MYPLUGIN_SANITIZE did not reach the skeleton's compile lines" >&2; exit 1; }
+    # Per translation unit, as buildlab's section reads its switches: a grep
+    # for the flag anywhere would pass with the library instrumented and the
+    # test binary - the one target that must never be built without it - not.
+    for tu in session session_test; do
+        grep -q -- "-fsanitize=address.*$tu\.cpp" "$SK/build/dev/compile_commands.json" || {
+            echo "build_all.sh: MYPLUGIN_SANITIZE did not reach $tu.cpp's compile line" >&2; exit 1; }
+    done
     rm -rf "$SK/build"
     echo "  ok   skeleton: cmake --preset dev, built, ctest green, sanitizers in the compile database"
 elif [ "$REQUIRE_CMAKE" = 1 ]; then

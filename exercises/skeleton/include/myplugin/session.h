@@ -8,7 +8,8 @@
 namespace myplugin {
 
 // One measurement session: readings in, a mean out. Small on purpose - it
-// exists so the tree has a library, a test and a consumer of the header.
+// exists so the tree has a library and a test that is also the header's
+// one consumer.
 class Session {
 public:
     void Ingest(double reading);

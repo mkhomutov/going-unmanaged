@@ -1,7 +1,10 @@
 # The test binary: links the code under test, runs under CTest, and reads
 # its verdict from the exit code (Chapter 28).
 add_executable(session_test session_test.cpp)
-target_link_libraries(session_test PRIVATE myplugin::myplugin)
+# The sanitizer target is named here as well as inherited through the
+# library: the test binary is the one target that must never be built
+# without it, so it says so itself (Chapter 26's checklist, Chapter 28).
+target_link_libraries(session_test PRIVATE myplugin::myplugin myplugin_sanitizers)
 if(MSVC)
     target_compile_options(session_test PRIVATE /W4)
 else()

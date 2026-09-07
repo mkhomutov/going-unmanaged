@@ -1,7 +1,10 @@
 # myplugin — the project layout Chapter 26 describes, as a directory to copy
 
-Not an exercise: a starter. Copy it, rename `myplugin` (the project, the
-`include/myplugin/` directory, the namespace), and the three commands work.
+Not an exercise: a starter. Copy it, rename every spelling of `myplugin` —
+the project, the include directory, the namespace, the `MYPLUGIN_` options
+and the preset's cache variable that sets one of them; a half-rename builds
+green with the sanitizers off, which is why `build_all.sh` reads the flag
+back from the compile database — and the three commands work.
 
 ```bash
 cmake --preset dev          # configure: Debug, sanitizers on, compile database
@@ -22,7 +25,8 @@ What is where, and the chapter that says why:
 | `third_party/` | vendored dependencies, each with a README naming its version (Chapter 27) |
 | `.clang-format` | layout, enforced by a tool (Appendix A.8) |
 | `.clang-tidy` | the analyzers and their severities, names included |
-| `.gitignore` | `build/` and nothing else generated |
+| `.gitignore` | `build/`, and every generated directory as one arrives |
+| `LICENSE`, `NOTICE` | not copied here — this directory travels under the repository's own; a copy of the tree needs its own, the terms unmodified (Chapter 26) |
 | `build/` | generated, ignored, the only directory `rm -rf` should ever touch |
 
 The repository holds this directory to its own rules: `build_all.sh`

@@ -1,10 +1,14 @@
 # The analyzers and their severities (Chapter 26's root files). Names are
 # checked here, where clang-format cannot: this project spells types and
-# functions in PascalCase, members with a trailing underscore, constants
-# with a k prefix (Appendix A.8's Google dialect), and an identifier that
-# starts with an underscore and a capital, or holds a double underscore, is
-# reserved to the implementation - bugprone-reserved-identifier is the check
-# a team turns on, and it is on here.
+# functions in PascalCase - clang-tidy's word for it is CamelCase - members
+# with a trailing underscore, constants with a k prefix, variables and
+# parameters in snake_case (Appendix A.8's Google dialect; a public data
+# member of a plain struct is a bare name in that dialect, so it is exempt).
+# An identifier that starts with an underscore and a capital, or holds a
+# double underscore, is reserved to the implementation:
+# bugprone-reserved-identifier is the check a team turns on, and it is on.
+# HeaderFilterRegex: diagnostics in this project's own headers count, the
+# system's do not - older clang-tidy versions hid header findings unless told.
 Checks: >
   -*,
   bugprone-*,
@@ -14,14 +18,32 @@ Checks: >
   performance-*,
   readability-identifier-naming
 WarningsAsErrors: '*'
+HeaderFilterRegex: 'include/myplugin/.*'
 CheckOptions:
+  readability-identifier-naming.NamespaceCase: lower_case
   readability-identifier-naming.ClassCase: CamelCase
   readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.TypeAliasCase: CamelCase
+  readability-identifier-naming.TypedefCase: CamelCase
+  readability-identifier-naming.TemplateParameterCase: CamelCase
   readability-identifier-naming.FunctionCase: CamelCase
   readability-identifier-naming.MethodCase: CamelCase
+  readability-identifier-naming.VariableCase: lower_case
+  readability-identifier-naming.ParameterCase: lower_case
+  readability-identifier-naming.PublicMemberCase: lower_case
+  readability-identifier-naming.PrivateMemberCase: lower_case
   readability-identifier-naming.PrivateMemberSuffix: _
+  readability-identifier-naming.ProtectedMemberCase: lower_case
   readability-identifier-naming.ProtectedMemberSuffix: _
-  readability-identifier-naming.ConstexprVariablePrefix: k
   readability-identifier-naming.ConstexprVariableCase: CamelCase
-  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.ConstexprVariablePrefix: k
+  readability-identifier-naming.GlobalConstantCase: CamelCase
+  readability-identifier-naming.GlobalConstantPrefix: k
+  readability-identifier-naming.StaticConstantCase: CamelCase
+  readability-identifier-naming.StaticConstantPrefix: k
+  readability-identifier-naming.ClassConstantCase: CamelCase
+  readability-identifier-naming.ClassConstantPrefix: k
+  readability-identifier-naming.EnumConstantCase: CamelCase
+  readability-identifier-naming.EnumConstantPrefix: k
   readability-identifier-naming.MacroDefinitionCase: UPPER_CASE

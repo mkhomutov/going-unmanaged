@@ -61,7 +61,9 @@ jobs:
   # hand-aligned trailing comments the tool would fold - so clang-format
   # --dry-run --Werror runs over it, then clang-tidy against the compile
   # database, names included (.clang-tidy turns readability-identifier-naming
-  # and bugprone-reserved-identifier into errors). Both tools are pinned by
+  # and bugprone-reserved-identifier into errors). The labs are not
+  # formatted because their layout - one-line structs, aligned comments, a
+  # short body on the line that declares it - is what the chapters quote. Both tools are pinned by
   # version through pip, because clang-format's idea of Google style moves
   # between major versions and a format check must agree with the machine
   # that formatted the files. And a negative test, because a style check
@@ -85,7 +87,10 @@ jobs:
           if clang-tidy -p build/ci src/session.cpp > tidy.log 2>&1; then
             echo "FAIL: clang-tidy accepted a reserved identifier"; cat tidy.log; exit 1
           fi
-          grep -q "reserved-identifier" tidy.log && grep -q "identifier-naming" tidy.log
+          # Two statements, not one && list: under bash -e a failing command
+          # inside && is ignored unless it is the last, and both must hold.
+          grep -q "reserved-identifier" tidy.log
+          grep -q "identifier-naming" tidy.log
           echo "refused, and named both checks"
           git checkout -- .
 
@@ -161,6 +166,18 @@ jobs:
           cmake --build build/msvc-asan --config Debug
           asan_dll=$(ls "/c/Program Files/Microsoft Visual Studio"/*/*/VC/Tools/MSVC/*/bin/Hostx64/x64/clang_rt.asan_dynamic-x86_64.dll | tail -1)
           PATH="$(dirname "$asan_dll"):$PATH" ./build/msvc-asan/Debug/greet.exe
+      # Chapter 26's tree as a directory (exercises/skeleton/): its MSVC
+      # branches are the same shape as buildlab's, and a branch nothing builds
+      # is a branch nobody is checking. Built under Visual Studio with the
+      # sanitizer on and its test run through CTest, the ASan runtime on PATH
+      # as above; the dev preset is not used here because a multi-config
+      # generator ignores the CMAKE_BUILD_TYPE it pins.
+      - name: Skeleton (MYPLUGIN_SANITIZE=ON)
+        run: |
+          cmake -S exercises/skeleton -B build/msvc-skeleton -DMYPLUGIN_SANITIZE=ON
+          cmake --build build/msvc-skeleton --config Debug
+          asan_dll=$(ls "/c/Program Files/Microsoft Visual Studio"/*/*/VC/Tools/MSVC/*/bin/Hostx64/x64/clang_rt.asan_dynamic-x86_64.dll | tail -1)
+          PATH="$(dirname "$asan_dll"):$PATH" ctest --test-dir build/msvc-skeleton -C Debug --output-on-failure
 
       # cl is not on PATH in this shell; the steps above never needed it because
       # cmake locates the toolchain itself. Deliberately placed AFTER them, so
