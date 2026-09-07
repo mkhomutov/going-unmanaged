@@ -24,7 +24,7 @@ heredoc by check_verbatim.sh. K is the standards catalogue — the lookup
 half of Chapter 10's "check your standard" flags: which standard a
 toolchain speaks and how to ask (feature-test macros, MSVC's
 `/Zc:__cplusplus`), every feature the book names by the standard it
-arrived in with the newer spelling beside the taught one, and the six
+arrived in with the newer spelling beside the taught one, and the
 standards in one sitting. Its probe is `exercises/cookbook/standard.cpp`,
 quoted by excerpt (check_verbatim holds page → file), built by
 build_all.sh at C++17, C++20 and — under the expected probe — C++23 with
