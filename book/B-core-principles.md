@@ -128,6 +128,7 @@ One line each. If you can say these fluently and back them with code, the concep
 - "Fail-able lookups return optional<T>, not null or sentinels."
 - "A closed set of alternatives is a std::variant by value, visited exhaustively; an open set someone else extends is a virtual base behind unique_ptr."
 - "string_view for read-only string params — zero copies. But never store one to a temporary."
+- "The standard a codebase speaks is a line in its build description, not a fact about its compiler — and whether a feature is there is its feature-test macro's answer, not `__cplusplus`'s, because the library ships behind the language."
 
 **STL**
 

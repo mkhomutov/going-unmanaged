@@ -26,12 +26,15 @@ Cookbook*), one translation unit per domain —
 | `containers.cpp` | 27 — pre-size a collection: `reserve` against `vector(n)` and `resize` |
 | `flags.cpp` | 31–32 — a feature flag read once and kept as a member; a `[Flags]` enum as an `enum class` with its operators |
 | `ownership.cpp` | 33–34 — an owned object as a field, and who disposes it; an object too big for the stack |
+| `standard.cpp` | Appendix K's probe, not a recipe — which standard the compiler was told to speak (`__cplusplus`, and `_MSVC_LANG` where `__cplusplus` lies) and which of the book's named features this toolchain's library actually ships, one feature-test macro per line; built at C++17 and C++20 with its readings asserted, at C++23 under the `expected.cpp` probe, refused at C++14 by its own `static_assert`, and by the `buildlab-msvc` job with and without `/Zc:__cplusplus` |
 | `watch.cpp` | 40 — notice a file changed: the polling watcher, judged by a bounded wait, a restored-older-timestamp change, and silence after the join; built under TSan as well, since it owns a thread |
 
 — each with a `main()` that asserts what its recipes claim.
 `scripts/build_all.sh` builds and runs all of them on every push, so a recipe
 that stops being true stops being green — all but one under the canonical
-flags, which pin C++17. `expected.cpp` is C++23, the one file here cut by
+flags, which pin C++17 (`standard.cpp`, Appendix K's probe, is built at
+those flags and again with the standard raised, because its readings are
+the claim). `expected.cpp` is C++23, the one file here cut by
 standard rather than by domain, and it is its own probe: a toolchain that
 cannot build it prints SKIPPED, and CI passes `--require-expected` so it can
 never skip there. `crypto.cpp`, `http.cpp` and `database.cpp` are the other probes: they need

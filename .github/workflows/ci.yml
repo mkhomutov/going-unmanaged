@@ -164,6 +164,26 @@ jobs:
           [ "$d" = 1 ] || { echo "FAIL: Chapter 14 says the documented cl line shows exactly one extra move-construction here; saw $d"; exit 1; }
           [ "$n" = 0 ] || { echo "FAIL: /Zc:nrvo should elide it entirely; saw $n"; exit 1; }
 
+      # Appendix K's first claim rests on the same kind of fact: MSVC reports
+      # __cplusplus as 199711 unless /Zc:__cplusplus is passed, and _MSVC_LANG
+      # carries the honest value either way. Both readings asserted, from the
+      # probe's own output, so a changed default names the appendix.
+      - name: Appendix K's /Zc:__cplusplus claim
+        env:
+          MSYS_NO_PATHCONV: 1
+          MSYS2_ARG_CONV_EXCL: '*'
+        run: |
+          reading() { tr -d '\r' < "$1" | grep -E "^$2 " | awk '{print $2}'; }
+          cl /nologo /std:c++17 /W4 /EHsc exercises/cookbook/standard.cpp /Fe:standard_default.exe
+          ./standard_default.exe > standard_default.log
+          cl /nologo /std:c++17 /W4 /EHsc /Zc:__cplusplus exercises/cookbook/standard.cpp /Fe:standard_zc.exe
+          ./standard_zc.exe > standard_zc.log
+          echo "default: __cplusplus=$(reading standard_default.log __cplusplus) _MSVC_LANG=$(reading standard_default.log _MSVC_LANG)"
+          echo "/Zc:__cplusplus: __cplusplus=$(reading standard_zc.log __cplusplus)"
+          [ "$(reading standard_default.log __cplusplus)" = 199711 ] || { echo "FAIL: Appendix K says MSVC reports __cplusplus as 199711 by default"; exit 1; }
+          [ "$(reading standard_default.log _MSVC_LANG)" = 201703 ] || { echo "FAIL: _MSVC_LANG should carry the real standard regardless"; exit 1; }
+          [ "$(reading standard_zc.log __cplusplus)" = 201703 ] || { echo "FAIL: /Zc:__cplusplus should make __cplusplus honest"; exit 1; }
+
       # Chapter 40's lab under Visual Studio: the SDK drop installed, the
       # MODULE built against the prefix, the host loading it both ways - and
       # the one line in that lab only Windows can check,

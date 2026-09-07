@@ -153,6 +153,27 @@ if ! grep -q "| $JSON_VER |" exercises/third_party/README.md; then
     exit 1
 fi
 run "cb_json"     $CXX $FLAGS   -isystem exercises/third_party exercises/cookbook/json.cpp -o $OUT/cb_json
+# Appendix K's probe, built at the book's floor and one standard above it
+# (the C++23 build lives in the expected.cpp probe further down, since it
+# needs the same toolchain). Not a recipe: the one cookbook TU whose claim
+# is about the toolchain rather than the code, so what each build PRINTS is
+# asserted below, not merely that it ran.
+run "cb_standard17" $CXX $FLAGS   exercises/cookbook/standard.cpp        -o $OUT/cb_standard17
+run "cb_standard20" $CXX $FLAGS20 exercises/cookbook/standard.cpp        -o $OUT/cb_standard20
+# ...and refused below the floor. The static_assert's own sentence must be
+# the first error, on the diagnostic's MESSAGE only (constlab's discipline:
+# the path is cut away first, or "C++17" in a filename would match).
+echo "== cb_standard14 (must be refused)"
+if $CXX ${FLAGS/-std=c++17/-std=c++14} exercises/cookbook/standard.cpp -o "$OUT/cb_standard14" > "$OUT/standard14.log" 2>&1; then
+    echo "build_all.sh: standard.cpp built under -std=c++14, but its static_assert should refuse the book's floor" >&2
+    exit 1
+fi
+if ! grep -m1 'error:' "$OUT/standard14.log" | sed 's/.*error: //' | grep -q "this book's floor is C++17"; then
+    echo "build_all.sh: standard.cpp was refused under -std=c++14, but not by its own static_assert:" >&2
+    sed 's/^/  /' "$OUT/standard14.log" >&2
+    exit 1
+fi
+echo "  ok   refused, with the static_assert's own sentence as the first error"
 # Chapter 32's lab, built TWICE with the translation units in opposite orders.
 # The chapter's bug is decided by link order, so the fix's whole claim is that
 # order no longer matters - one build proves it compiles, two builds prove the
@@ -271,6 +292,24 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_ownership > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_watch > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_shm > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_json > /dev/null
+# Appendix K's probe: the claim is what it prints. At the floor, __cplusplus
+# is C++17's value and the C++20 and C++23 library macros are absent; one
+# standard up, __cplusplus moves and span appears while expected stays
+# absent. Asserted as lines, since the appendix quotes these very readings.
+expect_line() {   # expect_line <binary> <macro> <value-or-absent>
+    if ! "$1" | grep -qE "^$2 +$3\$"; then
+        echo "build_all.sh: $1 did not print '$2 $3'; it printed:" >&2
+        "$1" | sed 's/^/  /' >&2
+        exit 1
+    fi
+}
+expect_line $OUT/cb_standard17 __cplusplus 201703
+expect_line $OUT/cb_standard17 __cpp_lib_optional '[0-9]+'
+expect_line $OUT/cb_standard17 __cpp_lib_span absent
+expect_line $OUT/cb_standard17 __cpp_lib_expected absent
+expect_line $OUT/cb_standard20 __cplusplus 202002
+expect_line $OUT/cb_standard20 __cpp_lib_span '[0-9]+'
+expect_line $OUT/cb_standard20 __cpp_lib_expected absent
 # Both link orders of the Chapter 32 lab: surviving exit IS the claim here.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_a > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/exitlab_b > /dev/null
@@ -985,6 +1024,15 @@ FLAGS23=${FLAGS/-std=c++17/-std=c++23}
 if $CXX $FLAGS23 exercises/cookbook/expected.cpp -o "$OUT/cb_expected" > "$OUT/expected_build.log" 2>&1; then
     UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_expected" > /dev/null
     echo "  ok   exercises/cookbook/expected.cpp under -std=c++23"
+    # The same toolchain answers Appendix K's third reading: at C++23 the
+    # probe must report __cplusplus moved past C++20's 202002 and
+    # __cpp_lib_expected present - the library macro this section's whole
+    # existence is about. "Past", not 202302: GCC 13 says 202100 here, the
+    # provisional date it shipped with before C++23 was final, and the
+    # appendix quotes that reading as its own lesson.
+    run "cb_standard23" $CXX $FLAGS23 exercises/cookbook/standard.cpp -o "$OUT/cb_standard23"
+    expect_line "$OUT/cb_standard23" __cplusplus '202[1-9][0-9]{2}'
+    expect_line "$OUT/cb_standard23" __cpp_lib_expected '[0-9]+'
 elif [ "$REQUIRE_EXPECTED" = 1 ]; then
     echo "build_all.sh: $CXX cannot build exercises/cookbook/expected.cpp under" >&2
     echo "  $FLAGS23, and --require-expected was given. The compiler said:" >&2
