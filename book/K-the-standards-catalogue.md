@@ -37,7 +37,7 @@ The second half of the probe asks the library, and it is the half that matters m
 #endif
 ```
 
-Every feature the standard adds gets a **feature-test macro** — `__cpp_if_constexpr` from the compiler for a language feature, `__cpp_lib_optional` from the library for a library one — whose value is the year and month the feature reached its current shape, and whose absence means the toolchain does not have it *whatever `__cplusplus` says*. The `<version>` header (C++20, but shipped in C++17 mode by all three libraries) carries the library half in one place. The question to ask before reaching for `std::expected` is therefore not "am I on C++23" but "is `__cpp_lib_expected` defined" — on the machine this page was written on, `-std=c++26` still leaves `__cpp_lib_move_only_function` absent, which is a fact about the library and no contradiction at all. On this machine, clang with libc++, the probe at the book's floor and at C++23:
+Every feature the standard adds gets a **feature-test macro** — `__cpp_if_constexpr` from the compiler for a language feature, `__cpp_lib_optional` from the library for a library one — whose value is the year and month the feature reached its current shape, and whose absence means the toolchain does not have it *whatever `__cplusplus` says*. The `<version>` header (C++20, but shipped in C++17 mode by all three libraries) carries the library half in one place. The question to ask before reaching for `std::expected` is therefore not "am I on C++23" but "is `__cpp_lib_expected` defined" — on the machine this page was written on, `-std=c++26` still leaves `__cpp_lib_move_only_function` absent, while the Linux runner's libstdc++ reports it under `-std=c++23` — a fact about two libraries, and no contradiction at all. On this machine, clang with libc++, the probe at the book's floor and at C++23:
 
 ```text
 $ clang++ -std=c++17 standard.cpp -o s17 && ./s17 | grep -E 'cplusplus|span|expected'
@@ -55,13 +55,18 @@ Three spellings for the same switch, and one CMake line that produces all of the
 > [!TIP]
 > **Key principle:** "The standard a codebase speaks is a line in its build description, not a fact about its compiler — and whether a feature is there is its feature-test macro's answer, not `__cplusplus`'s, because the library ships behind the language."
 
-The probe's first line is not a print statement but a refusal, and `build_all.sh` asks `-std=c++14` to build it so the refusal is asserted rather than assumed:
+The probe's first act is not a print statement but a refusal, and `build_all.sh` asks `-std=c++14` to build it so the refusal is asserted rather than assumed:
 
 ```cpp
-static_assert(__cplusplus >= 201703L, "this book's floor is C++17: pass -std=c++17 or /std:c++17");
+#ifdef _MSVC_LANG
+#define STANDARD_SPOKEN _MSVC_LANG
+#else
+#define STANDARD_SPOKEN __cplusplus
+#endif
+static_assert(STANDARD_SPOKEN >= 201703L, "this book's floor is C++17: pass -std=c++17 or /std:c++17");
 ```
 
-One line at the top of a project's one common header does the same job for a codebase: the floor, stated once, enforced by the compiler in a sentence instead of by whichever `optional` first fails to be found three headers deep. [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s judge, applied to the toolchain.
+Five lines at the top of a project's one common header do the same job for a codebase: the floor, stated once, enforced by the compiler in a sentence instead of by whichever `optional` first fails to be found three headers deep — [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s judge, applied to the toolchain. The `#ifdef` is not decoration. The first draft of this probe asserted `__cplusplus` alone, and the `buildlab-msvc` job refused it at `/std:c++17` with the assertion's own sentence — the trap of the previous section, met before `main` ran, on the first build. And the Linux leg of the same run added a second lesson the section above only implied: GCC 13 reports `__cplusplus` as `202100` for `-std=c++23`, not `202302`, because the value is the compiler's opinion of a standard's date at the time the compiler shipped, and C++23 was not final until after GCC 13 was. Two compilers, one switch, two numbers — the year is a weak key, and the feature-test macro is the strong one.
 
 ### The features, by standard
 

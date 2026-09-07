@@ -12,8 +12,17 @@
 #include <cstdio>
 
 // The book's floor, enforced: a toolchain below it is refused with a
-// sentence rather than an error novel three headers deep.
-static_assert(__cplusplus >= 201703L, "this book's floor is C++17: pass -std=c++17 or /std:c++17");
+// sentence rather than an error novel three headers deep. Read the way a
+// portable header must read it: MSVC answers __cplusplus with 199711
+// unless /Zc:__cplusplus is on, so _MSVC_LANG is the honest value there -
+// the first draft of this file tested __cplusplus alone, and MSVC refused
+// it at /std:c++17, which is Appendix K's first trap met before main().
+#ifdef _MSVC_LANG
+#define STANDARD_SPOKEN _MSVC_LANG
+#else
+#define STANDARD_SPOKEN __cplusplus
+#endif
+static_assert(STANDARD_SPOKEN >= 201703L, "this book's floor is C++17: pass -std=c++17 or /std:c++17");
 
 // <version> is the C++20 header that carries every library feature-test
 // macro; all three standard libraries ship it in C++17 mode too, so it is

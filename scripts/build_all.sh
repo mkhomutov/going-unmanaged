@@ -1025,10 +1025,13 @@ if $CXX $FLAGS23 exercises/cookbook/expected.cpp -o "$OUT/cb_expected" > "$OUT/e
     UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_expected" > /dev/null
     echo "  ok   exercises/cookbook/expected.cpp under -std=c++23"
     # The same toolchain answers Appendix K's third reading: at C++23 the
-    # probe must report __cplusplus moved and __cpp_lib_expected present -
-    # the library macro this section's whole existence is about.
+    # probe must report __cplusplus moved past C++20's 202002 and
+    # __cpp_lib_expected present - the library macro this section's whole
+    # existence is about. "Past", not 202302: GCC 13 says 202100 here, the
+    # provisional date it shipped with before C++23 was final, and the
+    # appendix quotes that reading as its own lesson.
     run "cb_standard23" $CXX $FLAGS23 exercises/cookbook/standard.cpp -o "$OUT/cb_standard23"
-    expect_line "$OUT/cb_standard23" __cplusplus 202302
+    expect_line "$OUT/cb_standard23" __cplusplus '202[1-9][0-9]{2}'
     expect_line "$OUT/cb_standard23" __cpp_lib_expected '[0-9]+'
 elif [ "$REQUIRE_EXPECTED" = 1 ]; then
     echo "build_all.sh: $CXX cannot build exercises/cookbook/expected.cpp under" >&2
