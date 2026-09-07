@@ -34,15 +34,19 @@ numbers may still move.
   symptom index and Appendix E gain a row and an entry, and Appendix B
   the principle.
 - **Appendix F: Recipes 44–45 — match a pattern; trim, compare ignoring
-  case, prefix and suffix** (MINOR). The same review found string parsing
-  covered in pieces — split, `from_chars`, the word counter — and two C#
+  case, prefix and suffix** (MINOR). The fourth coverage review also found
+  string parsing covered in pieces — split, `from_chars`, the word counter — and two C#
   reflexes with no recipe at all: `Regex` and the four one-liners
   `string` ships. Recipe 44 is `std::regex` with the one shape decision
   that matters (the pattern is the object, built once in a function-local
   static), the capture copied out of the match because `smatch` borrows,
-  `[0-9]` because the classes are bytes, and the trap measured on this
-  machine — about 800 nanoseconds a match where a hand-written scan costs
-  a few, so a config parser's tool and never the deadline path's. Recipe
+  `[0-9]` because that is all `\d` means over bytes, and the trap
+  measured and counted — about 800 nanoseconds and eleven heap
+  allocations a match on this machine where `starts_with` plus
+  `from_chars` costs a few nanoseconds and none, the count asserted with
+  Chapter 36's replaced `operator new`; under libc++ a hostile line throws
+  `regex_error` rather than stalling, and the Trap says which library does
+  which — so a config parser's tool and never the deadline path's. Recipe
   45 is `trim`, `equals_ignore_case`, `starts_with` and `ends_with` over
   `string_view`, with the view's lifetime and the byte-wise compare
   (`ü` and `Ü` differ, asserted) stated where `Trim` and

@@ -11,7 +11,9 @@
 #include <cctype>
 #include <charconv>
 #include <cstdio>
+#include <cstdlib>
 #include <iomanip>
+#include <new>
 #include <optional>
 #include <regex>
 #include <sstream>
@@ -19,6 +21,24 @@
 #include <string_view>
 #include <system_error>
 #include <vector>
+
+// The harness's judge for Recipe 44's trap: a replaced operator new, Chapter
+// 36's instrument, so "a regex match allocates and the hand-written scan does
+// not" is counted rather than timed. Scaffolding, quoted nowhere.
+namespace {
+long g_heap_allocs = 0;
+}
+
+void* operator new(std::size_t size) {
+    ++g_heap_allocs;
+    if (void* p = std::malloc(size)) {
+        return p;
+    }
+    throw std::bad_alloc{};
+}
+
+void operator delete(void* p) noexcept { std::free(p); }
+void operator delete(void* p, std::size_t) noexcept { std::free(p); }
 
 // Recipe 2 - string.Split
 std::vector<std::string> split(const std::string& text, char sep) {
@@ -153,12 +173,12 @@ std::optional<int> sensor_index(const std::string& id) {
     // Constructed ONCE. Building a std::regex parses the pattern and compiles
     // it, which is the expensive half - a function-local static pays it on the
     // first call only (Chapter 32's construct-on-first-use).
-    static const std::regex pattern(R"(^sensor([0-9]+)$)");
+    static const std::regex pattern(R"(^sensor([0-9]+)$)");   // R"(...)" is C#'s @"..."
     std::smatch m;
     if (!std::regex_match(id, m, pattern)) {
         return std::nullopt;                       // IsMatch false: absence, not an error
     }
-    const std::string digits = m[1].str();         // Groups[1], copied out: m borrows from id (Chapter 33)
+    const std::string digits = m[1].str();         // Groups[1], copied out: m borrows from id (Chapter 10)
     int value = 0;
     if (std::from_chars(digits.data(), digits.data() + digits.size(), value).ec != std::errc{}) {
         return std::nullopt;                       // matched, but more digits than an int holds
@@ -265,10 +285,28 @@ int main() {
     assert(sensor_index("sensor0") == 0);
     assert(!sensor_index("sensor"));
     assert(!sensor_index("sensor12x"));
-    assert(!sensor_index(" sensor12"));            // regex_match, not regex_search: anchored
+    assert(!sensor_index(" sensor12"));            // anchored: by the pattern, and by regex_match again
     assert(!sensor_index("sensor99999999999"));    // matched, then from_chars refused
     assert(redact_digits("v1.2 build 345") == "v#.# build #");
     assert(redact_digits("none") == "none");
+    // The trap, counted rather than timed (Chapter 36's judge): a match
+    // through the static pattern allocates - the smatch, the engine's own
+    // state - and starts_with plus from_chars on the same input allocates
+    // nothing. The count is this library's business; some-versus-none is
+    // the claim.
+    (void)sensor_index("sensor12");                // first use: the pattern is built here, not below
+    const std::string probe = "sensor12";
+    const long before_regex = g_heap_allocs;
+    assert(sensor_index(probe) == 12);
+    const long regex_allocs = g_heap_allocs - before_regex;
+    const long before_hand = g_heap_allocs;
+    int by_hand = 0;
+    assert(starts_with(probe, "sensor"));
+    const std::string_view rest = std::string_view(probe).substr(6);
+    assert(std::from_chars(rest.data(), rest.data() + rest.size(), by_hand).ec == std::errc{});
+    assert(by_hand == 12);
+    assert(g_heap_allocs - before_hand == 0);
+    assert(regex_allocs > 0);
 
     // Recipe 45: the view lives on a named string here, on purpose - the
     // trap is a view of a temporary. Every input shape the trim has to meet:
@@ -286,7 +324,9 @@ int main() {
     assert(starts_with("sensor12", "sensor"));
     assert(!starts_with("sens", "sensor"));
     assert(starts_with("sensor", ""));
+    assert(!starts_with("xsensor", "sensor"));     // a prefix, not a substring
     assert(ends_with("report.txt", ".txt"));
     assert(!ends_with("txt", ".txt"));
+    assert(!ends_with("report.txt.bak", ".txt"));  // a suffix, not a substring
     return 0;
 }

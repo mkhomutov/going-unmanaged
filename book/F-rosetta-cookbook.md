@@ -2294,12 +2294,12 @@ std::optional<int> sensor_index(const std::string& id) {
     // Constructed ONCE. Building a std::regex parses the pattern and compiles
     // it, which is the expensive half - a function-local static pays it on the
     // first call only (Chapter 32's construct-on-first-use).
-    static const std::regex pattern(R"(^sensor([0-9]+)$)");
+    static const std::regex pattern(R"(^sensor([0-9]+)$)");   // R"(...)" is C#'s @"..."
     std::smatch m;
     if (!std::regex_match(id, m, pattern)) {
         return std::nullopt;                       // IsMatch false: absence, not an error
     }
-    const std::string digits = m[1].str();         // Groups[1], copied out: m borrows from id (Chapter 33)
+    const std::string digits = m[1].str();         // Groups[1], copied out: m borrows from id (Chapter 10)
     int value = 0;
     if (std::from_chars(digits.data(), digits.data() + digits.size(), value).ec != std::errc{}) {
         return std::nullopt;                       // matched, but more digits than an int holds
@@ -2321,23 +2321,23 @@ for you, and a `std::regex` built inside the function it serves is
 parsed and compiled on every call — a function-local `static const`
 builds it once, on first use, thread-safely since C++11
 ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit)'s
-shape). `regex_match` is `IsMatch` anchored at both ends —
-`regex_search` is the unanchored one — `smatch` is the `Match` object,
-and `m[1]` is `Groups[1]`: a pair of iterators *into the string you
-matched*, valid only while it lives
-([Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)'s
-loan), which is why the digits are copied out before anything else
-happens. The raw string literal `R"(...)"` is C#'s `@"..."`, so every
-backslash stays single. The dialect is ECMAScript — JavaScript's, close
-enough to .NET's for the everyday subset — and the class is `[0-9]`
-rather than `\d` because the character classes are byte-wise and
-locale-shaped, never Unicode categories
+shape). `regex_match` is `IsMatch` with `^` and `$` built in — the
+pattern keeps them so it reads as the C# one — and `regex_search` is the
+unanchored one; `smatch` is the `Match` object, and `m[1]` is
+`Groups[1]`: a pair of iterators *into the string you matched*,
+[Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
+view, so the digits are copied out on the spot. The class is written
+`[0-9]` where C# wrote `\d` because that is all `\d` means here — bytes,
+the ten ASCII digits, never a Unicode category — where .NET's `\d` is
+`\p{Nd}` and takes every script's digits
 ([Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)'s
-rule: a `std::string` is bytes). Needs `<regex>`, `<optional>`,
-`<charconv>`, `<string>`.
+rule: a `std::string` is bytes). The dialect is ECMAScript, close enough
+to .NET's for the everyday subset — except `$`, which here does not
+match before a final `\n`. Needs `<regex>`, `<optional>`, `<charconv>`,
+`<string>`.
 
 > [!WARNING]
-> **Trap:** `std::regex` is slow — on this machine a match through the `static const` above costs about 800 nanoseconds where Recipe 45's hand-written scan of the same input costs a few, and a pattern with nested repetition can backtrack for seconds on one hostile line — so it belongs in a config parser and never on [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s per-sample path; a regex that must be fast is a [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) dependency, RE2 or PCRE2.
+> **Trap:** `std::regex` is slow and it allocates — on this machine a match through the `static const` above costs about 800 nanoseconds and eleven heap allocations, where `starts_with` plus Recipe 19's `from_chars` on the same input costs a few nanoseconds and none, which the harness counts with [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s replaced `operator new`; and one hostile line against a pattern with nested repetition backtracks for seconds under libstdc++ and, under libc++, throws `std::regex_error` out of `regex_match` in milliseconds, which this recipe does not catch — so it belongs in a config parser and never on the per-sample path, and a regex that must be fast is a [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) dependency, RE2 or PCRE2.
 
 ### Recipe 45 — Trim, compare ignoring case, prefix and suffix
 
@@ -2378,8 +2378,8 @@ bool ends_with(std::string_view s, std::string_view suffix) {
 }
 ```
 
-**Why it looks like this.** Four one-liners C# has and `std::string`
-does not, each with the same shape: a `string_view` in, so a literal, a
+**Why it looks like this.** Four one-liners C# has and C++17's
+`std::string` does not, each with the same shape: a `string_view` in, so a literal, a
 `std::string` and a substring all bind without a copy
 ([Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s
 view branch). `trim` hands back a view rather than a new string — free,
@@ -2387,21 +2387,22 @@ and honest about what `Trim` allocated for you — so its result lives as
 long as its argument and no longer, which is
 [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
 dangling view the moment the argument was a temporary; copy into a
-`std::string` where the trimmed text must outlive the line. The
-`find_first_not_of` / `find_last_not_of` pair is the idiom, and the
-`npos` check comes first because `substr(npos)` throws `out_of_range`,
-so an all-blank input would fail loudly rather than trim to nothing.
+`std::string` where the trimmed text must outlive the line. `Trim`
+strips every Unicode white-space character where `blank` here is four
+bytes, so widen it if a no-break space (`C2 A0` in UTF-8) can reach
+you. The `find_first_not_of` / `find_last_not_of` pair is the idiom, and
+the `npos` check comes first because `substr(npos)` throws
+`out_of_range`: without it an all-blank input would throw where `Trim`
+returns `""`.
 The case-insensitive compare is ordinal and byte-wise — `tolower` on an
 `unsigned char`, [Chapter 19](19-exercise-the-word-counter.md#chapter-19--exercise-the-word-counter)'s
 cast, because a negative `char` is undefined behavior there — so it is
 `OrdinalIgnoreCase` for ASCII and *not* for anything else: `ü` and `Ü`
 differ as bytes, and the harness asserts that they do. `starts_with` and
 `ends_with` are C++20 members of `string` and `string_view`; on C++17
-these two lines are them. One thing C# hid: `s.StartsWith("x")` with no
-comparison argument is culture-sensitive in .NET, which is why the
-analyzers nag for the `Ordinal` overload — here every comparison is
-ordinal, always, and the question never arises. Needs `<cctype>`,
-`<string_view>`.
+these two lines are them — and ordinal always, where a bare
+`s.StartsWith("x")` in .NET is culture-sensitive, which is what the
+analyzers nag about. Needs `<cctype>`, `<string_view>`.
 
 > [!WARNING]
 > **Trap:** `auto t = trim(read_line());` is a view of a string that died at the semicolon — a `stack-use-after-scope` or `heap-use-after-free` under ASan, and plausible text until then; name the string first, or have your own `trim` return a `std::string` if callers keep the result.
