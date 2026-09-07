@@ -65,6 +65,8 @@ stays right.
 | `Regex.IsMatch` / `Match(...).Groups[1]` / `Regex.Replace` | `Pattern.compile` / `Matcher.group(1)` / `replaceAll` | [Recipe 44 — Match a pattern](#recipe-44--match-a-pattern) |
 | `Trim` / `Equals(OrdinalIgnoreCase)` / `StartsWith` / `EndsWith` | `strip` / `equalsIgnoreCase` / `startsWith` / `endsWith` | [Recipe 45 — Trim, compare ignoring case, prefix and suffix](#recipe-45--trim-compare-ignoring-case-prefix-and-suffix) |
 | `PostAsJsonAsync` / `ReadFromJsonAsync<T>` | `BodyPublishers.ofString(mapper.writeValueAsString(r))` / Jackson `readValue` | [Recipe 46 — Post a JSON body and read a JSON reply](#recipe-46--post-a-json-body-and-read-a-json-reply) |
+| `Rfc2898DeriveBytes.Pbkdf2` / `HKDF.DeriveKey` | `SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")` / `KDF.getInstance("HKDF-SHA256")` (JDK 25) | [Recipe 47 — Derive a key](#recipe-47--derive-a-key) |
+| `HMACSHA256.HashData` / `CryptographicOperations.FixedTimeEquals` | `Mac.getInstance("HmacSHA256")` / `MessageDigest.isEqual` | [Recipe 48 — Sign and verify bytes](#recipe-48--sign-and-verify-bytes) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 **The clocks, by name.** The five things `System` gave you for time, and
@@ -2495,6 +2497,144 @@ Recipe 25, `<chrono>`, `<memory>`, `<optional>`, `<string>`.
 
 > [!WARNING]
 > **Trap:** `curl_easy_setopt(easy, CURLOPT_POSTFIELDS, body.dump().c_str())` compiles, and the temporary dies at the semicolon — libcurl reads dead memory during `perform`: a `heap-use-after-free` under ASan, or `stack-use-after-scope` for a body short enough to fit the small-string buffer, which is also the body that *works* without ASan until the payload grows; name the string, and keep it alive until `perform` returns.
+
+### Recipe 47 — Derive a key
+
+**In C#:** `Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, 32)` for a password; `HKDF.DeriveKey(HashAlgorithmName.SHA256, secret, 32, salt, info)` for a secret that already has entropy
+
+**The recipe:**
+
+```cpp
+Key key_from_password(std::string_view password, const Bytes& salt, int iterations) {
+    Key key{};
+    if (PKCS5_PBKDF2_HMAC(password.data(), static_cast<int>(password.size()),
+                          salt.data(), static_cast<int>(salt.size()),
+                          iterations, EVP_sha256(),
+                          static_cast<int>(key.size()), key.data()) != 1) {
+        throw std::runtime_error("PBKDF2-HMAC-SHA256 failed");   // the library, not the input: the event pole
+    }
+    return key;
+}
+
+using DeriveCtx = std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)>;   // Recipe 7's shape, again
+
+Key key_from_secret(const Bytes& secret, const Bytes& salt, const Bytes& info) {
+    DeriveCtx ctx(EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, nullptr), &EVP_PKEY_CTX_free);
+    Key key{};
+    std::size_t length = key.size();
+    if (!ctx || EVP_PKEY_derive_init(ctx.get()) != 1 ||
+        EVP_PKEY_CTX_set_hkdf_md(ctx.get(), EVP_sha256()) != 1 ||
+        EVP_PKEY_CTX_set1_hkdf_salt(ctx.get(), salt.data(), static_cast<int>(salt.size())) != 1 ||
+        EVP_PKEY_CTX_set1_hkdf_key(ctx.get(), secret.data(), static_cast<int>(secret.size())) != 1 ||
+        EVP_PKEY_CTX_add1_hkdf_info(ctx.get(), info.data(), static_cast<int>(info.size())) != 1 ||
+        EVP_PKEY_derive(ctx.get(), key.data(), &length) != 1 || length != key.size()) {
+        throw std::runtime_error("HKDF-SHA256 failed");
+    }
+    return key;
+}
+```
+
+**Why it looks like this.** Recipe 37 took a `Key` and never said where
+one comes from; these are the two answers, and which one is a question
+about the input rather than the output. A password has almost no
+entropy, so PBKDF2 spends *time* on it — `iterations` rounds of
+HMAC-SHA-256, the count chosen so one derivation costs tens of
+milliseconds on the machine that will run it rather than chosen as a
+number, since any figure quoted today is too few in a few years — to
+make each guess cost the attacker what it cost you; a secret that already has
+entropy (a key agreed elsewhere, a master key from the platform's store)
+only needs *condensing and separating*: HKDF extracts a uniform key from
+it and expands that to the length wanted, in a few hashes, with `info`
+naming the purpose so one secret yields different keys for different
+jobs. Both can produce any length; the 32 bytes here are Recipe 37's,
+because that is the key these two exist to feed. The two shapes are two ages of the same
+library: `PKCS5_PBKDF2_HMAC` is one call in the old style, and HKDF is
+the `EVP_PKEY` derivation context, the spelling that still builds on
+1.1.1 (OpenSSL 3 also fetches a KDF by name, the way Recipe 48 fetches
+its MAC) — a [Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary)
+Shape 2 handle, set up one option at a time, with a status from every
+call and one free, which is why the chain of `!= 1` reads the way
+Recipe 37's `seal` does: one `||` per call, the first failure ending
+the chain. The reflex to check at the door is C#'s defaults: the older
+`new Rfc2898DeriveBytes(password, salt)` chose SHA-1 and 1000
+iterations for you, which is where a drifted count on the C# side
+usually comes from, and the C++ call has no defaults at all — every
+parameter is yours to write down. Salt, iteration count and `info` are not
+secrets, and they travel: a key that must be re-derived on the C# side
+needs the same three, so they are a wire format in
+[Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
+sense, written down next to the envelope of Recipe 37. The harness
+holds both functions to published vectors — RFC 7914's PBKDF2-HMAC-SHA-256
+cases and RFC 5869's first HKDF case — because a derivation that agrees
+with itself proves nothing about whether it agrees with .NET's — and
+then the Trap as a value: the same password one iteration off, and
+Recipe 37 refuses to open. Needs
+`<openssl/evp.h>`, `<openssl/kdf.h>` and libcrypto as Recipe 36,
+`<array>`, `<memory>`, `<string_view>`, `<vector>`.
+
+> [!WARNING]
+> **Trap:** the iteration count is part of the key — change it on one side, or let a config default drift, and the two sides derive different keys from the same password with no error anywhere, only Recipe 37's `open_sealed` returning `nullopt`; store the count and the salt beside the ciphertext, as part of the envelope.
+
+### Recipe 48 — Sign and verify bytes
+
+**In C#:** `new HMACSHA256(key).ComputeHash(data)` (or `HMACSHA256.HashData(key, data)`), and `CryptographicOperations.FixedTimeEquals(expected, tag)` to check one
+
+**The recipe:**
+
+```cpp
+using Mac    = std::unique_ptr<EVP_MAC, decltype(&EVP_MAC_free)>;
+using MacCtx = std::unique_ptr<EVP_MAC_CTX, decltype(&EVP_MAC_CTX_free)>;
+
+Bytes hmac_sha256(const Bytes& key, const Bytes& data) {
+    Mac mac(EVP_MAC_fetch(nullptr, "HMAC", nullptr), &EVP_MAC_free);
+    MacCtx ctx(mac ? EVP_MAC_CTX_new(mac.get()) : nullptr, &EVP_MAC_CTX_free);
+    char digest[] = "SHA256";                              // a writable char* by signature; a name goes here, the key through init
+    const OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, digest, 0),
+                                 OSSL_PARAM_construct_end()};
+    Bytes tag(EVP_MAX_MD_SIZE);
+    std::size_t written = 0;
+    if (!ctx || EVP_MAC_init(ctx.get(), key.data(), key.size(), params) != 1 ||
+        EVP_MAC_update(ctx.get(), data.data(), data.size()) != 1 ||
+        EVP_MAC_final(ctx.get(), tag.data(), &written, tag.size()) != 1) {
+        throw std::runtime_error("HMAC-SHA256 failed");
+    }
+    tag.resize(written);                                   // 32 for SHA-256
+    return tag;
+}
+
+bool verify_hmac_sha256(const Bytes& key, const Bytes& data, const Bytes& tag) {
+    const Bytes expected = hmac_sha256(key, data);
+    // CRYPTO_memcmp, never ==: a comparison that stops at the first wrong
+    // byte tells an attacker how many bytes were right (FixedTimeEquals).
+    // No harness can see this line change - constant time is not a value.
+    return expected.size() == tag.size() && CRYPTO_memcmp(expected.data(), tag.data(), tag.size()) == 0;
+}
+```
+
+**Why it looks like this.** An HMAC is the answer to a question Recipe
+37 does not ask — *did the bytes I can read come from someone holding
+the key?* — for the file or the message that is not secret but must not
+be forged: a settings file the plug-in wrote and must trust on re-read,
+telemetry for a backend of your own, a request between two processes of
+yours. `EVP_MAC` is OpenSSL 3's
+spelling: fetch the algorithm by name, make a context, initialise it with
+the key and a parameter list naming the digest — the `OSSL_PARAM` array
+is the C API's way of passing options without a function per option,
+and its string slot is a writable `char*` by declaration, which is why
+the name sits in a local array rather than a literal — then update and
+finalise, a handle with a status from every call, one more time. The
+verifier is the half that matters. `==` on two vectors stops at the
+first differing byte, and how long it took is something an attacker can
+measure, given enough samples, even over a network; `CRYPTO_memcmp` compares every byte whatever
+the answer, which is what `FixedTimeEquals` exists for in .NET and what
+`SequenceEqual` is not. The harness holds the function to RFC 4231's
+vectors and then to its own verifier: a flipped byte, a wrong key, a
+changed message and a short tag all refuse. Needs `<openssl/evp.h>`,
+`<openssl/core_names.h>`, `<openssl/params.h>`, `<openssl/crypto.h>` and
+libcrypto 3 as Recipe 36, `<memory>`, `<vector>`.
+
+> [!WARNING]
+> **Trap:** `verify_hmac_sha256` on a licence blob compiles, runs and verifies — and the key that verifies is the key that signs, so the plug-in checking the licence on the customer's machine carries everything needed to forge one; when the verifier must not be able to sign, that is a signature (Ed25519, `EVP_DigestSign` with a private key), a different recipe with a different key shape.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
