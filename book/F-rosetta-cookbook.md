@@ -64,6 +64,7 @@ stays right.
 | `MemoryMappedFile.CreateOrOpen` / `CreateViewAccessor` | `FileChannel.map` (files only) | [Recipe 43 — Share a buffer with another process](#recipe-43--share-a-buffer-with-another-process) |
 | `Regex.IsMatch` / `Match(...).Groups[1]` / `Regex.Replace` | `Pattern.compile` / `Matcher.group(1)` / `replaceAll` | [Recipe 44 — Match a pattern](#recipe-44--match-a-pattern) |
 | `Trim` / `Equals(OrdinalIgnoreCase)` / `StartsWith` / `EndsWith` | `strip` / `equalsIgnoreCase` / `startsWith` / `endsWith` | [Recipe 45 — Trim, compare ignoring case, prefix and suffix](#recipe-45--trim-compare-ignoring-case-prefix-and-suffix) |
+| `PostAsJsonAsync` / `ReadFromJsonAsync<T>` | `HttpRequest.BodyPublishers.ofString` + Jackson | [Recipe 46 — Post a JSON body and read a JSON reply](#recipe-46--post-a-json-body-and-read-a-json-reply) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 **The clocks, by name.** The five things `System` gave you for time, and
@@ -2406,6 +2407,83 @@ analyzers nag about. Needs `<cctype>`, `<string_view>`.
 
 > [!WARNING]
 > **Trap:** `auto t = trim(read_line());` is a view of a string that died at the semicolon — a `stack-use-after-scope` or `heap-use-after-free` under ASan, and plausible text until then; name the string first, or have your own `trim` return a `std::string` if callers keep the result.
+
+### Recipe 46 — Post a JSON body and read a JSON reply
+
+**In C#:** `var resp = await http.PostAsJsonAsync(url, reading); resp.EnsureSuccessStatusCode(); var reply = await resp.Content.ReadFromJsonAsync<Reply>();`
+
+**The recipe:**
+
+```cpp
+using HeaderList = std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)>;   // Recipe 7's shape: a second handle type
+
+HttpResult http_post_json(const std::string& url, const json& body, std::chrono::milliseconds timeout) {
+    Easy easy(curl_easy_init(), &curl_easy_cleanup);
+    if (!easy) {
+        throw std::runtime_error("curl_easy_init failed");
+    }
+    HeaderList headers(curl_slist_append(nullptr, "Content-Type: application/json"), &curl_slist_free_all);
+    const std::string payload = body.dump();        // NAMED: libcurl borrows these bytes until perform returns
+    HttpResult r;
+    curl_easy_setopt(easy.get(), CURLOPT_URL, url.c_str());
+    curl_easy_setopt(easy.get(), CURLOPT_HTTPHEADER, headers.get());
+    curl_easy_setopt(easy.get(), CURLOPT_POSTFIELDS, payload.c_str());          // a loan, not a copy (Chapter 33)
+    curl_easy_setopt(easy.get(), CURLOPT_POSTFIELDSIZE, static_cast<long>(payload.size()));
+    curl_easy_setopt(easy.get(), CURLOPT_WRITEFUNCTION, &append_chunk);
+    curl_easy_setopt(easy.get(), CURLOPT_WRITEDATA, &r.body);
+    curl_easy_setopt(easy.get(), CURLOPT_TIMEOUT_MS, static_cast<long>(timeout.count()));
+    r.transport = curl_easy_perform(easy.get());
+    curl_easy_getinfo(easy.get(), CURLINFO_RESPONSE_CODE, &r.status);
+    return r;
+}
+
+// The third verdict, after the transport's and the server's: are the bytes
+// JSON at all? A 200 whose body is an HTML page is a value here, not a
+// throw - the caller asked a server a question and got a non-answer.
+std::optional<json> json_reply(const HttpResult& r) {
+    if (!r.ok()) {
+        return std::nullopt;                        // the wire or the server said no: the body is not the answer
+    }
+    json parsed = json::parse(r.body, nullptr, false);   // false: no exceptions - junk is a value here
+    if (parsed.is_discarded()) {
+        return std::nullopt;
+    }
+    return parsed;
+}
+```
+
+**Why it looks like this.** Recipe 41 with the request turned around and
+Recipe 25 on both ends of it. The header list is one more C handle with
+a matching free — `curl_slist_free_all`, Recipe 7's shape for the
+second time on one page — and `CURLOPT_POSTFIELDS` is the reason the
+serialized body has a name: libcurl keeps the *pointer*, not a copy, and
+reads the bytes during `perform`, so a temporary from `body.dump()` on
+that line would be gone before the request left
+([Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)'s
+loan, with the SDK on the borrowing side). `PostAsJsonAsync` set the
+content type for you; here it is the one header the list carries,
+because a server that reads it (the echo server in the harness does)
+sees a string body otherwise. The reply is
+[Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
+decision made three times: the transport's verdict and the server's are
+Recipe 41's two, and the third — is this JSON at all — is a value too,
+because a maintenance page with a 200 on it is an answer the server
+gave, not an event; so `json_reply` parses with exceptions off and
+returns `nullopt`, where Recipe 26's `parse` throws because *its* junk
+was a broken file. What comes back is Recipe 26's document, and the
+required key is still `at()`, which throws `out_of_range` naming it.
+`EnsureSuccessStatusCode` and `ReadFromJsonAsync` folded all three
+verdicts into two exception types; `HttpResult` and the `optional` keep
+them apart, and `ok()` plus a check is the everyday call. It is also,
+to the byte, the shape of a call to a hosted language model — JSON in,
+JSON out, a vendor's endpoint in the URL and its schema in the body,
+nothing else — and [Chapter 27](27-dependency-management.md#chapter-27--dependency-management)
+says where in a plug-in such a call runs. Needs
+`<curl/curl.h>` and libcurl as Recipe 41, `<nlohmann/json.hpp>` as
+Recipe 25, `<chrono>`, `<memory>`, `<optional>`, `<string>`.
+
+> [!WARNING]
+> **Trap:** `curl_easy_setopt(easy, CURLOPT_POSTFIELDS, body.dump().c_str())` compiles, and the temporary dies at the semicolon — libcurl reads freed memory during `perform`, a `heap-use-after-free` under ASan and, without it, a request body of whatever the allocator left there; name the string, and keep it alive until `perform` returns.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

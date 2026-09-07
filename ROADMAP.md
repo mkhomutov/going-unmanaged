@@ -1628,7 +1628,7 @@ second is a transport and two Bestiary shapes the reader can already read.
 **As a tool for learning and working:** Appendix C is the page, and its rule
 is the whole policy — review mode, and `scripts/check.sh` before belief,
 because in C++ the plausible-but-wrong answer compiles. **As a thing the
-plug-in calls:** a hosted model is JSON over HTTP — Recipes 25, 26 and 41 —
+plug-in calls:** a hosted model is JSON over HTTP — Recipes 25, 26, 41 and 46 —
 and it runs out of process by Chapter 38's invariant, since a model call
 is the long operation that freezes a host's main thread; in process, the
 two libraries a shop meets are C APIs the Bestiary already describes —

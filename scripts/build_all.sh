@@ -1094,7 +1094,9 @@ if pkg-config --exists libcurl 2> /dev/null; then
     CURL_FLAGS=$(pkg-config --cflags libcurl)
     CURL_LIBS=$(pkg-config --libs libcurl)
     # shellcheck disable=SC2086
-    if $CXX $FLAGS ${CURL_FLAGS//-I/-isystem } exercises/cookbook/http.cpp $CURL_LIBS \
+    # -isystem exercises/third_party as well: Recipe 46 posts and parses
+    # JSON through the vendored nlohmann/json of Recipe 25.
+    if $CXX $FLAGS ${CURL_FLAGS//-I/-isystem } -isystem exercises/third_party exercises/cookbook/http.cpp $CURL_LIBS \
             -o "$OUT/cb_http" > "$OUT/http_build.log" 2>&1; then
         # As for sqlite3 below: the linked library's own version, not the shim's.
         CURL_SEEN=$(UBSAN_OPTIONS=halt_on_error=1 "$OUT/cb_http" | sed -n 's/^http ok (libcurl \([^)]*\)).*/\1/p')

@@ -159,7 +159,12 @@ Chapter 25's Finding 10.
   and a forty-line loopback server in the harness (POSIX sockets;
   `http.cpp` is not built by the MSVC job) serves a redirect, a 500 and a
   stall, so the server's verdict, the redirect follow and the timeout's
-  unit are judged too. `database.cpp` is the fourth probe, sqlite3
+  unit are judged too. Recipe 46 (post a JSON body, read a JSON reply)
+  lives in the same TU, which therefore also includes the vendored
+  nlohmann/json with `-isystem`; for it the harness's server reads a
+  request whole and echoes the body and its Content-Type back as JSON, so
+  the round trip is judged on what the server received, then answers a
+  400, a 200 that is HTML, and JSON without the key. `database.cpp` is the fourth probe, sqlite3
   (`--require-sqlite`), judged by an in-memory database — and by
   `sqlite3_close`'s return code, which is `SQLITE_OK` only when every
   statement was finalized, so a leaked statement fails the run the way
