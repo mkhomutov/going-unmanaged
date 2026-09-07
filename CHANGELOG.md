@@ -75,7 +75,7 @@ numbers may still move.
   `Key` and never said where one comes from. Recipe 47 is the
   two answers, chosen by the input: PBKDF2-HMAC-SHA-256 for a password
   (time spent on purpose) and HKDF-SHA-256 for a secret that already has
-  entropy (stretched and separated by `info`), the second through the
+  entropy (extracted and expanded, separated by `info`), the second through the
   `EVP_PKEY` derivation context — a Bestiary Shape 2 handle, one option
   per call — and its Trap the iteration count as part of the key, drifting
   silently into `open_sealed`'s `nullopt`. Recipe 48 is HMAC-SHA-256

@@ -153,7 +153,7 @@ using MacCtx = std::unique_ptr<EVP_MAC_CTX, decltype(&EVP_MAC_CTX_free)>;
 Bytes hmac_sha256(const Bytes& key, const Bytes& data) {
     Mac mac(EVP_MAC_fetch(nullptr, "HMAC", nullptr), &EVP_MAC_free);
     MacCtx ctx(mac ? EVP_MAC_CTX_new(mac.get()) : nullptr, &EVP_MAC_CTX_free);
-    char digest[] = "SHA256";                              // OSSL_PARAM takes a writable char*: a name, never a secret
+    char digest[] = "SHA256";                              // a writable char* by signature; a name goes here, the key through init
     const OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, digest, 0),
                                  OSSL_PARAM_construct_end()};
     Bytes tag(EVP_MAX_MD_SIZE);
@@ -171,6 +171,7 @@ bool verify_hmac_sha256(const Bytes& key, const Bytes& data, const Bytes& tag) {
     const Bytes expected = hmac_sha256(key, data);
     // CRYPTO_memcmp, never ==: a comparison that stops at the first wrong
     // byte tells an attacker how many bytes were right (FixedTimeEquals).
+    // No harness can see this line change - constant time is not a value.
     return expected.size() == tag.size() && CRYPTO_memcmp(expected.data(), tag.data(), tag.size()) == 0;
 }
 

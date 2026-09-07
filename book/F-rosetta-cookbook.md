@@ -2543,9 +2543,11 @@ milliseconds on the machine that will run it rather than chosen as a
 number, since any figure quoted today is too few in a few years — to
 make each guess cost the attacker what it cost you; a secret that already has
 entropy (a key agreed elsewhere, a master key from the platform's store)
-only needs *stretching and separating*, and HKDF does that in a few
-hashes, with `info` naming the purpose so one secret yields different
-keys for different jobs. The two shapes are two ages of the same
+only needs *condensing and separating*: HKDF extracts a uniform key from
+it and expands that to the length wanted, in a few hashes, with `info`
+naming the purpose so one secret yields different keys for different
+jobs. Both can produce any length; the 32 bytes here are Recipe 37's,
+because that is the key these two exist to feed. The two shapes are two ages of the same
 library: `PKCS5_PBKDF2_HMAC` is one call in the old style, and HKDF is
 the `EVP_PKEY` derivation context, the spelling that still builds on
 1.1.1 (OpenSSL 3 also fetches a KDF by name, the way Recipe 48 fetches
@@ -2586,7 +2588,7 @@ using MacCtx = std::unique_ptr<EVP_MAC_CTX, decltype(&EVP_MAC_CTX_free)>;
 Bytes hmac_sha256(const Bytes& key, const Bytes& data) {
     Mac mac(EVP_MAC_fetch(nullptr, "HMAC", nullptr), &EVP_MAC_free);
     MacCtx ctx(mac ? EVP_MAC_CTX_new(mac.get()) : nullptr, &EVP_MAC_CTX_free);
-    char digest[] = "SHA256";                              // OSSL_PARAM takes a writable char*: a name, never a secret
+    char digest[] = "SHA256";                              // a writable char* by signature; a name goes here, the key through init
     const OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, digest, 0),
                                  OSSL_PARAM_construct_end()};
     Bytes tag(EVP_MAX_MD_SIZE);
@@ -2604,6 +2606,7 @@ bool verify_hmac_sha256(const Bytes& key, const Bytes& data, const Bytes& tag) {
     const Bytes expected = hmac_sha256(key, data);
     // CRYPTO_memcmp, never ==: a comparison that stops at the first wrong
     // byte tells an attacker how many bytes were right (FixedTimeEquals).
+    // No harness can see this line change - constant time is not a value.
     return expected.size() == tag.size() && CRYPTO_memcmp(expected.data(), tag.data(), tag.size()) == 0;
 }
 ```
@@ -2621,8 +2624,8 @@ and its string slot is a writable `char*` by declaration, which is why
 the name sits in a local array rather than a literal — then update and
 finalise, a handle with a status from every call, one more time. The
 verifier is the half that matters. `==` on two vectors stops at the
-first differing byte, and how long it took is a measurement an attacker
-can take over a network; `CRYPTO_memcmp` compares every byte whatever
+first differing byte, and how long it took is something an attacker can
+measure, given enough samples, even over a network; `CRYPTO_memcmp` compares every byte whatever
 the answer, which is what `FixedTimeEquals` exists for in .NET and what
 `SequenceEqual` is not. The harness holds the function to RFC 4231's
 vectors and then to its own verifier: a flipped byte, a wrong key, a
