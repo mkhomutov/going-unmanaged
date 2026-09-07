@@ -33,6 +33,21 @@ numbers may still move.
   asserts both readings. Chapter 10 closes on the appendix, Chapter 31's
   symptom index and Appendix E gain a row and an entry, and Appendix B
   the principle.
+- **Appendix F: Recipes 44–45 — match a pattern; trim, compare ignoring
+  case, prefix and suffix** (MINOR). The same review found string parsing
+  covered in pieces — split, `from_chars`, the word counter — and two C#
+  reflexes with no recipe at all: `Regex` and the four one-liners
+  `string` ships. Recipe 44 is `std::regex` with the one shape decision
+  that matters (the pattern is the object, built once in a function-local
+  static), the capture copied out of the match because `smatch` borrows,
+  `[0-9]` because the classes are bytes, and the trap measured on this
+  machine — about 800 nanoseconds a match where a hand-written scan costs
+  a few, so a config parser's tool and never the deadline path's. Recipe
+  45 is `trim`, `equals_ignore_case`, `starts_with` and `ends_with` over
+  `string_view`, with the view's lifetime and the byte-wise compare
+  (`ü` and `Ü` differ, asserted) stated where `Trim` and
+  `OrdinalIgnoreCase` never had to. Both in `cookbook/strings.cpp`;
+  Chapter 31's symptom index gains the row.
 
 ## [0.11.0] — 2026-09-06
 
