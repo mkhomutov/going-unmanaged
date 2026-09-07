@@ -1,17 +1,44 @@
-// Appendix F, Recipes 2-5, 17 and 23 - strings: split, join, build, format,
-// the UTF-8 <-> UTF-16 boundary, and the empty string that is not null.
+// Appendix F, Recipes 2-5, 17, 23, 44 and 45 - strings: split, join, build,
+// format, the UTF-8 <-> UTF-16 boundary, the empty string that is not null,
+// a pattern matched with std::regex, and trim / compare-ignoring-case /
+// prefix / suffix over string_view.
 //
 // The recipe functions below are quoted VERBATIM in book/F-rosetta-cookbook.md:
 // editing one means editing the appendix in the same commit (the testlab
 // discipline). main() is scaffolding, not part of any recipe - it asserts
 // what the recipes claim, so build_all.sh keeps the cookbook honest.
 #include <cassert>
+#include <cctype>
+#include <charconv>
 #include <cstdio>
+#include <cstdlib>
 #include <iomanip>
+#include <new>
+#include <optional>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <vector>
+
+// The harness's judge for Recipe 44's trap: a replaced operator new, Chapter
+// 36's instrument, so "a regex match allocates and the hand-written scan does
+// not" is counted rather than timed. Scaffolding, quoted nowhere.
+namespace {
+long g_heap_allocs = 0;
+}
+
+void* operator new(std::size_t size) {
+    ++g_heap_allocs;
+    if (void* p = std::malloc(size)) {
+        return p;
+    }
+    throw std::bad_alloc{};
+}
+
+void operator delete(void* p) noexcept { std::free(p); }
+void operator delete(void* p, std::size_t) noexcept { std::free(p); }
 
 // Recipe 2 - string.Split
 std::vector<std::string> split(const std::string& text, char sep) {
@@ -141,6 +168,61 @@ std::string name_or_default(const char* from_c_api) {
     return from_c_api;                      // safe now - std::string(nullptr) is UB
 }
 
+// Recipe 44 - Regex.IsMatch, Match(...).Groups[1], Regex.Replace
+std::optional<int> sensor_index(const std::string& id) {
+    // Constructed ONCE. Building a std::regex parses the pattern and compiles
+    // it, which is the expensive half - a function-local static pays it on the
+    // first call only (Chapter 32's construct-on-first-use).
+    static const std::regex pattern(R"(^sensor([0-9]+)$)");   // R"(...)" is C#'s @"..."
+    std::smatch m;
+    if (!std::regex_match(id, m, pattern)) {
+        return std::nullopt;                       // IsMatch false: absence, not an error
+    }
+    const std::string digits = m[1].str();         // Groups[1], copied out: m borrows from id (Chapter 10)
+    int value = 0;
+    if (std::from_chars(digits.data(), digits.data() + digits.size(), value).ec != std::errc{}) {
+        return std::nullopt;                       // matched, but more digits than an int holds
+    }
+    return value;
+}
+
+std::string redact_digits(const std::string& text) {
+    static const std::regex digits(R"([0-9]+)");
+    return std::regex_replace(text, digits, "#");   // Regex.Replace: every match, a new string
+}
+
+// Recipe 45 - Trim, Equals(OrdinalIgnoreCase), StartsWith / EndsWith
+std::string_view trim(std::string_view s) {
+    constexpr std::string_view blank = " \t\r\n";
+    const auto first = s.find_first_not_of(blank);
+    if (first == std::string_view::npos) {
+        return {};                                 // all blank: empty - substr(npos) would throw
+    }
+    const auto last = s.find_last_not_of(blank);
+    return s.substr(first, last - first + 1);      // a VIEW into s: the caller's string must outlive it
+}
+
+bool equals_ignore_case(std::string_view a, std::string_view b) {
+    if (a.size() != b.size()) {
+        return false;
+    }
+    for (std::size_t i = 0; i < a.size(); ++i) {   // ASCII only: bytes, not characters (Chapter 9)
+        if (std::tolower(static_cast<unsigned char>(a[i])) !=      // unsigned char first: Chapter 19's UB
+            std::tolower(static_cast<unsigned char>(b[i]))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool starts_with(std::string_view s, std::string_view prefix) {
+    return s.substr(0, prefix.size()) == prefix;   // C++20 spells it s.starts_with(prefix)
+}
+
+bool ends_with(std::string_view s, std::string_view suffix) {
+    return s.size() >= suffix.size() && s.substr(s.size() - suffix.size()) == suffix;
+}
+
 int main() {
     // Recipe 2, including the two behaviors the appendix claims: interior
     // empty fields are kept, the final empty field is not (C# keeps it).
@@ -196,5 +278,55 @@ int main() {
     // null return dies inside the constructor on libc++ and throws
     // std::logic_error on libstdc++ - scripts/check_platform_claims.sh
     // asserts both, per standard library.
+
+    // Recipe 44: anchored at both ends, the capture read as a number, and the
+    // two refusals - no match at all, and a match too wide for an int.
+    assert(sensor_index("sensor12") == 12);
+    assert(sensor_index("sensor0") == 0);
+    assert(!sensor_index("sensor"));
+    assert(!sensor_index("sensor12x"));
+    assert(!sensor_index(" sensor12"));            // anchored: by the pattern, and by regex_match again
+    assert(!sensor_index("sensor99999999999"));    // matched, then from_chars refused
+    assert(redact_digits("v1.2 build 345") == "v#.# build #");
+    assert(redact_digits("none") == "none");
+    // The trap, counted rather than timed (Chapter 36's judge): a match
+    // through the static pattern allocates - the smatch, the engine's own
+    // state - and starts_with plus from_chars on the same input allocates
+    // nothing. The count is this library's business; some-versus-none is
+    // the claim.
+    (void)sensor_index("sensor12");                // first use: the pattern is built here, not below
+    const std::string probe = "sensor12";
+    const long before_regex = g_heap_allocs;
+    assert(sensor_index(probe) == 12);
+    const long regex_allocs = g_heap_allocs - before_regex;
+    const long before_hand = g_heap_allocs;
+    int by_hand = 0;
+    assert(starts_with(probe, "sensor"));
+    const std::string_view rest = std::string_view(probe).substr(6);
+    assert(std::from_chars(rest.data(), rest.data() + rest.size(), by_hand).ec == std::errc{});
+    assert(by_hand == 12);
+    assert(g_heap_allocs - before_hand == 0);
+    assert(regex_allocs > 0);
+
+    // Recipe 45: the view lives on a named string here, on purpose - the
+    // trap is a view of a temporary. Every input shape the trim has to meet:
+    // padded, all blank, empty, nothing to trim.
+    const std::string padded = "  \tname \r\n";
+    assert(trim(padded) == "name");
+    assert(trim("   ").empty());
+    assert(trim("").empty());
+    assert(trim("x") == "x");
+    assert(equals_ignore_case("Sensor", "SENSOR"));
+    assert(!equals_ignore_case("Sensor", "Sensors"));
+    // Ordinal and byte-wise: ü and Ü are different bytes, so the "same"
+    // word in two cases is NOT equal here - OrdinalIgnoreCase for ASCII only.
+    assert(!equals_ignore_case("Gr\xc3\xbc\xc3\x9f""e", "GR\xc3\x9c\xc3\x9f""E"));
+    assert(starts_with("sensor12", "sensor"));
+    assert(!starts_with("sens", "sensor"));
+    assert(starts_with("sensor", ""));
+    assert(!starts_with("xsensor", "sensor"));     // a prefix, not a substring
+    assert(ends_with("report.txt", ".txt"));
+    assert(!ends_with("txt", ".txt"));
+    assert(!ends_with("report.txt.bak", ".txt"));  // a suffix, not a substring
     return 0;
 }

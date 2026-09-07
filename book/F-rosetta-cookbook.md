@@ -62,6 +62,8 @@ stays right.
 | `HttpClient.GetStringAsync` | `HttpClient.send` | [Recipe 41 — Call an HTTP endpoint](#recipe-41--call-an-http-endpoint) |
 | `SqliteConnection` / `SqliteCommand.ExecuteReader` | `DriverManager.getConnection` / `PreparedStatement` | [Recipe 42 — Open a local database and run a query](#recipe-42--open-a-local-database-and-run-a-query) |
 | `MemoryMappedFile.CreateOrOpen` / `CreateViewAccessor` | `FileChannel.map` (files only) | [Recipe 43 — Share a buffer with another process](#recipe-43--share-a-buffer-with-another-process) |
+| `Regex.IsMatch` / `Match(...).Groups[1]` / `Regex.Replace` | `Pattern.compile` / `Matcher.group(1)` / `replaceAll` | [Recipe 44 — Match a pattern](#recipe-44--match-a-pattern) |
+| `Trim` / `Equals(OrdinalIgnoreCase)` / `StartsWith` / `EndsWith` | `strip` / `equalsIgnoreCase` / `startsWith` / `endsWith` | [Recipe 45 — Trim, compare ignoring case, prefix and suffix](#recipe-45--trim-compare-ignoring-case-prefix-and-suffix) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 **The clocks, by name.** The five things `System` gave you for time, and
@@ -2280,6 +2282,130 @@ unverified there. Needs `<atomic>`, `<cstdint>`, `<string>`,
 
 > [!WARNING]
 > **Trap:** the name outlives every process that mapped it — close every handle, exit, and the name is still there holding the last frame, visibly on Linux as `/dev/shm/name` and with no path to list at all on macOS, until someone calls `shm_unlink` (a harness killed on an assertion leaves one behind) — and ThreadSanitizer instruments one process, so a race between two is invisible to every tool in the book, Finding 10's family with a process boundary through it. Two smaller ones the harness meets: macOS caps the name at 31 characters and allows `ftruncate` on the object exactly once (a second returns `EINVAL`).
+
+### Recipe 44 — Match a pattern
+
+**In C#:** `Regex.IsMatch(id, @"^sensor(\d+)$")`, `Regex.Match(id, @"^sensor(\d+)$").Groups[1].Value`, `Regex.Replace(text, @"\d+", "#")`
+
+**The recipe:**
+
+```cpp
+std::optional<int> sensor_index(const std::string& id) {
+    // Constructed ONCE. Building a std::regex parses the pattern and compiles
+    // it, which is the expensive half - a function-local static pays it on the
+    // first call only (Chapter 32's construct-on-first-use).
+    static const std::regex pattern(R"(^sensor([0-9]+)$)");   // R"(...)" is C#'s @"..."
+    std::smatch m;
+    if (!std::regex_match(id, m, pattern)) {
+        return std::nullopt;                       // IsMatch false: absence, not an error
+    }
+    const std::string digits = m[1].str();         // Groups[1], copied out: m borrows from id (Chapter 10)
+    int value = 0;
+    if (std::from_chars(digits.data(), digits.data() + digits.size(), value).ec != std::errc{}) {
+        return std::nullopt;                       // matched, but more digits than an int holds
+    }
+    return value;
+}
+
+std::string redact_digits(const std::string& text) {
+    static const std::regex digits(R"([0-9]+)");
+    return std::regex_replace(text, digits, "#");   // Regex.Replace: every match, a new string
+}
+```
+
+**Why it looks like this.** `std::regex` is the `Regex` class with the
+static helpers removed: the object *is* the compiled pattern, so the
+shape that matters is where it lives. `Regex.IsMatch(s, pattern)` hides
+a cache of compiled patterns behind the static call; here nothing caches
+for you, and a `std::regex` built inside the function it serves is
+parsed and compiled on every call — a function-local `static const`
+builds it once, on first use, thread-safely since C++11
+([Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit)'s
+shape). `regex_match` is `IsMatch` with `^` and `$` built in — the
+pattern keeps them so it reads as the C# one — and `regex_search` is the
+unanchored one; `smatch` is the `Match` object, and `m[1]` is
+`Groups[1]`: a pair of iterators *into the string you matched*,
+[Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
+view, so the digits are copied out on the spot. The class is written
+`[0-9]` where C# wrote `\d` because that is all `\d` means here — bytes,
+the ten ASCII digits, never a Unicode category — where .NET's `\d` is
+`\p{Nd}` and takes every script's digits
+([Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)'s
+rule: a `std::string` is bytes). The dialect is ECMAScript, close enough
+to .NET's for the everyday subset — except `$`, which here does not
+match before a final `\n`. Needs `<regex>`, `<optional>`, `<charconv>`,
+`<string>`.
+
+> [!WARNING]
+> **Trap:** `std::regex` is slow and it allocates — on this machine a match through the `static const` above costs about 800 nanoseconds and eleven heap allocations, where `starts_with` plus Recipe 19's `from_chars` on the same input costs a few nanoseconds and none, which the harness counts with [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s replaced `operator new`; and one hostile line against a pattern with nested repetition backtracks for seconds under libstdc++ and, under libc++, throws `std::regex_error` out of `regex_match` in milliseconds, which this recipe does not catch — so it belongs in a config parser and never on the per-sample path, and a regex that must be fast is a [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) dependency, RE2 or PCRE2.
+
+### Recipe 45 — Trim, compare ignoring case, prefix and suffix
+
+**In C#:** `s.Trim()`, `string.Equals(a, b, StringComparison.OrdinalIgnoreCase)`, `s.StartsWith("sensor", StringComparison.Ordinal)`, `s.EndsWith(".txt", StringComparison.Ordinal)`
+
+**The recipe:**
+
+```cpp
+std::string_view trim(std::string_view s) {
+    constexpr std::string_view blank = " \t\r\n";
+    const auto first = s.find_first_not_of(blank);
+    if (first == std::string_view::npos) {
+        return {};                                 // all blank: empty - substr(npos) would throw
+    }
+    const auto last = s.find_last_not_of(blank);
+    return s.substr(first, last - first + 1);      // a VIEW into s: the caller's string must outlive it
+}
+
+bool equals_ignore_case(std::string_view a, std::string_view b) {
+    if (a.size() != b.size()) {
+        return false;
+    }
+    for (std::size_t i = 0; i < a.size(); ++i) {   // ASCII only: bytes, not characters (Chapter 9)
+        if (std::tolower(static_cast<unsigned char>(a[i])) !=      // unsigned char first: Chapter 19's UB
+            std::tolower(static_cast<unsigned char>(b[i]))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool starts_with(std::string_view s, std::string_view prefix) {
+    return s.substr(0, prefix.size()) == prefix;   // C++20 spells it s.starts_with(prefix)
+}
+
+bool ends_with(std::string_view s, std::string_view suffix) {
+    return s.size() >= suffix.size() && s.substr(s.size() - suffix.size()) == suffix;
+}
+```
+
+**Why it looks like this.** Four one-liners C# has and C++17's
+`std::string` does not, each with the same shape: a `string_view` in, so a literal, a
+`std::string` and a substring all bind without a copy
+([Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s
+view branch). `trim` hands back a view rather than a new string — free,
+and honest about what `Trim` allocated for you — so its result lives as
+long as its argument and no longer, which is
+[Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
+dangling view the moment the argument was a temporary; copy into a
+`std::string` where the trimmed text must outlive the line. `Trim`
+strips every Unicode white-space character where `blank` here is four
+bytes, so widen it if a no-break space (`C2 A0` in UTF-8) can reach
+you. The `find_first_not_of` / `find_last_not_of` pair is the idiom, and
+the `npos` check comes first because `substr(npos)` throws
+`out_of_range`: without it an all-blank input would throw where `Trim`
+returns `""`.
+The case-insensitive compare is ordinal and byte-wise — `tolower` on an
+`unsigned char`, [Chapter 19](19-exercise-the-word-counter.md#chapter-19--exercise-the-word-counter)'s
+cast, because a negative `char` is undefined behavior there — so it is
+`OrdinalIgnoreCase` for ASCII and *not* for anything else: `ü` and `Ü`
+differ as bytes, and the harness asserts that they do. `starts_with` and
+`ends_with` are C++20 members of `string` and `string_view`; on C++17
+these two lines are them — and ordinal always, where a bare
+`s.StartsWith("x")` in .NET is culture-sensitive, which is what the
+analyzers nag about. Needs `<cctype>`, `<string_view>`.
+
+> [!WARNING]
+> **Trap:** `auto t = trim(read_line());` is a view of a string that died at the semicolon — a `stack-use-after-scope` or `heap-use-after-free` under ASan, and plausible text until then; name the string first, or have your own `trim` return a `std::string` if callers keep the result.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
