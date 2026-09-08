@@ -12,15 +12,27 @@ the markdown under book/ and the renderer:
 2. on_page_markdown turns GitHub alerts (`> [!TIP]` then a blockquote body)
    into Material admonitions. Only the shape the book uses is handled; the
    marker line names the type and the body keeps its bold label, which is
-   what check_markup.sh already enforces.
+   what check_markup.sh already enforces. It also marks every `<details>`
+   and `<summary>` for md_in_html: GitHub resumes markdown after a blank
+   line inside a raw HTML block, Python-Markdown does not, and without the
+   attribute the fourteen solution and walkthrough folds render as literal
+   asterisks and backticks (found by review, not by the build - a fold that
+   shows raw text is still a fold to every checker).
 """
 import pathlib
 import re
 
+# Material has no "important" type - an unknown type renders in the plain
+# note style, which would give the book's two non-negotiable rules (CLAUDE.md:
+# IMPORTANT only if breaking it is a bug) the mildest box on the page while
+# every Trap gets a stronger one. "danger" is Material's strongest, so the
+# visual order matches GitHub's: TIP < NOTE < WARNING < IMPORTANT. An
+# extra_css rule would have to live under book/, which is the book's, not
+# the site's.
 ALERT_TYPES = {
     "NOTE": "note",
     "TIP": "tip",
-    "IMPORTANT": "important",
+    "IMPORTANT": "danger",
     "WARNING": "warning",
     "CAUTION": "danger",
 }
@@ -28,9 +40,20 @@ ALERT_MARK = re.compile(r"^> \[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$")
 
 
 def _headings(path):
-    """First H1 (a part or the Appendices separator, if any) and first H2."""
+    """First H1 (a part or the Appendices separator, if any) and first H2.
+
+    Lines inside a code fence are skipped: a `# comment` in a shell or CMake
+    listing is not a heading, and a Part intro may open a fence before the
+    chapter's own `## ` line.
+    """
     h1 = h2 = None
+    in_fence = False
     for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("```") or line.startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
         if h1 is None and line.startswith("# "):
             h1 = line[2:].strip()
         elif h2 is None and line.startswith("## "):
@@ -56,6 +79,8 @@ def on_config(config):
 
 
 def on_page_markdown(markdown, page, config, files):
+    markdown = markdown.replace("<details>", '<details markdown="1">')
+    markdown = markdown.replace("<summary>", '<summary markdown="1">')
     out, lines, i = [], markdown.split("\n"), 0
     while i < len(lines):
         match = ALERT_MARK.match(lines[i])

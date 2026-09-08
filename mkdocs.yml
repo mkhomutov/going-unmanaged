@@ -54,7 +54,10 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.snippets:
       # Include-from-file, the mechanism SITE-PLAN.md's step 4 moves the
-      # quoted listings onto: `--8<-- "exercises/cookbook/files.cpp:52:60"`.
+      # quoted listings onto: `--8<-- "exercises/cookbook/files.cpp:recipe-1"`
+      # names a section fenced in the source by `// --8<-- [start:recipe-1]`
+      # and `[end:recipe-1]` comments. Never a line range: check_paths only
+      # proves the range exists, not that it still holds the function.
       base_path: [.]
       check_paths: true
   - pymdownx.superfences:

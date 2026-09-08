@@ -56,7 +56,7 @@ What it cost, measured on the built site:
 | Cross-file links with a `#chapter-n--title` anchor | 609 | 609 resolve; `pymdownx.slugs` reproduces GitHub's slugs byte for byte, double dash included |
 | `> [!TYPE]` alerts | 151 | 151 admonitions, through a thirty-line hook, no plugin |
 | mermaid fences | 12 | 12 render (client-side; see the open decision below) |
-| `<details>` folds | 14 | 14 |
+| `<details>` folds | 14 | 14, once the hook marks them for `md_in_html` — the first build kept all fourteen tags and rendered their markdown as literal text, and no checker noticed |
 | Strict build (`mkdocs build --strict`) | — | green, 3 seconds, 7.6 MB |
 
 Include-from-file was proven on Recipe 1: a page whose C++ tab is
@@ -65,8 +65,9 @@ out of the cookbook source, beside a C# tab and a Rust tab, with a copy
 button — the whole of step 4's mechanism, working. Two frictions found and
 recorded rather than fixed: the generated nav footers at the bottom of every
 chapter are redundant on a site with its own navigation (they go in step 2),
-and `IMPORTANT` is not a Material admonition type, so it renders in the
-default style until one CSS rule names it. Versions are pinned in
+and `IMPORTANT` is not a Material admonition type, so the hook maps it to
+`danger`, Material's strongest, to keep GitHub's visual order (a stylesheet
+would have to live under `book/`). Versions are pinned in
 `scripts/site-requirements.txt` because Material's own team warns that
 MkDocs 2.0 removes the hook system with no migration path; mdBook is the
 fallback if that forces a move, and its include-by-anchor is the same

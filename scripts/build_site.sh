@@ -14,11 +14,13 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 VENV=build/site-venv
-if [ ! -x "$VENV/bin/mkdocs" ]; then
+if [ ! -x "$VENV/bin/pip" ]; then
     python3 -m venv "$VENV"
     "$VENV/bin/pip" install --quiet --upgrade pip
-    "$VENV/bin/pip" install --quiet -r scripts/site-requirements.txt
 fi
+# Every run, not only the first: a no-op when the pins are already satisfied
+# (about a second), and the only way a bumped pin reaches a venv that exists.
+"$VENV/bin/pip" install --quiet -r scripts/site-requirements.txt
 
 if [ "${1:-}" = "--serve" ]; then
     exec "$VENV/bin/mkdocs" serve
