@@ -146,6 +146,23 @@ numbers may still move.
   flags; `check_verbatim.sh` holds the file to the page both ways. Two
   rows in the verbs table, one in the decision table; Chapter 27 and
   Recipe 42 point at it.
+- **Appendix F: Recipe 49 — read a large file without copying it** (MINOR
+  — an appended recipe). `MemoryMappedFile.CreateFromFile`, and the
+  `File.ReadAllBytes` it replaces the day the file is the size of the
+  machine: a read-only, private mapping behind an RAII class, the
+  descriptor closed the moment the mapping exists, the empty file an
+  empty view rather than an `EINVAL`, and a `string_view` that lives
+  exactly as long as the object. The harness in `files.cpp` maps four
+  megabytes, compares every byte against Recipe 1's copy, counts heap
+  allocations across the mapping with a replaced `operator new` — both
+  forms, because under ASan the array form does not route through the
+  scalar one and a `new char[]` copy passed the first draft — deletes
+  the file under the live mapping on POSIX and reads on, and checks the
+  descriptor was closed; the `buildlab-msvc` job builds and runs the
+  Win32 half. Its trap is one no tool names and the platforms answer
+  differently: a file truncated under a mapping is a `SIGBUS` on Linux
+  and a completed read on macOS, and `check_platform_claims.sh` holds
+  each platform to its own answer. Chapter 31 gains a row.
 
 ## [0.11.0] — 2026-09-06
 

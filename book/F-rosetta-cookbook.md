@@ -67,6 +67,7 @@ stays right.
 | `PostAsJsonAsync` / `ReadFromJsonAsync<T>` | `BodyPublishers.ofString(mapper.writeValueAsString(r))` / Jackson `readValue` | [Recipe 46 — Post a JSON body and read a JSON reply](#recipe-46--post-a-json-body-and-read-a-json-reply) |
 | `Rfc2898DeriveBytes.Pbkdf2` / `HKDF.DeriveKey` | `SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")` / `KDF.getInstance("HKDF-SHA256")` (JDK 25) | [Recipe 47 — Derive a key](#recipe-47--derive-a-key) |
 | `HMACSHA256.HashData` / `CryptographicOperations.FixedTimeEquals` | `Mac.getInstance("HmacSHA256")` / `MessageDigest.isEqual` | [Recipe 48 — Sign and verify bytes](#recipe-48--sign-and-verify-bytes) |
+| `MemoryMappedFile.CreateFromFile` / `File.ReadAllBytes` on a large file | `FileChannel.map(READ_ONLY)` | [Recipe 49 — Read a large file without copying it](#recipe-49--read-a-large-file-without-copying-it) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 **The clocks, by name.** The five things `System` gave you for time, and
@@ -2641,6 +2642,100 @@ libcrypto 3 as Recipe 36, `<memory>`, `<vector>`.
 
 > [!WARNING]
 > **Trap:** `verify_hmac_sha256` on a licence blob compiles, runs and verifies — and the key that verifies is the key that signs, so the plug-in checking the licence on the customer's machine carries everything needed to forge one; when the verifier must not be able to sign, that is a signature (Ed25519, `EVP_DigestSign` with a private key), a different recipe with a different key shape.
+
+### Recipe 49 — Read a large file without copying it
+
+**In C#:** `using var mmf = MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, 0, MemoryMappedFileAccess.Read); using var view = mmf.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);` — or, far more often, `File.ReadAllBytes(path)`, which was fine until the file was the size of the machine's memory; the mapped form pages the file in as it is touched, and the runtime keeps both handles alive for the view
+
+**The recipe:**
+
+```cpp
+// Recipe 49 - MemoryMappedFile.CreateFromFile: a file's bytes as a view,
+// mapped rather than read. Pages arrive as they are touched and leave with
+// the object; nothing is copied into the heap, and the file may be closed -
+// or, on POSIX, deleted - the moment the mapping exists.
+class MappedFile {
+public:
+    explicit MappedFile(const std::filesystem::path& path) {
+#if defined(_WIN32)
+        HANDLE file = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+                                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (file == INVALID_HANDLE_VALUE) throw std::runtime_error("cannot open " + path.string());
+        LARGE_INTEGER size{};
+        if (!GetFileSizeEx(file, &size)) { CloseHandle(file); throw std::runtime_error("cannot size " + path.string()); }
+        if (size.QuadPart == 0) { CloseHandle(file); return; }      // a zero-length mapping is refused: an empty view instead
+        HANDLE mapping = CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
+        CloseHandle(file);                                           // the mapping object holds its own reference
+        if (mapping == nullptr) throw std::runtime_error("cannot map " + path.string());
+        view_ = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+        CloseHandle(mapping);                                        // and the view holds its own
+        if (view_ == nullptr) throw std::runtime_error("cannot view " + path.string());
+        size_ = static_cast<std::size_t>(size.QuadPart);
+#else
+        const int fd = ::open(path.c_str(), O_RDONLY);
+        if (fd < 0) throw std::runtime_error("cannot open " + path.string());
+        struct stat st{};
+        if (::fstat(fd, &st) != 0) { ::close(fd); throw std::runtime_error("cannot size " + path.string()); }
+        if (st.st_size == 0) { ::close(fd); return; }                // mmap of length 0 is EINVAL: an empty view instead
+        void* view = ::mmap(nullptr, static_cast<std::size_t>(st.st_size), PROT_READ, MAP_PRIVATE, fd, 0);
+        ::close(fd);                                                 // the mapping keeps its own reference to the file
+        if (view == MAP_FAILED) throw std::runtime_error("cannot map " + path.string());
+        view_ = view;
+        size_ = static_cast<std::size_t>(st.st_size);
+#endif
+    }
+    ~MappedFile() {
+        if (view_ == nullptr) return;
+#if defined(_WIN32)
+        UnmapViewOfFile(view_);
+#else
+        ::munmap(const_cast<void*>(view_), size_);
+#endif
+    }
+    MappedFile(const MappedFile&) = delete;
+    MappedFile& operator=(const MappedFile&) = delete;
+
+    // A view into the mapping: valid exactly as long as this object is.
+    std::string_view bytes() const { return {static_cast<const char*>(view_), size_}; }
+
+private:
+    const void* view_ = nullptr;
+    std::size_t size_ = 0;
+};
+```
+
+**Why it looks like this.** Recipe 1 copies the file into a `std::string`,
+the right shape for a config and the wrong one for a capture, a log or a
+media file: the copy costs a heap allocation the size of the file and a
+read of every byte before the first is looked at. A mapping asks the OS
+to make the file's pages appear in the process's address space as they
+are touched — the same `mmap` and `MapViewOfFile` as Recipe 43, with a
+file where that recipe had a name, and read-only, private, so the file
+cannot change through the view. The class is Recipe 7 for a view: the
+descriptor is closed the moment the mapping exists, because the mapping
+holds its own reference to the file — which is also why, on POSIX, the
+file can be deleted under a live mapping and the bytes still read, the
+harness's second assertion (Windows refuses the delete instead). The
+empty file is the branch a first draft lacks: `mmap` of zero bytes is
+`EINVAL` and `CreateFileMapping` of an empty file fails outright, so an
+empty file is an empty view, not an exception. `bytes()` is a
+`string_view`, [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
+non-owning window with that chapter's rule attached: valid exactly as
+long as the `MappedFile` is, and a view kept past the object reads
+unmapped memory, which ASan reports as a `SEGV on unknown address` with
+no allocation site — the pages were the kernel's, never the allocator's.
+The harness maps four megabytes, compares every byte against Recipe 1's
+copy, and — [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s
+instrument — counts heap allocations across the mapping with a replaced
+`operator new`: zero, which is the recipe's whole claim over
+`ReadAllBytes` (both forms of `operator new` are replaced, because under
+ASan the array form does not route through the scalar one, and a copy
+made with `new char[]` passed the first draft of the judge). Needs
+`<filesystem>`, `<string_view>`; `<sys/mman.h>`, `<sys/stat.h>`,
+`<fcntl.h>`, `<unistd.h>` on POSIX; `<windows.h>` on Windows.
+
+> [!WARNING]
+> **Trap:** a file that shrinks while it is mapped — another process truncating the log you are reading — is, on Linux, a `SIGBUS` on the first touch of a page past the new end: plain memory, no allocation site, none of Chapter 31's shapes, and no sanitizer names it; on macOS the same read completes with the old byte, which `check_platform_claims.sh` holds each platform to. Map files nobody else writes, or copy what you need out of the view before anyone can — a mapping is not a copy, and the bytes change under you if the writer keeps writing.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

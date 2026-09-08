@@ -205,6 +205,40 @@ run_rc_bounded() {
     echo "$rc"
 }
 
+cat > "$OUT/truncate_under_map.cpp" <<'EOF'
+// Recipe 49's trap: a file shrunk while a read-only, private mapping of it
+// is live. The mapping is 64 MB, only the first page is touched before the
+// truncation, and the last page after it - a page the process had not
+// faulted in while the bytes still existed.
+#include <cstdio>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+int main() {
+    const char* path = "truncate_under_map.bin";
+    const size_t size = 64u << 20;
+    {
+        FILE* f = std::fopen(path, "wb");
+        if (!f || ftruncate(fileno(f), (off_t)size) != 0) return 2;
+        std::fseek(f, (long)size - 1, SEEK_SET);
+        std::fputc('z', f);
+        std::fclose(f);
+    }
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) return 2;
+    const char* view = (const char*)mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd);
+    if (view == MAP_FAILED) return 2;
+    std::printf("first page: %d\n", view[0]);
+    if (truncate(path, 4096) != 0) return 2;
+    std::printf("truncated to one page; touching the last page\n");
+    std::fflush(stdout);
+    std::printf("last byte: %d\n", view[size - 1]);
+    unlink(path);
+    return 0;
+}
+EOF
+
 # --- 1. AddressSanitizer's exit code ----------------------------------------
 # Chapter 28: "on macOS the sanitizer runtime calls abort() after printing; on
 # Linux it defaults to _exit(1)". Chapter 31 says the same for UBSan's
@@ -659,6 +693,42 @@ else
     skip "AddressSanitizer cannot build the stack-overflow demonstrations with $CXX"
 fi
 
+# --- 9. a file truncated under a mapping -------------------------------------
+# Recipe 49's trap. POSIX says a reference to a page of a mapping that lies
+# beyond the file's end raises SIGBUS, and Linux does exactly that: the run
+# dies on the read of the last page, on plain memory, with no allocation
+# site - none of Chapter 31's shapes, and no sanitizer names it. macOS,
+# measured on the maintainer's arm64 machine, keeps the page readable and
+# the run completes with the old byte. The recipe's page states both, and
+# this section holds each platform to its own answer rather than writing
+# one down as the rule - the mistake section 8 records.
+echo "== a file truncated under a mapping =="
+if [ "$OS" = Darwin ] || [ "$OS" = Linux ]; then
+    if $CXX -std=c++17 -g "$OUT/truncate_under_map.cpp" -o "$OUT/truncate_under_map" 2>/dev/null; then
+        RC_T=$( (cd "$OUT" && run_rc_bounded "$OUT/truncate_under_map" "$OUT/truncate_under_map.log" 60) )
+        rm -f "$OUT/truncate_under_map.bin"
+        case "$OS" in
+            Linux)
+                # the process dies of SIGBUS: 128 + 7 from the shell that reaped it
+                if [ "$RC_T" = 135 ] && ! grep -q "last byte" "$OUT/truncate_under_map.log"; then
+                    pass "Linux: the read past the new end is a SIGBUS (exit $RC_T), no sanitizer, no allocation site   [Recipe 49]"
+                else
+                    fail "Linux: expected SIGBUS (exit 135) on the read past the new end, got exit $RC_T   [Recipe 49]"
+                fi ;;
+            Darwin)
+                if [ "$RC_T" = 0 ] && grep -q "last byte: 122" "$OUT/truncate_under_map.log"; then
+                    pass "macOS: the page past the new end still reads the old byte (exit 0)   [Recipe 49]"
+                else
+                    fail "macOS: expected the run to complete with the old byte, got exit $RC_T   [Recipe 49]"
+                fi ;;
+        esac
+    else
+        skip "cannot build the truncate-under-mapping demonstration with $CXX"
+    fi
+else
+    skip "truncate-under-mapping is a POSIX demonstration ($OS)"
+fi
+
 echo
 if [ "$FAILED" = 0 ]; then
     echo "platform claims OK ($OS/$ARCH, $STDLIB)"
@@ -670,6 +740,7 @@ else
     echo "  sections 5 and 7 are linker claims that hold everywhere alike, so a" >&2
     echo "  failure there means this toolchain differs from the chapter's transcript;" >&2
     echo "  section 6 is per standard library, keyed by the library's macro;" >&2
-    echo "  section 8 asserts only what every platform and every run share." >&2
+    echo "  section 8 asserts only what every platform and every run share;" >&2
+    echo "  section 9 is per-platform again, Recipe 49's truncated mapping." >&2
     exit 1
 fi

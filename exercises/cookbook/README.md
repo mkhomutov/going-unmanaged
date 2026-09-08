@@ -6,7 +6,7 @@ Cookbook*), one translation unit per domain —
 
 | File | Recipes |
 |---|---|
-| `files.cpp` | 1, 9, 38 — read and write a whole file; save one without losing the old one (the judge is the inode: a save must replace the file, not rewrite it) |
+| `files.cpp` | 1, 9, 38, 49 — read and write a whole file; save one without losing the old one (the judge is the inode: a save must replace the file, not rewrite it); read a large file without copying it (the judge is a replaced `operator new`, both forms, counting zero allocations across the mapping, every byte compared, the file deleted under the live mapping on POSIX and the descriptor checked closed) |
 | `strings.cpp` | 2–5, 17, 23, 44–45 — split, join, build, format; the UTF-8/UTF-16 boundary; the empty string that is not null; a pattern matched with `std::regex` (anchored, the capture read back as a number, both refusals asserted); trim, compare ignoring case, prefix and suffix over `string_view` (the byte-wise compare asserted to differ on `ü`/`Ü`) |
 | `timing.cpp` | 6, 16, 28–30 — time a call; a repeating timer; a scoped timer and a forwarding wrapper; a timestamp for a log line; a timeout handed to a C API |
 | `handles.cpp` | 7 — wrap a C handle so it frees itself |
