@@ -41,6 +41,7 @@ void operator delete(void* p) noexcept { std::free(p); }
 void operator delete(void* p, std::size_t) noexcept { std::free(p); }
 
 // Recipe 2 - string.Split
+// --8<-- [start:recipe-2]
 std::vector<std::string> split(const std::string& text, char sep) {
     std::vector<std::string> parts;
     std::istringstream stream(text);
@@ -50,8 +51,10 @@ std::vector<std::string> split(const std::string& text, char sep) {
     }
     return parts;
 }
+// --8<-- [end:recipe-2]
 
 // Recipe 3 - string.Join
+// --8<-- [start:recipe-3]
 std::string join(const std::vector<std::string>& parts, const std::string& sep) {
     std::string result;
     for (const auto& part : parts) {
@@ -62,8 +65,10 @@ std::string join(const std::vector<std::string>& parts, const std::string& sep) 
     }
     return result;
 }
+// --8<-- [end:recipe-3]
 
 // Recipe 4 - StringBuilder
+// --8<-- [start:recipe-4]
 std::string build_report(const std::vector<int>& values) {
     std::string out;
     // one allocation up front - the StringBuilder(capacity) constructor
@@ -75,8 +80,10 @@ std::string build_report(const std::vector<int>& values) {
     }
     return out;
 }
+// --8<-- [end:recipe-4]
 
 // Recipe 5 - string.Format
+// --8<-- [start:recipe-5]
 std::string describe(int count, double ratio) {
     std::ostringstream out;
     out << count << " samples, ratio "
@@ -89,8 +96,10 @@ std::string describe_c(int count, double ratio) {
     std::snprintf(buffer, sizeof buffer, "%d samples, ratio %.2f", count, ratio);
     return buffer;
 }
+// --8<-- [end:recipe-5]
 
 // Recipe 17 - the UTF-8 <-> UTF-16 boundary
+// --8<-- [start:recipe-17]
 // UTF-8 -> UTF-16. Invalid input becomes U+FFFD, the convention browsers
 // follow; no exceptions, no locale, no deprecated machinery.
 std::u16string utf8_to_utf16(std::string_view utf8) {
@@ -159,16 +168,20 @@ std::string utf16_to_utf8(std::u16string_view utf16) {
     }
     return out;
 }
+// --8<-- [end:recipe-17]
 
 // Recipe 23 - string.IsNullOrEmpty / s ?? ""
+// --8<-- [start:recipe-23]
 std::string name_or_default(const char* from_c_api) {
     if (from_c_api == nullptr) {            // the one null there is: a C API's "no name"
         return "unnamed";
     }
     return from_c_api;                      // safe now - std::string(nullptr) is UB
 }
+// --8<-- [end:recipe-23]
 
 // Recipe 44 - Regex.IsMatch, Match(...).Groups[1], Regex.Replace
+// --8<-- [start:recipe-44]
 std::optional<int> sensor_index(const std::string& id) {
     // Constructed ONCE. Building a std::regex parses the pattern and compiles
     // it, which is the expensive half - a function-local static pays it on the
@@ -190,8 +203,10 @@ std::string redact_digits(const std::string& text) {
     static const std::regex digits(R"([0-9]+)");
     return std::regex_replace(text, digits, "#");   // Regex.Replace: every match, a new string
 }
+// --8<-- [end:recipe-44]
 
 // Recipe 45 - Trim, Equals(OrdinalIgnoreCase), StartsWith / EndsWith
+// --8<-- [start:recipe-45]
 std::string_view trim(std::string_view s) {
     constexpr std::string_view blank = " \t\r\n";
     const auto first = s.find_first_not_of(blank);
@@ -222,6 +237,7 @@ bool starts_with(std::string_view s, std::string_view prefix) {
 bool ends_with(std::string_view s, std::string_view suffix) {
     return s.size() >= suffix.size() && s.substr(s.size() - suffix.size()) == suffix;
 }
+// --8<-- [end:recipe-45]
 
 int main() {
     // Recipe 2, including the two behaviors the appendix claims: interior

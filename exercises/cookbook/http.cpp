@@ -52,6 +52,7 @@
 
 using json = nlohmann::json;
 
+// --8<-- [start:recipe-41]
 // Recipe 41 - HttpClient.GetStringAsync, through the C API the ecosystem uses
 // (curl_global_init(CURL_GLOBAL_DEFAULT) runs once per process before this,
 // on the thread that starts the others - see the Why.)
@@ -92,8 +93,10 @@ HttpResult http_get(const std::string& url, std::chrono::milliseconds timeout) {
     curl_easy_getinfo(easy.get(), CURLINFO_RESPONSE_CODE, &r.status);
     return r;
 }
+// --8<-- [end:recipe-41]
 
 // Recipe 46 - PostAsJsonAsync, then ReadFromJsonAsync<T>
+// --8<-- [start:recipe-46]
 using HeaderList = std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)>;   // Recipe 7's shape: a second handle type
 
 HttpResult http_post_json(const std::string& url, const json& body, std::chrono::milliseconds timeout) {
@@ -132,6 +135,7 @@ std::optional<json> json_reply(const HttpResult& r) {
     }
     return parsed;
 }
+// --8<-- [end:recipe-46]
 
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;

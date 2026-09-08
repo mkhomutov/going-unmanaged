@@ -153,7 +153,7 @@ titled by symptom and open on the evidence; the symptom index has a row for
 every ticket and every gotcha; `check_verbatim.sh` and `check_markup.sh`
 green, because the cuts touch prose the pairings do not cover.
 
-## Step 4 — invert the verbatim direction
+## Step 4 — invert the verbatim direction — IN PROGRESS
 
 Today a chapter *contains* the code and `check_verbatim.sh` proves the file
 agrees, in one direction or both. After this step the file is the only
@@ -180,6 +180,8 @@ already one-fence-per-unit; then the ticket labs' fixed files; then the rest.
 That is the accepted cost: the site is the delivered form, and GitHub's
 rendering of `book/` becomes what the single file was, a second view nobody
 optimises for.
+
+**Status.** PR 1: Appendix F, DONE — 49 recipes included from 20 cookbook files by `recipe-N` sections; the rendered code blocks on every page were compared before and after (325 blocks, identical), and `check_verbatim.sh` gained the generic both-ways include check. A manual-trigger Pages workflow (`.github/workflows/site.yml`) ships with it, for the day hosting is switched on. Next: the ticket labs and their cards, then the rest.
 
 **Acceptance:** no cpp fence on a page that a pairing covers contains code;
 `check_verbatim.sh` still fails when a marker is deleted from a source file

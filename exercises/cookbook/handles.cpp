@@ -9,11 +9,13 @@
 #include <cstdio>
 #include <memory>
 
+// --8<-- [start:recipe-7]
 using FileHandle = std::unique_ptr<std::FILE, int (*)(std::FILE*)>;
 
 FileHandle open_file(const char* path, const char* mode) {
     return FileHandle(std::fopen(path, mode), &std::fclose);
 }
+// --8<-- [end:recipe-7]
 
 int main() {
     const char* path = "cookbook_handle.txt";

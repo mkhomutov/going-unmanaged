@@ -13,6 +13,7 @@
 #include <sstream>
 #include <string>
 
+// --8<-- [start:recipe-15]
 void report_progress(int done, int total) {
     std::cout << "processed " << done << " of " << total << '\n';    // buffered: fast
 }
@@ -20,14 +21,17 @@ void report_progress(int done, int total) {
 void report_failure(const std::string& what) {
     std::cerr << "error: " << what << '\n';    // unbuffered: survives a crash
 }
+// --8<-- [end:recipe-15]
 
 // Recipe 24 - [Conditional("DEBUG")]
+// --8<-- [start:recipe-24]
 void check_channel_count([[maybe_unused]] int channels) {          // used only in Debug
     assert(channels > 0 && "a session has at least one channel");   // gone under NDEBUG
 #ifndef NDEBUG
     std::cerr << "[debug] channels=" << channels << '\n';           // and so is this block
 #endif
 }
+// --8<-- [end:recipe-24]
 
 int main() {
     std::ostringstream captured;

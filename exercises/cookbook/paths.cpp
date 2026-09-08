@@ -30,11 +30,14 @@
 #endif
 
 // Recipe 10 - Path.Combine
+// --8<-- [start:recipe-10]
 std::filesystem::path log_path(const std::filesystem::path& dir) {
     return dir / "logs" / "app.txt";    // '/' inserts the platform's separator
 }
+// --8<-- [end:recipe-10]
 
 // Recipe 11 - File.Exists / Directory.Exists
+// --8<-- [start:recipe-11]
 namespace fs = std::filesystem;
 
 bool config_present(const fs::path& p) {
@@ -44,8 +47,10 @@ bool config_present(const fs::path& p) {
 bool logs_dir_present(const fs::path& p) {
     return fs::is_directory(p);       // Directory.Exists: exists AND is a directory
 }
+// --8<-- [end:recipe-11]
 
 // Recipe 12 - Directory.GetFiles
+// --8<-- [start:recipe-12]
 std::vector<std::filesystem::path> list_files(const std::filesystem::path& dir) {
     std::vector<std::filesystem::path> files;
     for (const auto& entry : std::filesystem::directory_iterator(dir)) {
@@ -55,8 +60,10 @@ std::vector<std::filesystem::path> list_files(const std::filesystem::path& dir) 
     }
     return files;
 }
+// --8<-- [end:recipe-12]
 
 // Recipe 39 - Directory.CreateDirectory, File.Copy, File.Move, Directory.Delete
+// --8<-- [start:recipe-39]
 void rotate_export(const fs::path& export_dir, const fs::path& fresh_report) {
     fs::create_directories(export_dir / "archive");           // parents included; already there is not an error
     const fs::path current = export_dir / "report.txt";
@@ -70,6 +77,7 @@ void rotate_export(const fs::path& export_dir, const fs::path& fresh_report) {
 std::uintmax_t purge(const fs::path& dir) {
     return fs::remove_all(dir);    // Directory.Delete(recursive: true): the count removed, 0 if nothing was there
 }
+// --8<-- [end:recipe-39]
 
 static void write(const fs::path& p, const std::string& text) {
     std::ofstream(p, std::ios::binary) << text;

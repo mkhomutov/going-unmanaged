@@ -39,6 +39,7 @@ void run_the_batch() {
 }
 
 // Recipe 6 - Stopwatch
+// --8<-- [start:recipe-6]
 void report_batch_time() {
     const auto start = std::chrono::steady_clock::now();
     run_the_batch();    // the code being timed
@@ -46,8 +47,10 @@ void report_batch_time() {
     const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
     std::cout << ms.count() << " ms\n";
 }
+// --8<-- [end:recipe-6]
 
 // Recipe 16 - System.Timers.Timer
+// --8<-- [start:recipe-16]
 class RepeatingTimer {
 public:
     RepeatingTimer(std::chrono::milliseconds interval, std::function<void()> tick)
@@ -70,9 +73,11 @@ private:
     std::atomic<bool> stop_{false};    // declared before worker_: initialized first
     std::thread worker_;
 };
+// --8<-- [end:recipe-16]
 
 // Recipe 28 - Stopwatch.StartNew() with the stop in a finally, so it runs on
 // every exit path, and a wrapper that times one call and hands its result back
+// --8<-- [start:recipe-28]
 class ScopedTimer {
 public:
     explicit ScopedTimer(std::chrono::nanoseconds& record)
@@ -92,8 +97,10 @@ auto time_call(std::chrono::nanoseconds& record, F&& f, Args&&... args)
     ScopedTimer timer(record);
     return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);   // each argument passed on as it arrived
 }
+// --8<-- [end:recipe-28]
 
 // Recipe 29 - DateTime.UtcNow.ToString("o"), to the millisecond rather than the tick
+// --8<-- [start:recipe-29]
 std::string timestamp_utc() {
     const auto now = std::chrono::system_clock::now();          // the wall clock: the one with a calendar
     const auto since_epoch = now.time_since_epoch();
@@ -111,13 +118,16 @@ std::string timestamp_utc() {
         << '.' << std::setw(3) << std::setfill('0') << millis.count() << 'Z';
     return out.str();
 }
+// --8<-- [end:recipe-29]
 
 // Recipe 30 - TimeSpan.FromSeconds(2) handed to an SDK that wants an integer
+// --8<-- [start:recipe-30]
 int Device_Wait(std::uint32_t timeout_ms);   // the vendor's declaration: a bare integer, the unit in the name
 
 int wait_for_sample(std::chrono::milliseconds timeout) {
     return Device_Wait(static_cast<std::uint32_t>(timeout.count()));   // the unit left the type HERE, and only here
 }
+// --8<-- [end:recipe-30]
 
 namespace {
     std::uint32_t last_timeout_ms = 0;

@@ -22,14 +22,17 @@ namespace {
     void apply_timeout(int value) { applied = value; }
 }
 
+// --8<-- [start:recipe-8]
 void apply_timeout_setting(const std::map<std::string, int>& settings) {
     const auto it = settings.find("timeout");
     if (it != settings.end()) {
         apply_timeout(it->second);    // found - the iterator is the out-parameter
     }
 }
+// --8<-- [end:recipe-8]
 
 // Recipe 18 - IndexOf / Contains, on a sequence and on a string
+// --8<-- [start:recipe-18]
 template <class Seq, class T>
 std::optional<std::size_t> index_of(const Seq& values, const T& wanted) {
     const auto it = std::find(values.begin(), values.end(), wanted);
@@ -42,6 +45,7 @@ std::optional<std::size_t> index_of(const Seq& values, const T& wanted) {
 bool contains_word(std::string_view text, std::string_view word) {
     return text.find(word) != std::string_view::npos;    // a string says it as npos
 }
+// --8<-- [end:recipe-18]
 
 int main() {
     const std::map<std::string, int> settings{{"timeout", 30}};

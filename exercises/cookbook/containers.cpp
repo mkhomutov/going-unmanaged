@@ -20,6 +20,7 @@ namespace {
 }
 
 // Recipe 27 - new List<int>(capacity), and new double[n]
+// --8<-- [start:recipe-27]
 std::vector<int> read_samples(std::size_t expected) {
     std::vector<int> samples;
     samples.reserve(expected);            // List<T>(capacity): room for expected, size still 0
@@ -32,6 +33,7 @@ std::vector<int> read_samples(std::size_t expected) {
 std::vector<double> zeroed(std::size_t n) {
     return std::vector<double>(n);        // new double[n]: n elements, every one 0.0
 }
+// --8<-- [end:recipe-27]
 
 int main() {
     // reserve: the room is there, the elements are not, and the loop never

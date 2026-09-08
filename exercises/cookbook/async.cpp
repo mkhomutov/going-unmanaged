@@ -23,11 +23,13 @@ int do_other_work() {
     return 4;
 }
 
+// --8<-- [start:recipe-13]
 int overlap_work() {
     std::future<int> task = std::async(std::launch::async, count_defects);
     const int other = do_other_work();    // runs while count_defects runs
     return other + task.get();            // the await: blocks until the result arrives
 }
+// --8<-- [end:recipe-13]
 
 int main() {
     assert(overlap_work() == 104);

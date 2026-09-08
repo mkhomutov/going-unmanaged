@@ -32,6 +32,7 @@
 #include <utility>
 #include <vector>
 
+// --8<-- [start:recipe-42]
 // Recipe 42 - SqliteConnection, SqliteCommand, ExecuteReader: the C API underneath
 using Db = std::unique_ptr<sqlite3, decltype(&sqlite3_close)>;   // Recipe 7's shape, again
 
@@ -141,6 +142,7 @@ std::vector<Reading> readings_above(sqlite3* db, int threshold) {
     }
     return out;
 }
+// --8<-- [end:recipe-42]
 
 // SQLite reports API misuse - a close of a handle already closed, a bind on
 // a statement mid-step - through its log hook, and returns SQLITE_MISUSE to

@@ -1,0 +1,38 @@
+name: Site
+
+# Builds the book as a static site and deploys it to GitHub Pages - on demand
+# only. Nothing here runs on push: publishing is the maintainer's decision
+# (SITE-PLAN.md, open decisions), and the repository's Pages setting must be
+# "GitHub Actions" before the deploy step can succeed. Until it is run, the
+# site is read locally with scripts/build_site.sh --serve, and the strict
+# build that guards it runs in ci.yml's `site` job on every push.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: ./scripts/build_site.sh
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/site
+      - id: deployment
+        uses: actions/deploy-pages@v4

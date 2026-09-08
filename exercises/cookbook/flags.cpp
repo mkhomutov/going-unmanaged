@@ -15,6 +15,7 @@
 #include <string_view>
 
 // Recipe 31 - IConfiguration read at startup, once
+// --8<-- [start:recipe-31]
 struct Features {
     bool audit = false;                  // the defaults ARE the off state
     bool fast_path = false;
@@ -49,8 +50,10 @@ public:
 private:
     Features features_;
 };
+// --8<-- [end:recipe-31]
 
 // Recipe 32 - [Flags] enum Channel, and HasFlag
+// --8<-- [start:recipe-32]
 enum class Channel : std::uint8_t { None = 0, Left = 1, Right = 2, Sub = 4 };   // [Flags] enum Channel
 
 constexpr Channel operator|(Channel a, Channel b) {
@@ -60,6 +63,7 @@ constexpr Channel operator&(Channel a, Channel b) {
     return static_cast<Channel>(static_cast<std::uint8_t>(a) & static_cast<std::uint8_t>(b));
 }
 constexpr bool has(Channel set, Channel flag) { return (set & flag) == flag; }   // set.HasFlag(flag)
+// --8<-- [end:recipe-32]
 
 namespace {
     void set_env(const char* name, const char* value) {

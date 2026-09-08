@@ -16,6 +16,7 @@
 #include <vector>
 
 // Recipe 33 - a field of class type, and who disposes it
+// --8<-- [start:recipe-33]
 class Log {                                  // polymorphic: lives behind a pointer (Chapter 2)
 public:
     virtual ~Log() = default;
@@ -44,8 +45,10 @@ private:
     std::unique_ptr<Log> log_;               // one owner, polymorphic, optional: behind a unique_ptr
     std::shared_ptr<Sink> sink_;             // co-owned: alive while anyone still holds it
 };   // no Dispose to write: the fields die in reverse order of declaration, then the object
+// --8<-- [end:recipe-33]
 
 // Recipe 34 - an object too big for the stack
+// --8<-- [start:recipe-34]
 struct FrameBuffer {
     std::array<std::uint8_t, 4 * 1024 * 1024> pixels{};   // 4 MB inline: a class this size has no business on a stack
 };
@@ -54,6 +57,7 @@ static_assert(sizeof(FrameBuffer) > 1024 * 1024, "FrameBuffer is a heap object b
 std::unique_ptr<FrameBuffer> make_frame() {
     return std::make_unique<FrameBuffer>();  // one owner on the stack, four megabytes on the heap
 }
+// --8<-- [end:recipe-34]
 
 namespace {
     // A Log that reports its own death AND how many owners the Sink had at

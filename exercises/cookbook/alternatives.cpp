@@ -18,6 +18,7 @@
 #include <variant>
 
 // Recipe 19 - int.TryParse / ?? / ?.
+// --8<-- [start:recipe-19]
 std::optional<int> parse_port(std::string_view text) {
     int value = 0;
     const auto [end, ec] = std::from_chars(text.data(), text.data() + text.size(), value);
@@ -37,10 +38,12 @@ std::optional<std::size_t> digits_in(const std::optional<std::string>& text) {
     }
     return text->size();                  // -> is only legal once you have checked
 }
+// --8<-- [end:recipe-19]
 
 // Recipe 20 - switch (e) { case Temperature t: ... }. The overloaded idiom
 // is the two template lines: one callable with one operator() per
 // alternative, which C++17 does not ship and every codebase has.
+// --8<-- [start:recipe-20]
 struct Temperature { int centi; };        // centi-degrees, as the wire carries them
 struct Fault       { int code; };
 struct Heartbeat   {};
@@ -56,6 +59,7 @@ std::string describe(const Event& e) {
         [](Heartbeat)            { return std::string("heartbeat"); },
     }, e);
 }
+// --8<-- [end:recipe-20]
 
 int main() {
     // Recipe 19: one type, and the caller cannot forget to look because the

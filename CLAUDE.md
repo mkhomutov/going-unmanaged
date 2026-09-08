@@ -213,10 +213,11 @@ Chapter 25's Finding 10.
   `operator new` in BOTH forms as its judge — under ASan `new[]` does not
   route through the scalar replacement, and a heap copy passed the judge
   until the array form was replaced too.
-  Same sync
-  discipline as testlab: the recipe functions are quoted verbatim in the
-  appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
-  same commit (the mains are scaffolding and appear in no listing)
+  The recipe
+  functions are INCLUDED by the appendix, each between `// --8<-- [start:recipe-N]`
+  and `[end:recipe-N]` marker comments: edit the function in the file and the
+  page follows; moving a marker changes what the page shows (the mains are
+  scaffolding and appear in no listing)
 - `exercises/constlab/` — Appendix I's lab, and the only one in the repo whose
   judge asserts a build FAILS. `counter.h` + `main.cpp` compile and run
   clean; five const violations behind `-DCONSTLAB_VIOLATION_1..5` must each
@@ -431,7 +432,11 @@ Chapter 25's Finding 10.
   files, solution folds), banner-stripped containment for testlab/abilab
   (the convention: a committed lab file may open with a `//` provenance
   banner the chapter listing omits; the verbatim contract covers everything
-  below it), every Appendix F cpp fence in a cookbook TU, and the seven
+  below it), every listing a page INCLUDES — `--8<-- "path:section"`, the
+  section fenced in the source by `--8<-- [start:section]`/`[end:section]`
+  comment lines; Appendix F is entirely this shape, SITE-PLAN step 4 moves
+  the rest — held both ways (every include names a section its file marks
+  exactly once; every marked section is included by some page), and the seven
   ticket/lab TASK cards' broken listings in their chapters — plus two
   reverse directions: every cpp fence in Chapter 38 must live in
   `exercises/bridgelab/`, and Appendix H is held to `exercises/choosing/`
@@ -596,6 +601,8 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 - Recipes (Appendix F) follow strictly: **In C# / The recipe / Why it looks
   like this / Trap** — the trap a one-line `[!WARNING]`, the why
   cross-references to the owning chapter, numbers append-only like Findings.
+  The recipe fence is one line, `--8<-- "exercises/cookbook/<domain>.cpp:recipe-N"`;
+  the code lives only in the file, between its `recipe-N` markers.
 - Key-principle quotes are in speakable first person ("I check every error
   code...") — they double as a cheat sheet (Appendix B mirrors them; keep
   the two in sync when adding one).

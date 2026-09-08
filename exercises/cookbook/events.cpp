@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+// --8<-- [start:recipe-14]
 class SampleSource {
 public:
     using Handler = std::function<void(int)>;
@@ -36,6 +37,7 @@ private:
     std::vector<std::pair<int, Handler>> handlers_;
     int next_id_ = 0;
 };
+// --8<-- [end:recipe-14]
 
 int main() {
     SampleSource source;

@@ -33,6 +33,7 @@
 #include <utility>
 
 // Recipe 40 - FileSystemWatcher, in the one spelling the standard library has
+// --8<-- [start:recipe-40]
 class FileWatcher {
 public:
     FileWatcher(std::filesystem::path path, std::chrono::milliseconds interval,
@@ -93,6 +94,7 @@ private:
     std::atomic<bool> stop_{false};     // declared before worker_: initialized first (Recipe 16)
     std::thread worker_;
 };
+// --8<-- [end:recipe-40]
 
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;

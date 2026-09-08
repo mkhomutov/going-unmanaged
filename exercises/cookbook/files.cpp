@@ -49,6 +49,7 @@
 #endif
 
 // Recipe 1 - File.ReadAllText
+// --8<-- [start:recipe-1]
 std::string read_all_text(const std::filesystem::path& path) {
     std::ifstream in(path, std::ios::binary);
     if (!in) {
@@ -58,8 +59,10 @@ std::string read_all_text(const std::filesystem::path& path) {
     buffer << in.rdbuf();    // one streamed read; no line loop to get wrong
     return buffer.str();
 }
+// --8<-- [end:recipe-1]
 
 // Recipe 9 - File.WriteAllText
+// --8<-- [start:recipe-9]
 void write_all_text(const std::filesystem::path& path, const std::string& text) {
     std::ofstream out(path, std::ios::binary);
     if (!out) {
@@ -70,15 +73,19 @@ void write_all_text(const std::filesystem::path& path, const std::string& text) 
         throw std::runtime_error("write failed: " + path.string());
     }
 }
+// --8<-- [end:recipe-9]
 
 // Recipe 38 - File.Replace: write beside the file, then rename over it
+// --8<-- [start:recipe-38]
 void save_file(const std::filesystem::path& path, const std::string& text) {
     std::filesystem::path tmp = path;
     tmp += ".tmp";                           // += on purpose: a suffix, not a segment - same directory, same volume
     write_all_text(tmp, text);               // Recipe 9: flushed and checked, or it threw and path is untouched
     std::filesystem::rename(tmp, path);      // one atomic step: a reader sees the old file or the new, never half
 }
+// --8<-- [end:recipe-38]
 
+// --8<-- [start:recipe-49]
 // Recipe 49 - MemoryMappedFile.CreateFromFile: a file's bytes as a view,
 // mapped rather than read. Pages arrive as they are touched and leave with
 // the object; nothing is copied into the heap, and the file may be closed -
@@ -131,6 +138,7 @@ private:
     const void* view_ = nullptr;
     std::size_t size_ = 0;
 };
+// --8<-- [end:recipe-49]
 
 // The harness's judge for Recipe 49: a replaced operator new, Chapter 36's
 // instrument, so "no copy" is a count and not a claim. Scaffolding.

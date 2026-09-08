@@ -20,6 +20,7 @@
 using json = nlohmann::json;
 
 // Recipe 25 - JsonSerializer.Serialize(record)
+// --8<-- [start:recipe-25]
 struct Reading {
     int sensor;
     double value;
@@ -41,8 +42,10 @@ void from_json(const json& j, Reading& r) {
 std::string serialize(const std::vector<Reading>& readings) {
     return json(readings).dump(2);            // 2 = indent; dump() alone is one line
 }
+// --8<-- [end:recipe-25]
 
 // Recipe 26 - JsonSerializer.Deserialize<Config>(text), with defaults
+// --8<-- [start:recipe-26]
 struct Config {
     int timeout = 30;
     std::string name;
@@ -55,8 +58,10 @@ Config load_config(std::string_view text) {
     c.name = j.at("name").get<std::string>();        // at(): required - missing throws out_of_range
     return c;
 }
+// --8<-- [end:recipe-26]
 
 // Recipe 35 - EnumerateObject / TryGetProperty / EnumerateArray over a document you do not own
+// --8<-- [start:recipe-35]
 struct Channel {
     std::string name;
     double gain = 1.0;
@@ -90,6 +95,7 @@ int count_numbers(const json& node) {         // walk anything: objects, arrays,
     }
     return n;
 }
+// --8<-- [end:recipe-35]
 
 int main() {
     // Recipe 25: the round trip is the assertion.

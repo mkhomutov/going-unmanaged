@@ -36,6 +36,7 @@
 #include <string_view>
 #include <vector>
 
+// --8<-- [start:recipe-36]
 using Bytes = std::vector<std::uint8_t>;
 
 std::string hex(const Bytes& bytes) {                        // Convert.ToHexStringLower (.NET 9); ToHexString is UPPER-case
@@ -58,8 +59,10 @@ Bytes sha256(std::string_view data) {
     digest.resize(written);                                    // 32 for SHA-256
     return digest;
 }
+// --8<-- [end:recipe-36]
 
 // Recipe 37 - new AesGcm(key, tagSizeInBytes: 16).Encrypt(nonce, plain, ciphertext, tag)
+// --8<-- [start:recipe-37]
 using Key   = std::array<std::uint8_t, 32>;                    // AES-256: the key size is the algorithm's name
 using Nonce = std::array<std::uint8_t, 12>;                    // 96 bits: what GCM and AesGcm both expect
 constexpr std::size_t kTagSize = 16;                           // the authentication tag: full length, always
@@ -115,9 +118,11 @@ std::optional<Bytes> open_sealed(const Key& key, const Bytes& sealed) {
     }
     return plain;
 }
+// --8<-- [end:recipe-37]
 
 // Recipe 47 - Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, 32)
 //             HKDF.DeriveKey(HashAlgorithmName.SHA256, secret, 32, salt, info)
+// --8<-- [start:recipe-47]
 Key key_from_password(std::string_view password, const Bytes& salt, int iterations) {
     Key key{};
     if (PKCS5_PBKDF2_HMAC(password.data(), static_cast<int>(password.size()),
@@ -145,8 +150,10 @@ Key key_from_secret(const Bytes& secret, const Bytes& salt, const Bytes& info) {
     }
     return key;
 }
+// --8<-- [end:recipe-47]
 
 // Recipe 48 - new HMACSHA256(key).ComputeHash(data) / CryptographicOperations.FixedTimeEquals
+// --8<-- [start:recipe-48]
 using Mac    = std::unique_ptr<EVP_MAC, decltype(&EVP_MAC_free)>;
 using MacCtx = std::unique_ptr<EVP_MAC_CTX, decltype(&EVP_MAC_CTX_free)>;
 
@@ -174,6 +181,7 @@ bool verify_hmac_sha256(const Bytes& key, const Bytes& data, const Bytes& tag) {
     // No harness can see this line change - constant time is not a value.
     return expected.size() == tag.size() && CRYPTO_memcmp(expected.data(), tag.data(), tag.size()) == 0;
 }
+// --8<-- [end:recipe-48]
 
 static Bytes bytes_of(std::string_view s) { return Bytes(s.begin(), s.end()); }
 

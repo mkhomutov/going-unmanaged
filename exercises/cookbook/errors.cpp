@@ -30,6 +30,7 @@ namespace {
 }
 
 // Recipe 21 - class ParseException : Exception
+// --8<-- [start:recipe-21]
 class ParseError : public std::runtime_error {
 public:
     ParseError(int line, const std::string& what)
@@ -60,10 +61,12 @@ int channels_or_default(std::string_view text, int line) {
         return 2;
     }
 }
+// --8<-- [end:recipe-21]
 
 // Recipe 22 - the Result shape, on C++17: a variant behind two named doors.
 // This is what std::expected spells in C++23; most codebases are not there,
 // and ship one of these (Chapter 8 names the well-known ones).
+// --8<-- [start:recipe-22]
 template <class T, class E>
 class Result {
 public:
@@ -94,6 +97,7 @@ Result<Config, ConfigError> load_config(std::string_view text) {
         return Result<Config, ConfigError>::fail(ConfigError{e.line(), e.what()});
     }
 }
+// --8<-- [end:recipe-22]
 
 int main() {
     // Recipe 21: the derived handler runs, and what() carries the message

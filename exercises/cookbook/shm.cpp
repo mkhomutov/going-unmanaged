@@ -48,6 +48,7 @@
 // fixed-width fields, a version first (Chapter 30), no pointers - an address
 // means nothing in the other process - and nothing whose layout the
 // compiler chose. The static_asserts are Chapter 41's judge on that claim.
+// --8<-- [start:recipe-43]
 struct Frame {
     std::uint32_t version;              // sizeof(Frame): a reader built against an older layout can tell
     std::atomic<std::uint32_t> seq;     // bumped by the writer AFTER the payload: the reader's "is it there yet"
@@ -142,6 +143,7 @@ private:
     int fd_ = -1;
 #endif
 };
+// --8<-- [end:recipe-43]
 
 using namespace std::chrono_literals;
 

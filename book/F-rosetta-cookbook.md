@@ -88,15 +88,7 @@ where each lands — the map the timing recipes teach one row at a time:
 **The recipe:**
 
 ```cpp
-std::string read_all_text(const std::filesystem::path& path) {
-    std::ifstream in(path, std::ios::binary);
-    if (!in) {
-        throw std::runtime_error("cannot open: " + path.string());
-    }
-    std::ostringstream buffer;
-    buffer << in.rdbuf();    // one streamed read; no line loop to get wrong
-    return buffer.str();
-}
+--8<-- "exercises/cookbook/files.cpp:recipe-1"
 ```
 
 **Why it looks like this.** There is no `File` static class: the stream
@@ -123,15 +115,7 @@ C++17 — a string argument still converts. Needs `<filesystem>`,
 **The recipe:**
 
 ```cpp
-std::vector<std::string> split(const std::string& text, char sep) {
-    std::vector<std::string> parts;
-    std::istringstream stream(text);
-    std::string field;
-    while (std::getline(stream, field, sep)) {
-        parts.push_back(field);
-    }
-    return parts;
-}
+--8<-- "exercises/cookbook/strings.cpp:recipe-2"
 ```
 
 **Why it looks like this.** `std::string` ships no `Split`, and this loop is
@@ -153,16 +137,7 @@ mean. Needs `<sstream>`, `<vector>`.
 **The recipe:**
 
 ```cpp
-std::string join(const std::vector<std::string>& parts, const std::string& sep) {
-    std::string result;
-    for (const auto& part : parts) {
-        if (!result.empty()) {
-            result += sep;    // between elements only - never leading
-        }
-        result += part;
-    }
-    return result;
-}
+--8<-- "exercises/cookbook/strings.cpp:recipe-3"
 ```
 
 **Why it looks like this.** The guard clause is the whole trick: append the
@@ -181,17 +156,7 @@ codebase; most codebases already have, so grep before adding yours.
 **The recipe:**
 
 ```cpp
-std::string build_report(const std::vector<int>& values) {
-    std::string out;
-    // one allocation up front - the StringBuilder(capacity) constructor
-    out.reserve(values.size() * 12);
-    for (int value : values) {
-        out += "value=";
-        out += std::to_string(value);
-        out += '\n';
-    }
-    return out;
-}
+--8<-- "exercises/cookbook/strings.cpp:recipe-4"
 ```
 
 **Why it looks like this.** `std::string` *is* the string builder.
@@ -212,18 +177,7 @@ class C# taught you to avoid in a loop is the right default in C++.
 **The recipe:**
 
 ```cpp
-std::string describe(int count, double ratio) {
-    std::ostringstream out;
-    out << count << " samples, ratio "
-        << std::fixed << std::setprecision(2) << ratio;
-    return out.str();
-}
-
-std::string describe_c(int count, double ratio) {
-    char buffer[64];
-    std::snprintf(buffer, sizeof buffer, "%d samples, ratio %.2f", count, ratio);
-    return buffer;
-}
+--8<-- "exercises/cookbook/strings.cpp:recipe-5"
 ```
 
 **Why it looks like this.** The honest answer: C++17 has no interpolation.
@@ -246,13 +200,7 @@ speak it natively). Needs `<sstream>` and `<iomanip>`, or `<cstdio>`.
 **The recipe:**
 
 ```cpp
-void report_batch_time() {
-    const auto start = std::chrono::steady_clock::now();
-    run_the_batch();    // the code being timed
-    const auto elapsed = std::chrono::steady_clock::now() - start;
-    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
-    std::cout << ms.count() << " ms\n";
-}
+--8<-- "exercises/cookbook/timing.cpp:recipe-6"
 ```
 
 **Why it looks like this.** A stopwatch is two time points and a subtraction;
@@ -272,11 +220,7 @@ and `<chrono>` will not let you mix units by accident. Needs `<chrono>`, `<iostr
 **The recipe:**
 
 ```cpp
-using FileHandle = std::unique_ptr<std::FILE, int (*)(std::FILE*)>;
-
-FileHandle open_file(const char* path, const char* mode) {
-    return FileHandle(std::fopen(path, mode), &std::fclose);
-}
+--8<-- "exercises/cookbook/handles.cpp:recipe-7"
 ```
 
 **Why it looks like this.** The most load-bearing three lines of the
@@ -303,12 +247,7 @@ Needs `<memory>`, `<cstdio>`.
 **The recipe:**
 
 ```cpp
-void apply_timeout_setting(const std::map<std::string, int>& settings) {
-    const auto it = settings.find("timeout");
-    if (it != settings.end()) {
-        apply_timeout(it->second);    // found - the iterator is the out-parameter
-    }
-}
+--8<-- "exercises/cookbook/lookups.cpp:recipe-8"
 ```
 
 **Why it looks like this.** `find` is `TryGetValue` with the iterator playing
@@ -330,16 +269,7 @@ identical.
 **The recipe:**
 
 ```cpp
-void write_all_text(const std::filesystem::path& path, const std::string& text) {
-    std::ofstream out(path, std::ios::binary);
-    if (!out) {
-        throw std::runtime_error("cannot create: " + path.string());
-    }
-    out << text;
-    if (!out.flush()) {
-        throw std::runtime_error("write failed: " + path.string());
-    }
-}
+--8<-- "exercises/cookbook/files.cpp:recipe-9"
 ```
 
 **Why it looks like this.** The mirror of
@@ -364,9 +294,7 @@ bytes as written, no platform newline translation — and the parameter is a
 **The recipe:**
 
 ```cpp
-std::filesystem::path log_path(const std::filesystem::path& dir) {
-    return dir / "logs" / "app.txt";    // '/' inserts the platform's separator
-}
+--8<-- "exercises/cookbook/paths.cpp:recipe-10"
 ```
 
 **Why it looks like this.** `std::filesystem::path` (C++17) overloads
@@ -399,15 +327,7 @@ platform where the two constructors differ. Needs `<filesystem>`.
 **The recipe:**
 
 ```cpp
-namespace fs = std::filesystem;
-
-bool config_present(const fs::path& p) {
-    return fs::is_regular_file(p);    // File.Exists: it exists AND is a file
-}
-
-bool logs_dir_present(const fs::path& p) {
-    return fs::is_directory(p);       // Directory.Exists: exists AND is a directory
-}
+--8<-- "exercises/cookbook/paths.cpp:recipe-11"
 ```
 
 **Why it looks like this.** The split is the same split C# makes:
@@ -430,15 +350,7 @@ everyone writes. Needs `<filesystem>`.
 **The recipe:**
 
 ```cpp
-std::vector<std::filesystem::path> list_files(const std::filesystem::path& dir) {
-    std::vector<std::filesystem::path> files;
-    for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-        if (entry.is_regular_file()) {
-            files.push_back(entry.path());
-        }
-    }
-    return files;
-}
+--8<-- "exercises/cookbook/paths.cpp:recipe-12"
 ```
 
 **Why it looks like this.** The iterator *is* the enumeration: range-`for`
@@ -458,11 +370,7 @@ spares you a glob dialect. Needs `<filesystem>`, `<vector>`.
 **The recipe:**
 
 ```cpp
-int overlap_work() {
-    std::future<int> task = std::async(std::launch::async, count_defects);
-    const int other = do_other_work();    // runs while count_defects runs
-    return other + task.get();            // the await: blocks until the result arrives
-}
+--8<-- "exercises/cookbook/async.cpp:recipe-13"
 ```
 
 **Why it looks like this.** `std::async` is `Task.Run` without the runtime:
@@ -488,31 +396,7 @@ you. Needs `<future>`.
 **The recipe:**
 
 ```cpp
-class SampleSource {
-public:
-    using Handler = std::function<void(int)>;
-
-    int subscribe(Handler handler) {
-        handlers_.emplace_back(next_id_, std::move(handler));
-        return next_id_++;    // the token is how -= works without delegate identity
-    }
-
-    void unsubscribe(int id) {
-        handlers_.erase(std::remove_if(handlers_.begin(), handlers_.end(),
-                            [id](const auto& entry) { return entry.first == id; }),
-                        handlers_.end());
-    }
-
-    void raise(int sample) {    // the ?.Invoke: an empty list is a zero-pass loop
-        for (const auto& entry : handlers_) {
-            entry.second(sample);
-        }
-    }
-
-private:
-    std::vector<std::pair<int, Handler>> handlers_;
-    int next_id_ = 0;
-};
+--8<-- "exercises/cookbook/events.cpp:recipe-14"
 ```
 
 **Why it looks like this.** `event` is language sugar over a delegate field;
@@ -539,13 +423,7 @@ subject. Needs `<functional>`, `<vector>`, `<algorithm>`, `<utility>`.
 **The recipe:**
 
 ```cpp
-void report_progress(int done, int total) {
-    std::cout << "processed " << done << " of " << total << '\n';    // buffered: fast
-}
-
-void report_failure(const std::string& what) {
-    std::cerr << "error: " << what << '\n';    // unbuffered: survives a crash
-}
+--8<-- "exercises/cookbook/logging.cpp:recipe-15"
 ```
 
 **Why it looks like this.** The mapping is direct — `cout` is `Console.Out`,
@@ -574,28 +452,7 @@ timing (Chapter 31's point); reach for the sanitizer instead. Needs
 **The recipe:**
 
 ```cpp
-class RepeatingTimer {
-public:
-    RepeatingTimer(std::chrono::milliseconds interval, std::function<void()> tick)
-        : worker_([this, interval, tick = std::move(tick)] {
-              while (!stop_) {
-                  // Task.Delay, spelled honestly: a thread you own, blocked.
-                  std::this_thread::sleep_for(interval);
-                  if (!stop_) {
-                      tick();
-                  }
-              }
-          }) {}
-
-    ~RepeatingTimer() {
-        stop_ = true;
-        worker_.join();    // Chapter 29's obligation - and this join IS the Stop()
-    }
-
-private:
-    std::atomic<bool> stop_{false};    // declared before worker_: initialized first
-    std::thread worker_;
-};
+--8<-- "exercises/cookbook/timing.cpp:recipe-16"
 ```
 
 **Why it looks like this.** The standard library has no timer, and the
@@ -624,74 +481,7 @@ Needs `<atomic>`, `<chrono>`, `<functional>`, `<thread>`.
 **The recipe:**
 
 ```cpp
-// UTF-8 -> UTF-16. Invalid input becomes U+FFFD, the convention browsers
-// follow; no exceptions, no locale, no deprecated machinery.
-std::u16string utf8_to_utf16(std::string_view utf8) {
-    std::u16string out;
-    for (std::size_t i = 0; i < utf8.size(); ) {
-        const auto b0 = static_cast<unsigned char>(utf8[i]);
-        std::size_t n = b0 < 0x80          ? 1
-                      : (b0 & 0xE0) == 0xC0 ? 2
-                      : (b0 & 0xF0) == 0xE0 ? 3
-                      : (b0 & 0xF8) == 0xF0 ? 4 : 0;
-        char32_t cp = n == 1 ? b0
-                    : n     ? b0 & (0x7Fu >> n)   // the lead byte's payload
-                            : 0xFFFDu;            // stray or invalid lead
-        std::size_t taken = 1;
-        for (std::size_t k = 1; n && k < n && i + k < utf8.size(); ++k) {
-            const auto bk = static_cast<unsigned char>(utf8[i + k]);
-            if ((bk & 0xC0) != 0x80) { n = 0; break; }  // sequence cut short
-            cp = (cp << 6) | (bk & 0x3Fu);
-            ++taken;
-        }
-        if (n == 0 || taken != n || cp > 0x10FFFFu ||
-            (cp >= 0xD800u && cp <= 0xDFFFu) ||           // surrogates
-            (n == 2 && cp < 0x80u) || (n == 3 && cp < 0x800u) ||
-            (n == 4 && cp < 0x10000u))                    // overlong forms
-            cp = 0xFFFDu;
-        i += taken;
-        if (cp < 0x10000u) {
-            out.push_back(static_cast<char16_t>(cp));
-        } else {                                  // astral plane: a pair
-            cp -= 0x10000u;
-            out.push_back(static_cast<char16_t>(0xD800u + (cp >> 10)));
-            out.push_back(static_cast<char16_t>(0xDC00u + (cp & 0x3FFu)));
-        }
-    }
-    return out;
-}
-
-// UTF-16 -> UTF-8. Lone surrogates become U+FFFD; everything else is
-// mechanical: split the code point across 1-4 bytes, high bits first.
-std::string utf16_to_utf8(std::u16string_view utf16) {
-    std::string out;
-    for (std::size_t i = 0; i < utf16.size(); ++i) {
-        char32_t cp = utf16[i];
-        if (cp >= 0xD800u && cp <= 0xDBFFu && i + 1 < utf16.size() &&
-            utf16[i + 1] >= 0xDC00u && utf16[i + 1] <= 0xDFFFu) {
-            cp = 0x10000u + ((cp - 0xD800u) << 10) + (utf16[i + 1] - 0xDC00u);
-            ++i;                                  // consumed the pair
-        } else if (cp >= 0xD800u && cp <= 0xDFFFu) {
-            cp = 0xFFFDu;                         // lone surrogate
-        }
-        if (cp < 0x80u) {
-            out.push_back(static_cast<char>(cp));
-        } else if (cp < 0x800u) {
-            out.push_back(static_cast<char>(0xC0u | (cp >> 6)));
-            out.push_back(static_cast<char>(0x80u | (cp & 0x3Fu)));
-        } else if (cp < 0x10000u) {
-            out.push_back(static_cast<char>(0xE0u | (cp >> 12)));
-            out.push_back(static_cast<char>(0x80u | ((cp >> 6) & 0x3Fu)));
-            out.push_back(static_cast<char>(0x80u | (cp & 0x3Fu)));
-        } else {
-            out.push_back(static_cast<char>(0xF0u | (cp >> 18)));
-            out.push_back(static_cast<char>(0x80u | ((cp >> 12) & 0x3Fu)));
-            out.push_back(static_cast<char>(0x80u | ((cp >> 6) & 0x3Fu)));
-            out.push_back(static_cast<char>(0x80u | (cp & 0x3Fu)));
-        }
-    }
-    return out;
-}
+--8<-- "exercises/cookbook/strings.cpp:recipe-17"
 ```
 
 **Why it looks like this.** The honest part first: the standard library has
@@ -720,18 +510,7 @@ Needs `<string>`, `<string_view>`.
 **The recipe:**
 
 ```cpp
-template <class Seq, class T>
-std::optional<std::size_t> index_of(const Seq& values, const T& wanted) {
-    const auto it = std::find(values.begin(), values.end(), wanted);
-    if (it == values.end()) {
-        return std::nullopt;             // an algorithm says "not found" as end()
-    }
-    return static_cast<std::size_t>(std::distance(values.begin(), it));
-}
-
-bool contains_word(std::string_view text, std::string_view word) {
-    return text.find(word) != std::string_view::npos;    // a string says it as npos
-}
+--8<-- "exercises/cookbook/lookups.cpp:recipe-18"
 ```
 
 **Why it looks like this.** "Not found" has three spellings in C++: an
@@ -756,25 +535,7 @@ owns the algorithm story. Needs `<algorithm>`, `<iterator>`, `<optional>`,
 **The recipe:**
 
 ```cpp
-std::optional<int> parse_port(std::string_view text) {
-    int value = 0;
-    const auto [end, ec] = std::from_chars(text.data(), text.data() + text.size(), value);
-    if (ec != std::errc{} || end != text.data() + text.size() || value < 0 || value > 65535) {
-        return std::nullopt;              // not a port: absence, not an error (Chapter 8)
-    }
-    return value;                         // TryParse's out-parameter, as the return
-}
-
-int port_or_default(std::optional<int> port) {
-    return port.value_or(8080);           // the ?? operator
-}
-
-std::optional<std::size_t> digits_in(const std::optional<std::string>& text) {
-    if (!text) {
-        return std::nullopt;              // ?. by hand: C++17 has no null-propagating call
-    }
-    return text->size();                  // -> is only legal once you have checked
-}
+--8<-- "exercises/cookbook/alternatives.cpp:recipe-19"
 ```
 
 **Why it looks like this.** `std::optional<T>` is `T?` with the value kept
@@ -800,21 +561,7 @@ decides when absence is the right answer at all. Needs `<optional>`,
 **The recipe:**
 
 ```cpp
-struct Temperature { int centi; };        // centi-degrees, as the wire carries them
-struct Fault       { int code; };
-struct Heartbeat   {};
-using Event = std::variant<Temperature, Fault, Heartbeat>;
-
-template <class... Fs> struct overloaded : Fs... { using Fs::operator()...; };
-template <class... Fs> overloaded(Fs...) -> overloaded<Fs...>;
-
-std::string describe(const Event& e) {
-    return std::visit(overloaded{
-        [](const Temperature& t) { return "temperature " + std::to_string(t.centi) + " centi-degrees"; },
-        [](const Fault& f)       { return "fault " + std::to_string(f.code); },
-        [](Heartbeat)            { return std::string("heartbeat"); },
-    }, e);
-}
+--8<-- "exercises/cookbook/alternatives.cpp:recipe-20"
 ```
 
 **Why it looks like this.** C# pattern-matches on the runtime type of an
@@ -838,36 +585,7 @@ written in C#. Needs `<variant>`, `<string>`.
 **The recipe:**
 
 ```cpp
-class ParseError : public std::runtime_error {
-public:
-    ParseError(int line, const std::string& what)
-        : std::runtime_error("line " + std::to_string(line) + ": " + what),
-          line_(line) {}
-    int line() const noexcept { return line_; }    // the payload what() cannot carry
-private:
-    int line_;
-};
-
-int parse_channel_count(std::string_view text, int line) {
-    int value = 0;
-    const auto [end, ec] = std::from_chars(text.data(), text.data() + text.size(), value);
-    if (ec != std::errc{} || end != text.data() + text.size() || value <= 0) {
-        throw ParseError(line, "channel count is not a number: '" + std::string(text) + "'");
-    }
-    return value;
-}
-
-int channels_or_default(std::string_view text, int line) {
-    try {
-        return parse_channel_count(text, line);
-    } catch (const ParseError& e) {          // the derived type FIRST
-        log_line(e.line(), e.what());
-        return 2;
-    } catch (const std::exception& e) {      // then the base: order is the rule
-        log_line(line, e.what());
-        return 2;
-    }
-}
+--8<-- "exercises/cookbook/errors.cpp:recipe-21"
 ```
 
 **Why it looks like this.** Derive from `std::runtime_error` (or
@@ -891,36 +609,7 @@ slices the payload off. Needs `<stdexcept>`, `<string>`, `<string_view>`,
 **The recipe:**
 
 ```cpp
-template <class T, class E>
-class Result {
-public:
-    static Result ok(T value)   { return Result(std::in_place_index<0>, std::move(value)); }
-    static Result fail(E error) { return Result(std::in_place_index<1>, std::move(error)); }
-
-    bool has_value() const noexcept { return state_.index() == 0; }
-    explicit operator bool() const noexcept { return has_value(); }
-
-    const T& value() const { return std::get<0>(state_); }   // throws bad_variant_access on a failure
-    const E& error() const { return std::get<1>(state_); }   // ...and on a success
-
-private:
-    template <std::size_t I, class X>                        // built in place: one move, not two
-    Result(std::in_place_index_t<I> door, X&& x) : state_(door, std::forward<X>(x)) {}
-    std::variant<T, E> state_;                               // index 0 is the value, 1 the error
-};
-
-struct ConfigError { int line; std::string what; };
-struct Config      { int channels; };
-
-// The translation at the module's edge: the parser throws, this function
-// returns. Nothing above it ever sees a ParseError.
-Result<Config, ConfigError> load_config(std::string_view text) {
-    try {
-        return Result<Config, ConfigError>::ok(Config{parse_channel_count(text, 1)});
-    } catch (const ParseError& e) {          // the throw stops here: failure becomes a value
-        return Result<Config, ConfigError>::fail(ConfigError{e.line(), e.what()});
-    }
-}
+--8<-- "exercises/cookbook/errors.cpp:recipe-22"
 ```
 
 **Why it looks like this.** Three spellings of one idea, chosen by what the
@@ -947,12 +636,7 @@ is that section's edge: the parser throws, the function returns. Needs
 **The recipe:**
 
 ```cpp
-std::string name_or_default(const char* from_c_api) {
-    if (from_c_api == nullptr) {            // the one null there is: a C API's "no name"
-        return "unnamed";
-    }
-    return from_c_api;                      // safe now - std::string(nullptr) is UB
-}
+--8<-- "exercises/cookbook/strings.cpp:recipe-23"
 ```
 
 **Why it looks like this.** `IsNullOrEmpty` exists because a C# `string`
@@ -976,12 +660,7 @@ Needs `<string>`.
 **The recipe:**
 
 ```cpp
-void check_channel_count([[maybe_unused]] int channels) {          // used only in Debug
-    assert(channels > 0 && "a session has at least one channel");   // gone under NDEBUG
-#ifndef NDEBUG
-    std::cerr << "[debug] channels=" << channels << '\n';           // and so is this block
-#endif
-}
+--8<-- "exercises/cookbook/logging.cpp:recipe-24"
 ```
 
 **Why it looks like this.** `assert` is [Appendix E](E-glossary.md#appendix-e--glossary)'s
@@ -1007,27 +686,7 @@ so) and why a macro — `#ifdef NDEBUG` / `#define CHECK_CHANNELS(x) ((void)0)`
 **The recipe:**
 
 ```cpp
-struct Reading {
-    int sensor;
-    double value;
-    std::string unit;
-};
-
-// Two free functions the library finds by argument-dependent lookup - no
-// attribute, no reflection: this IS the [JsonPropertyName] table, by hand.
-void to_json(json& j, const Reading& r) {
-    j = json{{"sensor", r.sensor}, {"value", r.value}, {"unit", r.unit}};
-}
-
-void from_json(const json& j, Reading& r) {
-    j.at("sensor").get_to(r.sensor);
-    j.at("value").get_to(r.value);
-    j.at("unit").get_to(r.unit);
-}
-
-std::string serialize(const std::vector<Reading>& readings) {
-    return json(readings).dump(2);            // 2 = indent; dump() alone is one line
-}
+--8<-- "exercises/cookbook/json.cpp:recipe-25"
 ```
 
 **Why it looks like this.** The standard library has no JSON
@@ -1065,18 +724,7 @@ compile line, which `scripts/check.sh` adds), `<string>`, `<vector>`, and
 **The recipe:**
 
 ```cpp
-struct Config {
-    int timeout = 30;
-    std::string name;
-};
-
-Config load_config(std::string_view text) {
-    const json j = json::parse(text);         // junk throws json::parse_error - the event pole
-    Config c;
-    c.timeout = j.value("timeout", c.timeout);      // TryGetValue with a default: absent is fine
-    c.name = j.at("name").get<std::string>();        // at(): required - missing throws out_of_range
-    return c;
-}
+--8<-- "exercises/cookbook/json.cpp:recipe-26"
 ```
 
 **Why it looks like this.** Three outcomes, three spellings, and they are
@@ -1102,18 +750,7 @@ point. Needs `<nlohmann/json.hpp>` (`-isystem exercises/third_party`),
 **The recipe:**
 
 ```cpp
-std::vector<int> read_samples(std::size_t expected) {
-    std::vector<int> samples;
-    samples.reserve(expected);            // List<T>(capacity): room for expected, size still 0
-    for (std::size_t i = 0; i < expected; ++i) {
-        samples.push_back(next_sample());  // size grows; no reallocation until the room runs out
-    }
-    return samples;
-}
-
-std::vector<double> zeroed(std::size_t n) {
-    return std::vector<double>(n);        // new double[n]: n elements, every one 0.0
-}
+--8<-- "exercises/cookbook/containers.cpp:recipe-27"
 ```
 
 **Why it looks like this.** A vector carries two numbers and C# showed you
@@ -1144,25 +781,7 @@ pitfall stands. Needs `<vector>`.
 **The recipe:**
 
 ```cpp
-class ScopedTimer {
-public:
-    explicit ScopedTimer(std::chrono::nanoseconds& record)
-        : record_(record), start_(std::chrono::steady_clock::now()) {}
-    ~ScopedTimer() { record_ = std::chrono::steady_clock::now() - start_; }   // return, throw: every path
-    ScopedTimer(const ScopedTimer&) = delete;
-    ScopedTimer& operator=(const ScopedTimer&) = delete;
-
-private:
-    std::chrono::nanoseconds& record_;
-    std::chrono::steady_clock::time_point start_;
-};
-
-template <class F, class... Args>
-auto time_call(std::chrono::nanoseconds& record, F&& f, Args&&... args)
-    -> std::invoke_result_t<F, Args...> {
-    ScopedTimer timer(record);
-    return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);   // each argument passed on as it arrived
-}
+--8<-- "exercises/cookbook/timing.cpp:recipe-28"
 ```
 
 **Why it looks like this.** The `finally` is a destructor —
@@ -1197,23 +816,7 @@ case. Needs `<chrono>`, `<functional>`, `<type_traits>`, `<utility>`.
 **The recipe:**
 
 ```cpp
-std::string timestamp_utc() {
-    const auto now = std::chrono::system_clock::now();          // the wall clock: the one with a calendar
-    const auto since_epoch = now.time_since_epoch();
-    const auto whole = std::chrono::floor<std::chrono::seconds>(since_epoch);   // what to_time_t would give, rounding settled
-    const std::time_t seconds = whole.count();
-    const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(since_epoch - whole);
-    std::tm utc{};
-#if defined(_WIN32)
-    gmtime_s(&utc, &seconds);              // the thread-safe spellings: never std::gmtime
-#else
-    gmtime_r(&seconds, &utc);
-#endif
-    std::ostringstream out;
-    out << std::put_time(&utc, "%Y-%m-%dT%H:%M:%S")
-        << '.' << std::setw(3) << std::setfill('0') << millis.count() << 'Z';
-    return out.str();
-}
+--8<-- "exercises/cookbook/timing.cpp:recipe-29"
 ```
 
 **Why it looks like this.** Recipe 6 said intervals come from
@@ -1244,11 +847,7 @@ until your toolchain is there, this is the spelling. Needs `<chrono>`,
 **The recipe:**
 
 ```cpp
-int Device_Wait(std::uint32_t timeout_ms);   // the vendor's declaration: a bare integer, the unit in the name
-
-int wait_for_sample(std::chrono::milliseconds timeout) {
-    return Device_Wait(static_cast<std::uint32_t>(timeout.count()));   // the unit left the type HERE, and only here
-}
+--8<-- "exercises/cookbook/timing.cpp:recipe-30"
 ```
 
 **Why it looks like this.** A C API has no `TimeSpan`: a timeout arrives
@@ -1278,40 +877,7 @@ callers can pass anything long clamps before the cast. The literals need
 **The recipe:**
 
 ```cpp
-struct Features {
-    bool audit = false;                  // the defaults ARE the off state
-    bool fast_path = false;
-    int  batch_size = 64;
-
-    // One source among several - Recipe 26's JSON file, the host's
-    // preferences API, a command line. Whatever the source, it is read HERE,
-    // once, and never again.
-    static Features from_environment() {
-        Features f;
-        if (const char* v = std::getenv("MYPLUGIN_AUDIT"))      f.audit = std::string_view(v) == "1";
-        if (const char* v = std::getenv("MYPLUGIN_FAST_PATH"))  f.fast_path = std::string_view(v) == "1";
-        if (const char* v = std::getenv("MYPLUGIN_BATCH_SIZE")) {
-            const std::string_view s(v);
-            std::from_chars(s.data(), s.data() + s.size(), f.batch_size);   // junk: batch_size stays 64 (Recipe 19)
-        }
-        return f;
-    }
-};
-
-class Processor {
-public:
-    explicit Processor(Features features) : features_(features) {}   // read once, kept as a member
-
-    int process(int sample) const {
-        if (features_.fast_path) {       // a branch: free, even on the deadline path
-            return sample;
-        }
-        return sample * 2;
-    }
-
-private:
-    Features features_;
-};
+--8<-- "exercises/cookbook/flags.cpp:recipe-31"
 ```
 
 **Why it looks like this.** A feature flag is the first of
@@ -1339,15 +905,7 @@ Needs `<charconv>`, `<cstdlib>`, `<string_view>`.
 **The recipe:**
 
 ```cpp
-enum class Channel : std::uint8_t { None = 0, Left = 1, Right = 2, Sub = 4 };   // [Flags] enum Channel
-
-constexpr Channel operator|(Channel a, Channel b) {
-    return static_cast<Channel>(static_cast<std::uint8_t>(a) | static_cast<std::uint8_t>(b));
-}
-constexpr Channel operator&(Channel a, Channel b) {
-    return static_cast<Channel>(static_cast<std::uint8_t>(a) & static_cast<std::uint8_t>(b));
-}
-constexpr bool has(Channel set, Channel flag) { return (set & flag) == flag; }   // set.HasFlag(flag)
+--8<-- "exercises/cookbook/flags.cpp:recipe-32"
 ```
 
 **Why it looks like this.** `[Flags]` is a promise to the formatter and to
@@ -1373,34 +931,7 @@ is true for every set, exactly as `HasFlag(0)` is. Needs `<cstdint>`.
 **The recipe:**
 
 ```cpp
-class Log {                                  // polymorphic: lives behind a pointer (Chapter 2)
-public:
-    virtual ~Log() = default;
-    virtual void write(const std::string& line) = 0;
-};
-
-struct Sink {                                // shared with a callback: co-owned (Chapter 29)
-    std::vector<int> samples;
-};
-
-class Session {
-public:
-    Session(std::string name, std::unique_ptr<Log> log, std::shared_ptr<Sink> sink)
-        : name_(std::move(name)), log_(std::move(log)), sink_(std::move(sink)) {}
-
-    void record(int sample) {
-        sink_->samples.push_back(sample);
-        if (log_) {                          // the pointer is where "may be absent" lives
-            log_->write(name_ + ": recorded");
-        }
-    }
-
-private:
-    std::string name_;                       // by value: the field IS the object, and dies with the owner
-    std::vector<int> history_;               // by value too: its elements are on the heap, the field is three pointers
-    std::unique_ptr<Log> log_;               // one owner, polymorphic, optional: behind a unique_ptr
-    std::shared_ptr<Sink> sink_;             // co-owned: alive while anyone still holds it
-};   // no Dispose to write: the fields die in reverse order of declaration, then the object
+--8<-- "exercises/cookbook/ownership.cpp:recipe-33"
 ```
 
 **Why it looks like this.** The C# question — can a field own something,
@@ -1432,14 +963,7 @@ Rule of Zero: copy deleted, move generated, nothing written. Needs
 **The recipe:**
 
 ```cpp
-struct FrameBuffer {
-    std::array<std::uint8_t, 4 * 1024 * 1024> pixels{};   // 4 MB inline: a class this size has no business on a stack
-};
-static_assert(sizeof(FrameBuffer) > 1024 * 1024, "FrameBuffer is a heap object by design");
-
-std::unique_ptr<FrameBuffer> make_frame() {
-    return std::make_unique<FrameBuffer>();  // one owner on the stack, four megabytes on the heap
-}
+--8<-- "exercises/cookbook/ownership.cpp:recipe-34"
 ```
 
 **Why it looks like this.** [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)'s
@@ -1472,39 +996,7 @@ Needs `<array>`, `<cstdint>`, `<memory>`.
 **The recipe:**
 
 ```cpp
-struct Channel {
-    std::string name;
-    double gain = 1.0;
-    std::optional<int> delay_ms;          // present on some channels, absent on others
-};
-
-std::vector<Channel> read_channels(const json& doc) {
-    std::vector<Channel> out;
-    for (const auto& [name, node] : doc.at("channels").items()) {   // an object: its keys and values
-        Channel c;
-        c.name = name;
-        c.gain = node.value("gain", c.gain);                       // absent: the default
-        if (node.contains("delay_ms")) {                           // TryGetProperty
-            c.delay_ms = node.at("delay_ms").get<int>();
-        }
-        out.push_back(std::move(c));
-    }
-    return out;
-}
-
-int count_numbers(const json& node) {         // walk anything: objects, arrays, scalars, nested
-    if (node.is_number()) {
-        return 1;
-    }
-    if (!node.is_structured()) {              // a string, a bool, null: nothing inside
-        return 0;
-    }
-    int n = 0;
-    for (const auto& child : node) {          // an array yields its elements, an object its values
-        n += count_numbers(child);
-    }
-    return n;
-}
+--8<-- "exercises/cookbook/json.cpp:recipe-35"
 ```
 
 **Why it looks like this.** Recipes 25 and 26 mapped a document onto a
@@ -1546,28 +1038,7 @@ ASan until C++23, so the document is named first. Needs
 **The recipe:**
 
 ```cpp
-using Bytes = std::vector<std::uint8_t>;
-
-std::string hex(const Bytes& bytes) {                        // Convert.ToHexStringLower (.NET 9); ToHexString is UPPER-case
-    static constexpr char digits[] = "0123456789abcdef";
-    std::string out;
-    for (const std::uint8_t b : bytes) {
-        out += digits[b >> 4];
-        out += digits[b & 0x0F];
-    }
-    return out;
-}
-
-// Recipe 36 - SHA256.HashData(bytes)
-Bytes sha256(std::string_view data) {
-    Bytes digest(EVP_MAX_MD_SIZE);
-    unsigned int written = 0;
-    if (EVP_Digest(data.data(), data.size(), digest.data(), &written, EVP_sha256(), nullptr) != 1) {
-        throw std::runtime_error("EVP_Digest failed");        // the event pole: the library itself broke
-    }
-    digest.resize(written);                                    // 32 for SHA-256
-    return digest;
-}
+--8<-- "exercises/cookbook/crypto.cpp:recipe-36"
 ```
 
 **Why it looks like this.** There is no `System.Security.Cryptography`:
@@ -1602,61 +1073,7 @@ entry.
 **The recipe:**
 
 ```cpp
-using Key   = std::array<std::uint8_t, 32>;                    // AES-256: the key size is the algorithm's name
-using Nonce = std::array<std::uint8_t, 12>;                    // 96 bits: what GCM and AesGcm both expect
-constexpr std::size_t kTagSize = 16;                           // the authentication tag: full length, always
-
-using CipherCtx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>;   // Recipe 7's shape
-
-// The envelope, and the whole of the cross-language contract:
-//   nonce (12 bytes) || ciphertext (plain.size() bytes) || tag (16 bytes)
-// Every reader - C#, Python, the next version of this plug-in - opens it
-// by reading those three lengths back, so the layout is an ICD (Chapter 34).
-Bytes seal(const Key& key, const Nonce& nonce, const Bytes& plain) {
-    CipherCtx ctx(EVP_CIPHER_CTX_new(), &EVP_CIPHER_CTX_free);
-    if (!ctx || EVP_EncryptInit_ex(ctx.get(), EVP_aes_256_gcm(), nullptr, key.data(), nonce.data()) != 1) {
-        throw std::runtime_error("AES-256-GCM init failed");
-    }
-    Bytes out(nonce.begin(), nonce.end());
-    out.resize(nonce.size() + plain.size() + kTagSize);
-    std::uint8_t* const ciphertext = out.data() + nonce.size();
-    int n = 0;
-    if (EVP_EncryptUpdate(ctx.get(), ciphertext, &n, plain.data(), static_cast<int>(plain.size())) != 1 ||
-        EVP_EncryptFinal_ex(ctx.get(), ciphertext + n, &n) != 1 ||                 // GCM: no padding, n is 0 here
-        EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_GET_TAG, kTagSize, ciphertext + plain.size()) != 1) {
-        throw std::runtime_error("AES-256-GCM seal failed");
-    }
-    return out;
-}
-
-// Absence is the verdict: a wrong key, a flipped byte, a truncated envelope
-// all come back as nullopt (Recipe 19), and no unauthenticated byte leaves this
-// function - DecryptUpdate fills the buffer, DecryptFinal_ex checks the tag, and
-// the buffer is returned only past that check, and wiped when it fails.
-std::optional<Bytes> open_sealed(const Key& key, const Bytes& sealed) {
-    if (sealed.size() < std::tuple_size<Nonce>::value + kTagSize) {
-        return std::nullopt;
-    }
-    const std::uint8_t* const nonce      = sealed.data();
-    const std::uint8_t* const ciphertext = nonce + std::tuple_size<Nonce>::value;
-    const std::size_t length = sealed.size() - std::tuple_size<Nonce>::value - kTagSize;
-    std::array<std::uint8_t, kTagSize> tag{};
-    std::copy(sealed.end() - kTagSize, sealed.end(), tag.begin());
-
-    CipherCtx ctx(EVP_CIPHER_CTX_new(), &EVP_CIPHER_CTX_free);
-    if (!ctx || EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_gcm(), nullptr, key.data(), nonce) != 1) {
-        throw std::runtime_error("AES-256-GCM init failed");           // the library, not the envelope: the event pole
-    }
-    Bytes plain(length);
-    int n = 0;
-    if (EVP_DecryptUpdate(ctx.get(), plain.data(), &n, ciphertext, static_cast<int>(length)) != 1 ||
-        EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_SET_TAG, kTagSize, tag.data()) != 1 ||
-        EVP_DecryptFinal_ex(ctx.get(), plain.data() + n, &n) != 1) {       // the tag check lives HERE
-        OPENSSL_cleanse(plain.data(), plain.size());                       // what AesGcm.Decrypt does before it throws
-        return std::nullopt;
-    }
-    return plain;
-}
+--8<-- "exercises/cookbook/crypto.cpp:recipe-37"
 ```
 
 **Why it looks like this.** The cipher is the easy half — `AesGcm` with
@@ -1692,12 +1109,7 @@ is the first suspect. Needs `<openssl/evp.h>` and libcrypto as Recipe
 **The recipe:**
 
 ```cpp
-void save_file(const std::filesystem::path& path, const std::string& text) {
-    std::filesystem::path tmp = path;
-    tmp += ".tmp";                           // += on purpose: a suffix, not a segment - same directory, same volume
-    write_all_text(tmp, text);               // Recipe 9: flushed and checked, or it threw and path is untouched
-    std::filesystem::rename(tmp, path);      // one atomic step: a reader sees the old file or the new, never half
-}
+--8<-- "exercises/cookbook/files.cpp:recipe-38"
 ```
 
 **Why it looks like this.** Recipe 9 writes in place, which is fine until
@@ -1740,19 +1152,7 @@ which you got. Needs `<filesystem>`, `<string>`, and Recipe 9.
 **The recipe:**
 
 ```cpp
-void rotate_export(const fs::path& export_dir, const fs::path& fresh_report) {
-    fs::create_directories(export_dir / "archive");           // parents included; already there is not an error
-    const fs::path current = export_dir / "report.txt";
-    if (fs::exists(current)) {
-        fs::copy_file(current, export_dir / "archive" / "previous.txt",
-                      fs::copy_options::overwrite_existing);  // File.Copy(overwrite: true): both defaults refuse
-    }
-    fs::rename(fresh_report, current);                        // File.Move onto the name - which REPLACES here, and throws in C#
-}
-
-std::uintmax_t purge(const fs::path& dir) {
-    return fs::remove_all(dir);    // Directory.Delete(recursive: true): the count removed, 0 if nothing was there
-}
+--8<-- "exercises/cookbook/paths.cpp:recipe-39"
 ```
 
 **Why it looks like this.** Four calls, four C# names, and two places
@@ -1787,66 +1187,7 @@ pair, throwing or `error_code`. Needs `<filesystem>`, `<cstdint>`, and
 **The recipe:**
 
 ```cpp
-class FileWatcher {
-public:
-    FileWatcher(std::filesystem::path path, std::chrono::milliseconds interval,
-                std::function<void()> on_change)
-        : path_(std::move(path)),
-          seen_(Snapshot(path_)),
-          worker_([this, interval, on_change = std::move(on_change)] {
-              while (!stop_) {
-                  std::this_thread::sleep_for(interval);     // Recipe 16: a thread you own, blocked
-                  if (stop_) {
-                      break;
-                  }
-                  const Stamp now = Snapshot(path_);
-                  if (now != seen_) {                        // !=, never >: a restored backup is OLDER
-                      seen_ = now;
-                      on_change();                           // on THIS thread - Chapter 29's rules apply
-                  }
-              }
-          }) {}
-
-    ~FileWatcher() {
-        stop_ = true;
-        worker_.join();    // Chapter 29's obligation, and the promise that no callback follows
-    }
-    FileWatcher(const FileWatcher&) = delete;
-    FileWatcher& operator=(const FileWatcher&) = delete;
-
-private:
-    // What "changed" means to a poll: the time, the size, and whether it is
-    // there at all. Absence is a state (Chapter 8's error_code overloads),
-    // not an exception on the watcher's thread.
-    struct Stamp {
-        std::filesystem::file_time_type written{};
-        std::uintmax_t size = 0;
-        bool exists = false;
-        bool operator!=(const Stamp& o) const {
-            return written != o.written || size != o.size || exists != o.exists;
-        }
-    };
-    static Stamp Snapshot(const std::filesystem::path& p) {
-        std::error_code ec;
-        Stamp s;
-        s.exists = std::filesystem::is_regular_file(p, ec);
-        if (s.exists) {
-            s.written = std::filesystem::last_write_time(p, ec);
-            if (!ec) {
-                s.size = std::filesystem::file_size(p, ec);
-            }
-            if (ec) {
-                s = Stamp{};    // it went away between the calls: absent, not a phantom of min() and -1
-            }
-        }
-        return s;
-    }
-
-    std::filesystem::path path_;
-    Stamp seen_;                        // the worker's alone once it starts
-    std::atomic<bool> stop_{false};     // declared before worker_: initialized first (Recipe 16)
-    std::thread worker_;
-};
+--8<-- "exercises/cookbook/watch.cpp:recipe-40"
 ```
 
 **Why it looks like this.** The standard library has no watcher, and the
@@ -1892,46 +1233,7 @@ callback should be safe to run twice. Needs `<atomic>`, `<chrono>`,
 **The recipe:**
 
 ```cpp
-// Recipe 41 - HttpClient.GetStringAsync, through the C API the ecosystem uses
-// (curl_global_init(CURL_GLOBAL_DEFAULT) runs once per process before this,
-// on the thread that starts the others - see the Why.)
-using Easy = std::unique_ptr<CURL, decltype(&curl_easy_cleanup)>;   // Recipe 7's shape: the cleanup is the type
-
-// Two verdicts, both kept: the transport's (did the bytes arrive?) and the
-// server's (are they the answer?). HttpClient folded them into one
-// exception; here each is data, and ok() is the question most callers ask.
-struct HttpResult {
-    CURLcode transport = CURLE_OK;    // DNS, connect, TLS, timeout: the wire's opinion
-    long status = 0;                  // the server's opinion; 0 when there was no server (file://)
-    std::string body;
-    bool ok() const { return transport == CURLE_OK && status < 400; }
-};
-
-// The trampoline (Chapter 18): libcurl calls this with the void* it was
-// handed - once per CHUNK, many times per response, never once.
-static std::size_t append_chunk(char* data, std::size_t size, std::size_t count, void* userdata) {
-    static_cast<std::string*>(userdata)->append(data, size * count);
-    return size * count;    // anything less tells libcurl to abort the transfer
-}
-
-HttpResult http_get(const std::string& url, std::chrono::milliseconds timeout) {
-    Easy easy(curl_easy_init(), &curl_easy_cleanup);
-    if (!easy) {
-        throw std::runtime_error("curl_easy_init failed");    // the library itself: Chapter 8's event pole
-    }
-    HttpResult r;
-    // setopt's own return is unchecked on purpose: the options below fail
-    // only for a build that lacks them, and a URL it cannot parse is
-    // refused by perform, where the verdict is read anyway.
-    curl_easy_setopt(easy.get(), CURLOPT_URL, url.c_str());
-    curl_easy_setopt(easy.get(), CURLOPT_WRITEFUNCTION, &append_chunk);
-    curl_easy_setopt(easy.get(), CURLOPT_WRITEDATA, &r.body);
-    curl_easy_setopt(easy.get(), CURLOPT_FOLLOWLOCATION, 1L);   // HttpClient's default: a 3xx is followed, not returned
-    curl_easy_setopt(easy.get(), CURLOPT_TIMEOUT_MS, static_cast<long>(timeout.count()));   // Recipe 30's hand-off
-    r.transport = curl_easy_perform(easy.get());              // blocks: this IS the await, spelled as a call
-    curl_easy_getinfo(easy.get(), CURLINFO_RESPONSE_CODE, &r.status);
-    return r;
-}
+--8<-- "exercises/cookbook/http.cpp:recipe-41"
 ```
 
 **Why it looks like this.** There is no `HttpClient` because there are no
@@ -1979,115 +1281,7 @@ entry.
 **The recipe:**
 
 ```cpp
-// Recipe 42 - SqliteConnection, SqliteCommand, ExecuteReader: the C API underneath
-using Db = std::unique_ptr<sqlite3, decltype(&sqlite3_close)>;   // Recipe 7's shape, again
-
-Db open_database(const std::string& path) {                        // ":memory:" is a database too
-    sqlite3* raw = nullptr;
-    const int rc = sqlite3_open_v2(path.c_str(), &raw, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
-    Db db(raw, &sqlite3_close);                                     // own it BEFORE checking: a failed open still allocates
-    if (rc != SQLITE_OK) {
-        throw std::runtime_error("cannot open " + path + ": " + sqlite3_errmsg(raw));
-    }
-    return db;
-}
-
-// A prepared statement: SqliteCommand with its parameters, owned so that
-// finalize runs on every path - and it must, because a database with a live
-// statement refuses to close.
-class Statement {
-public:
-    Statement(sqlite3* db, const char* sql) : db_(db) {
-        if (sqlite3_prepare_v2(db, sql, -1, &stmt_, nullptr) != SQLITE_OK) {
-            throw std::runtime_error(std::string("prepare: ") + sqlite3_errmsg(db));
-        }
-    }
-    ~Statement() { sqlite3_finalize(stmt_); }                      // null-safe by the SDK's contract
-    Statement(const Statement&) = delete;
-    Statement& operator=(const Statement&) = delete;
-
-    void bind(int index, int value) { check(sqlite3_bind_int(stmt_, index, value)); }
-    void bind(int index, const std::string& value) {
-        // SQLITE_TRANSIENT: copy the bytes now. SQLITE_STATIC would be a loan
-        // (Appendix H) that must outlive every step - the recipe does not
-        // make that promise on the caller's behalf.
-        check(sqlite3_bind_text(stmt_, index, value.c_str(), -1, SQLITE_TRANSIENT));
-    }
-
-    // One row, or done. The two codes are 100 and 101: successes that are not
-    // zero, which is Chapter 8's "usually zero is not a contract" in production.
-    bool step() {
-        const int rc = sqlite3_step(stmt_);
-        if (rc == SQLITE_ROW) return true;
-        if (rc == SQLITE_DONE) return false;
-        throw std::runtime_error(std::string("step: ") + sqlite3_errmsg(db_));   // SQLITE_BUSY too: one connection, so
-                                                                                // busy IS exceptional here - see the Why
-    }
-    int column_int(int i) const { return sqlite3_column_int(stmt_, i); }
-    std::string column_text(int i) const {
-        // A LOAN (Chapter 33): valid until the next step, reset or finalize.
-        // Copied out on the spot, so no caller keeps a pointer into the row.
-        const unsigned char* text = sqlite3_column_text(stmt_, i);
-        return text ? reinterpret_cast<const char*>(text) : "";   // NULL column: the one null there is
-    }
-    void reset() { check(sqlite3_reset(stmt_)); }                 // reuse the plan - and rebind EVERY parameter:
-                                                                  // a reset keeps the old bindings
-
-private:
-    void check(int rc) const {
-        if (rc != SQLITE_OK) throw std::runtime_error(std::string("sqlite: ") + sqlite3_errmsg(db_));
-    }
-    sqlite3* db_;
-    sqlite3_stmt* stmt_ = nullptr;
-};
-
-// One statement with no rows to read: CREATE, INSERT, BEGIN.
-void execute(sqlite3* db, const char* sql) {
-    Statement s(db, sql);
-    while (s.step()) {}
-}
-
-// A transaction that rolls back unless told otherwise: Chapter 1's shape
-// over Chapter 8's unwinding, so a throw between BEGIN and commit() leaves
-// the database as it was.
-class Transaction {
-public:
-    explicit Transaction(sqlite3* db) : db_(db) { execute(db_, "BEGIN"); }
-    ~Transaction() {
-        if (!committed_) sqlite3_exec(db_, "ROLLBACK", nullptr, nullptr, nullptr);   // no throw in a destructor
-    }
-    void commit() { execute(db_, "COMMIT"); committed_ = true; }
-    Transaction(const Transaction&) = delete;
-    Transaction& operator=(const Transaction&) = delete;
-
-private:
-    sqlite3* db_;
-    bool committed_ = false;
-};
-
-// The verdict a deleter cannot report: a unique_ptr's deleter returns
-// nothing, so the shutdown path takes the handle back and closes it by hand.
-// SQLITE_BUSY here is a statement nobody finalized - log it; the handle stays
-// open, which is the leak made visible rather than the leak made worse.
-int close_database(Db db) {
-    return sqlite3_close(db.release());
-}
-
-struct Reading {
-    int sensor;
-    std::string unit;
-};
-
-// SELECT with a parameter, the rows copied out row by row.
-std::vector<Reading> readings_above(sqlite3* db, int threshold) {
-    Statement q(db, "SELECT sensor, unit FROM readings WHERE sensor > ?1 ORDER BY sensor");
-    q.bind(1, threshold);
-    std::vector<Reading> out;
-    while (q.step()) {
-        out.push_back({q.column_int(0), q.column_text(1)});
-    }
-    return out;
-}
+--8<-- "exercises/cookbook/database.cpp:recipe-42"
 ```
 
 **Why it looks like this.** There is no ADO.NET
@@ -2145,100 +1339,7 @@ entry.
 **The recipe:**
 
 ```cpp
-struct Frame {
-    std::uint32_t version;              // sizeof(Frame): a reader built against an older layout can tell
-    std::atomic<std::uint32_t> seq;     // bumped by the writer AFTER the payload: the reader's "is it there yet"
-    std::uint32_t width;
-    std::uint32_t height;
-    std::uint8_t  pixels[64];
-};
-static_assert(std::is_standard_layout<Frame>::value, "a shared layout has no vtable and no surprises");
-static_assert(std::atomic<std::uint32_t>::is_always_lock_free,
-              "a lock-based atomic holds a lock that exists in ONE process");
-static_assert(sizeof(Frame) == 4 + 4 + 4 + 4 + 64, "the layout is the contract; a change here is a version bump");
-// Not is_trivially_copyable: an atomic has no copy at all, and what the trait
-// says about that differs by standard library. And none of the three refuses
-// a pointer or a std::string - both are standard-layout - so that half of
-// the rule is yours to keep; the asserts hold the size, the vtable, the lock.
-
-// One name, one mapping, two handles - the object and the view - released
-// in reverse on every path. Recipe 7's shape, twice, behind one class.
-class SharedRegion {
-public:
-    SharedRegion(const std::string& name, std::size_t size, bool create)
-        : size_(size) {
-#if defined(_WIN32)
-        SetLastError(0);
-        mapping_ = create
-            ? CreateFileMappingA(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0,   // INVALID_HANDLE_VALUE: the paging file backs it
-                                 static_cast<DWORD>(size), name.c_str())
-            : OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name.c_str());
-        if (mapping_ == nullptr) {
-            throw std::runtime_error("file mapping failed: " + name);
-        }
-        if (create && GetLastError() == ERROR_ALREADY_EXISTS) {   // Windows has no O_EXCL: a live name is RETURNED, not refused
-            CloseHandle(mapping_);
-            throw std::runtime_error("file mapping exists: " + name);
-        }
-        view_ = MapViewOfFile(mapping_, FILE_MAP_ALL_ACCESS, 0, 0, size);
-        if (view_ == nullptr) {
-            CloseHandle(mapping_);
-            throw std::runtime_error("MapViewOfFile failed: " + name);
-        }
-#else
-        const int flags = create ? (O_RDWR | O_CREAT | O_EXCL) : O_RDWR;   // EXCL: a stale name is an error, not a reuse
-        fd_ = ::shm_open(name.c_str(), flags, 0600);
-        if (fd_ < 0) {
-            throw std::runtime_error("shm_open failed: " + name);
-        }
-        if (create && ::ftruncate(fd_, static_cast<off_t>(size)) != 0) {   // once, at creation: macOS refuses a second (EINVAL)
-            ::close(fd_);
-            ::shm_unlink(name.c_str());
-            throw std::runtime_error("ftruncate failed: " + name);
-        }
-        view_ = ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
-        if (view_ == MAP_FAILED) {
-            ::close(fd_);
-            if (create) ::shm_unlink(name.c_str());
-            throw std::runtime_error("mmap failed: " + name);
-        }
-#endif
-    }
-
-    ~SharedRegion() {
-#if defined(_WIN32)
-        UnmapViewOfFile(view_);
-        CloseHandle(mapping_);          // the object dies with its last handle: nothing to unlink (a FILE-backed mapping leaves its file)
-#else
-        ::munmap(view_, size_);
-        ::close(fd_);                   // the NAME stays until someone unlinks it - see unlink()
-#endif
-    }
-    SharedRegion(const SharedRegion&) = delete;
-    SharedRegion& operator=(const SharedRegion&) = delete;
-
-    // The creator's last duty: without it the region outlives every process
-    // that mapped it (Appendix G's price), and the next create fails on the
-    // stale name. Windows has no such step and no such leak.
-    static void unlink(const std::string& name) {
-#if !defined(_WIN32)
-        ::shm_unlink(name.c_str());
-#else
-        (void)name;
-#endif
-    }
-
-    void* data() const { return view_; }
-
-private:
-    std::size_t size_;
-    void* view_ = nullptr;
-#if defined(_WIN32)
-    HANDLE mapping_ = nullptr;
-#else
-    int fd_ = -1;
-#endif
-};
+--8<-- "exercises/cookbook/shm.cpp:recipe-43"
 ```
 
 **Why it looks like this.** No library, because the platform is the
@@ -2299,27 +1400,7 @@ unverified there. Needs `<atomic>`, `<cstdint>`, `<string>`,
 **The recipe:**
 
 ```cpp
-std::optional<int> sensor_index(const std::string& id) {
-    // Constructed ONCE. Building a std::regex parses the pattern and compiles
-    // it, which is the expensive half - a function-local static pays it on the
-    // first call only (Chapter 32's construct-on-first-use).
-    static const std::regex pattern(R"(^sensor([0-9]+)$)");   // R"(...)" is C#'s @"..."
-    std::smatch m;
-    if (!std::regex_match(id, m, pattern)) {
-        return std::nullopt;                       // IsMatch false: absence, not an error
-    }
-    const std::string digits = m[1].str();         // Groups[1], copied out: m borrows from id (Chapter 10)
-    int value = 0;
-    if (std::from_chars(digits.data(), digits.data() + digits.size(), value).ec != std::errc{}) {
-        return std::nullopt;                       // matched, but more digits than an int holds
-    }
-    return value;
-}
-
-std::string redact_digits(const std::string& text) {
-    static const std::regex digits(R"([0-9]+)");
-    return std::regex_replace(text, digits, "#");   // Regex.Replace: every match, a new string
-}
+--8<-- "exercises/cookbook/strings.cpp:recipe-44"
 ```
 
 **Why it looks like this.** `std::regex` is the `Regex` class with the
@@ -2355,36 +1436,7 @@ match before a final `\n`. Needs `<regex>`, `<optional>`, `<charconv>`,
 **The recipe:**
 
 ```cpp
-std::string_view trim(std::string_view s) {
-    constexpr std::string_view blank = " \t\r\n";
-    const auto first = s.find_first_not_of(blank);
-    if (first == std::string_view::npos) {
-        return {};                                 // all blank: empty - substr(npos) would throw
-    }
-    const auto last = s.find_last_not_of(blank);
-    return s.substr(first, last - first + 1);      // a VIEW into s: the caller's string must outlive it
-}
-
-bool equals_ignore_case(std::string_view a, std::string_view b) {
-    if (a.size() != b.size()) {
-        return false;
-    }
-    for (std::size_t i = 0; i < a.size(); ++i) {   // ASCII only: bytes, not characters (Chapter 9)
-        if (std::tolower(static_cast<unsigned char>(a[i])) !=      // unsigned char first: Chapter 19's UB
-            std::tolower(static_cast<unsigned char>(b[i]))) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool starts_with(std::string_view s, std::string_view prefix) {
-    return s.substr(0, prefix.size()) == prefix;   // C++20 spells it s.starts_with(prefix)
-}
-
-bool ends_with(std::string_view s, std::string_view suffix) {
-    return s.size() >= suffix.size() && s.substr(s.size() - suffix.size()) == suffix;
-}
+--8<-- "exercises/cookbook/strings.cpp:recipe-45"
 ```
 
 **Why it looks like this.** Four one-liners C# has and C++17's
@@ -2423,44 +1475,7 @@ analyzers nag about. Needs `<cctype>`, `<string_view>`.
 **The recipe:**
 
 ```cpp
-using HeaderList = std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)>;   // Recipe 7's shape: a second handle type
-
-HttpResult http_post_json(const std::string& url, const json& body, std::chrono::milliseconds timeout) {
-    Easy easy(curl_easy_init(), &curl_easy_cleanup);
-    if (!easy) {
-        throw std::runtime_error("curl_easy_init failed");
-    }
-    HeaderList headers(curl_slist_append(nullptr, "Content-Type: application/json"), &curl_slist_free_all);
-    if (!headers) {
-        throw std::runtime_error("curl_slist_append failed");   // a null list means "no custom headers": a silent form post
-    }
-    const std::string payload = body.dump();        // NAMED: libcurl borrows these bytes until perform returns
-    HttpResult r;
-    curl_easy_setopt(easy.get(), CURLOPT_URL, url.c_str());
-    curl_easy_setopt(easy.get(), CURLOPT_HTTPHEADER, headers.get());
-    curl_easy_setopt(easy.get(), CURLOPT_POSTFIELDS, payload.c_str());          // a loan, not a copy (Chapter 33)
-    curl_easy_setopt(easy.get(), CURLOPT_POSTFIELDSIZE, static_cast<long>(payload.size()));
-    curl_easy_setopt(easy.get(), CURLOPT_WRITEFUNCTION, &append_chunk);
-    curl_easy_setopt(easy.get(), CURLOPT_WRITEDATA, &r.body);
-    curl_easy_setopt(easy.get(), CURLOPT_TIMEOUT_MS, static_cast<long>(timeout.count()));
-    r.transport = curl_easy_perform(easy.get());
-    curl_easy_getinfo(easy.get(), CURLINFO_RESPONSE_CODE, &r.status);
-    return r;
-}
-
-// The third verdict, after the transport's and the server's: are the bytes
-// JSON at all? A 200 whose body is an HTML page is a value here, not a
-// throw - the caller asked a server a question and got a non-answer.
-std::optional<json> json_reply(const HttpResult& r) {
-    if (!r.ok()) {
-        return std::nullopt;                        // the wire or the server said no: the body is not the answer
-    }
-    json parsed = json::parse(r.body, nullptr, false);   // false: no exceptions - junk is a value here
-    if (parsed.is_discarded()) {
-        return std::nullopt;
-    }
-    return parsed;
-}
+--8<-- "exercises/cookbook/http.cpp:recipe-46"
 ```
 
 **Why it looks like this.** Recipe 41 with the request turned around and
@@ -2512,33 +1527,7 @@ Recipe 25, `<chrono>`, `<memory>`, `<optional>`, `<string>`.
 **The recipe:**
 
 ```cpp
-Key key_from_password(std::string_view password, const Bytes& salt, int iterations) {
-    Key key{};
-    if (PKCS5_PBKDF2_HMAC(password.data(), static_cast<int>(password.size()),
-                          salt.data(), static_cast<int>(salt.size()),
-                          iterations, EVP_sha256(),
-                          static_cast<int>(key.size()), key.data()) != 1) {
-        throw std::runtime_error("PBKDF2-HMAC-SHA256 failed");   // the library, not the input: the event pole
-    }
-    return key;
-}
-
-using DeriveCtx = std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)>;   // Recipe 7's shape, again
-
-Key key_from_secret(const Bytes& secret, const Bytes& salt, const Bytes& info) {
-    DeriveCtx ctx(EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, nullptr), &EVP_PKEY_CTX_free);
-    Key key{};
-    std::size_t length = key.size();
-    if (!ctx || EVP_PKEY_derive_init(ctx.get()) != 1 ||
-        EVP_PKEY_CTX_set_hkdf_md(ctx.get(), EVP_sha256()) != 1 ||
-        EVP_PKEY_CTX_set1_hkdf_salt(ctx.get(), salt.data(), static_cast<int>(salt.size())) != 1 ||
-        EVP_PKEY_CTX_set1_hkdf_key(ctx.get(), secret.data(), static_cast<int>(secret.size())) != 1 ||
-        EVP_PKEY_CTX_add1_hkdf_info(ctx.get(), info.data(), static_cast<int>(info.size())) != 1 ||
-        EVP_PKEY_derive(ctx.get(), key.data(), &length) != 1 || length != key.size()) {
-        throw std::runtime_error("HKDF-SHA256 failed");
-    }
-    return key;
-}
+--8<-- "exercises/cookbook/crypto.cpp:recipe-47"
 ```
 
 **Why it looks like this.** Recipe 37 took a `Key` and never said where
@@ -2589,33 +1578,7 @@ Recipe 37 refuses to open. Needs
 **The recipe:**
 
 ```cpp
-using Mac    = std::unique_ptr<EVP_MAC, decltype(&EVP_MAC_free)>;
-using MacCtx = std::unique_ptr<EVP_MAC_CTX, decltype(&EVP_MAC_CTX_free)>;
-
-Bytes hmac_sha256(const Bytes& key, const Bytes& data) {
-    Mac mac(EVP_MAC_fetch(nullptr, "HMAC", nullptr), &EVP_MAC_free);
-    MacCtx ctx(mac ? EVP_MAC_CTX_new(mac.get()) : nullptr, &EVP_MAC_CTX_free);
-    char digest[] = "SHA256";                              // a writable char* by signature; a name goes here, the key through init
-    const OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, digest, 0),
-                                 OSSL_PARAM_construct_end()};
-    Bytes tag(EVP_MAX_MD_SIZE);
-    std::size_t written = 0;
-    if (!ctx || EVP_MAC_init(ctx.get(), key.data(), key.size(), params) != 1 ||
-        EVP_MAC_update(ctx.get(), data.data(), data.size()) != 1 ||
-        EVP_MAC_final(ctx.get(), tag.data(), &written, tag.size()) != 1) {
-        throw std::runtime_error("HMAC-SHA256 failed");
-    }
-    tag.resize(written);                                   // 32 for SHA-256
-    return tag;
-}
-
-bool verify_hmac_sha256(const Bytes& key, const Bytes& data, const Bytes& tag) {
-    const Bytes expected = hmac_sha256(key, data);
-    // CRYPTO_memcmp, never ==: a comparison that stops at the first wrong
-    // byte tells an attacker how many bytes were right (FixedTimeEquals).
-    // No harness can see this line change - constant time is not a value.
-    return expected.size() == tag.size() && CRYPTO_memcmp(expected.data(), tag.data(), tag.size()) == 0;
-}
+--8<-- "exercises/cookbook/crypto.cpp:recipe-48"
 ```
 
 **Why it looks like this.** An HMAC is the answer to a question Recipe
@@ -2650,58 +1613,7 @@ libcrypto 3 as Recipe 36, `<memory>`, `<vector>`.
 **The recipe:**
 
 ```cpp
-// Recipe 49 - MemoryMappedFile.CreateFromFile: a file's bytes as a view,
-// mapped rather than read. Pages arrive as they are touched and leave with
-// the object; nothing is copied into the heap, and the file may be closed -
-// or, on POSIX, deleted - the moment the mapping exists.
-class MappedFile {
-public:
-    explicit MappedFile(const std::filesystem::path& path) {
-#if defined(_WIN32)
-        HANDLE file = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
-                                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-        if (file == INVALID_HANDLE_VALUE) throw std::runtime_error("cannot open " + path.string());
-        LARGE_INTEGER size{};
-        if (!GetFileSizeEx(file, &size)) { CloseHandle(file); throw std::runtime_error("cannot size " + path.string()); }
-        if (size.QuadPart == 0) { CloseHandle(file); return; }      // a zero-length mapping is refused: an empty view instead
-        HANDLE mapping = CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
-        CloseHandle(file);                                           // the mapping object holds its own reference
-        if (mapping == nullptr) throw std::runtime_error("cannot map " + path.string());
-        view_ = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
-        CloseHandle(mapping);                                        // and the view holds its own
-        if (view_ == nullptr) throw std::runtime_error("cannot view " + path.string());
-        size_ = static_cast<std::size_t>(size.QuadPart);
-#else
-        const int fd = ::open(path.c_str(), O_RDONLY);
-        if (fd < 0) throw std::runtime_error("cannot open " + path.string());
-        struct stat st{};
-        if (::fstat(fd, &st) != 0) { ::close(fd); throw std::runtime_error("cannot size " + path.string()); }
-        if (st.st_size == 0) { ::close(fd); return; }                // mmap of length 0 is EINVAL: an empty view instead
-        void* view = ::mmap(nullptr, static_cast<std::size_t>(st.st_size), PROT_READ, MAP_PRIVATE, fd, 0);
-        ::close(fd);                                                 // the mapping keeps its own reference to the file
-        if (view == MAP_FAILED) throw std::runtime_error("cannot map " + path.string());
-        view_ = view;
-        size_ = static_cast<std::size_t>(st.st_size);
-#endif
-    }
-    ~MappedFile() {
-        if (view_ == nullptr) return;
-#if defined(_WIN32)
-        UnmapViewOfFile(view_);
-#else
-        ::munmap(const_cast<void*>(view_), size_);
-#endif
-    }
-    MappedFile(const MappedFile&) = delete;
-    MappedFile& operator=(const MappedFile&) = delete;
-
-    // A view into the mapping: valid exactly as long as this object is.
-    std::string_view bytes() const { return {static_cast<const char*>(view_), size_}; }
-
-private:
-    const void* view_ = nullptr;
-    std::size_t size_ = 0;
-};
+--8<-- "exercises/cookbook/files.cpp:recipe-49"
 ```
 
 **Why it looks like this.** Recipe 1 copies the file into a `std::string`,
