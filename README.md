@@ -20,10 +20,13 @@ Where this text disagrees with [cppreference](https://cppreference.com) or the [
 
 ## What's inside
 
-The book lives in [book/](book/README.md) — one file per chapter, with the
-Contents as the entry point. The same files build as a searchable static
-site (`scripts/build_site.sh`, or `--serve` to read it locally); where it is
-going is in [SITE-PLAN.md](SITE-PLAN.md).
+**Read it at [mkhomutov.github.io/going-unmanaged](https://mkhomutov.github.io/going-unmanaged/).**
+The source lives in [book/](book/README.md) — one file per chapter, with the
+Contents as the entry point; the site is built from those files on every
+push to `main` (`scripts/build_site.sh --serve` reads it locally). On GitHub
+the code listings show as include directives, because the pages include
+them from the tested files; the site is where they render. Where all this
+is going is in [SITE-PLAN.md](SITE-PLAN.md).
 
 - **Parts I–IV (Chapters 1–13):** the syllabus — ownership and RAII, value semantics, the Rule of Five, virtual dispatch, templates vs generics, error handling, the STL, the compilation model, and the toolchain — every topic anchored in the C# knowledge you already have.
 - **Part V (Chapters 14–23):** learning by doing — ten exercises with reference solutions and pitfall analyses, including two miniature vendor SDKs written in the real-world idioms: **FakeSDK** (error codes + owned payloads, the desktop-plugin style) and **FakeDevice** (opaque handles + C callbacks, the peripheral-device style).

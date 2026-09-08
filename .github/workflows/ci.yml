@@ -376,6 +376,14 @@ jobs:
       # SITE-PLAN.md. --strict (inside the script) makes this a second,
       # independent link-and-anchor check beside lychee, with two things
       # lychee cannot see: a page the nav does not know, and an include
-      # (--8<--) whose file or line range does not exist.
+      # (--8<--) whose file or section does not exist. mermaid-cli is
+      # installed so the diagrams are rendered at build time here exactly as
+      # the Pages workflow renders them, and the guard after the build says
+      # so: no page may still carry a fence for the browser to render.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install -g @mermaid-js/mermaid-cli@11
       - run: ./scripts/build_site.sh
       - run: test -f build/site/index.html
+      - run: '! grep -rl "language-mermaid\|class=\"mermaid\"" build/site --include=*.html'

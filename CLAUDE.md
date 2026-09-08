@@ -531,7 +531,12 @@ Chapter 25's Finding 10.
   becoming a reference consulted daily, not a book read once — with the
   measurements behind it and the next steps; read it before changing the
   book's structure. CI's `site` job runs the strict build, which is also a
-  second link-and-anchor checker
+  second link-and-anchor checker, with mermaid-cli installed so the
+  diagrams render at build time exactly as they are published.
+  `.github/workflows/site.yml` deploys the site to GitHub Pages on every
+  push to `main` — https://mkhomutov.github.io/going-unmanaged/ — with
+  directory URLs (`site_url` in mkdocs.yml), and refuses to publish a page
+  that still carries a diagram fence for the browser to render
 
 ## Where chapter code lives (decided once; full text in CONTRIBUTING.md)
 
@@ -675,11 +680,14 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
     or a `<details>` fold. A callout that must live there stays plain bold
     with no marker — there are none today. Blank line before the marker.
 - Diagrams are mermaid in a ```` ```mermaid ```` fence, rendered natively by
-  GitHub and by the site. The rules:
+  GitHub and, on the site, to inline SVG at build time (light and dark, by
+  `site_hooks.py` when `mmdc` is on PATH; a local build without it falls
+  back to browser-side rendering from a CDN, and CI and the Pages workflow
+  always have it). The rules:
   - **A diagram is additive.** It illustrates prose that already stands on
     its own — nothing is deleted or rewritten to make room, because a
-    renderer that blocks the script shows the fence and the prose must
-    still carry the point. At most one lead-in sentence.
+    renderer without mermaid shows the fence and the prose must still
+    carry the point. At most one lead-in sentence.
   - **Basic `flowchart` and `sequenceDiagram` only**, no `style`/`classDef`
     and no hardcoded colours — GitHub themes mermaid for light and dark
     itself, and a hardcoded colour is unreadable in one of them.
