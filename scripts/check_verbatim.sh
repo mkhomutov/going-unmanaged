@@ -70,7 +70,7 @@ SOURCE_GLOBS = ('exercises/**/*.h', 'exercises/**/*.cpp', 'exercises/**/*.rs', '
 sources = {}
 for pattern in SOURCE_GLOBS:
     for path in sorted(glob.glob(pattern, recursive=True)):
-        if 'third_party' in path or '/build/' in path:
+        if 'third_party' in path or '/build/' in path or '/target/' in path:
             continue
         sources[path] = open(path, errors='replace').read()
 
