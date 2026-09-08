@@ -6,8 +6,8 @@ the markdown under book/ and the renderer:
 1. on_config builds the navigation from the chapter files themselves - the
    reading order is the file order (digits sort before letters), a part's H1
    opens a section, and each page's title is its own `## Chapter N` line - so
-   adding a chapter file needs no edit here (the same rule build_book.sh
-   follows for the single file).
+   adding a chapter file needs no edit here, and the chapter files carry no
+   navigation of their own.
 
 2. on_page_markdown turns GitHub alerts (`> [!TIP]` then a blockquote body)
    into Material admonitions. Only the shape the book uses is handled; the

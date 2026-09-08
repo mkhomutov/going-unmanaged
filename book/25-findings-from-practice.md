@@ -266,10 +266,3 @@ The exercise that surfaced Findings 1–5 is worth keeping as a reusable instrum
 | Destructors ran in reverse construction order per scope | stack unwinding order |
 
 **Habit:** when container or call behavior is mysterious at work, reach for the Tracer before reaching for theory. Ten lines of printing beat an hour of guessing — and it requires no tools a locked-down work machine lacks.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 24 — Practice Plan](24-practice-plan.md) · [Contents](README.md) · [Chapter 26 — Build Systems and CMake →](26-build-systems-and-cmake.md)
-<!-- nav:end -->

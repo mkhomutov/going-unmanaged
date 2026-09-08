@@ -211,10 +211,3 @@ Eleven constructions, eleven destructions — balanced books, no leaks. Destruct
 2. **Add `v.reserve(4);`** before the push_backs. The entire reallocation block vanishes — no growth, no transfer.
 3. **Add `Tracer x("x"); x = x;`** — self-copy-assignment. The copy assignment here has no self-check and survives only because `std::string::operator=` tolerates it. Ask yourself what happens when the member is a raw pointer: that question is the doorway to the Buffer worked example in Chapter 15.
 4. **Make `a` const** — `const Tracer a("a");` — and watch the third line of the singles section. `Tracer c = std::move(a);` now prints `copy-CONSTRUCTED`, and `a` never becomes a husk: the cast asked for a steal, the const forbade it, and the copy constructor answered without a word from the compiler. Chapter 6's value-category table is the reason, and the trap it names second.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 13 — Toolchain Quick Reference](13-toolchain-quick-reference.md) · [Contents](README.md) · [Chapter 15 — Exercise: The Buffer →](15-exercise-the-buffer.md)
-<!-- nav:end -->

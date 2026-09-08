@@ -165,9 +165,3 @@ Extend the Chapter 26 project. You need no network and no third-party code: writ
 6. **Now point the sanitizer at it.** Back at `-O0`, rebuild both link orders with `-fsanitize=address,undefined` and run each. Before you do: predict which one ASan catches. One aborts with a stack overread naming `GetTimeout`; the other prints its wrong answer and exits 0 with nothing to report at all. Working out *why* that asymmetry falls the way it does is the whole exercise — and it is the reason the pitfall here is structural rather than a tool you can add to CI. Steps 5 and 6 are the most valuable fifteen minutes in the chapter, and a strong candidate for your notes file.
 
 Steps 1–4 have a finished form in `exercises/deplab/`: one `main.cpp` consumed all three ways, so the app source never says where the library came from and the three build descriptions are the whole difference. The repository's own CI builds each of them so they cannot quietly rot, and holds the fetched one to *both* tags — because building once proves the mechanism runs, and only building twice proves the pin chose the version. Write yours in a directory of its own first, then read that one. Steps 5 and 6 are deliberately not in it: the prediction is the exercise, and a committed answer spoils it in the time it takes to read a filename.
-
----
-
-<!-- nav:begin -->
-[← Chapter 26 — Build Systems and CMake](26-build-systems-and-cmake.md) · [Contents](README.md) · [Chapter 28 — Testing →](28-testing.md)
-<!-- nav:end -->

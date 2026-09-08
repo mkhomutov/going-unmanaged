@@ -226,7 +226,3 @@ The loan sentence is everywhere once you look for it. The C standard's own `gete
 ### Reproduce it cold
 
 A week or two from now, closed book, one fresh file: recreate this bug class from memory — a vector, a pointer into it, a `push_back` past capacity, a read through the stale pointer — and predict what the plain run prints before ASan names it. Then the fix from memory: store the key, borrow at the point of use, and prove it at no growth and at plenty. Bonus round: reconstruct the region arithmetic — which element, which member — from the report alone. The schedule is in [Chapter 24](24-practice-plan.md#chapter-24--practice-plan).
-
-<!-- nav:begin -->
-[← Chapter 32 — It Crashes on Exit](32-it-crashes-on-exit.md) · [Contents](README.md) · [Chapter 34 — Parse This Capture →](34-parse-this-capture.md)
-<!-- nav:end -->

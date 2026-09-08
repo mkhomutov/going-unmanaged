@@ -262,10 +262,3 @@ The bug/value/event decision is the chapter's whole point, and reading about a d
 Score yourself the way a review would: 8 and 2 are the ones worth re-reading the chapter over, because both flip on context — *who produced the data* and *where the call crosses a boundary* — rather than on the line of code itself.
 
 </details>
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 7 — Templates vs C# Generics](07-templates-vs-csharp-generics.md) · [Contents](README.md) · [Chapter 9 — Casts, Conversions, and Strings →](09-casts-conversions-and-strings.md)
-<!-- nav:end -->

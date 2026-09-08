@@ -75,10 +75,3 @@ if (c) c->radius = 5;
 ### In the wild: C-style SDKs
 
 Established C++ SDKs frequently ship their own template container libraries paralleling the STL — Qt's `QVector`/`QMap`, Unreal's `TArray`/`TMap`, and many vendor equivalents born before the STL was trustworthy on all platforms. STL fluency translates directly: the concepts (and the invalidation rules) are the same, only the spelling differs. Expect to read the vendor's containers in API samples and convert at the boundary.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 6 — The Rule of Five and Move Semantics](06-the-rule-of-five-and-move-semantics.md) · [Contents](README.md) · [Chapter 8 — Error Handling: Exceptions and Error Codes →](08-error-handling.md)
-<!-- nav:end -->

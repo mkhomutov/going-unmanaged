@@ -1,7 +1,9 @@
 name: Release
 
-# The single-file book is a build artifact, not repository content, so every
-# tagged release carries it as a download.
+# A tagged release is an annotated tag plus a CHANGELOG entry; this creates
+# the GitHub release page for it. The single-file book that earlier releases
+# attached is gone (SITE-PLAN.md, step 2): the book is read as a site now,
+# and how a release travels is that plan's open hosting decision.
 on:
   push:
     tags: ['v*']
@@ -10,16 +12,14 @@ permissions:
   contents: write
 
 jobs:
-  book:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - run: ./scripts/build_book.sh
-      - name: Attach the single-file book to the release
+      - name: Create the release if the tag has none
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
             || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" \
                  --notes "See CHANGELOG.md for what changed in this release."
-          gh release upload "$GITHUB_REF_NAME" build/going-unmanaged.md --clobber

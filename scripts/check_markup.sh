@@ -14,7 +14,7 @@
 # a real mermaid parse (mmdc), and a Node dependency this job does not have.
 # Render new diagrams in a browser before committing; see CLAUDE.md.
 #
-#   scripts/check_markup.sh                 -> book/*.md and the built single file
+#   scripts/check_markup.sh                 -> book/*.md
 #   scripts/check_markup.sh FILE...         -> just those files
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -23,9 +23,6 @@ if [ $# -gt 0 ]; then
     FILES=("$@")
 else
     FILES=(book/*.md)
-    # The built single file is derived, so checking it too is what catches a
-    # build_book.sh change that mangles a fence on its way through.
-    [ -f build/going-unmanaged.md ] && FILES+=(build/going-unmanaged.md)
 fi
 
 awk '

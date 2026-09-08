@@ -232,20 +232,19 @@ front matter and the Contents. Concretely, for a contributor:
   front of it: `](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)`.
   Links inside the same file stay plain `](#anchor)`. Plain prose references
   ("see Chapter 26") need no link at all.
-- **The nav footer** at the bottom of each file, between `<!-- nav:begin -->`
-  and `<!-- nav:end -->`, is generated — never hand-edit it. If you add or
-  rename a file, run `scripts/build_book.sh --write-nav` and commit the
-  result; CI fails on a stale footer.
+- **No navigation inside a chapter file.** The site generates its nav from
+  the file order and the `## Chapter N` headings, and GitHub has the
+  Contents; a new file needs nothing but its name and its heading.
 
-The single-file book is a build artifact, not repository content:
+The book is also a static site, built from the same files:
 
 ```bash
-./scripts/build_book.sh          # -> build/going-unmanaged.md
+./scripts/build_site.sh          # -> build/site/ ; --serve for a live reader
 ```
 
-It concatenates the chapters in reading order and turns the cross-file links
-back into in-page anchors. CI builds it on every push, and every tagged
-release attaches it as a download.
+The build is strict — a link to a missing file or anchor fails it — so run
+it after editing `book/`; CI does. [SITE-PLAN.md](SITE-PLAN.md) is where the
+site is going.
 
 ## Where chapter code lives
 
@@ -415,8 +414,7 @@ the scripts CI runs. Then:
 
 1. Fork, branch, make your change.
 2. Run `./scripts/build_all.sh` — it must print `ALL GREEN`. If you touched
-   `book/`, run `./scripts/build_book.sh` too (and `--write-nav` if you added
-   or renamed a file).
+   `book/`, run `./scripts/build_site.sh` too; it is strict about links.
 3. Open a PR. Keep it focused: one Finding, one correction topic, or one
    exercise per PR.
 4. In the PR description, say which exercise or chapter the change belongs to

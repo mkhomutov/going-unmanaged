@@ -314,7 +314,3 @@ If a future toolchain makes one of these claims false, the build fails rather th
 - **Parameter:** polymorphic base? `unique_ptr<Base>` if kept, `const Base&` if only read. Otherwise: does it keep a copy? Sink by value and move. Otherwise borrow with `const&` — a view for read-only buffers, `T&` only to modify.
 - **Return:** by value, always, including collections; `unique_ptr<Base>` for a polymorphic object; `optional` if it can find nothing ([Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes) decides which); document the term if you hand back a view.
 - **Element:** by value, unless slicing, address stability, or move cost makes you box it — and then say which; a closed set of unrelated types is a `variant`, still by value.
-
-<!-- nav:begin -->
-[← Appendix G — The Bridge Catalogue](G-the-bridge-catalogue.md) · [Contents](README.md) · [Appendix I — Const-Correctness →](I-const.md)
-<!-- nav:end -->

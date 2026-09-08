@@ -216,10 +216,3 @@ shapes.push_back(std::move(s));          // unique_ptr can ONLY move - this
 ### In the wild: C-style SDKs
 
 Large C++ SDKs often ship their own unique_ptr analog (an "Owner" or "ScopedRef" type) with the same move-only behavior. Any RAII guard you write around SDK handles is exactly the "class holding a raw resource" case — either delete copy/move entirely (simplest, as in Chapter 1's guard), or implement moves properly when guards must be stored in containers or returned from factories (as Chapter 18's DeviceSession does — with a subtle twist worth meeting there).
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 5 — Virtual Dispatch and the Virtual Destructor](05-virtual-dispatch-and-the-virtual-destructor.md) · [Contents](README.md) · [Chapter 7 — Templates vs C# Generics →](07-templates-vs-csharp-generics.md)
-<!-- nav:end -->

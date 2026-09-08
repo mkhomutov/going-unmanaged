@@ -142,9 +142,3 @@ They are conflated constantly and they answer different questions. `const` is "I
 
 > [!TIP]
 > **Key principle:** "`mutable` is for members that are not part of the value — a cache, a memo, a mutex — and never for anything a caller can observe."
-
----
-
-<!-- nav:begin -->
-[← Appendix H — Choosing: Signatures, Containers, and Storage](H-choosing.md) · [Contents](README.md) · [Appendix J — The CMake Catalogue →](J-cmake-catalogue.md)
-<!-- nav:end -->

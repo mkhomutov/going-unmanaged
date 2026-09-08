@@ -75,10 +75,3 @@ int main(int argc, char* argv[]) {
 ### Stretch goals
 
 Rewrite the pipeline with C++20 ranges (`views::filter` + `views::take`); time the difference between `map` and `unordered_map` on a large file (then explain it via Chapter 11's cache-locality argument); make the minimum count and top-N command-line arguments with proper validation.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 18 — Exercise: The Device SDK](18-exercise-the-device-sdk.md) · [Contents](README.md) · [Chapter 20 — Exercise: Slicing and Polymorphism →](20-exercise-slicing-and-polymorphism.md)
-<!-- nav:end -->

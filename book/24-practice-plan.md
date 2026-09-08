@@ -30,10 +30,3 @@ The week above builds the skills; what keeps them is retrieval on a schedule, be
 - **Before your first real code review — Appendix B, once through.** The principles are in speakable first person for exactly this moment: the reviewer's comment lands, and the sentence that answers it is already yours.
 
 If the job has already started, the schedule compresses honestly: real tickets replace the drills the moment they arrive, and the only item that must survive contact is the cold Buffer rewrite — it is ten minutes, and it is the whole ownership model in one file.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 23 — Exercise: The Build-Model Lab](23-exercise-the-build-model-lab.md) · [Contents](README.md) · [Chapter 25 — Findings from Practice: a Living Log →](25-findings-from-practice.md)
-<!-- nav:end -->

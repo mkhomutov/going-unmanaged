@@ -74,10 +74,3 @@ And the sanitizer reflex from the previous section does not cover this one: Addr
 The same rule reaches three places beyond the plain local. A **member left out of the initializer list** (Chapter 4) is default-initialized on exactly these terms — the constructor compiled, the member holds junk. **`new T[n]` without braces** does not zero either — `new int[n]{}` does, and one pair of braces is the whole fix (Finding 7 in Chapter 25 has the rest). And a **C API struct** you hand to a vendor function is the same hazard with a longer fuse, which is why Chapters 2 and 17 write `= {}` on every one of them.
 
 The habit is three lines long. Initialize at the point of declaration, so there is no window in which the variable is readable and wrong. Put `= {}` on every API struct. And when the compiler hedges that a variable *might* be used uninitialized — GCC's `-Wmaybe-uninitialized`, clang's `-Wsometimes-uninitialized`, MSVC's C4701 *potentially uninitialized local variable* — treat it as a certainty rather than a maybe: the hedge is there because the compiler could not prove the path, not because it thinks you are probably fine.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 2 — Value Semantics](02-value-semantics.md) · [Contents](README.md) · [Chapter 4 — Classes, Inheritance, Interfaces →](04-classes-inheritance-interfaces.md)
-<!-- nav:end -->

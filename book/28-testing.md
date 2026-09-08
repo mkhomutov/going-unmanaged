@@ -332,10 +332,3 @@ The Buffer of Chapter 15 is the subject, and everything here uses the standard l
 4. **Prove the suite can fail.** Change one expected value, confirm red and exit code 1, change it back.
 5. **Run the demonstration.** Break only the move constructor's null-out. Confirm every assertion still passes, then rebuild with `-fsanitize=address,undefined` and read the double-free report. This is the single most important run in the chapter: it is what "the sanitizer is the oracle" means, in your own terminal.
 6. **Stretch:** put a Chapter 14 Tracer in a `std::vector`, and assert on the number of copies and moves a `push_back` causes. You are now testing a property that has no return value at all — and you will need `noexcept` on the move constructor for the test to pass (Finding 3).
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 27 — Dependency Management](27-dependency-management.md) · [Contents](README.md) · [Chapter 29 — Concurrency →](29-concurrency.md)
-<!-- nav:end -->

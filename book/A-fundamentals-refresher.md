@@ -191,10 +191,3 @@ Layout has a tool and names mostly do not. `.clang-format` at the repository roo
 
 > [!TIP]
 > **Key principle:** "I read fifty lines of a codebase before I write one, and match what is there — never spelling an identifier with a leading underscore and a capital."
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 42 — The Formula Field](42-the-formula-field.md) · [Contents](README.md) · [Appendix B — Core Principles (Cheat Sheet) →](B-core-principles.md)
-<!-- nav:end -->

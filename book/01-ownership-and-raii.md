@@ -163,10 +163,3 @@ Without the guard, every early `return` needs its own dispose call — the exact
 
 > [!TIP]
 > **Key principle:** "In C++ I think in terms of ownership. Every resource has exactly one clear owner, expressed with unique_ptr or stack allocation. I basically never write new or delete by hand — raw new/delete in code is a bug waiting to happen."
-
----
-
-
-<!-- nav:begin -->
-[Contents](README.md) · [Chapter 2 — Value Semantics →](02-value-semantics.md)
-<!-- nav:end -->
