@@ -50,10 +50,11 @@ SQLite is public domain). To build either by hand, crypto for instance: `clang++
 -fsanitize=address,undefined -g $(pkg-config --cflags libcrypto) crypto.cpp
 $(pkg-config --libs libcrypto)`.
 
-The sync rule is the testlab discipline: the recipe functions here are quoted
-**verbatim** in `book/F-rosetta-cookbook.md` — and three units are quoted
-whole by Chapter 8 as well (`Result` and `load_config` from `errors.cpp`,
-`channels_doubled` from `expected.cpp`), which each file's banner names.
-Editing a recipe on either side means editing every page that quotes it in
-the same commit. The `main()` functions are scaffolding
-and appear in no listing — change those freely.
+The sync rule: the recipe functions here are **included** by
+`book/F-rosetta-cookbook.md`, each between `recipe-N` section markers — and
+three units by Chapter 8 as well (`Result` and `load_config` from
+`errors.cpp`, `channels_doubled` from `expected.cpp`), which each file's
+banner names. Edit a recipe here and every page that includes it follows; a
+marker moved is what the page shows, and `scripts/check_verbatim.sh` refuses
+a copy pasted onto a page. The `main()` functions are scaffolding and appear
+in no listing — change those freely.

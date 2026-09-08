@@ -126,59 +126,13 @@ The second half of the contract is about evidence: **a mean can only acquit a me
 Two ampersands and a `const` — the cheapest fix in this book, in the two files the signature lives in ([Chapter 12](12-the-compilation-model.md#chapter-12--the-compilation-model): a declaration changes in the header *and* the definition). The fixed `meter.h`:
 
 ```cpp
-#pragma once
-#include <cstddef>
-#include <vector>
-
-// One channel's samples for one tick of the host's meter clock.
-struct Block {
-    std::vector<float> samples;
-};
-
-class Meter {
-public:
-    explicit Meter(std::size_t channels);
-
-    // Called once per tick on the host's audio thread - the deadline path.
-    // Borrows the blocks for the duration of the call: no copy, no
-    // allocation, nothing that can block.
-    void Tick(const std::vector<Block>& inputs);
-
-    // Running peak for one channel, linear [0, 1].
-    float Peak(std::size_t channel) const;
-
-private:
-    std::vector<float> peaks_;
-};
+--8<-- "exercises/perflab/meter.h"
 ```
 
 And the fixed `meter.cpp`:
 
 ```cpp
-#include "meter.h"
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-
-Meter::Meter(std::size_t channels) : peaks_(channels, 0.0f) {}
-
-void Meter::Tick(const std::vector<Block>& inputs) {
-    assert(inputs.size() == peaks_.size());
-    std::size_t ch = 0;
-    for (const auto& block : inputs) {          // borrow - the second &
-        float peak = peaks_[ch];
-        for (const float s : block.samples) {   // a float: by value on purpose
-            peak = std::max(peak, std::fabs(s));
-        }
-        peaks_[ch] = peak;
-        ++ch;
-    }
-}
-
-float Meter::Peak(std::size_t channel) const {
-    assert(channel < peaks_.size());
-    return peaks_[channel];
-}
+--8<-- "exercises/perflab/meter.cpp"
 ```
 
 Note what the inner loop kept: `const float s`, by value, on purpose. A `float` *is* a register; copying it is the fast path, and an `&` there would buy nothing. The reflex is not "never copy" — it is "know what the thing weighs". [Chapter 14](14-exercise-the-lifetime-tracer.md#chapter-14--exercise-the-lifetime-tracer) counted constructor calls; this ticket is what they cost when the type is sixteen heap buffers deep.
@@ -186,89 +140,7 @@ Note what the inner loop kept: `const float s`, by value, on purpose. A `float` 
 The acceptance test is the part the first shipping missed, so it is the part the lab mechanizes. The harness — the whole file, because the counter *is* the chapter:
 
 ```cpp
-#include "meter.h"
-#include <chrono>
-#include <cstdio>
-#include <cstdlib>
-#include <new>
-
-// The judge this ticket needed: a heap-allocation counter. Replacing the
-// global operator new and operator delete is legal and program-wide - it is
-// what a memory profiler does, with more ceremony. The default operator
-// new[] and the sized and array deletes all forward to these two, so
-// counting here counts everything a std:: container allocates.
-namespace {
-long g_heap_allocs = 0;
-}
-
-void* operator new(std::size_t size) {
-    ++g_heap_allocs;
-    if (void* p = std::malloc(size)) {
-        return p;
-    }
-    throw std::bad_alloc{};
-}
-
-void operator delete(void* p) noexcept { std::free(p); }
-void operator delete(void* p, std::size_t) noexcept { std::free(p); }
-
-int main(int argc, char** argv) {
-    // Tick count. build_all.sh runs this at 50 AND at 1000: the fix's claim
-    // is that the deadline path is allocation-free - zero is the one
-    // per-tick number a longer session cannot scale - and one session
-    // length cannot prove independence from session length.
-    const long ticks = argc > 1 ? std::atol(argv[1]) : 1000;
-
-    constexpr std::size_t kChannels = 16;
-    constexpr std::size_t kSamples  = 1024;   // 21.3 ms of audio at 48 kHz
-
-    // Setup may allocate freely; the session is what is on trial.
-    std::vector<Block> inputs(kChannels);
-    for (std::size_t ch = 0; ch < kChannels; ++ch) {
-        inputs[ch].samples.resize(kSamples);
-        for (std::size_t i = 0; i < kSamples; ++i) {
-            const float sign = (i % 2 == 0) ? 1.0f : -1.0f;
-            inputs[ch].samples[i] = sign * static_cast<float>(i % 100) / 200.0f;
-        }
-        inputs[ch].samples[ch * 3 + 7] = 0.75f;   // one planted peak, exactly
-    }                                             // representable in a float
-
-    Meter meter(kChannels);
-
-    const long before = g_heap_allocs;
-    const auto t0 = std::chrono::steady_clock::now();
-    for (long t = 0; t < ticks; ++t) {
-        meter.Tick(inputs);
-    }
-    const auto t1 = std::chrono::steady_clock::now();
-    const long during = g_heap_allocs - before;
-
-    // Correctness first: a faster meter that meters wrong is not a fix.
-    for (std::size_t ch = 0; ch < kChannels; ++ch) {
-        if (meter.Peak(ch) != 0.75f) {
-            std::printf("FAILED: channel %zu peak %.3f, expected 0.750\n",
-                        ch, static_cast<double>(meter.Peak(ch)));
-            return 1;
-        }
-    }
-    if (during != 0) {
-        std::printf("FAILED: %ld heap allocations across %ld ticks - the"
-                    " deadline path is copying\n", during, ticks);
-        return 1;
-    }
-
-    // Printed to watch the fix move; MEASURE at -O2 without sanitizers -
-    // under the canonical flags this number is not a benchmark.
-    const auto ns =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
-    std::printf("meter ok: %zu channels x %zu samples, %ld ticks, 0 heap"
-                " allocations, %.1f us/tick\n",
-                kChannels, kSamples, ticks,
-                ticks > 0 ? static_cast<double>(ns) / 1000.0
-                                / static_cast<double>(ticks)
-                          : 0.0);
-    return 0;
-}
+--8<-- "exercises/perflab/main.cpp"
 ```
 
 Run against the broken meter, this harness fails with `33 heap allocations` per tick multiplied out; against the fix it prints zero. That number — not a timing — is the acceptance test, for the same reason the diagnosis could not come from the profile's percentages: a timing asserts about the mean, and the ticket was about the worst case. **Zero allocations is a claim about every tick at once**, including the four-millionth one on the studio machine, and it is immune to how fast the CI runner happens to be. `build_all.sh` runs it at 50 ticks and at 1000 because zero-per-tick is a claim of session-length independence, and one length cannot prove it. This is a real industry practice with a name — allocation tests — and it is the same idea as [Chapter 35](35-still-live-at-unload.md#chapter-35--objects-still-live-at-unload)'s counter judging what the sanitizers cannot: pick the judge that can actually see the crime.

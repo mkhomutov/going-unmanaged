@@ -59,34 +59,11 @@ That is the failure mode you are designing against: silent, remote, and triggere
 Move every data member into a hidden implementation type, and leave the public class holding exactly one pointer.
 
 ```cpp
-// Widget.h - the only thing your users compile against
-#pragma once
-#include <memory>
-#include <string>
-
-class Widget {
-public:
-    explicit Widget(std::string name);
-    ~Widget();                          // declared here, DEFINED in the .cpp
-    Widget(Widget&&) noexcept;          // the same rule applies to move ops
-    Widget& operator=(Widget&&) noexcept;
-    int Score() const;
-private:
-    struct Impl;                        // declared, never defined here
-    std::unique_ptr<Impl> impl_;
-};
+--8<-- "exercises/abilab/Widget.h:listing"
 ```
 
 ```cpp
-// Widget.cpp - everything real, invisible to callers
-#include "Widget.h"
-struct Widget::Impl { std::string name; int score = 7; };
-
-Widget::Widget(std::string n) : impl_(std::make_unique<Impl>()) { impl_->name = std::move(n); }
-Widget::~Widget() = default;                              // HERE Impl is complete
-Widget::Widget(Widget&&) noexcept = default;
-Widget& Widget::operator=(Widget&&) noexcept = default;
-int Widget::Score() const { return impl_->score; }
+--8<-- "exercises/abilab/Widget.cpp:listing"
 ```
 
 Look at what is still in that header, though: `std::string` in an exported signature — the thing the corollary above forbids. PIMPL does not fix that and was never meant to. What it fixes is *your class's* layout drift, and what it buys you is the freedom to add private members forever. Both sides must still have been built by the same compiler with the same standard library in the same configuration, which is exactly what the first row of the table below says. If you need more reach than that, you need Technique 3.
@@ -110,16 +87,7 @@ PIMPL costs a heap allocation per object, an indirection per access, and the los
 Ship an abstract class with no data at all, plus one function to make instances. The caller sees only a vtable shape.
 
 ```cpp
-// IScorer.h
-#pragma once
-class IScorer {
-public:
-    virtual int  Score() const = 0;
-    virtual void Destroy() = 0;      // the LIBRARY frees it, with its own allocator
-protected:
-    ~IScorer() = default;            // non-virtual AND protected: no delete through this
-};
-extern "C" IScorer* CreateScorer(int seed);   // one unmangled symbol to find
+--8<-- "exercises/abilab/IScorer.h:listing"
 ```
 
 The implementation lives entirely in your .cpp, in an anonymous namespace, and never appears in a header. `Destroy` exists because of the whoever-allocates-frees rule — and the destructor is deliberately `protected` and non-virtual so a caller *cannot* write `delete scorer` and get it wrong. Chapter 5 taught that deleting through a base pointer without a virtual destructor is undefined behavior; here you remove the temptation at the type level.
@@ -133,18 +101,7 @@ One direction only, though, and it is worth knowing which one you are in. Append
 The most robust option, because C's ABI is the one thing every toolchain on a platform agrees about. Opaque handle, free functions, error codes:
 
 ```cpp
-// engine.h - consumable by C, C++, and anything with an FFI
-#pragma once
-#ifdef __cplusplus
-extern "C" {
-#endif
-typedef struct EngineImpl* EngineHandle;          // opaque: no layout to disagree about
-int Engine_Create(int seed, EngineHandle* out);   // 0 = ok
-int Engine_Score(EngineHandle h, int* outScore);
-int Engine_Destroy(EngineHandle h);
-#ifdef __cplusplus
-}
-#endif
+--8<-- "exercises/abilab/engine.h:listing"
 ```
 
 ```cpp

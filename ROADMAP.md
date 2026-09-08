@@ -1723,3 +1723,6 @@ first PR, the cuts, has landed (Chapter 24 and Appendix C retired, Appendix D
 trimmed, the ticket tails gone, Chapter 25 retitled *Gotchas*), and so has the second (the six ticket
 chapters titled by symptom, openings and cards without the series framing), and the third (the README's
 three entry points, the Symptom Index and Components pages) — step 3 is DONE.
+Step 4 is DONE too: every listing the book shows from a lab, a solution or a
+script heredoc is included from the file by a marked section (132 includes),
+and `check_verbatim.sh` refuses a copy pasted back.

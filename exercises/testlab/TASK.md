@@ -33,6 +33,6 @@ Afterwards, to run the reference suite against the already-extracted header in
       buffer_test.cpp -I ../../solutions -o test
 
 The two files here — `tiny_test.h` and `buffer_test.cpp` — are the chapter's
-listings verbatim, and `scripts/build_all.sh` builds and runs the suite under
-the canonical flags on every push. Editing them means editing Chapter 28 in the
-same commit.
+listings, included by it from below their banners, and `scripts/build_all.sh`
+builds and runs the suite under the canonical flags on every push. Edit them
+here and the page follows.

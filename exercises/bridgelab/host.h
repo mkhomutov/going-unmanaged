@@ -1,11 +1,11 @@
 // host.h - the seam between the bridge and the host's SDK, plus the
 // stand-in that lets the whole bridge run with no host installed.
 //
-// Quoted IN FULL in Chapter 38 ("The seam"). Changing it means updating
-// that listing in the same commit - the same discipline the Fake* vendor
-// code is held to. The stub is deliberately NOT named Fake*: FakeSDK and
-// FakeDevice are frozen vendor contracts you consume; this one is yours,
+// Included IN FULL by Chapter 38 ("The seam") from below this banner: edit
+// here and the page follows. The stub is deliberately NOT named Fake*: FakeSDK
+// and FakeDevice are frozen vendor contracts you consume; this one is yours,
 // and the task card expects you to extend it.
+// --8<-- [start:listing]
 #pragma once
 #include <cassert>
 #include <functional>
@@ -75,3 +75,4 @@ private:
     bool modal_ = false;
     std::vector<std::string> undo_;
 };
+// --8<-- [end:listing]

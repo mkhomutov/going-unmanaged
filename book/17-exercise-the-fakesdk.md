@@ -7,62 +7,7 @@
 Two files, `FakeSDK.h` and `FakeSDK.cpp` — **read them, compile them, link them, never edit them.** The header is the contract; every convention in it mirrors the classic desktop-SDK idiom: every function returns `ErrCode` (0 = success), "Get" functions fill caller-provided structs passed by address, and `Thing_GetData` allocates a payload the caller must release with `Thing_DisposeData` exactly once. The SDK has a built-in leak detector: `FakeSdk_LiveAllocations()` must be **0** after your code runs.
 
 ```cpp
-// ============================================================================
-// FakeSDK.h - a miniature C-style API in the classic desktop-SDK idiom.
-// DO NOT MODIFY THIS FILE. Treat it as vendor code: read it, wrap it, obey it.
-//
-// Conventions (the classic C-flavored desktop-SDK idiom):
-//   - every function returns ErrCode; 0 (NoErr) means success
-//   - "Get" functions fill caller-provided structs passed by address
-//   - ThingData owns heap allocations made by the SDK; the caller MUST
-//     release them with Thing_DisposeData exactly once
-//   - passing null pointers is an error (ErrNullParam), not a crash
-// ============================================================================
-#pragma once
-#include <cstddef>
-#include <cstdint>   // SIZE_MAX, used as "no index" in FakeSdk_Setup
-
-using ErrCode = int;
-
-constexpr ErrCode NoErr        = 0;
-constexpr ErrCode ErrNullParam = 1;   // a required pointer was null
-constexpr ErrCode ErrBadIndex  = 2;   // no Thing with that index
-constexpr ErrCode ErrNoData    = 3;   // Thing exists but has no payload
-constexpr ErrCode ErrInternal  = 4;   // simulated transient failure
-
-// A Thing's payload. 'values' is allocated BY THE SDK inside Thing_GetData;
-// the caller owns disposal via Thing_DisposeData. All other fields are inline.
-struct ThingData {
-    int     id;          // stable identifier of the Thing
-    size_t  valueCount;  // number of entries in 'values'
-    double* values;      // SDK-allocated array; null until Thing_GetData
-};
-
-// How many Things exist in the "project". Never fails if count is non-null.
-ErrCode Thing_GetCount(size_t* count);
-
-// Fill 'data' for the Thing at 'index' (0-based).
-//   - allocates data->values (caller must dispose)
-//   - on ANY failure, 'data' is left untouched and nothing is allocated
-// Note: some Things in the project legitimately have no payload and
-// return ErrNoData. Others may fail transiently with ErrInternal.
-ErrCode Thing_GetData(size_t index, ThingData* data);
-
-// Release the payload of 'data'. Safe on a zeroed struct. After the call,
-// data->values is null and valueCount is 0. Calling twice is safe;
-// calling on a struct whose 'values' you overwrote by hand is not.
-ErrCode Thing_DisposeData(ThingData* data);
-
-// Sum of all entries in data->values. Requires a non-null, filled 'data'.
-ErrCode Thing_SumValues(const ThingData* data, double* sum);
-
-// Test-support: configure the fake project. 'failAtIndex' makes
-// Thing_GetData return ErrInternal for that index (pass SIZE_MAX for none).
-void FakeSdk_Setup(size_t thingCount, size_t emptyIndex, size_t failAtIndex);
-
-// Test-support: how many SDK allocations are currently live.
-// After your code runs, this MUST be zero - it is the leak detector.
-size_t FakeSdk_LiveAllocations();
+--8<-- "exercises/fakesdk/FakeSDK.h"
 ```
 
 (The matching `FakeSDK.cpp` implements this contract and ships with the repository. Build with both translation units: `g++ -std=c++17 -Wall -Wextra -fsanitize=address -g FakeSDK.cpp yourfile.cpp -o task`.)
@@ -90,83 +35,7 @@ Check **every** return code; `ErrNoData` is a normal skip; other failures propag
 <summary><strong>Show the solution — do the exercise cold first</strong></summary>
 
 ```cpp
-// FakeSDK exercise - reference solution.
-#include "FakeSDK.h"
-#include <cassert>
-#include <iostream>
-
-// Part A - the RAII guard. Non-copyable, non-movable: it aliases one struct
-// for one scope; copying would double-dispose, moving has no use case here.
-class ThingDataGuard {
-    ThingData& d_;
-public:
-    explicit ThingDataGuard(ThingData& d) : d_(d) {}
-    ~ThingDataGuard() { Thing_DisposeData(&d_); }   // safe even if never filled
-    ThingDataGuard(const ThingDataGuard&) = delete;
-    ThingDataGuard& operator=(const ThingDataGuard&) = delete;
-};
-
-// Part B - the worker. Flat early returns; every code checked; no leaks.
-ErrCode SumAllThings(double* total, size_t* skippedCount) {
-    if (!total || !skippedCount) return ErrNullParam;   // validate like the SDK does
-    *total = 0;
-    *skippedCount = 0;
-
-    size_t count = 0;
-    ErrCode err = Thing_GetCount(&count);
-    if (err != NoErr) return err;
-
-    for (size_t i = 0; i < count; ++i) {
-        ThingData data = {};                    // zero-init: values == nullptr
-        err = Thing_GetData(i, &data);
-        if (err == ErrNoData) {                 // documented: nothing allocated
-            ++*skippedCount;                    // on failure -> safe to just skip
-            continue;
-        }
-        if (err != NoErr) return err;           // ditto: nothing to dispose
-
-        ThingDataGuard guard(data);             // from here, disposal guaranteed
-
-        double sum = 0;
-        err = Thing_SumValues(&data, &sum);
-        if (err != NoErr) return err;           // guard disposes on this exit
-        *total += sum;
-    }                                           // guard disposes each iteration
-    return NoErr;
-}
-
-int main() {
-    double total; size_t skipped; ErrCode err;
-
-    // Scenario 1: 4 Things, index 2 empty. Hand-computed expectation:
-    // thing0: 3 vals 0,1,2        -> 3
-    // thing1: 4 vals 10..13       -> 46
-    // thing2: skipped
-    // thing3: 3 vals 30,31,32     -> 93        total = 142, skipped = 1
-    FakeSdk_Setup(4, 2, SIZE_MAX);
-    err = SumAllThings(&total, &skipped);
-    assert(err == NoErr && skipped == 1 && total == 142.0);
-    assert(FakeSdk_LiveAllocations() == 0);
-    std::cout << "scenario1 ok: total=" << total << " skipped=" << skipped << "\n";
-
-    // Scenario 2: Thing 2 fails transiently. Things 0,1 were read first -
-    // the CRITICAL check is that their payloads were disposed on the abort.
-    FakeSdk_Setup(4, SIZE_MAX, 2);
-    err = SumAllThings(&total, &skipped);
-    assert(err == ErrInternal);
-    assert(FakeSdk_LiveAllocations() == 0);     // Finding 10: check VALUES
-    std::cout << "scenario2 ok: propagated err=" << err << ", no leaks\n";
-
-    // Scenario 3: empty project. Correct = NoErr, total 0, skipped 0.
-    FakeSdk_Setup(0, SIZE_MAX, SIZE_MAX);
-    err = SumAllThings(&total, &skipped);
-    assert(err == NoErr && total == 0.0 && skipped == 0);
-    std::cout << "scenario3 ok: empty project is a valid, zero result\n";
-
-    // Robustness: our own null-param contract.
-    assert(SumAllThings(nullptr, &skipped) == ErrNullParam);
-    return 0;
-}
+--8<-- "solutions/fakesdk_solution.cpp"
 ```
 
 </details>

@@ -21,30 +21,7 @@ C# had this distinction too, and hid it: an assembly loaded with `Assembly.LoadF
 Chapter 27 showed the well-behaved case: an SDK that installs a config package, so `find_package(mathlib CONFIG)` produces an imported target and the consumer links it. Most native SDKs do not do that. What arrives is a directory — `include/` with headers, `lib/` with archives or import libraries, a `bin/` with runtime DLLs, and no CMake support of any kind. Chapter 26 said to locate the pieces by hand "once, in one file"; this is that file.
 
 ```cmake
-# FindHostSDK.cmake - the imported target, written by hand.
-#
-# The SDK ships a header and a library and no CMake config package, so the
-# consumer builds the target a config package would have generated: locate
-# the two files under CMAKE_PREFIX_PATH (or HostSDK_ROOT), and present them
-# as HostSDK::Core, carrying its include directory as usage requirements.
-# After this file, the rest of the project links HostSDK::Core exactly as it
-# would link an SDK that had done this work itself.
-find_path(HostSDK_INCLUDE_DIR hostsdk/hostsdk.h)
-find_library(HostSDK_LIBRARY NAMES hostsdk)
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(HostSDK
-    REQUIRED_VARS HostSDK_LIBRARY HostSDK_INCLUDE_DIR)
-
-if(HostSDK_FOUND AND NOT TARGET HostSDK::Core)
-    # UNKNOWN: static or shared, CMake need not know - the file is the file.
-    add_library(HostSDK::Core UNKNOWN IMPORTED)
-    set_target_properties(HostSDK::Core PROPERTIES
-        IMPORTED_LOCATION "${HostSDK_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${HostSDK_INCLUDE_DIR}")
-endif()
-
-mark_as_advanced(HostSDK_INCLUDE_DIR HostSDK_LIBRARY)
+--8<-- "exercises/pluginlab/plugin/cmake/FindHostSDK.cmake"
 ```
 
 Three things to read off it. `find_path` and `find_library` search a list of prefixes, and the one that matters is `CMAKE_PREFIX_PATH`: the consumer says `-DCMAKE_PREFIX_PATH=/opt/HostSDK-3.0` at configure time, and no path is ever written into the project — the same mechanism deplab uses for its installed package, which is why a config package and a hand-written find-module look identical from the consuming side. `find_package_handle_standard_args` is what makes `REQUIRED` mean *fail at configure time with a message naming the SDK*. Point it at the wrong prefix and configure stops with `Could NOT find HostSDK (missing: HostSDK_LIBRARY HostSDK_INCLUDE_DIR)` — the line to remember when a colleague's build fails before the compiler runs; Chapter 27's pitfall about assuming the build machine's environment is otherwise paid at link time, as an unresolved external. And the imported target is `UNKNOWN`, because the consumer does not care whether the vendor shipped a static archive or an import library; the file is the file.
@@ -107,117 +84,17 @@ const char* HostSdk_VersionString(void);
 The discipline is then two lines in the build and one macro in the source: hide everything, then mark the one function that is the surface.
 
 ```cpp
-// The export macro: the one symbol that crosses the boundary wears it, and
-// everything else in the module stays hidden (CXX_VISIBILITY_PRESET hidden in
-// CMakeLists.txt). Two spellings, one meaning: "this is the plug-in's surface".
-#pragma once
-#if defined(_WIN32)
-#define MONITOR_EXPORT __declspec(dllexport)
-#else
-#define MONITOR_EXPORT __attribute__((visibility("default")))
-#endif
+--8<-- "exercises/pluginlab/plugin/monitor_export.h"
 ```
 
 ```cpp
-// monitor.cpp - the plug-in. One exported entry point, everything else hidden.
-#include <hostsdk/hostsdk.h>
-#include "monitor_export.h"
-
-#include <string>
-#include <type_traits>
-
-// External linkage on purpose: this is the function CXX_VISIBILITY_PRESET
-// hidden exists for. Remove the preset and Describe appears in the export
-// table, where a same-named function in the host or another plug-in could
-// collide with it (Chapter 27's diamond, at plug-in scale). Hidden, it is
-// ours alone.
-std::string Describe(const HostApi& host) {
-    return std::string("monitor loaded against ") + HostSdk_VersionString()
-         + ", host api " + std::to_string(host.api_version);
-}
-
-extern "C" MONITOR_EXPORT int32_t Plugin_Entry(const HostApi* host) {
-    if (host == nullptr || host->size < sizeof(HostApi)) {
-        return -1;                          // an older host: do not read past what it gave us
-    }
-    if (host->api_version != HOSTSDK_API_VERSION) {
-        return -2;
-    }
-    if (host->log == nullptr) {
-        return -1;                          // a slot the host left empty is not ours to call
-    }
-    try {
-        host->log(Describe(*host).c_str());
-        return 0;
-    } catch (...) {
-        return -3;                          // nothing escapes into the host's frames
-    }
-}
-
-// The header publishes the entry point as a name and a typedef, never a
-// prototype - so nothing above compared this definition to the contract.
-// This line does (Chapter 39's "written twice, compared by nothing", closed).
-static_assert(std::is_same<decltype(&Plugin_Entry), PluginEntryFn>::value,
-              "Plugin_Entry must match the SDK's PluginEntryFn");
+--8<-- "exercises/pluginlab/plugin/monitor.cpp"
 ```
 
 Every rule from Chapter 30 is in that entry point — `extern "C"` so the name is findable, the size field checked before anything past it is read, the slot checked before it is called, `catch (...)` because the frame above is the host's. The `static_assert` at the bottom is [Chapter 39](39-the-round-trip-home.md#chapter-39--the-round-trip-home)'s lesson in-language: the header published the entry point as a name and a typedef, never a prototype, so nothing else compared this definition to the contract — a wrong return type builds clean and the host calls through a mismatched pointer. The build description around it is the whole plug-in CMakeLists:
 
 ```cmake
-# The plug-in's build: a MODULE library, an SDK located by a hand-written
-# find-module, and a symbol surface of exactly one function. Chapter 40's
-# reference; do the chapter's "Try it" from scratch before reading it.
-cmake_minimum_required(VERSION 3.16)
-
-project(monitor LANGUAGES CXX)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-# Match the host's C runtime on Windows before any target exists: a plug-in
-# on the debug CRT loaded by a release host corrupts the heap it shares
-# (Chapter 26's pitfall). The generator expression picks per configuration.
-if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-endif()
-
-# The SDK ships no config package, so cmake/FindHostSDK.cmake writes the
-# imported target by hand; this line is what makes find_package find it.
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-find_package(HostSDK REQUIRED)
-
-# MODULE, not SHARED: a library that exists to be loaded at run time by
-# name, that nothing links against - so CMake publishes no import library
-# on Windows, no soname on Linux, and refuses to let another target link it.
-add_library(monitor MODULE monitor.cpp)
-target_link_libraries(monitor PRIVATE HostSDK::Core)
-
-set_target_properties(monitor PROPERTIES
-    PREFIX ""                            # monitor.so (macOS too) / monitor.dll, not libmonitor
-    CXX_VISIBILITY_PRESET hidden         # export nothing by default...
-    VISIBILITY_INLINES_HIDDEN ON)        # ...inline bodies included
-# ...and monitor_export.h marks the one function that IS exported.
-
-# Hidden visibility covers code THIS project compiles. A static library it
-# links brings its own: libhostsdk was built with default visibility, so
-# without the line below every hostsdk function is exported from the module
-# too - and the host, which links the same library, now has two copies of
-# each in one process, and which copy a call reaches is the platform
-# loader's decision, not yours (Chapter 27's diamond, delivered by your
-# plug-in). Tell the linker the surface is one name. MSVC needs nothing: it
-# exports only what wears __declspec(dllexport).
-if(APPLE)
-    target_link_options(monitor PRIVATE "-Wl,-exported_symbol,_Plugin_Entry")
-elseif(NOT MSVC)
-    target_link_options(monitor PRIVATE "-Wl,--exclude-libs,ALL")
-endif()
-
-if(MSVC)
-    target_compile_options(monitor PRIVATE /W4)
-else()
-    target_compile_options(monitor PRIVATE -Wall -Wextra)
-endif()
+--8<-- "exercises/pluginlab/plugin/CMakeLists.txt"
 ```
 
 The first time I built this lab, the paragraph in the middle of that file was not there — and it is the chapter's finding. `CXX_VISIBILITY_PRESET hidden` is a *compiler* flag, `-fvisibility=hidden`, and it applies to the code this project compiles. The SDK's helper library was compiled by the vendor, with the default, and when the plug-in links it the linker copies its functions in *with their visibility*. So the first `monitor.so` — on this Mac; CI's Linux leg shows the same names without the leading underscore, plus a few of the C runtime's own — read like this:
@@ -284,106 +161,7 @@ Chapter 26's two commands grow options fast: a prefix path, a build type, a comp
 Chapter 27's try-it asked you to write the producing half of `find_package` and pointed at deplab; the chapter never showed it, and it is the one piece of CMake a plug-in author writes for someone else — the day your plug-in ships a library of its own, or the day you are the vendor. It is `dotnet pack`, the producing side of `PackageReference`. The whole file, comments included, because the comments are where the two easy mistakes are — and they speak deplab's language: "step 3" is Chapter 27's *Fetch it*, and "path 1" and "path 2" are its vendored and fetched consumers.
 
 ```cmake
-# The dependency: a standalone project, buildable on its own.
-#
-# It has to be standalone or two of the three consumption paths cannot work -
-# FetchContent clones and configures it as a project, and the install/export
-# half below is what makes find_package(mathlib) possible at all.
-
-cmake_minimum_required(VERSION 3.16)
-
-# The VERSION here is the thing step 3 watches move. It reaches the code as a
-# compile definition, not as a header the consumer parses.
-project(mathlib VERSION 1.0.0 LANGUAGES CXX)
-
-add_library(mathlib src/mathlib.cpp)
-
-# The namespaced alias. Consumers link mathlib::mathlib whichever way they got
-# it, so switching between the three paths does not touch their CMakeLists -
-# and a typo becomes a configure-time error instead of a linker guess, because
-# CMake knows a name with :: in it must be a target.
-add_library(mathlib::mathlib ALIAS mathlib)
-
-target_compile_features(mathlib PUBLIC cxx_std_17)
-
-# GNUInstallDirs before the include directories, not just before install():
-# CMAKE_INSTALL_INCLUDEDIR is needed by both, and the two have to agree.
-include(GNUInstallDirs)
-
-# PUBLIC: consumers compile against this header, so the include directory is
-# part of the interface. The two generator expressions are the same directory
-# seen from two places - the source tree while building here, the install tree
-# after install(). Hardcode the source path and the installed package points at
-# a directory that exists only on the machine that built it.
-#
-# The install half says ${CMAKE_INSTALL_INCLUDEDIR} rather than `include` for
-# the same reason, and it is the easier half to get wrong: the literal is
-# correct until someone configures with -DCMAKE_INSTALL_INCLUDEDIR=... (a
-# normal thing for versioned headers or a distro layout), and then the headers
-# go one place while the exported target advertises another. The consumer
-# still finds the package, still configures, and fails at the #include.
-target_include_directories(mathlib PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-
-# PRIVATE: compiles this library and stops there (Chapter 26's distinction).
-target_compile_definitions(mathlib PRIVATE MATHLIB_VERSION="${PROJECT_VERSION}")
-if(MSVC)
-    target_compile_options(mathlib PRIVATE /W4)
-else()
-    target_compile_options(mathlib PRIVATE -Wall -Wextra)
-endif()
-
-# --- the install/export half -------------------------------------------------
-# Everything below exists so that find_package(mathlib CONFIG REQUIRED) works
-# in another project. This is the "if it ships one" in Chapter 27's
-# `find_package(VendorSDK REQUIRED)  # a config package, if it ships one`:
-# a config package is a thing the library AUTHOR generates and installs, and
-# this is what generating one looks like.
-#
-# And it is guarded, which is the part that is easy to leave out. install()
-# rules belong to the directory that declares them, and a parent's install
-# collects its subdirectories' rules - so when this file is reached through
-# add_subdirectory (path 1) or FetchContent_MakeAvailable (path 2, which is
-# add_subdirectory underneath), these rules become the CONSUMER's. Installing
-# that app would then also install libmathlib.a, mathlib's headers and this
-# config package into the app's prefix: a private, statically-absorbed
-# dependency publishing itself, ready for some third project to find_package
-# and link against a build nobody meant to ship.
-#
-# PROJECT_IS_TOP_LEVEL says this in one word but arrived in CMake 3.21, and
-# this file promises 3.16 - so it is spelled out. A library that genuinely
-# needs to be installed from inside a consumer would make this an option()
-# instead; defaulting it off for a subdirectory build is the same decision.
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    include(CMakePackageConfigHelpers)
-
-    # EXPORT records the target in a set; the install(EXPORT) below writes that
-    # set out as importable CMake code.
-    install(TARGETS mathlib EXPORT mathlibTargets)
-    install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
-    install(EXPORT mathlibTargets
-        FILE mathlibTargets.cmake
-        NAMESPACE mathlib::      # so the consumer's name matches the alias above
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mathlib)
-
-    configure_package_config_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/mathlibConfig.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/mathlibConfig.cmake"
-        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mathlib)
-
-    # SameMajorVersion: find_package(mathlib 1.0 REQUIRED) accepts 1.1, refuses
-    # 2.0. The policy is the author's to choose and the consumer's to rely on.
-    write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/mathlibConfigVersion.cmake"
-        COMPATIBILITY SameMajorVersion)
-
-    install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/mathlibConfig.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/mathlibConfigVersion.cmake"
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mathlib)
-endif()
+--8<-- "exercises/deplab/mathlib/CMakeLists.txt"
 ```
 
 Four verbs, in order: `install(TARGETS ... EXPORT set)` records the target, `install(EXPORT set)` writes the set out as CMake code under a namespace, `configure_package_config_file` writes the `Config.cmake` a consumer's `find_package` loads, and `write_basic_package_version_file` decides which versions that consumer's `find_package(mathlib 1.0)` will accept. That is the entire mechanism behind every `find_package(Vendor CONFIG)` that ever worked for you, and the two long comments are the two ways it silently does not: an unguarded install block that publishes a vendored dependency out of the consumer's prefix, and a literal `include` that parts company with `CMAKE_INSTALL_INCLUDEDIR` the first time someone overrides it. `build_all.sh` builds this file and consumes its output three ways.

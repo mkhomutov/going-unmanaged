@@ -38,11 +38,13 @@ typedef struct PluginImpl* PluginHandle;   // opaque: no layout to disagree abou
 // char, no pointer-to-anything-managed. The marshaller copies these bytes
 // and does not translate them, which is the cheapest and least surprising
 // thing it can do.
+// --8<-- [start:plugin-options]
 typedef struct {
     uint32_t size;        // caller sets this to sizeof(PluginOptions)
     int32_t  gain;
     int32_t  channels;
 } PluginOptions;
+// --8<-- [end:plugin-options]
 
 PluginResult Plugin_Create(const PluginOptions* options, PluginHandle* out);
 PluginResult Plugin_Destroy(PluginHandle h);
@@ -65,8 +67,10 @@ PluginResult Plugin_Destroy(PluginHandle h);
 // ENCODING IS PART OF THE CONTRACT: this is UTF-8, always, on every
 // platform. A managed caller marshals it as UTF-8 explicitly. It is not
 // "the platform's char", because there is no such agreement to rely on.
+// --8<-- [start:get-name]
 PluginResult Plugin_GetName(PluginHandle h, char* buffer, size_t capacity,
                             size_t* needed);
+// --8<-- [end:get-name]
 
 // Addition 4: a callback whose lifetime window is written down.
 //

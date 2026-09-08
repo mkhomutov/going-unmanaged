@@ -115,16 +115,18 @@ never on the page. And the numbering is the Findings contract: add your
 recipe at the end with the next free number, add its row to the index table,
 never renumber existing ones.
 
-The verbatim rule, made precise, for the pairings not yet on the include
-form (SITE-PLAN step 4 moves them group by group): a committed lab file may
-open with a `//`-comment provenance banner that the chapter listing omits —
-the contract covers everything below the banner, character for character.
-`scripts/check_verbatim.sh` enforces all of it in CI — the copied pairings by
-containment, the included ones by checking that every include names a
-section its file marks exactly once and that every marked section is
-included by some page — so a drifted pairing fails the build rather than
-waiting for a reader to notice. A new listing goes on the include form; a
-new copied pairing means adding it to that script in the same commit.
+The same rule holds for every listing the book shows from a lab or a
+solution, not just recipes: the page includes the file (whole, or a section
+fenced by `--8<-- [start:name]` / `[end:name]` comment lines; a file may
+open with a `//` provenance banner above its marker, and the page shows what
+is below it). `scripts/check_verbatim.sh` enforces the shape in CI — every
+include names a section its file marks exactly once, every marked section is
+included by some page, and no fence of four lines or more on any page is a
+copy of a source region — so a listing pasted onto a page instead of included
+fails the build. The two exceptions stay copied and are held by containment:
+the TASK cards' broken listings (book-and-card code with no compiled source)
+and two one-line quotations. Never spell the marker syntax literally in a
+comment or on a page: the snippet engine takes it for a marker.
 
 ## The questions every piece of material answers
 
@@ -366,9 +368,9 @@ everything the header exists to hide.
   redistributed.
 - **Vendor code is frozen.** `exercises/fakesdk/FakeSDK.h|.cpp` and
   `exercises/fakedevice/FakeDevice.h|.cpp` are "vendor code": their public
-  contracts are quoted verbatim in Chapters 17 and 18. Changing them requires
-  updating those chapters in the same commit — and is almost never the right
-  move. Exercise solutions never edit vendor files.
+  contracts are included whole by Chapters 17 and 18, so a change shows on
+  those pages the moment it is made — and is almost never the right move.
+  Exercise solutions never edit vendor files.
 - **Chapter numbering is load-bearing.** The book cross-references chapters by
   number ("Chapter 6", "Finding 3 of Chapter 25"), including inside code
   comments. Prefer appending new material over inserting. Renumbering is a

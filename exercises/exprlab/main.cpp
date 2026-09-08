@@ -1,9 +1,9 @@
-// Chapter 42's judge. Not a solution to attempt: it holds expr.h/expr.cpp to
-// a table of hand-computed values (Chapter 34's oracle - no tool knows what
-// "wall.width * 2" should be), to error POSITIONS (a parser that says
-// "syntax error" is a parser nobody can use), to a depth limit refused at
-// N+1 and accepted at N, and to locale independence - the bug that works on
-// the bench. Quoted by excerpt in the chapter.
+// Chapter 42's judge. Not a solution to attempt: it holds expr.h/expr.cpp to a
+// table of hand-computed values (Chapter 34's oracle - no tool knows what
+// "wall.width * 2" should be), to error POSITIONS (a parser that says "syntax
+// error" is a parser nobody can use), to a depth limit refused at N+1 and
+// accepted at N, and to locale independence - the bug that works on the bench.
+// Included by excerpt in the chapter, between section markers.
 #include "expr.h"
 
 #include <algorithm>
@@ -29,6 +29,7 @@ public:
     void Set(std::string object, std::string property, double value) {
         objects_[std::move(object)][std::move(property)] = value;
     }
+// --8<-- [start:provider]
     std::optional<double> Value(std::string_view name) const override {
         const auto dot = name.find('.');
         if (dot == std::string_view::npos) return std::nullopt;
@@ -38,6 +39,7 @@ public:
         if (prop == obj->second.end()) return std::nullopt;
         return prop->second;
     }
+// --8<-- [end:provider]
     std::optional<double> Call(std::string_view name, const std::vector<double>& args) const override {
         if (name == "abs" && args.size() == 1) return std::fabs(args[0]);
         if (name == "max" && args.size() == 2) return std::max(args[0], args[1]);
@@ -100,6 +102,7 @@ int main() {
 
     // The value table: every expected number computed by hand, and each row
     // a shape the wrong-that-looks-like-working would get wrong.
+// --8<-- [start:value-table]
     const std::vector<std::pair<const char*, double>> table = {
         {"1 + 2 * 3", 7},                        // precedence: * binds tighter
         {"(1 + 2) * 3", 9},                      // parentheses override it
@@ -117,6 +120,7 @@ int main() {
         {" 2  +  2 ", 4},                        // whitespace anywhere
         {"min(1, 2) == 1", 1},
     };
+// --8<-- [end:value-table]
     for (const auto& [text, expected] : table) CheckRow(host, text, expected);
 
     // Errors carry the byte offset of the culprit, not "syntax error".
@@ -141,6 +145,7 @@ int main() {
     // check nobody ran. The scan only ever hands digits and dots to the
     // number parse, so the comma row passes with strtod too; "1.5 * 2"
     // under de_DE is the discriminating row.
+// --8<-- [start:locale-judge]
     CHECK(ErrorAt(Evaluate("1,5", host), 1));
     const char* locale_used = nullptr;
     for (const char* name : {"de_DE.UTF-8", "de_DE.utf8", "de_DE"}) {
@@ -151,6 +156,7 @@ int main() {
         CHECK(ValueIs(Evaluate("1.5 * 2", host), 3));
         std::setlocale(LC_NUMERIC, "C");
     }
+// --8<-- [end:locale-judge]
 
     // The depth guard: N levels accepted, N + 1 refused - with the position
     // where the level too deep begins, not a stack overflow. Depth is one

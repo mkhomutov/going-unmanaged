@@ -102,15 +102,11 @@ Two of your dependencies each want a different version of a third. In C# this is
 In C++ there is no resolver, no unification, and no redirect. If two versions of the same library reach one binary, you have violated the One Definition Rule — the same class name with two different definitions in one program — and the standard's response is that your program is ill-formed, no diagnostic required. Here is what that actually looks like. A `Config` struct gains a field in v2, *before* the existing one:
 
 ```cpp
-// v1.h
-struct Config { int timeout; };
-inline int GetTimeout(const Config& c) { return c.timeout; }
+--8<-- "scripts/check_platform_claims.sh:v1-h"
 ```
 
 ```cpp
-// v2.h
-struct Config { int retries; int timeout; };   // the new field went FIRST
-inline int GetTimeout(const Config& c) { return c.timeout; }   // byte-identical to v1's
+--8<-- "scripts/check_platform_claims.sh:v2-h"
 ```
 
 One part of the program is compiled against v1, the rest against v2, and they are linked together. The linker says nothing at all — it exits 0 with no diagnostic, because `GetTimeout` is inline, so it appears in both object files as a mergeable symbol and the linker does exactly what it is designed to do: keeps one, discards the other. Which one survives depends on link order. Running it:

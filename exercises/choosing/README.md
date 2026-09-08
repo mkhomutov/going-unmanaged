@@ -11,14 +11,14 @@ instead of assurances —
 | `passing.cpp` | 2, 3 | what a sink costs against `const&` for each kind of caller — in copies, moves **and allocations** — the missing `&` in a loop, and what returning costs; plus two of Chapter 6's value-category traps (a move from a const, `return std::move(local)`) |
 | `storing.cpp` | 1, 4 | that vector growth relocates elements while boxed ones stand still, what each costs, and which containers spare references |
 
-**The sync rule.** Some units here are quoted in `book/H-choosing.md` —
-and three in `passing.cpp` by Chapter 6 — and each file's banner names
-exactly which, and where. `scripts/check_verbatim.sh` holds the pairing in
-**both** directions: every `cpp` fence on Appendix H must be byte-identical
-to something in this directory, and every unit the banners name must appear
-on its page *whole*. Editing one side means editing the
-other in the same commit — the cookbook discipline. Anything not named in a
-banner, `main()` included, is scaffolding and appears in no listing.
+**The sync rule.** Some units here are included by `book/H-choosing.md` —
+and three in `passing.cpp` by Chapter 6 — each between section markers, and
+each file's banner names exactly which, and where. Edit the unit here and
+the page follows; a marker moved is what the page shows.
+`scripts/check_verbatim.sh` holds that every marked section is included by
+a page and that no page carries a copy of code from this directory.
+Anything not named in a banner, `main()` included, is scaffolding and
+appears in no listing.
 
 **The judge is `CHECK`, not `assert`.** `assert` compiles to nothing under
 `-DNDEBUG`, which a CMake `Release` build defines (Chapter 26) — an

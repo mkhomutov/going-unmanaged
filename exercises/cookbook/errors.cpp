@@ -5,12 +5,12 @@
 // ConfigError, Config and load_config() are included by
 // book/F-rosetta-cookbook.md, between their recipe-21 and recipe-22 section
 // markers (edit here and the page follows), and Result and load_config() are
-// quoted VERBATIM in Chapter 8's "Living in both dialects"
-// (book/08-error-handling.md), whole and by name - scripts/check_verbatim.sh
-// holds that page: editing either means editing Chapter 8 in the same commit.
-// main() and log_line() are scaffolding - main() asserts what the recipes
-// claim, and records the catch-order trap as a comment, because a dead handler
-// is a warning rather than a behavior a test can observe.
+// included by Chapter 8's "Living in both dialects"
+// (book/08-error-handling.md) as well, between the result-class and
+// load-config markers. main() and log_line() are scaffolding - main() asserts
+// what the recipes claim, and records the catch-order trap as a comment,
+// because a dead handler is a warning rather than a behavior a test can
+// observe.
 #include <cassert>
 #include <charconv>
 #include <cstddef>
@@ -68,6 +68,7 @@ int channels_or_default(std::string_view text, int line) {
 // This is what std::expected spells in C++23; most codebases are not there,
 // and ship one of these (Chapter 8 names the well-known ones).
 // --8<-- [start:recipe-22]
+// --8<-- [start:result-class]
 template <class T, class E>
 class Result {
 public:
@@ -85,12 +86,14 @@ private:
     Result(std::in_place_index_t<I> door, X&& x) : state_(door, std::forward<X>(x)) {}
     std::variant<T, E> state_;                               // index 0 is the value, 1 the error
 };
+// --8<-- [end:result-class]
 
 struct ConfigError { int line; std::string what; };
 struct Config      { int channels; };
 
 // The translation at the module's edge: the parser throws, this function
 // returns. Nothing above it ever sees a ParseError.
+// --8<-- [start:load-config]
 Result<Config, ConfigError> load_config(std::string_view text) {
     try {
         return Result<Config, ConfigError>::ok(Config{parse_channel_count(text, 1)});
@@ -98,6 +101,7 @@ Result<Config, ConfigError> load_config(std::string_view text) {
         return Result<Config, ConfigError>::fail(ConfigError{e.line(), e.what()});
     }
 }
+// --8<-- [end:load-config]
 // --8<-- [end:recipe-22]
 
 int main() {

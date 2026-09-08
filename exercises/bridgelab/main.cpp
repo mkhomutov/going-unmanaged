@@ -10,6 +10,7 @@
 
 #include "bridge_core.h"
 
+// --8<-- [start:failure-counter]
 // Failures are counted, never thrown: a transport thread reporting through
 // an exception would just terminate (Chapter 29). Atomic, because EXPECT
 // runs on the client threads too.
@@ -38,6 +39,7 @@ static CommandResult InvokeChecked(BridgeCore& core, const std::string& name,
         return {false, "DEADLINE_EXCEEDED"};
     return fut.get();
 }
+// --8<-- [end:failure-counter]
 
 int main() {
     StubHostAdapter host;      // built on the main thread: the adapter and
@@ -112,6 +114,7 @@ int main() {
     const CommandResult unknown = InvokeChecked(core, "no_such_command", "", kDeadline);
     EXPECT(!unknown.ok);
 
+// --8<-- [start:reentrancy-phase]
     // Phase 3 - reentrancy. A job that pumps the queue must nest to zero,
     // and the job posted meanwhile must still run one Drain later - kept,
     // not dropped: the queue completes everything it accepts.
@@ -128,6 +131,7 @@ int main() {
     EXPECT(queue.Drain() == 1);        // the kept job runs now
     EXPECT(later.wait_for(kDeadline) == std::future_status::ready);
     EXPECT(later.get() == 41);
+// --8<-- [end:reentrancy-phase]
 
     std::printf("bridgelab: %d calls answered (%d ok, %d busy), "
                 "%zu undo steps, every wait under its deadline\n",

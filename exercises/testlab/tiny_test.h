@@ -1,10 +1,9 @@
+// tiny_test.h is included IN FULL by Chapter 28 ("A test framework in forty
+// lines") from the marker below: edit there and the page follows. Write your
+// own first: the chapter's Try it step 1 asks you to build it from the
+// description, not from the listing, and comparing afterwards is the point.
+// --8<-- [start:listing]
 // tiny_test.h - the three jobs of any test framework: register, check, report.
-//
-// This file is quoted IN FULL in Chapter 28 ("A test framework in forty
-// lines"). Changing it means updating that listing in the same commit - the
-// same discipline the Fake* vendor code is held to. Write your own first: the
-// chapter's Try it step 1 asks you to build it from the description, not from
-// the listing, and comparing afterwards is the point.
 #pragma once
 #include <functional>
 #include <iostream>
@@ -63,3 +62,4 @@ inline int RunAll() {
     static void name();                                     \
     static ::tiny::Registrar registrar_##name(#name, name); \
     static void name()
+// --8<-- [end:listing]

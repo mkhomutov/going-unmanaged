@@ -57,8 +57,10 @@ Each demo is a *separate binary of two translation units*, and that separation
 is the subject matter rather than a build detail: the caller is compiled against
 the header alone, so what the header does not say is genuinely unavailable to
 it. `Widget.h`, `Widget.cpp`, `IScorer.h` and `engine.h` are Chapter 30's
-listings; `scorer.cpp` and the rest of `engine.cpp` complete what the chapter
-excerpts. Editing any of them means editing Chapter 30 in the same commit.
+listings, included by the chapter from below their banners, so an edit shows
+on the page at once; `scorer.cpp` and the rest of `engine.cpp` complete what
+the chapter excerpts, and `engine.cpp`'s excerpt is the one listing still
+copied by hand — change its top half and change the chapter with it.
 
 The demos assert what the chapter claims — `sizeof(Widget) == sizeof(void*)`,
 that a protected destructor makes `delete scorer` a compile error, that every

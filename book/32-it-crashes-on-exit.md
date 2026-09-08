@@ -178,10 +178,7 @@ The global moves behind a function, and the function's local static *is*
 the logger:
 
 ```cpp
-Logger& TheLogger() {
-    static Logger logger;    // constructed the first time anyone asks
-    return logger;
-}
+--8<-- "exercises/exitlab/logger.cpp:the-logger"
 ```
 
 `logger.h` now ends by declaring the accessor instead of the object:
@@ -202,15 +199,7 @@ words.
 The exit half needs one more move, and it is the load-bearing one:
 
 ```cpp
-#include "logger.h"
-
-class Auditor {
-public:
-    Auditor()  { TheLogger().write("audit: session opened"); }    // pins the order
-    ~Auditor() { TheLogger().write("audit: session closed"); }
-};
-
-Auditor g_auditor;
+--8<-- "exercises/exitlab/audit.cpp"
 ```
 
 The constructor's call is not logging for logging's sake. First use

@@ -1,9 +1,9 @@
-// The Chapter 28 suite, quoted in full in that chapter's "Testing the Rule of
-// Five". Changing it means updating the listing in the same commit.
+// The Chapter 28 suite, included by that chapter's "Testing the Rule of Five"
+// from below this banner: edit here and the page follows.
 //
 // Buffer.h is the Chapter 15 solution's class, extracted so both the demo
 // (solutions/buffer.cpp) and this binary can include it; build_all.sh passes
-// -I solutions.
+// -I solutions.  --8<-- [start:listing]
 #include "Buffer.h"
 #include "tiny_test.h"
 #include <vector>
@@ -80,3 +80,4 @@ TEST(VectorReallocationPreservesContents) {
 }
 
 int main() { return tiny::RunAll(); }
+// --8<-- [end:listing]

@@ -138,70 +138,13 @@ The third contract is subtler and has no tool behind it at all: **strict aliasin
 The wire gets offsets, the struct gets the results. The committed lab replaces the overlay with two small commitments. First, the wire's layout becomes *data about the document* — named offsets, cited to the ICD, in one place:
 
 ```cpp
-#pragma once
-#include <cstddef>
-#include <cstdint>
-
-// The vendor's frame header as the ICD documents it: 8 bytes on the wire,
-// network byte order, no padding. The layout lives here as named offsets,
-// not as a struct - the wire's layout belongs to the ICD, a struct's to
-// the compiler, and neither may impersonate the other.
-constexpr std::size_t kHeaderSize  = 8;
-constexpr std::size_t kOffSync     = 0;    // u8, always 0xA5
-constexpr std::size_t kOffSequence = 1;    // u32, big-endian
-constexpr std::size_t kOffLength   = 5;    // u16, big-endian, payload bytes
-constexpr std::size_t kOffKind     = 7;    // u8, 0x01 = temperature
-
-std::uint16_t read_u16_be(const unsigned char* p);
-std::uint32_t read_u32_be(const unsigned char* p);
-
-// The DECODED frame - host-order values in a struct the compiler lays out
-// however it likes, because this struct never touches the wire.
-struct Frame {
-    std::uint32_t sequence;
-    std::uint16_t length;              // payload bytes
-    std::uint8_t  kind;
-    const unsigned char* payload;      // borrow into the capture buffer
-};
-
-// Decode one frame starting at p. Returns false if the sync byte is wrong
-// or the frame runs past the end; on success fills out and sets *advance
-// to the bytes consumed.
-bool decode_frame(const unsigned char* p, std::size_t size,
-                  Frame& out, std::size_t* advance);
+--8<-- "exercises/capturelab/wire.h"
 ```
 
 Second, the readers spell the wire's byte order — with shifts, not with casts:
 
 ```cpp
-#include "wire.h"
-
-std::uint16_t read_u16_be(const unsigned char* p) {
-    return static_cast<std::uint16_t>((std::uint32_t(p[0]) << 8) | p[1]);
-}
-
-std::uint32_t read_u32_be(const unsigned char* p) {
-    return (std::uint32_t(p[0]) << 24) | (std::uint32_t(p[1]) << 16)
-         | (std::uint32_t(p[2]) << 8)  |  std::uint32_t(p[3]);
-}
-
-bool decode_frame(const unsigned char* p, std::size_t size,
-                  Frame& out, std::size_t* advance) {
-    if (size < kHeaderSize || p[kOffSync] != 0xA5) {
-        return false;
-    }
-    out.sequence = read_u32_be(p + kOffSequence);
-    out.length   = read_u16_be(p + kOffLength);
-    out.kind     = p[kOffKind];
-    if (size - kHeaderSize < out.length) {
-        return false;    // payload would run past the capture
-    }
-    out.payload = p + kHeaderSize;
-    if (advance != nullptr) {
-        *advance = kHeaderSize + out.length;
-    }
-    return true;
-}
+--8<-- "exercises/capturelab/wire.cpp"
 ```
 
 Look at what those readers do *not* contain: no host-order detection, no `#if` on the architecture, no byte-swap called conditionally. `p[0]` is the high byte because *the document says so*, and the same expression computes the same value on a little-endian laptop, a big-endian switch fabric, or anything else — the code states the wire's order and thereby stops depending on the host's. Note also that `Frame` is still a struct: structs are fine as *destinations*, laid out however the compiler pleases, precisely because a decoded result never touches the wire. Only the overlay was the sin.
@@ -209,14 +152,7 @@ Look at what those readers do *not* contain: no host-order detection, no `#if` o
 The fixed `main` decodes the ticket's own capture and asserts every field of both frames against the hand decode from the fold — which is the honest acceptance test, since no tool in the chain knows what these bytes mean:
 
 ```cpp
-// The ticket's capture, byte for byte: two temperature frames. Frame 1
-// starts at offset 0, frame 2 at offset 10 - deliberately off every
-// four-byte boundary. Decoding at any offset is the fix's claim, and one
-// aligned frame cannot prove it.
-static const unsigned char kCapture[] = {
-    0xa5, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x01, 0x09, 0x29,
-    0xa5, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02, 0x01, 0x09, 0x2b,
-};
+--8<-- "exercises/capturelab/main.cpp:capture-bytes"
 ```
 
 `build_all.sh` runs exactly that on every push. The exit-crash and hot-plug labs proved their fixes by varying what the bug depended on — link order, growth — and this one does the same: the capture keeps one frame aligned and one not, because offset-independence is part of what "decoded correctly" means for a stream.

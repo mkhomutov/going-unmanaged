@@ -33,11 +33,13 @@ std::size_t Probe() {
 // Compile-time claims about the type, per instantiation: the seam costs no
 // virtual call (no vtable pointer, so the object is exactly its members)
 // and moves without throwing (Chapter 6's noexcept, checked rather than hoped).
+// --8<-- [start:nothrow-move-assert]
 static_assert(std::is_nothrow_move_constructible_v<Session<RecordingSdk>>);
 static_assert(std::is_nothrow_move_constructible_v<Session<FakeDeviceSdk>>);
 static_assert(!std::is_polymorphic_v<Session<RecordingSdk>>);
 static_assert(HasSdkShape<RecordingSdk>::value && HasSdkShape<FakeDeviceSdk>::value);
 static_assert(!HasSdkShape<int>::value);
+// --8<-- [end:nothrow-move-assert]
 
 int main() {
     // The double: scripted samples, no device, and the counts prove RAII.

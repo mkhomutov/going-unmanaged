@@ -153,7 +153,7 @@ titled by symptom and open on the evidence; the symptom index has a row for
 every ticket and every gotcha; `check_verbatim.sh` and `check_markup.sh`
 green, because the cuts touch prose the pairings do not cover.
 
-## Step 4 — invert the verbatim direction — IN PROGRESS
+## Step 4 — invert the verbatim direction — DONE
 
 Today a chapter *contains* the code and `check_verbatim.sh` proves the file
 agrees, in one direction or both. After this step the file is the only
@@ -181,7 +181,7 @@ That is the accepted cost: the site is the delivered form, and GitHub's
 rendering of `book/` becomes what the single file was, a second view nobody
 optimises for.
 
-**Status.** PR 1: Appendix F, DONE — 49 recipes included from 20 cookbook files by `recipe-N` sections; the rendered code blocks on every page were compared before and after (325 blocks, identical), and `check_verbatim.sh` gained the generic both-ways include check. A manual-trigger Pages workflow (`.github/workflows/site.yml`) ships with it, for the day hosting is switched on. Next: the ticket labs and their cards, then the rest.
+**Status.** DONE in two PRs. PR 1: Appendix F — 49 recipes included from 20 cookbook files by `recipe-N` sections, with the rendered code blocks on every page compared before and after (325 blocks, identical), the generic both-ways include check in `check_verbatim.sh`, and a manual-trigger Pages workflow (`.github/workflows/site.yml`) for the day hosting is switched on. PR 2: every other pairing — 132 includes in all, 28 of them whole files, 104 named sections across 48 marked files, the same oracle identical again; the copied-pairing lists in `check_verbatim.sh` are gone, replaced by the include checks plus a guard that refuses any fence of four lines or more that copies a source region. Two kinds of listing stay copied on purpose and are held by containment: the TASK cards' broken listings (they exist to fail and have no compiled source; an HTML-comment marker inside a card's fence would render as code on GitHub) and two one-line quotations. Five files whose chapter listing kept the banner's title line had their banner reordered so the title sits below the marker. Every lab banner that said "editing one means editing the chapter in the same commit" now says edit here and the page follows.
 
 **Acceptance:** no cpp fence on a page that a pairing covers contains code;
 `check_verbatim.sh` still fails when a marker is deleted from a source file

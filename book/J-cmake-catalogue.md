@@ -47,34 +47,7 @@ Each entry below is a tool a plug-in shop meets that no chapter had a reason to 
 **Getting the runtime to the loader.** Chapter 12's trio ends with a runtime binary the *loader* must find, and Chapter 26 said the step was yours — PATH, an explicit copy, or RPATH — without spelling any of the three. The spelling depends on the platform, and it is one of the two entries on this page the repository does check. On Linux and macOS an executable carries a list of directories the loader searches before the system directories, its *runpath* (an `LD_LIBRARY_PATH` or `DYLD_LIBRARY_PATH` in the environment still wins, which is why the check below unsets both), and CMake writes it at install time from one property — relative to the executable itself, so the whole prefix can move:
 
 ```cmake
-cmake_minimum_required(VERSION 3.16)
-project(rpathlab LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# The runtime half of Chapter 12's trio: a SHARED library the executable
-# needs at load time, installed beside it.
-add_library(telemetry SHARED src/telemetry.cpp)
-target_include_directories(telemetry PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-
-add_executable(report src/main.cpp)
-target_link_libraries(report PRIVATE telemetry)
-
-# Where the loader looks, written into the executable at install time:
-# relative to the executable itself, so the prefix can move as a whole.
-# $ORIGIN is the executable's directory on Linux, @loader_path on macOS;
-# Windows has no such field - there the library is copied beside the
-# executable instead (see the catalogue).
-include(GNUInstallDirs)
-if(APPLE)
-    set_target_properties(report PROPERTIES INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
-elseif(UNIX)
-    set_target_properties(report PROPERTIES INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
-endif()
-
-install(TARGETS telemetry report
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+--8<-- "scripts/build_all.sh:runtime-delivery"
 ```
 
 `build_all.sh` generates that project into a temporary directory under the cmake probe, installs it, and runs the installed executable from a directory that is not the prefix — then installs it again with `-DCMAKE_SKIP_INSTALL_RPATH=ON` and asserts the same run *fails to load*, because a step that only ever succeeds proves nothing about what the runpath did. (In the build tree CMake writes a runpath for you, which is why the bug appears only in the installed copy.) The symptom, when it arrives, is a program that runs from the build tree and dies on the customer's machine before `main` — `dyld: Library not loaded` on macOS, `error while loading shared libraries` on Linux, *the code execution cannot proceed because X.dll was not found* on Windows. Windows has no runpath: the loader searches the executable's own directory, then the system directories, then `PATH`, so the library is *copied* beside the executable — `$<TARGET_RUNTIME_DLLS:report>` (CMake 3.21) names the `SHARED` targets a target links whose location CMake knows, and an `add_custom_command(TARGET report POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:report> $<TARGET_RUNTIME_DLLS:report> COMMAND_EXPAND_LISTS)` inside an `if(WIN32)` puts them there (the expression is empty elsewhere, and an `UNKNOWN IMPORTED` target from a find-module like Chapter 40's is not among what it lists — that DLL you copy by name). For a plug-in the host's directory is the search path, and where the vendor's DLL goes is the bundling step Chapter 40's pitfalls name. **Price:** an install prefix that must keep its shape; a DLL copy step that runs every build. **When:** the moment the runtime half of the trio is a library you or the vendor built, which for a plug-in is usually day one.
@@ -82,58 +55,7 @@ install(TARGETS telemetry report
 **A library the system provides.** Chapter 27's fourth strategy — locate it, never copy it in — was spelled there for a vendor with a config package; for a library the *system* ships, the cookbook practises it on libcrypto, libcurl and sqlite3 in the shell spelling only, `pkg-config --cflags --libs` spliced into a compiler line by `build_all.sh`. The CMake spelling is a find step that yields an imported target, three ways. A module CMake ships — `FindSQLite3.cmake`, `FindOpenSSL.cmake`; `cmake --help-module-list` names the others — is `find_package(SQLite3 REQUIRED)` and a link to the module's target, which carries include directory and library both: Chapter 27's `find_package` shape with a module in place of the config package. A `.pc` file and no module is `find_package(PkgConfig REQUIRED)` then `pkg_check_modules(CURL REQUIRED IMPORTED_TARGET libcurl)`, which turns what `build_all.sh` reads through `pkg-config` into `PkgConfig::CURL` (libcurl has a module too; the `.pc` spelling is shown on it because every machine has one). Neither is Chapter 40's hand-written find-module. All three fail at configure time, naming the library, when `REQUIRED` is given — a spliced compiler line only does if the script probes first, as `build_all.sh`'s does. The three, in one file:
 
 ```cmake
-cmake_minimum_required(VERSION 3.18)      # an ALIAS of an imported target needs 3.18
-
-project(cookbook_system_libraries LANGUAGES CXX)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-set(COOKBOOK ${CMAKE_CURRENT_SOURCE_DIR}/..)
-
-# 1. A module CMake ships: find_package(SQLite3) defines a target - named
-#    SQLite::SQLite3 until CMake 4.3, SQLite3::SQLite3 from there, the old
-#    name kept but deprecated. The module's own advice for a project that
-#    must configure under both is this alias, and it is the price the
-#    catalogue names: the target's spelling is the machine's CMake's.
-find_package(SQLite3 REQUIRED)
-if(NOT TARGET SQLite3::SQLite3)
-    add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
-endif()
-add_executable(cb_database ${COOKBOOK}/database.cpp)
-target_link_libraries(cb_database PRIVATE SQLite3::SQLite3)
-
-# 2. Another shipped module: find_package(OpenSSL) defines OpenSSL::Crypto
-#    (and OpenSSL::SSL, which this recipe does not need).
-find_package(OpenSSL REQUIRED)
-add_executable(cb_crypto ${COOKBOOK}/crypto.cpp)
-target_link_libraries(cb_crypto PRIVATE OpenSSL::Crypto)
-
-# 3. FindPkgConfig: for a library CMake has no module for, pkg-config's
-#    metadata becomes an imported target - PkgConfig::CURL - with one call.
-#    libcurl has a module too (FindCURL, CURL::libcurl); it is spelled this
-#    way here so the third mechanism is shown on a library every machine has.
-#    -isystem exercises/third_party is Recipe 46's vendored JSON, Chapter
-#    27's first strategy sitting beside its fourth in one target.
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(CURL REQUIRED IMPORTED_TARGET libcurl)
-add_executable(cb_http ${COOKBOOK}/http.cpp)
-target_link_libraries(cb_http PRIVATE PkgConfig::CURL)
-target_include_directories(cb_http SYSTEM PRIVATE ${COOKBOOK}/../third_party)
-
-foreach(t cb_database cb_crypto cb_http)
-    if(MSVC)
-        target_compile_options(${t} PRIVATE /W4)
-    else()
-        target_compile_options(${t} PRIVATE -Wall -Wextra)
-    endif()
-endforeach()
-
-enable_testing()
-add_test(NAME cb_database COMMAND cb_database)
-add_test(NAME cb_crypto COMMAND cb_crypto)
-add_test(NAME cb_http COMMAND cb_http)
+--8<-- "exercises/cookbook/cmake/CMakeLists.txt:system-libraries"
 ```
 
 `build_all.sh` configures that project and runs the three under CTest where cmake and all three libraries are present — the same source files, each under its own judge, without the sanitizers the flat build already applied — and `check_verbatim.sh` holds the listing to this page both ways. **Price:** where a library lives and what its target is called is the machine's CMake's, not the project's — CMake 4.3 renamed the SQLite target, which the alias above absorbs — so the version the binary reports (`sqlite3_libversion()`, Recipe 42's closing line) is the one to trust over any `.pc` file's. And `REQUIRED` on an optional dependency fails every machine without it; drop it and test `<Pkg>_FOUND`. **When:** the library is one the deployment target ships or its package manager installs; never for something that must travel with the plug-in, which is `FetchContent` or the vendored copy.
