@@ -1309,9 +1309,15 @@ ASan until C++23, so the document is named first. Needs
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/crypto.cpp:recipe-36"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/crypto.cpp:recipe-36"
+    ```
+
+=== "Rust"
+
+    Rust's standard library has no cryptography, by design. The ecosystem's answers are the RustCrypto crates (`sha2` here) and `ring`; a hash is a dependency, which is Chapter 27's decision, not this page's, and the crate stays dependency-free.
 
 **Why it looks like this.** There is no `System.Security.Cryptography`:
 the standard library ships no hash, no cipher and no random source
@@ -1344,9 +1350,15 @@ entry.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/crypto.cpp:recipe-37"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/crypto.cpp:recipe-37"
+    ```
+
+=== "Rust"
+
+    As for Recipe 36: `aes-gcm` from RustCrypto seals and opens the same nonce‖ciphertext‖tag envelope, and the layout stays the ICD it is here. A dependency this crate does not take.
 
 **Why it looks like this.** The cipher is the easy half — `AesGcm` with
 a 32-byte key is AES-256-GCM, and authenticated means a flipped byte is
@@ -1380,9 +1392,17 @@ is the first suspect. Needs `<openssl/evp.h>` and libcrypto as Recipe
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/files.cpp:recipe-38"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/files.cpp:recipe-38"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/files.rs:recipe-38"
+    ```
 
 **Why it looks like this.** Recipe 9 writes in place, which is fine until
 the process dies halfway — a crash, a host that kills the plug-in — and
@@ -1412,7 +1432,7 @@ quietly (the harness asserts that on Linux, where the CI runner has a
 second volume to try) — while MSVC's does the opposite, passing
 `MOVEFILE_COPY_ALLOWED` so that across volumes it copies and deletes,
 silently and non-atomically. Same directory is how you never find out
-which you got. Needs `<filesystem>`, `<string>`, and Recipe 9.
+which you got. Needs `<filesystem>`, `<string>`, and Recipe 9. **In Rust** it is the same two calls, `fs::write` to the sibling name and `fs::rename` over the target, and `?` on each is the part C# hid inside `File.Replace`.
 
 > [!WARNING]
 > **Trap:** the rename gives the *name* a new file, so anything holding the old one open keeps the old one — on POSIX a stale inode no path reaches any more; on Windows the rename itself fails while a reader holds the target open without `FILE_SHARE_DELETE`, which a default `FileStream` does not — and the harness's own judge is that inode: a save that rewrote the file in place would pass every other check and still tear.
@@ -1423,9 +1443,17 @@ which you got. Needs `<filesystem>`, `<string>`, and Recipe 9.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/paths.cpp:recipe-39"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/paths.cpp:recipe-39"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/paths.rs:recipe-39"
+    ```
 
 **Why it looks like this.** Four calls, four C# names, and two places
 the defaults differ — in opposite directions. `create_directories` is
@@ -1447,7 +1475,7 @@ two of them, and leave formatting to C++20's `clock_cast` or the
 platform. Every one ships as
 [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
 pair, throwing or `error_code`. Needs `<filesystem>`, `<cstdint>`, and
-`namespace fs = std::filesystem;`.
+`namespace fs = std::filesystem;`. **In Rust** `fs::copy` overwrites and `fs::rename` replaces without being asked, exactly as here, and `remove_dir_all` on a missing directory is an `Err` the recipe turns back into `Ok` — the one place the C++ and Rust defaults differ.
 
 > [!WARNING]
 > **Trap:** `dir / name` with an empty `name` is `dir/` — the separator and nothing after it — so `remove_all(dir / entry)` where `entry` came back empty from a lookup deletes the *directory itself* and everything in it, not one entry, and compiles clean; `Path.Combine(dir, "")` is `dir` by a shorter spelling and the same deletion, and the harness asserts this one: two files and a subdirectory gone, and the directory with them.
@@ -1458,9 +1486,17 @@ pair, throwing or `error_code`. Needs `<filesystem>`, `<cstdint>`, and
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/watch.cpp:recipe-40"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/watch.cpp:recipe-40"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/watch.rs:recipe-40"
+    ```
 
 **Why it looks like this.** The standard library has no watcher, and the
 native ones — `inotify` on Linux, FSEvents and `kqueue` on macOS,
@@ -1493,7 +1529,7 @@ poll can still catch a file half-written by an in-place save and report
 one change twice, exactly `FileSystemWatcher`'s double event, so the
 callback should be safe to run twice. Needs `<atomic>`, `<chrono>`,
 `<cstdint>`, `<filesystem>`, `<functional>`, `<system_error>`, `<thread>`,
-`<utility>`.
+`<utility>`. **In Rust** the poll is `fs::metadata`, which answers all three questions in one call and reports absence as an `Err` the watcher treats as a state; the OS-notification version is the `notify` crate, and it carries the same two traps.
 
 > [!WARNING]
 > **Trap:** a poll reads the timestamp at the filesystem's resolution, not the clock's — nanoseconds on APFS and ext4, hundreds of them on NTFS, whole seconds on HFS+ and many network shares, two on FAT — so two same-size writes inside one tick are one event or none; and many editors save by Recipe 38's rename, so a watch on the *inode* — what `inotify` attaches its watch to, and what `kqueue`'s open descriptor names — is watching a ghost after the first save; watch the path, as this one does.
@@ -1504,9 +1540,15 @@ callback should be safe to run twice. Needs `<atomic>`, `<chrono>`,
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/http.cpp:recipe-41"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/http.cpp:recipe-41"
+    ```
+
+=== "Rust"
+
+    The standard library has TCP sockets and nothing above them: an HTTP client is `ureq` (blocking, small) or `reqwest` (async, large), and the two verdicts — the transport's and the server's — come back as an `Err` and a status code respectively. A dependency this crate does not take.
 
 **Why it looks like this.** There is no `HttpClient` because there are no
 sockets ([Chapter 27](27-dependency-management.md#chapter-27--dependency-management)),
@@ -1552,9 +1594,15 @@ entry.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/database.cpp:recipe-42"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/database.cpp:recipe-42"
+    ```
+
+=== "Rust"
+
+    SQLite from Rust is `rusqlite`, a safe wrapper over the same C API: `Connection`, a prepared `Statement` that finalizes on `Drop`, and a `Transaction` that rolls back on `Drop` unless committed — the three shapes this recipe writes by hand. A dependency this crate does not take.
 
 **Why it looks like this.** There is no ADO.NET
 ([Chapter 27](27-dependency-management.md#chapter-27--dependency-management)),
@@ -1610,9 +1658,15 @@ entry.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/shm.cpp:recipe-43"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/shm.cpp:recipe-43"
+    ```
+
+=== "Rust"
+
+    The standard library has no shared memory. `memmap2` maps a file (or `/dev/shm` on Linux), `shared_memory` wraps the named-segment calls, and the layout rules — `#[repr(C)]`, atomics that are lock-free, a version field first — are the same ICD discipline as here. A dependency this crate does not take.
 
 **Why it looks like this.** No library, because the platform is the
 dependency: POSIX `shm_open` plus `mmap` on Linux and macOS, a
@@ -1671,9 +1725,17 @@ unverified there. Needs `<atomic>`, `<cstdint>`, `<string>`,
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/strings.cpp:recipe-44"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/strings.cpp:recipe-44"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/strings.rs:recipe-44"
+    ```
 
 **Why it looks like this.** `std::regex` is the `Regex` class with the
 static helpers removed: the object *is* the compiled pattern, so the
@@ -1696,7 +1758,7 @@ the ten ASCII digits, never a Unicode category — where .NET's `\d` is
 rule: a `std::string` is bytes). The dialect is ECMAScript, close enough
 to .NET's for the everyday subset — except `$`, which here does not
 match before a final `\n`. Needs `<regex>`, `<optional>`, `<charconv>`,
-`<string>`.
+`<string>`. **In Rust** this particular pattern needs no regex at all — `strip_prefix` is the anchor and the literal, and an all-digits check is the class — which is worth knowing before reaching for the `regex` crate, whose compile-once rule is spelled `OnceLock` or `LazyLock` rather than a function-local static.
 
 > [!WARNING]
 > **Trap:** `std::regex` is slow and it allocates — on this machine a match through the `static const` above costs about 800 nanoseconds and eleven heap allocations, where `starts_with` plus Recipe 19's `from_chars` on the same input costs a few nanoseconds and none, which the harness counts with [Chapter 36](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded)'s replaced `operator new`; and one hostile line against a pattern with nested repetition backtracks for seconds under libstdc++ and, under libc++, throws `std::regex_error` out of `regex_match` in milliseconds, which this recipe does not catch — so it belongs in a config parser and never on the per-sample path, and a regex that must be fast is a [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) dependency, RE2 or PCRE2.
@@ -1707,9 +1769,17 @@ match before a final `\n`. Needs `<regex>`, `<optional>`, `<charconv>`,
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/strings.cpp:recipe-45"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/strings.cpp:recipe-45"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/strings.rs:recipe-45"
+    ```
 
 **Why it looks like this.** Four one-liners C# has and C++17's
 `std::string` does not, each with the same shape: a `string_view` in, so a literal, a
@@ -1735,7 +1805,7 @@ differ as bytes, and the harness asserts that they do. `starts_with` and
 `ends_with` are C++20 members of `string` and `string_view`; on C++17
 these two lines are them — and ordinal always, where a bare
 `s.StartsWith("x")` in .NET is culture-sensitive, which is what the
-analyzers nag about. Needs `<cctype>`, `<string_view>`.
+analyzers nag about. Needs `<cctype>`, `<string_view>`. **In Rust** `trim` returns a `&str` into its argument the same way, and the lifetime the C++ comment asks you to remember is one the borrow checker refuses to let you forget; `eq_ignore_ascii_case` puts the ASCII limitation in the name.
 
 > [!WARNING]
 > **Trap:** `auto t = trim(read_line());` is a view of a string that died at the semicolon — a `stack-use-after-scope` or `heap-use-after-free` under ASan, and plausible text until then; name the string first, or have your own `trim` return a `std::string` if callers keep the result.
@@ -1746,9 +1816,15 @@ analyzers nag about. Needs `<cctype>`, `<string_view>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/http.cpp:recipe-46"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/http.cpp:recipe-46"
+    ```
+
+=== "Rust"
+
+    As for Recipe 41: `ureq::post(url).send_json(body)` and `into_json()` on the reply, with the same two verdicts kept apart; `serde_json` as in Recipe 25. Dependencies this crate does not take.
 
 **Why it looks like this.** Recipe 41 with the request turned around and
 Recipe 25 on both ends of it. The header list is one more C handle with
@@ -1798,9 +1874,15 @@ Recipe 25, `<chrono>`, `<memory>`, `<optional>`, `<string>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/crypto.cpp:recipe-47"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/crypto.cpp:recipe-47"
+    ```
+
+=== "Rust"
+
+    As for Recipe 36: `pbkdf2` and `hkdf` from RustCrypto, each a few lines against the same published vectors. Dependencies this crate does not take.
 
 **Why it looks like this.** Recipe 37 took a `Key` and never said where
 one comes from; these are the two answers, and which one is a question
@@ -1849,9 +1931,15 @@ Recipe 37 refuses to open. Needs
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/crypto.cpp:recipe-48"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/crypto.cpp:recipe-48"
+    ```
+
+=== "Rust"
+
+    As for Recipe 36: `hmac` with `sha2`, and its `verify_slice` is the constant-time comparison this recipe's `==` warns about. Dependencies this crate does not take.
 
 **Why it looks like this.** An HMAC is the answer to a question Recipe
 37 does not ask — *did the bytes I can read come from someone holding
@@ -1884,9 +1972,15 @@ libcrypto 3 as Recipe 36, `<memory>`, `<vector>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/files.cpp:recipe-49"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/files.cpp:recipe-49"
+    ```
+
+=== "Rust"
+
+    The standard library has no memory mapping. `memmap2::Mmap` is the view, `unsafe` because the file can change under it — the `SIGBUS` this recipe's trap names is why the constructor is unsafe there — and the honest std-only alternative is `std::fs::read`, which is the copy this recipe exists to avoid. A dependency this crate does not take.
 
 **Why it looks like this.** Recipe 1 copies the file into a `std::string`,
 the right shape for a config and the wrong one for a capture, a log or a

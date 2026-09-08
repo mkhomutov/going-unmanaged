@@ -36,3 +36,30 @@ mod tests {
         assert!(write_all_text(Path::new("no_such_dir_xyz/f.txt"), "x").is_err());
     }
 }
+
+// --8<-- [start:recipe-38]
+pub fn save_file(path: &Path, text: &str) -> std::io::Result<()> {
+    let mut tmp = path.as_os_str().to_owned();
+    tmp.push(".tmp");                       // a suffix, not a segment: same directory, same volume
+    let tmp = std::path::PathBuf::from(tmp);
+    std::fs::write(&tmp, text)?;            // Recipe 9: written and closed, or the ? returned and path is untouched
+    std::fs::rename(&tmp, path)             // one atomic step: a reader sees the old file or the new, never half
+}
+// --8<-- [end:recipe-38]
+
+#[cfg(test)]
+mod save_tests {
+    use super::*;
+
+    #[test]
+    fn a_save_replaces_whole_and_leaves_no_temp() {
+        let dir = std::env::temp_dir().join(format!("cookbook-rs-save-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("prefs.txt");
+        save_file(&path, "old").unwrap();
+        save_file(&path, "new").unwrap();
+        assert_eq!(read_all_text(&path).unwrap(), "new");
+        assert!(!dir.join("prefs.txt.tmp").exists());    // renamed away, not left behind
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+}

@@ -107,3 +107,73 @@ mod encoding_tests {
         }
     }
 }
+
+// --8<-- [start:recipe-44]
+// The general answer is the regex crate, a dependency this crate does not
+// take. This pattern - a fixed prefix and digits - does not need one: the
+// standard library's strip_prefix and a digit check say it exactly.
+pub fn sensor_index(id: &str) -> Option<u32> {
+    let digits = id.strip_prefix("sensor")?;    // the anchor and the literal: None if absent
+    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+        return None;    // IsMatch false: absence, not an error
+    }
+    digits.parse().ok()    // matched, but more digits than a u32 holds: None as well
+}
+
+pub fn redact_digits(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut in_run = false;
+    for c in text.chars() {    // Regex.Replace("[0-9]+", "#"): every run of digits becomes one '#'
+        match (c.is_ascii_digit(), in_run) {
+            (true, false) => { out.push('#'); in_run = true; }
+            (true, true) => {}
+            (false, _) => { out.push(c); in_run = false; }
+        }
+    }
+    out
+}
+// --8<-- [end:recipe-44]
+
+// --8<-- [start:recipe-45]
+pub fn trim(s: &str) -> &str {
+    s.trim_matches(|c| c == ' ' || c == '\t' || c == '\r' || c == '\n')    // a &str INTO s: the borrow checker holds the lifetime
+}
+
+pub fn equals_ignore_case(a: &str, b: &str) -> bool {
+    a.eq_ignore_ascii_case(b)    // ASCII only, and the name says so (Chapter 9)
+}
+
+pub fn starts_with(s: &str, prefix: &str) -> bool {
+    s.starts_with(prefix)
+}
+
+pub fn ends_with(s: &str, suffix: &str) -> bool {
+    s.ends_with(suffix)
+}
+// --8<-- [end:recipe-45]
+
+#[cfg(test)]
+mod text_tests {
+    use super::*;
+
+    #[test]
+    fn pattern_without_a_regex() {
+        assert_eq!(sensor_index("sensor12"), Some(12));
+        assert_eq!(sensor_index("sensor"), None);
+        assert_eq!(sensor_index("sensor12x"), None);
+        assert_eq!(sensor_index("Sensor12"), None);
+        assert_eq!(sensor_index("sensor99999999999"), None);
+        assert_eq!(redact_digits("card 4111 1111, pin 07"), "card # #, pin #");
+        assert_eq!(redact_digits("no digits"), "no digits");
+    }
+
+    #[test]
+    fn trim_compare_prefix_suffix() {
+        assert_eq!(trim("  \tname\r\n"), "name");
+        assert_eq!(trim(" \n "), "");
+        assert!(equals_ignore_case("Sensor", "sENSOR"));
+        assert!(!equals_ignore_case("Sensor", "Sensors"));
+        assert!(starts_with("sensor12", "sensor") && ends_with("report.txt", ".txt"));
+        assert!(!ends_with("txt", "report.txt"));
+    }
+}

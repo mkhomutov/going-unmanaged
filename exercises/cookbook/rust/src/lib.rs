@@ -17,3 +17,4 @@ pub mod ownership;
 pub mod paths;
 pub mod strings;
 pub mod timing;
+pub mod watch;
