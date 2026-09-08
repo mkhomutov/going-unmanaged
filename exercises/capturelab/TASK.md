@@ -1,4 +1,4 @@
-# Parse This Capture — ticket card (Chapter 34)
+# Every Capture Rejected as Malformed — ticket card (Chapter 34)
 
 This lab is a **ticket, not a task** — and its evidence is a bus capture,
 attached below with the vendor's own header table. Chapter 34 states
@@ -8,7 +8,7 @@ the table before you run anything. Fair warning from the chapter: the
 handbook's sanitizer flags stay green on this bug. Your hand decode is the
 only oracle this ticket has.
 
-> **#5347 — Ingest rejects every capture from the new analyzer
+> **Ingest rejects every capture from the new analyzer
 > (bring-up).** The new bus analyzer's telemetry feed is being brought up.
 > The vendor's own viewer opens every capture file fine; our ingest calls
 > every one of them malformed. The developer who started the bring-up notes

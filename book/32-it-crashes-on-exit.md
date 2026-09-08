@@ -1,15 +1,13 @@
-## Chapter 32 — It Crashes on Exit
+## Chapter 32 — Crash on Exit
 
-Every exercise so far told you what it trains before you wrote a line. This
-chapter — the first of the ticket-shaped ones — works the way the job does:
-you get a symptom, the code it happened to, and no chapter title spoiling
-the diagnosis. Work it cold, then open the fold; the thing it trains gets
-its name only after you have felt the need for it, on the far side of the
-diagnosis.
+This chapter and the five after it work the way a ticket does: a symptom,
+the code it happened to, and no title that names the concept in advance.
+Work it cold, then open the fold; the thing it trains gets its name only
+after you have felt the need for it, on the far side of the diagnosis.
 
 ### The ticket
 
-> **#4712 — Crash on exit (since 2.4.1).** The app crashes when it is
+> **Crash on exit (since 2.4.1).** The app crashes when it is
 > closed. Not every install: support cannot reproduce it, and neither can
 > the developer who shipped 2.4.1. The customer's crash report shows a
 > segmentation fault *after* `exit`, in `__cxa_finalize` — after `main` has

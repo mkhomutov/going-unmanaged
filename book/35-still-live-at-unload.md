@@ -1,10 +1,10 @@
-## Chapter 35 — Still Live at Unload
+## Chapter 35 — Objects Still Live at Unload
 
-The fourth ticket-shaped chapter, and the one where the vendor moves the ground under you: an SDK upgrade changes the object model, and a port that dutifully swapped every 1.x call for its 2.0 spelling now has the host complaining at unload. The migration notes arrive attached, the way they do. The previous three tickets each ended at a guilty line; part of working this one cold is discovering what kind of ending it has.
+An SDK upgrade changes the object model, and a port that dutifully swapped every 1.x call for its 2.0 spelling now has the host complaining at unload. The migration notes arrive attached, the way they do. The diagnosis is an accounting exercise before it is a code change, and part of working it cold is discovering what kind of fix the accounting asks for.
 
 ### The ticket
 
-> **#5561 — Objects still live at unload (since the 2.0 port).** The vendor's 2.0 SDK made the project's Things shared, reference-counted objects. The port was mechanical — every 1.x call swapped for its 2.0 spelling, `Thing_DisposeData` for `Thing_Release`. Since then the host prints *"plug-in left N objects live"* at document close, with N varying by document — and two customers report crashes at close that support cannot reproduce. The vendor's migration notes are attached.
+> **Objects still live at unload (since the 2.0 port).** The vendor's 2.0 SDK made the project's Things shared, reference-counted objects. The port was mechanical — every 1.x call swapped for its 2.0 spelling, `Thing_DisposeData` for `Thing_Release`. Since then the host prints *"plug-in left N objects live"* at document close, with N varying by document — and two customers report crashes at close that support cannot reproduce. The vendor's migration notes are attached.
 
 Two symptoms, and they do not obviously share a cause: a counter that drifts up, and a crash that happens to other people. Hold both; the diagnosis owes you the connection.
 

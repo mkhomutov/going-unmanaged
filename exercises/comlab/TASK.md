@@ -1,14 +1,13 @@
-# Still Live at Unload — ticket card (Chapter 35)
+# Objects Still Live at Unload — ticket card (Chapter 35)
 
-This lab is a **ticket, not a task** — the fourth and last of the book's
-ticket chapters. The vendor from Chapter 17 has shipped SDK 2.0, and the
-object model changed: payloads are now shared, reference-counted objects.
+This lab is a **ticket, not a task**. The vendor from Chapter 17 has
+shipped SDK 2.0, and the object model changed: payloads are now shared, reference-counted objects.
 Chapter 35 states everything in full and walks the diagnosis behind a
 spoiler fold — work the ticket cold first, and work it with a **ledger**:
 this ticket is solved by accounting, one +1 or −1 per SDK call, before
 anything is rebuilt.
 
-> **#5561 — Objects still live at unload (since the 2.0 port).** The
+> **Objects still live at unload (since the 2.0 port).** The
 > vendor's 2.0 SDK made the project's Things shared, reference-counted
 > objects. The port was mechanical — every 1.x call swapped for its 2.0
 > spelling, `Thing_DisposeData` for `Thing_Release`. Since then the host

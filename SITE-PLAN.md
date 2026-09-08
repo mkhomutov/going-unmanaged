@@ -145,7 +145,7 @@ trimmed, the six "Reproduce it cold" tails gone, Chapter 25 retitled
 *Gotchas: the Findings Log* with **Symptom:** in place of **Found in:** and
 CONTRIBUTING's template changed to match. Appendix C's rule lives on as
 CONTRIBUTING's "Assistants, and the exercises"; its offline-lifelines list
-was already Appendix D's. Next: PR 2, the tickets; PR 3, the entry points.
+was already Appendix D's. PR 2 of 3, *the tickets*, is DONE: the six chapters are titled by symptom (Crash on Exit; A Value Reads Zero After Hot-Plug; Every Capture Rejected as Malformed; Objects Still Live at Unload; Dropouts With the Plug-in Loaded; Crash at Session Close, Field Units Only — file names unchanged, anchors updated everywhere), the openings state the evidence and the rule without narrating the series, the ticket numbers are gone from chapters and cards alike, and the fixtures — profile, crash report, capture, report, migration notes — are untouched. Next: PR 3, the entry points.
 
 **Acceptance:** `grep -rn -i "day [0-9]\|week [0-9]\|first week" book/`
 returns nothing outside code and quoted output; the six ticket pages are

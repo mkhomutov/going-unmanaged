@@ -1,11 +1,11 @@
-# The Exit Crash — ticket card (Chapter 32)
+# Crash on Exit — ticket card (Chapter 32)
 
 This lab is a **ticket, not a task**: you get a symptom and the code it
 happened to, and the job is the diagnosis. Chapter 32 states everything in
 full and walks the diagnosis behind a spoiler fold — work the ticket cold
 first.
 
-> **#4712 — Crash on exit (since 2.4.1).** The app crashes when it is
+> **Crash on exit (since 2.4.1).** The app crashes when it is
 > closed. Not every install: support cannot reproduce it, and neither can
 > the developer who shipped 2.4.1. The customer's crash report shows a
 > segmentation fault *after* `exit`, in `__cxa_finalize` — after `main` has

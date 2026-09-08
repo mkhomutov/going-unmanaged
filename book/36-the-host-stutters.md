@@ -1,10 +1,10 @@
-## Chapter 36 — The Host Stutters
+## Chapter 36 — Dropouts With the Plug-in Loaded
 
-The first four tickets ended with a confession: a sanitizer named the crime, a counter reached zero, a hand decode agreed with the wire. This one — the fifth — arrives with evidence that appears to *acquit* you. The attached profile is genuine, professionally taken, correctly summarized by support — and the summary is wrong anyway, because the two numbers it leans on measure the one thing this ticket was never about. Performance work is where C++ reputations are made and lost in an SDK shop, and it starts here: not with making code fast, but with reading cost evidence without being lied to by an average. Same rule as [Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report): **no compiler until your diagnosis is written down.** The two attachments and the listings below are sufficient.
+This ticket arrives with evidence that appears to *acquit* you. The attached profile is genuine, professionally taken, correctly summarized by support — and the summary is wrong anyway, because the two numbers it leans on measure the one thing this ticket was never about. Performance work is where C++ reputations are made and lost in an SDK shop, and it starts here: not with making code fast, but with reading cost evidence without being lied to by an average. Same rule as [Chapter 33](33-here-is-the-report.md#chapter-33--a-value-reads-zero-after-hot-plug): **no compiler until your diagnosis is written down.** The two attachments and the listings below are sufficient.
 
 ### The ticket
 
-> **#5788 — Audio dropouts with our meter loaded (since 2.1.0).** A
+> **Audio dropouts with our meter loaded (since 2.1.0).** A
 > mastering studio reports intermittent dropouts — a click every few
 > minutes during long sessions, worse on their 16-channel template, gone
 > the moment our meter plug-in is disabled. 2.1.0 is the release that
@@ -14,7 +14,7 @@ The first four tickets ended with a confession: a sanitizer named the crime, a c
 > clock." The host vendor's engineer reopened it the same day with one
 > sentence — *"Look under your own frame."* Both attachments are below.
 
-A ticket with two attachments that disagree about your guilt is a gift, though it rarely feels like one. The skill this chapter trains is making them testify together.
+Two attachments that disagree about where the time goes. The skill this chapter trains is making them testify together.
 
 ### Attachment 1 — the profile
 
@@ -271,7 +271,7 @@ int main(int argc, char** argv) {
 }
 ```
 
-Run against the broken meter, this harness fails with `33 heap allocations` per tick multiplied out; against the fix it prints zero. That number — not a timing — is the acceptance test, for the same reason the diagnosis could not come from the profile's percentages: a timing asserts about the mean, and the ticket was about the worst case. **Zero allocations is a claim about every tick at once**, including the four-millionth one on the studio machine, and it is immune to how fast the CI runner happens to be. `build_all.sh` runs it at 50 ticks and at 1000 because zero-per-tick is a claim of session-length independence, and one length cannot prove it. This is a real industry practice with a name — allocation tests — and it is the same idea as [Chapter 35](35-still-live-at-unload.md#chapter-35--still-live-at-unload)'s counter judging what the sanitizers cannot: pick the judge that can actually see the crime.
+Run against the broken meter, this harness fails with `33 heap allocations` per tick multiplied out; against the fix it prints zero. That number — not a timing — is the acceptance test, for the same reason the diagnosis could not come from the profile's percentages: a timing asserts about the mean, and the ticket was about the worst case. **Zero allocations is a claim about every tick at once**, including the four-millionth one on the studio machine, and it is immune to how fast the CI runner happens to be. `build_all.sh` runs it at 50 ticks and at 1000 because zero-per-tick is a claim of session-length independence, and one length cannot prove it. This is a real industry practice with a name — allocation tests — and it is the same idea as [Chapter 35](35-still-live-at-unload.md#chapter-35--objects-still-live-at-unload)'s counter judging what the sanitizers cannot: pick the judge that can actually see the crime.
 
 ### Pitfalls
 
