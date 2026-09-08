@@ -140,6 +140,10 @@ uint32_t, int64_t                // from <cstdint>: 'int' size isn't
                                  // guaranteed! (C# int is always 32-bit)
 ```
 
+### In Rust
+
+Most of this chapter is Rust's default setting. `let` infers like `auto` and cannot deduce a reference away, because a reference is a type. Closures capture by inference and `move` is the explicit word for the escaping case — the capture rule above, enforced: a closure that borrows a local cannot be stored past the local's life. Iterator adapters are algorithms plus lambdas with the LINQ laziness restored (`filter`, `map`, `collect`), and they are the idiom rather than the loop. `Option` is `optional`; an `enum` with data is `variant`, and `match` is the exhaustive visit with the compiler refusing a missing arm. `&str` is `string_view` with the dangling case made a compile error by lifetimes. Destructuring is `let (a, b) = pair;`, and `const fn` is `constexpr`. What Rust adds that this chapter cannot is the checker behind each of these — the lifetime on the view and the capture is a fact the compiler knows, not a comment.
+
 ### In the wild: C-style SDKs
 
 Most actively maintained SDKs now require C++17, so nearly all of this is usable in your plug-in or driver code — the exception being the ranges above, which are C++20; every maintained toolchain has had them for years, so whether you may write them is a property of the codebase's `-std=` setting and policy, not of your compiler's age — Chapter 8's dialect lesson again. The professional style: modern C++ in *your* logic — optional, lambdas, RAII wrappers — with a thin, disciplined layer where you touch the raw C API. The older the SDK's surface, the more valuable the modern layer you build on top of it.

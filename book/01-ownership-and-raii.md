@@ -135,6 +135,10 @@ void AddItem() {
 }                                          // unlocks here, always
 ```
 
+### In Rust
+
+Ownership is not a discipline you adopt in Rust; it is what the type system checks. Every value has exactly one owner, assignment *moves* by default, and using a moved-from variable is a compile error rather than a valid-but-unspecified state. `Drop` is the destructor: it runs at scope end on every path, and the `FileHandle` above is a struct with a `Drop` impl and nothing else. `Box<T>` is `unique_ptr`, `Rc<T>` and `Arc<T>` are `shared_ptr` with the cycle trap intact — `Weak` breaks it there too — and the lock is `Mutex<T>`: the mutex *owns the data*, and the guard that unlocks on drop is the only way to reach it, so the "forgot the lock" bug has no spelling. The question this chapter trains, *who frees this*, is answered at compile time; what does not change is the one you still have to ask at an SDK boundary, where the answer arrives in a comment and a Recipe 7 wrapper is how you write it down.
+
 ### In the wild: C-style SDKs
 
 Vendor SDKs — plug-in APIs, device SDKs, OS APIs — hand you raw resources (allocated payloads, handles, sessions) that you must release manually via a matching dispose/close/free function. The pro move is a small RAII guard per resource type, so the release runs on every path, including early error returns. Here is the shape against the miniature SDK you will meet in Chapter 17 (`ThingData` is a struct whose payload the SDK allocates and you must dispose):

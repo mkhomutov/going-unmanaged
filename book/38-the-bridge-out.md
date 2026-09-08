@@ -197,6 +197,8 @@ If the shim is the only thing that rebuilds per host release, you have won.
 
 Two more rules ride the same boundary. **Transactions:** one command is one undo step, labelled with the command's name — that is what `RunUndoable` encodes in the lab — and a client needing twenty edits to read as one step sends one `batch` command, because a transaction is a callback scope on the main thread and there is no such thing as "begin now, commit on a later request". **Long operations:** a hundred-thousand-element walk on the main thread freezes the host's UI for its whole duration, so no call in the contract is unbounded — paginate (`offset`/`limit`), chunk the shim's iteration across event-loop turns by having the job requeue its own continuation, and let a client's cancel set a flag the chunk checks. The freeze is break one's spinner with the roles reversed: this time the host's user is the one staring at it.
 
+A Rust client is one more row in the same table: it speaks the C ABI through `extern "C"` and `#[repr(C)]` the way C# speaks it through P/Invoke, and the queue, the seam and the deadline are unchanged by which language is on the far end — [Chapter 30](30-authoring-an-abi-boundary.md#in-rust-the-same-seam-from-the-callers-side) shows the shape against the smallest façade in the book.
+
 ### In the wild
 
 - **The host's channel first.** Before building any of this, read the SDK's automation pages. A host that lets plug-ins register commands on its existing HTTP or scripting endpoint has already built the queue, the safe point, and the discovery story — your transport decision collapses to "extend theirs, add a WebSocket for events if they have none".

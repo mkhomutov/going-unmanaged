@@ -157,6 +157,10 @@ friend class Serializer;        // 'friend': grants ANOTHER class/function
 | Field init | assign in ctor body | member initializer list (required for const/refs) |
 | Default inheritance | always public | private for class! Write 'public' explicitly |
 
+### In Rust
+
+There is no inheritance. A type is a `struct` (or an `enum`) plus `impl` blocks, and an interface is a `trait` — no keyword to mark it as one, exactly as here, but a trait is all that can be implemented by another type, so the diamond cannot be built. Runtime polymorphism is `Box<dyn Trait>`, which is `unique_ptr<Base>` with the vtable pointer kept beside the object rather than inside it; the compile-time kind is a generic with a trait bound (Chapter 7). The member-initializer-list rules have no counterpart because there is no two-step construction: a struct literal names every field at once and an unnamed field is an error, so a member cannot be read before it is set and "which order do fields initialize in" is a question about `Drop` only (declaration order, like here). There is no `protected`, and `private` is the default — a module boundary, not a class one.
+
 ### In the wild: C-style SDKs
 
 C++-side SDK layers use these patterns heavily: vendor base classes, interface-style pure virtual classes for observers and callbacks, and the occasional 'friend' in container internals. Your own model layer on top of any SDK is where you apply this — interface bases behind unique_ptr, always public inheritance, always virtual destructors.

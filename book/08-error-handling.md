@@ -201,6 +201,10 @@ That is the cookbook's one C++23 listing, `exercises/cookbook/expected.cpp`, whi
 > [!TIP]
 > **Key principle:** "A value becomes a throw again only at the top of the program — the one frame with nobody left to hand it to — and never in between."
 
+### In Rust
+
+Rust has one dialect and it is the return-value one, with the vocabulary this chapter's middle section describes built into the language: `Option<T>` is `optional`, `Result<T, E>` is the value-or-error type, and `?` is the translation layer in a single character — return the `Err` to the caller, unwrapped, or continue with the value. The three verdicts survive intact. A *bug* is a `panic!` (or an `assert!`), which unwinds like a throw but is not meant to be caught; a *value* is a `Result`; and the *event* pole, the rare non-local failure, is the same `Result` carried further up by `?` until the frame with nobody left to hand it to. The rule that does not bend is the same here as at every boundary in this book: a panic must not cross `extern "C"` — it is undefined behaviour in older toolchains and an abort in newer ones — so a Rust plug-in catches at its entry points with `catch_unwind` and translates to the SDK's error codes, exactly as Chapter 17's C++ does with `catch (...)`.
+
 ### The drill: ten failures, three verdicts
 
 The bug/value/event decision is the chapter's whole point, and reading about a decision trains nothing — so make it ten times, now, on paper. For each scenario write one of **assert**, **value** (error code / `optional` / `expected`), or **throw**, plus one sentence of why. Some are deliberately not what they first smell like; the reasoning is worth more than the verdict. Answers are in the fold below — no peeking until all ten are written.

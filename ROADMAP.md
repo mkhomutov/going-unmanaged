@@ -1728,4 +1728,7 @@ script heredoc is included from the file by a marked section (132 includes),
 and `check_verbatim.sh` refuses a copy pasted back. Step 5 has begun: the
 cookbook's Rust tab (`exercises/cookbook/rust/`, a tested crate behind a
 cargo probe) covers all 49 recipes — 36 with code, 13 with a one-line
-note naming the ecosystem crate where the standard library has nothing.
+note naming the ecosystem crate where the standard library has nothing;
+seven concept chapters close with an *In Rust* section, and Chapter 30 has a
+Rust caller of its `extern "C"` façade, built and tested by `build_all.sh`.
+Step 5, and the plan, are DONE.
