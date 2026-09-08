@@ -1,6 +1,6 @@
 ## Chapter 31 — Reading What the Tools Tell You
 
-Chapter 15's sabotage runs tell you to break the Buffer on purpose and read what AddressSanitizer says. The book has never shown you a report. This chapter is that omission repaired, plus the debugger and profiler skills that differ most from the C# experience.
+Chapter 15's sabotage runs tell you to break the Buffer one thing at a time and "read each report until it makes sense". The book has never shown you one. This chapter is that omission repaired, plus the debugger and profiler skills that differ most from the C# experience.
 
 The difference in posture is worth naming first. In C#, a failure comes to *you*: an exception with a type, a message, and a stack trace, thrown at the moment of the mistake. In C++, a failure is usually silent — the program keeps running with corrupted memory and dies somewhere unrelated, or doesn't die at all. The tools that turn silence into a report have to be invited in, at build time, before the run. That is why the sanitizer flags are in every command in this book.
 
