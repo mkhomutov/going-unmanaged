@@ -18,9 +18,11 @@ G, its every cpp fence pinned to `exercises/choosing/`, which asserts the
 costs the page quotes), and I const-correctness (item 8), whose lab asserts
 refusals rather than results. J is the CMake catalogue — Chapters 26,
 27 and 40's lookup half, the shape G is to Chapter 38: no cpp fence
-(enforced), and its one cmake fence is the runtime-delivery project that
-build_all.sh generates and holds both ways, pinned to that script's
-heredoc by check_verbatim.sh. K is the standards catalogue — the lookup
+(enforced), and its two cmake fences are checked projects: the runtime-delivery
+one build_all.sh generates and holds both ways, pinned to that script's
+heredoc by check_verbatim.sh, and the system-library one,
+`exercises/cookbook/cmake/CMakeLists.txt`, pinned to the page both ways
+(banner-stripped) and run under CTest. K is the standards catalogue — the lookup
 half of Chapter 10's "check your standard" flags: which standard a
 toolchain speaks and how to ask (feature-test macros, MSVC's
 `/Zc:__cplusplus`), every feature the book names by the standard it
@@ -179,7 +181,13 @@ Chapter 25's Finding 10.
   (`--require-sqlite`), judged by an in-memory database — and by
   `sqlite3_close`'s return code, which is `SQLITE_OK` only when every
   statement was finalized, so a leaked statement fails the run the way
-  `FakeSdk_LiveAllocations` did. `watch.cpp` owns a
+  `FakeSdk_LiveAllocations` did. `cmake/CMakeLists.txt` is not a recipe: it
+  is Appendix J's system-library entry — the same three libraries found
+  through `find_package(SQLite3)`, `find_package(OpenSSL)` and
+  `pkg_check_modules(... IMPORTED_TARGET libcurl)`, the three TUs built a
+  second way and their judges run under CTest by build_all.sh when cmake
+  and all three libraries are present, quoted whole on that page
+  (banner-stripped, both ways). `watch.cpp` owns a
   thread and is built under TSan as well. `shm.cpp` is the cookbook's one
   listing that is platform-split end to end (POSIX and Win32 under `#if`;
   Recipes 29 and 38 guard one call): no library, `-lrt`
@@ -363,18 +371,20 @@ Chapter 25's Finding 10.
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
-  Its last nine sections may skip: one builds `exercises/deplab/` three ways
+  Its last eleven sections may skip: one builds `exercises/deplab/` three ways
   (Chapter 27), one configures, builds and runs `exercises/buildlab/`'s
-  CMakeLists, one installs `exercises/pluginlab/`'s SDK drop and builds,
+  CMakeLists, one runs `exercises/skeleton/`'s three preset commands, one installs `exercises/pluginlab/`'s SDK drop and builds,
   loads and inspects its plug-in (Chapter 40), one generates Appendix J's
   runtime-delivery project and installs it with and without a runpath, one rebuilds
   `solutions/device_threaded_solution.cpp` under
   `-fsanitize=thread` (a second build, because TSan and ASan do not combine),
   one builds `exercises/cookbook/expected.cpp` as C++23, one builds
   `exercises/cookbook/crypto.cpp` against the system's libcrypto, one
-  builds `exercises/cookbook/http.cpp` against the system's libcurl, and
-  the last builds `exercises/cookbook/database.cpp` against the system's
-  sqlite3. Without cmake on PATH, without a git that can clone a `file://`
+  builds `exercises/cookbook/http.cpp` against the system's libcurl, one
+  builds `exercises/cookbook/database.cpp` against the system's sqlite3, and
+  the last configures `exercises/cookbook/cmake/` (Appendix J's
+  system-library entry) and runs those three recipes under CTest, which
+  needs cmake and all three libraries at once. Without cmake on PATH, without a git that can clone a `file://`
   repository (deplab's FetchContent path only), without a ThreadSanitizer
   that can compile *and start* a trivial program, or without a compiler
   that has `<expected>`, or without a libcrypto, a libcurl or a sqlite3

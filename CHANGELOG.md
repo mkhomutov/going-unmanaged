@@ -129,6 +129,23 @@ numbers may still move.
   it under Visual Studio with the sanitizer on. Chapter 26, Appendix A.8
   and Appendix J point at it; the labs beside it stay unformatted by
   machine, because their layout is what the chapters quote.
+- **Appendix J — *A library the system provides*, and
+  `exercises/cookbook/cmake/`** (MINOR — an appended entry). Chapter 27's
+  fourth strategy had only its shell spelling in the repository:
+  `pkg-config --cflags --libs` spliced into a compiler line by
+  `build_all.sh`. The entry gives the CMake spelling — a find step that
+  produces an imported target, three ways ordered by how much CMake
+  already knows: a shipped module (`find_package(SQLite3)`,
+  `find_package(OpenSSL)`), pkg-config metadata through `FindPkgConfig`
+  (`pkg_check_modules(... IMPORTED_TARGET libcurl)`), and Chapter 40's
+  hand-written module — with its price (the module's idea of where a
+  library lives is the machine's) and its when. The listing is a
+  committed project that builds the three probed recipes a second way
+  and runs their judges under CTest; `build_all.sh` runs it where cmake
+  and all three libraries are present and refuses to skip under CI's
+  flags; `check_verbatim.sh` holds the file to the page both ways. Two
+  rows in the verbs table, one in the decision table; Chapter 27 and
+  Recipe 42 point at it.
 
 ## [0.11.0] — 2026-09-06
 

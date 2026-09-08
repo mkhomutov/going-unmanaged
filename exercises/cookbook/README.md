@@ -28,8 +28,9 @@ Cookbook*), one translation unit per domain —
 | `ownership.cpp` | 33–34 — an owned object as a field, and who disposes it; an object too big for the stack |
 | `standard.cpp` | Appendix K's probe, not a recipe — which standard the compiler was told to speak (`__cplusplus`, and `_MSVC_LANG` where `__cplusplus` lies) and which of the book's named features this toolchain's library actually ships, one feature-test macro per line; built at C++17 and C++20 with its readings asserted, at C++23 under the `expected.cpp` probe, refused at C++14 by its own `static_assert`, and by the `buildlab-msvc` job with and without `/Zc:__cplusplus` |
 | `watch.cpp` | 40 — notice a file changed: the polling watcher, judged by a bounded wait, a restored-older-timestamp change, and silence after the join; built under TSan as well, since it owns a thread |
+| `cmake/CMakeLists.txt` | not a recipe: Appendix J's *A library the system provides* — the three probed TUs built a second way, through `find_package(SQLite3)` (with the alias CMake 4.3's rename of its target calls for), `find_package(OpenSSL)` and `pkg_check_modules(... IMPORTED_TARGET libcurl)`, each judge run under CTest; quoted whole on that page, banner-stripped, and held both ways by `check_verbatim.sh` |
 
-— each with a `main()` that asserts what its recipes claim.
+— each `.cpp` with a `main()` that asserts what its recipes claim.
 `scripts/build_all.sh` builds and runs all of them on every push, so a recipe
 that stops being true stops being green — all but one under the canonical
 flags, which pin C++17 (`standard.cpp`, Appendix K's probe, is built at

@@ -884,7 +884,7 @@ else
     echo "  SKIPPED - cmake not installed (CI runs this for real)"
 fi
 
-# Appendix J's one verified entry: the runtime half of Chapter 12's trio
+# Appendix J's first verified entry: the runtime half of Chapter 12's trio
 # reaching the loader. The project is generated here rather than committed -
 # a SHARED library and the executable that needs it are two files nobody
 # would open as a lab, and the CMakeLists is the whole lesson, so the page
@@ -1204,6 +1204,54 @@ elif [ "$REQUIRE_SQLITE" = 1 ]; then
     exit 1
 else
     echo "  SKIPPED - pkg-config cannot find sqlite3 (CI runs this for real)"
+fi
+
+# Appendix J's second verified entry: a library the system provides, in the
+# CMake spelling. exercises/cookbook/cmake/CMakeLists.txt builds the three
+# probed recipes through the three find steps - find_package(SQLite3) and
+# find_package(OpenSSL), modules CMake ships, and FindPkgConfig's
+# pkg_check_modules(... IMPORTED_TARGET libcurl) - and runs each recipe's
+# own judge under CTest. It needs cmake AND all three libraries, so it skips
+# unless every one of those probes found its tool, and refuses to skip when
+# all four --require flags are given (CI passes them). FindOpenSSL takes a
+# hint from pkg-config, so the PKG_CONFIG_PATH CI sets for the keg-only
+# OpenSSL on macOS serves this step too. The CMake paths apply no sanitizer
+# flags (the three TUs were built under the canonical flags above); this
+# section's claim is that the find steps produce the targets and the same
+# judges pass through them - the shell spelling and the CMake spelling
+# building the same files, so neither can drift from the other.
+echo "== cookbook cmake (find_package, FindPkgConfig) =="
+if command -v cmake > /dev/null 2>&1 && pkg-config --exists sqlite3 libcrypto libcurl 2> /dev/null; then
+    CBK=build/cookbook-cmake
+    rm -rf "$CBK"
+    if ! cmake -S exercises/cookbook/cmake -B "$CBK" -DCMAKE_BUILD_TYPE=Debug > "$OUT/cookbook_cmake_configure.log" 2>&1; then
+        sed 's/^/  /' "$OUT/cookbook_cmake_configure.log" >&2
+        echo "build_all.sh: exercises/cookbook/cmake did not configure" >&2
+        exit 1
+    fi
+    # Each find step reports what it found; the three lines are the entry's
+    # claim that three mechanisms produced three targets.
+    for lib in SQLite3 OpenSSL libcurl; do
+        grep -q "Found $lib" "$OUT/cookbook_cmake_configure.log" || {
+            echo "build_all.sh: the cookbook's CMake project did not report finding $lib:" >&2
+            sed 's/^/  /' "$OUT/cookbook_cmake_configure.log" >&2; exit 1; }
+    done
+    if ! cmake --build "$CBK" > "$OUT/cookbook_cmake_build.log" 2>&1; then
+        sed 's/^/  /' "$OUT/cookbook_cmake_build.log" >&2
+        echo "build_all.sh: exercises/cookbook/cmake configured but did not build" >&2
+        exit 1
+    fi
+    if ! (cd "$CBK" && ctest --output-on-failure > "$OUT/cookbook_ctest.log" 2>&1); then
+        sed 's/^/  /' "$OUT/cookbook_ctest.log" >&2
+        echo "build_all.sh: a cookbook recipe failed under CTest" >&2
+        exit 1
+    fi
+    echo "  ok   cookbook/cmake: SQLite3::SQLite3, OpenSSL::Crypto and PkgConfig::CURL found; three judges green under CTest"
+elif [ "$REQUIRE_CMAKE" = 1 ] && [ "$REQUIRE_OPENSSL" = 1 ] && [ "$REQUIRE_CURL" = 1 ] && [ "$REQUIRE_SQLITE" = 1 ]; then
+    echo "build_all.sh: cmake or one of sqlite3, libcrypto, libcurl is missing, and all four --require flags were given" >&2
+    exit 1
+else
+    echo "  SKIPPED - needs cmake and all of sqlite3, libcrypto, libcurl via pkg-config (CI runs this for real)"
 fi
 
 echo "ALL GREEN"

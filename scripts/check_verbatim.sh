@@ -54,7 +54,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 python3 - <<'PYEOF'
-import glob, re, sys
+import glob, os, re, sys
 
 failures = []
 
@@ -310,25 +310,53 @@ for chapter, script, openings in GENERATED:
             failures.append(f"{chapter}: the {opening!r} listing is not verbatim "
                             f"in {script}, which generates and asserts it")
 
-# Appendix J is Chapter 26/27/40's lookup half, and its one CMake listing is
-# the runtime-delivery project that build_all.sh generates into a temp
-# directory and holds both ways (installed executable loads through
+# Appendix J is Chapter 26/27/40's lookup half, and its CMake listings are
+# checked projects: the runtime-delivery one that build_all.sh generates into
+# a temp directory and holds both ways (installed executable loads through
 # INSTALL_RPATH; fails to load without it) - the generated arrangement above,
-# with a cmake fence instead of a cpp one. Every cmake fence on the page must
-# be verbatim in build_all.sh, and the page holds no cpp fence, as Appendix G
-# does not: a page with nothing to compile owes build_all.sh nothing, and a
-# page with one listing owes it exactly that listing.
+# with a cmake fence instead of a cpp one - and the system-library one,
+# committed under exercises/cookbook/cmake/ and run under CTest. Every cmake
+# fence on the page must be verbatim in build_all.sh or, banner-stripped, in
+# one of the committed files; each committed file must be on the page whole
+# (the Appendix H both-ways rule, so editing the file means editing the
+# page); and the page holds no cpp fence, as Appendix G does not: a page with
+# nothing to compile owes build_all.sh nothing, and a page with a listing
+# owes it exactly that listing.
 def cmake_fences(path):
     return re.findall(r'```cmake\n(.*?)```', open(path).read(), re.S)
 
+def cmake_body(path):
+    # a committed CMake file may open with a '#' banner the page omits: the
+    # leading comment lines up to the first blank line, and that blank. A
+    # comment after that blank is body, and the page must carry it.
+    lines = open(path).read().split('\n')
+    i = 0
+    while i < len(lines) and lines[i].startswith('#'):
+        i += 1
+    while i < len(lines) and not lines[i].strip():
+        i += 1
+    return '\n'.join(lines[i:]).rstrip('\n')
+
+J_CMAKE_FILES = ['exercises/cookbook/cmake/CMakeLists.txt']
 j_generator = open('scripts/build_all.sh').read()
+j_page = open('book/J-cmake-catalogue.md').read()
+j_bodies = {}
+for p in J_CMAKE_FILES:
+    if os.path.exists(p):
+        j_bodies[p] = cmake_body(p)
+    else:
+        failures.append(f"{p} is missing; book/J-cmake-catalogue.md quotes it whole")
 j_cmake = cmake_fences('book/J-cmake-catalogue.md')
 if not j_cmake:
     failures.append("book/J-cmake-catalogue.md holds no cmake fence; its runtime-delivery listing is missing")
 for i, block in enumerate(j_cmake, 1):
-    if block.rstrip('\n') not in j_generator:
+    text = block.rstrip('\n')
+    if text not in j_generator and not any(text in body for body in j_bodies.values()):
         first = block.strip().split('\n')[0]
-        failures.append(f"book/J-cmake-catalogue.md cmake fence #{i} ({first!r}) is not verbatim in scripts/build_all.sh, which generates and asserts it")
+        failures.append(f"book/J-cmake-catalogue.md cmake fence #{i} ({first!r}) is verbatim neither in scripts/build_all.sh nor in {', '.join(J_CMAKE_FILES)}")
+for p, body in j_bodies.items():
+    if body not in j_page:
+        failures.append(f"{p} (banner-stripped) is not on book/J-cmake-catalogue.md whole; the page quotes it, so edit both in one commit")
 j_cpp = cpp_fences('book/J-cmake-catalogue.md')
 if j_cpp:
     failures.append(f"book/J-cmake-catalogue.md holds {len(j_cpp)} cpp fence(s); its contract is no C++ listings")
@@ -350,6 +378,6 @@ print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
       f"{len(f_blocks)} cookbook fences, {len(TICKETS)} cards, "
       f"{len(ch38_fences)} ch38 fences, {len(ch39_fences)} ch39 fences, {len(ch42_fences)} ch42 fences, "
       f"{len(h_fences)} appH fences + "
-      f"{len(UNITS)} whole units on {len(pages)} pages, {gen_pairs} generated, {len(j_cmake)} J cmake, "
+      f"{len(UNITS)} whole units on {len(pages)} pages, {gen_pairs} generated, {len(j_cmake)} J cmake ({len(J_CMAKE_FILES)} committed), "
       f"{len(k_fences)} appK fences, G and J cpp-free)")
 PYEOF

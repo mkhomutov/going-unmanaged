@@ -2,7 +2,7 @@
 
 [Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake), [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) and [Chapter 40](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in) teach CMake the way the rest of the book teaches everything: in the order the job presents it, each verb arriving with the problem it solves. This page is the other shape, for the moment the verb is already in your head — a colleague's CMakeLists, a vendor's sample, an error naming a command you have not met — and you need the page that owns it in fifteen seconds. It is [Appendix G](G-the-bridge-catalogue.md#appendix-g--the-bridge-catalogue)'s shape applied to the build: a lookup table first, then the handful of tools the chapters never needed, each priced, and a decision table.
 
-One honesty note before the table. Every listing in the three chapters is built by `build_all.sh`; the entries in the second half of this page are not, except the first, because a DLL copy step or a cross-compile is a fact about a machine the CI matrix does not have. Read the rest as Chapter 40 reads its toolchain-file section — prose with the honesty stated: nothing checks it but you, the day you need it.
+One honesty note before the table. Every listing in the three chapters is built by `build_all.sh`; the entries in the second half of this page are not, except the first two, because a DLL copy step or a cross-compile is a fact about a machine the CI matrix does not have. Read the rest as Chapter 40 reads its toolchain-file section — prose with the honesty stated: nothing checks it but you, the day you need it.
 
 ### The verbs, and the page that owns each
 
@@ -26,6 +26,8 @@ One honesty note before the table. Every listing in the three chapters is built 
 | `add_subdirectory` | vendored source built as part of this build | [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) |
 | `include(FetchContent)`, `FetchContent_Declare`, `FetchContent_MakeAvailable`, `GIT_TAG` | pinned source cloned at configure time — a tag or a hash, never a branch | [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) |
 | `find_package(X CONFIG REQUIRED)`, `CMAKE_PREFIX_PATH` | a package that installed its own config file, located by prefix | [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) and [Chapter 40](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in) |
+| `find_package(SQLite3)`, `find_package(OpenSSL)`, `SQLite3::SQLite3`, `OpenSSL::Crypto` | a library the system provides, found by a module CMake ships and presented as an imported target | [this page, below](#what-the-chapters-never-needed), *A library the system provides* |
+| `find_package(PkgConfig)`, `pkg_check_modules(... IMPORTED_TARGET ...)`, `PkgConfig::CURL` | the same, from a library's pkg-config metadata | [this page, below](#what-the-chapters-never-needed), *A library the system provides* |
 | `find_path`, `find_library`, `find_package_handle_standard_args`, `CMAKE_MODULE_PATH` | the find-module you write when the SDK shipped no config package | [Chapter 40](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in) |
 | `install(TARGETS ... EXPORT)`, `install(EXPORT ...)`, `install(DIRECTORY)`, `install(FILES)` | the producing half of `find_package` | [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) and [Chapter 40](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in) |
 | `configure_package_config_file`, `write_basic_package_version_file`, `include(GNUInstallDirs)` | the config and version files, and the install directories a distro may override | [Chapter 40](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in) |
@@ -40,9 +42,9 @@ One honesty note before the table. Every listing in the three chapters is built 
 
 ### What the chapters never needed
 
-Each entry below is a tool a plug-in shop meets that no chapter had a reason to introduce. Each says what it is for, what it costs, and when to reach for it; the first is the one the repository checks, and the note above covers the rest.
+Each entry below is a tool a plug-in shop meets that no chapter had a reason to introduce. Each says what it is for, what it costs, and when to reach for it; the first two are the ones the repository checks, and the note above covers the rest.
 
-**Getting the runtime to the loader.** Chapter 12's trio ends with a runtime binary the *loader* must find, and Chapter 26 said the step was yours — PATH, an explicit copy, or RPATH — without spelling any of the three. The spelling depends on the platform, and it is the one entry on this page the repository does check. On Linux and macOS an executable carries a list of directories the loader searches before the system directories, its *runpath* (an `LD_LIBRARY_PATH` or `DYLD_LIBRARY_PATH` in the environment still wins, which is why the check below unsets both), and CMake writes it at install time from one property — relative to the executable itself, so the whole prefix can move:
+**Getting the runtime to the loader.** Chapter 12's trio ends with a runtime binary the *loader* must find, and Chapter 26 said the step was yours — PATH, an explicit copy, or RPATH — without spelling any of the three. The spelling depends on the platform, and it is one of the two entries on this page the repository does check. On Linux and macOS an executable carries a list of directories the loader searches before the system directories, its *runpath* (an `LD_LIBRARY_PATH` or `DYLD_LIBRARY_PATH` in the environment still wins, which is why the check below unsets both), and CMake writes it at install time from one property — relative to the executable itself, so the whole prefix can move:
 
 ```cmake
 cmake_minimum_required(VERSION 3.16)
@@ -77,6 +79,65 @@ install(TARGETS telemetry report
 
 `build_all.sh` generates that project into a temporary directory under the cmake probe, installs it, and runs the installed executable from a directory that is not the prefix — then installs it again with `-DCMAKE_SKIP_INSTALL_RPATH=ON` and asserts the same run *fails to load*, because a step that only ever succeeds proves nothing about what the runpath did. (In the build tree CMake writes a runpath for you, which is why the bug appears only in the installed copy.) The symptom, when it arrives, is a program that runs from the build tree and dies on the customer's machine before `main` — `dyld: Library not loaded` on macOS, `error while loading shared libraries` on Linux, *the code execution cannot proceed because X.dll was not found* on Windows. Windows has no runpath: the loader searches the executable's own directory, then the system directories, then `PATH`, so the library is *copied* beside the executable — `$<TARGET_RUNTIME_DLLS:report>` (CMake 3.21) names the `SHARED` targets a target links whose location CMake knows, and an `add_custom_command(TARGET report POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:report> $<TARGET_RUNTIME_DLLS:report> COMMAND_EXPAND_LISTS)` inside an `if(WIN32)` puts them there (the expression is empty elsewhere, and an `UNKNOWN IMPORTED` target from a find-module like Chapter 40's is not among what it lists — that DLL you copy by name). For a plug-in the host's directory is the search path, and where the vendor's DLL goes is the bundling step Chapter 40's pitfalls name. **Price:** an install prefix that must keep its shape; a DLL copy step that runs every build. **When:** the moment the runtime half of the trio is a library you or the vendor built, which for a plug-in is usually day one.
 
+**A library the system provides.** Chapter 27's fourth strategy — locate it, never copy it in — was spelled there for a vendor with a config package; for a library the *system* ships, the cookbook practises it on libcrypto, libcurl and sqlite3 in the shell spelling only, `pkg-config --cflags --libs` spliced into a compiler line by `build_all.sh`. The CMake spelling is a find step that yields an imported target, three ways. A module CMake ships — `FindSQLite3.cmake`, `FindOpenSSL.cmake`; `cmake --help-module-list` names the others — is `find_package(SQLite3 REQUIRED)` and a link to the module's target, which carries include directory and library both: Chapter 27's `find_package` shape with a module in place of the config package. A `.pc` file and no module is `find_package(PkgConfig REQUIRED)` then `pkg_check_modules(CURL REQUIRED IMPORTED_TARGET libcurl)`, which turns what `build_all.sh` reads through `pkg-config` into `PkgConfig::CURL` (libcurl has a module too; the `.pc` spelling is shown on it because every machine has one). Neither is Chapter 40's hand-written find-module. All three fail at configure time, naming the library, when `REQUIRED` is given — a spliced compiler line only does if the script probes first, as `build_all.sh`'s does. The three, in one file:
+
+```cmake
+cmake_minimum_required(VERSION 3.18)      # an ALIAS of an imported target needs 3.18
+
+project(cookbook_system_libraries LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(COOKBOOK ${CMAKE_CURRENT_SOURCE_DIR}/..)
+
+# 1. A module CMake ships: find_package(SQLite3) defines a target - named
+#    SQLite::SQLite3 until CMake 4.3, SQLite3::SQLite3 from there, the old
+#    name kept but deprecated. The module's own advice for a project that
+#    must configure under both is this alias, and it is the price the
+#    catalogue names: the target's spelling is the machine's CMake's.
+find_package(SQLite3 REQUIRED)
+if(NOT TARGET SQLite3::SQLite3)
+    add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+endif()
+add_executable(cb_database ${COOKBOOK}/database.cpp)
+target_link_libraries(cb_database PRIVATE SQLite3::SQLite3)
+
+# 2. Another shipped module: find_package(OpenSSL) defines OpenSSL::Crypto
+#    (and OpenSSL::SSL, which this recipe does not need).
+find_package(OpenSSL REQUIRED)
+add_executable(cb_crypto ${COOKBOOK}/crypto.cpp)
+target_link_libraries(cb_crypto PRIVATE OpenSSL::Crypto)
+
+# 3. FindPkgConfig: for a library CMake has no module for, pkg-config's
+#    metadata becomes an imported target - PkgConfig::CURL - with one call.
+#    libcurl has a module too (FindCURL, CURL::libcurl); it is spelled this
+#    way here so the third mechanism is shown on a library every machine has.
+#    -isystem exercises/third_party is Recipe 46's vendored JSON, Chapter
+#    27's first strategy sitting beside its fourth in one target.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(CURL REQUIRED IMPORTED_TARGET libcurl)
+add_executable(cb_http ${COOKBOOK}/http.cpp)
+target_link_libraries(cb_http PRIVATE PkgConfig::CURL)
+target_include_directories(cb_http SYSTEM PRIVATE ${COOKBOOK}/../third_party)
+
+foreach(t cb_database cb_crypto cb_http)
+    if(MSVC)
+        target_compile_options(${t} PRIVATE /W4)
+    else()
+        target_compile_options(${t} PRIVATE -Wall -Wextra)
+    endif()
+endforeach()
+
+enable_testing()
+add_test(NAME cb_database COMMAND cb_database)
+add_test(NAME cb_crypto COMMAND cb_crypto)
+add_test(NAME cb_http COMMAND cb_http)
+```
+
+`build_all.sh` configures that project and runs the three under CTest where cmake and all three libraries are present — the same source files, each under its own judge, without the sanitizers the flat build already applied — and `check_verbatim.sh` holds the listing to this page both ways. **Price:** where a library lives and what its target is called is the machine's CMake's, not the project's — CMake 4.3 renamed the SQLite target, which the alias above absorbs — so the version the binary reports (`sqlite3_libversion()`, Recipe 42's closing line) is the one to trust over any `.pc` file's. And `REQUIRED` on an optional dependency fails every machine without it; drop it and test `<Pkg>_FOUND`. **When:** the library is one the deployment target ships or its package manager installs; never for something that must travel with the plug-in, which is `FetchContent` or the vendored copy.
+
 **Precompiled headers.** `target_precompile_headers(monitor PRIVATE <vector> <string> <hostsdk/hostsdk.h>)` compiles the named headers once per target and reuses the result for every translation unit, which is the MSVC `pch.h` you may remember, made portable and generated — and `REUSE_FROM` lets several targets share one. **Price:** every translation unit in the target now depends on every header in the list, so a change to one recompiles all of them, and a header that was included through the PCH but not through the file compiles in the project and fails in a consumer that has no PCH. **When:** the build is slow and the profile of it says the same vendor header is parsed two hundred times; not before measuring.
 
 **Link-time optimization.** `set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)` — after `include(CheckIPOSupported)` and `check_ipo_supported()`, because not every toolchain can — makes the optimizer see the whole program at link time, which is where the devirtualization Chapter 5 mentioned comes from, and where the inlining Chapter 37 warned about starts reaching across translation units. **Price:** longer links, and an ABI hazard Chapter 27 named: objects built with `/GL` (Chapter 27's exclusion) or `-flto` are not linkable by a different toolchain version, so a static library shipped that way ties its consumers to your compiler. **When:** a Release build you measured, never a library you ship.
@@ -99,6 +160,7 @@ install(TARGETS telemetry report
 | A vendor DLL next to a host plug-in | the vendor's documented search location, then the copy step | anything that edits the host's own directory layout |
 | A dependency that is not a CMake project | `ExternalProject_Add` plus a hand-written imported target | forcing it through `FetchContent` |
 | A pinned CMake dependency | `FetchContent` with a tag or hash (Chapter 27) | `ExternalProject`'s extra ceremony |
+| A library the system provides | `find_package` with a shipped module, else `FindPkgConfig`'s `IMPORTED_TARGET` | vendoring a copy of what the platform already ships |
 | Tests that fail on a sanitizer finding or a hang | `set_tests_properties` `ENVIRONMENT` and `TIMEOUT` | a script that greps the log |
 | A faster rebuild | `ccache` first; a PCH after measuring; unity builds last | LTO — it slows the link and buys speed at run time, not at build time |
 | A shipping archive | `CPack` from the install rules | a hand-written zip step that drifts from `install()` |
