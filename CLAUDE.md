@@ -224,8 +224,11 @@ Chapter 25's Finding 10.
   each module's tests asserting what the recipe claims. On the page a recipe
   is two tabs, C++ and Rust, each an include. build_all.sh runs
   `cargo test --offline` with `RUSTFLAGS=-D warnings` behind a probe
-  (`--require-cargo`, which CI passes); Recipes 1–13 have a Rust tab so far,
-  the rest follow by PR
+  (`--require-cargo`, which CI passes). All 49 recipes have the tab: 36
+  carry code (32 tests), and 13 carry a one-line note instead, because the
+  standard library has no JSON, calendar, cryptography, HTTP, SQLite, regex
+  (Recipe 44 gets a std answer anyway), shared memory or memory mapping and
+  the crate takes no dependency — the note names the ecosystem crate
 - `exercises/constlab/` — Appendix I's lab, and the only one in the repo whose
   judge asserts a build FAILS. `counter.h` + `main.cpp` compile and run
   clean; five const violations behind `-DCONSTLAB_VIOLATION_1..5` must each

@@ -1727,4 +1727,5 @@ Step 4 is DONE too: every listing the book shows from a lab, a solution or a
 script heredoc is included from the file by a marked section (132 includes),
 and `check_verbatim.sh` refuses a copy pasted back. Step 5 has begun: the
 cookbook's Rust tab (`exercises/cookbook/rust/`, a tested crate behind a
-cargo probe) covers Recipes 1–13 so far.
+cargo probe) covers all 49 recipes — 36 with code, 13 with a one-line
+note naming the ecosystem crate where the standard library has nothing.
