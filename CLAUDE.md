@@ -371,9 +371,9 @@ Chapter 25's Finding 10.
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
 - `scripts/build_all.sh` — builds AND runs every solution; the repo invariant.
-  Its last ten sections may skip: one builds `exercises/deplab/` three ways
+  Its last eleven sections may skip: one builds `exercises/deplab/` three ways
   (Chapter 27), one configures, builds and runs `exercises/buildlab/`'s
-  CMakeLists, one installs `exercises/pluginlab/`'s SDK drop and builds,
+  CMakeLists, one runs `exercises/skeleton/`'s three preset commands, one installs `exercises/pluginlab/`'s SDK drop and builds,
   loads and inspects its plug-in (Chapter 40), one generates Appendix J's
   runtime-delivery project and installs it with and without a runpath, one rebuilds
   `solutions/device_threaded_solution.cpp` under

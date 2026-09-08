@@ -14,7 +14,7 @@
 # What build_all.sh does with pkg-config in bash, this file does in CMake.
 # Built and run by build_all.sh under the cmake probe and the three
 # library probes together; each recipe's own harness is its judge.
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)      # an ALIAS of an imported target needs 3.18
 
 project(cookbook_system_libraries LANGUAGES CXX)
 
@@ -24,10 +24,17 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(COOKBOOK ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-# 1. A module CMake ships: find_package(SQLite3) defines SQLite::SQLite3.
+# 1. A module CMake ships: find_package(SQLite3) defines a target - named
+#    SQLite::SQLite3 until CMake 4.3, SQLite3::SQLite3 from there, the old
+#    name kept but deprecated. The module's own advice for a project that
+#    must configure under both is this alias, and it is the price the
+#    catalogue names: the target's spelling is the machine's CMake's.
 find_package(SQLite3 REQUIRED)
+if(NOT TARGET SQLite3::SQLite3)
+    add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+endif()
 add_executable(cb_database ${COOKBOOK}/database.cpp)
-target_link_libraries(cb_database PRIVATE SQLite::SQLite3)
+target_link_libraries(cb_database PRIVATE SQLite3::SQLite3)
 
 # 2. Another shipped module: find_package(OpenSSL) defines OpenSSL::Crypto
 #    (and OpenSSL::SSL, which this recipe does not need).
@@ -37,6 +44,8 @@ target_link_libraries(cb_crypto PRIVATE OpenSSL::Crypto)
 
 # 3. FindPkgConfig: for a library CMake has no module for, pkg-config's
 #    metadata becomes an imported target - PkgConfig::CURL - with one call.
+#    libcurl has a module too (FindCURL, CURL::libcurl); it is spelled this
+#    way here so the third mechanism is shown on a library every machine has.
 #    -isystem exercises/third_party is Recipe 46's vendored JSON, Chapter
 #    27's first strategy sitting beside its fourth in one target.
 find_package(PkgConfig REQUIRED)

@@ -54,7 +54,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 python3 - <<'PYEOF'
-import glob, re, sys
+import glob, os, re, sys
 
 failures = []
 
@@ -326,17 +326,26 @@ def cmake_fences(path):
     return re.findall(r'```cmake\n(.*?)```', open(path).read(), re.S)
 
 def cmake_body(path):
-    # a committed CMake file may open with a '#' banner the page omits
+    # a committed CMake file may open with a '#' banner the page omits: the
+    # leading comment lines up to the first blank line, and that blank. A
+    # comment after that blank is body, and the page must carry it.
     lines = open(path).read().split('\n')
     i = 0
-    while i < len(lines) and (lines[i].startswith('#') or not lines[i].strip()):
+    while i < len(lines) and lines[i].startswith('#'):
+        i += 1
+    while i < len(lines) and not lines[i].strip():
         i += 1
     return '\n'.join(lines[i:]).rstrip('\n')
 
 J_CMAKE_FILES = ['exercises/cookbook/cmake/CMakeLists.txt']
 j_generator = open('scripts/build_all.sh').read()
 j_page = open('book/J-cmake-catalogue.md').read()
-j_bodies = {p: cmake_body(p) for p in J_CMAKE_FILES}
+j_bodies = {}
+for p in J_CMAKE_FILES:
+    if os.path.exists(p):
+        j_bodies[p] = cmake_body(p)
+    else:
+        failures.append(f"{p} is missing; book/J-cmake-catalogue.md quotes it whole")
 j_cmake = cmake_fences('book/J-cmake-catalogue.md')
 if not j_cmake:
     failures.append("book/J-cmake-catalogue.md holds no cmake fence; its runtime-delivery listing is missing")

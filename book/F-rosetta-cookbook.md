@@ -1587,7 +1587,9 @@ this `hex` is lower-case, and `ToHexStringLower` arrived in .NET 9. Needs
 `<openssl/evp.h>` and a link against libcrypto — `pkg-config --cflags
 --libs libcrypto`, which `build_all.sh` adds under its probe and
 `check.sh` does not — `<cstdint>`, `<stdexcept>`, `<string>`,
-`<string_view>`, `<vector>`.
+`<string_view>`, `<vector>`. In CMake the same link is
+`find_package(OpenSSL)` and `OpenSSL::Crypto` — [Appendix J](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue)'s
+entry.
 
 > [!WARNING]
 > **Trap:** `sha256(text)` hashes *bytes*, and a C# string is UTF-16 — `SHA256.HashData(Encoding.UTF8.GetBytes(s))` and this function agree, `SHA256.HashData(MemoryMarshal.AsBytes(s.AsSpan()))` does not, and both are correct hashes of different bytes; [Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)'s rule that the encoding is named applies to every byte that is hashed, signed or sealed.
@@ -1962,7 +1964,9 @@ page, and a stall the deadline cuts short, so both verdicts are judged and
 the timeout's unit with them. Needs `<curl/curl.h>` and a link against libcurl —
 `pkg-config --cflags --libs libcurl`, which `build_all.sh` adds under its
 probe and `check.sh` does not — `<chrono>`, `<memory>`, `<stdexcept>`,
-`<string>`.
+`<string>`. In CMake the same link is `pkg_check_modules(... IMPORTED_TARGET
+libcurl)` and `PkgConfig::CURL` — [Appendix J](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue)'s
+entry.
 
 > [!WARNING]
 > **Trap:** a green `CURLcode` says the bytes arrived, not that they are the answer — the body of a 404 is an HTML page that parses as JSON about as well as it reads, and a caller that checked only `perform`'s return will feed it to Recipe 26 and file the resulting `parse_error` under "the server is flaky".
@@ -2125,9 +2129,10 @@ has no leak detector at all. sqlite_orm and SOCI wrap this; most native
 codebases speak it raw, and reading it is cheaper than a wrapper nobody
 else on the team uses. Needs `<sqlite3.h>` and a
 link against libsqlite3 — `pkg-config --cflags --libs sqlite3`, which
-`build_all.sh` adds under its probe and `check.sh` does not; the CMake
-spelling, `find_package(SQLite3)`, is in [Appendix J](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue) — `<memory>`,
-`<stdexcept>`, `<string>`, `<vector>`.
+`build_all.sh` adds under its probe and `check.sh` does not — `<memory>`,
+`<stdexcept>`, `<string>`, `<vector>`. In CMake the same link is
+`find_package(SQLite3)` — [Appendix J](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue)'s
+entry.
 
 > [!WARNING]
 > **Trap:** `sqlite3_close` returning `SQLITE_BUSY` at shutdown is a statement somebody never finalized — Chapter 35's still-live-at-unload, one library over — and the tempting fix, `sqlite3_close_v2`, does not fix it: it defers the close until the last statement is finalized, which for a leaked one is never, so the handle, its open file and any lock a `SELECT` abandoned mid-rows was holding outlive your plug-in in the host's process; and a second close of the same handle is `SQLITE_MISUSE` returned into a deleter that discards it, read inside a library no sanitizer instruments.
