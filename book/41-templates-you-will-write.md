@@ -241,7 +241,7 @@ With the detection idiom in place the diagnosis is a sentence, and it arrives at
 
 ### What is not here, on purpose
 
-SFINAE beyond the detection idiom; CRTP; expression templates; `std::enable_if` gymnastics; the metaprogramming that made Boost famous. All real, all in the standard library you use every day, and none of it is a plug-in author's to write in the first year — which is why this chapter is a working subset rather than a tutorial. When one of those names arrives in a review comment, Appendix E says what kind of thing it is; when you need to *write* one, the book to open is Vandevoorde, Josuttis and Gregor's *C++ Templates: The Complete Guide* ([Appendix D](D-resources.md#appendix-d--resources-further-reading-and-first-week-tips)), and the feature to learn first is C++20 concepts, which retire most of the tricks.
+SFINAE beyond the detection idiom; CRTP; expression templates; `std::enable_if` gymnastics; the metaprogramming that made Boost famous. All real, all in the standard library you use every day, and none of it is a plug-in author's to write in the first year — which is why this chapter is a working subset rather than a tutorial. When one of those names arrives in a review comment, Appendix E says what kind of thing it is; when you need to *write* one, the book to open is Vandevoorde, Josuttis and Gregor's *C++ Templates: The Complete Guide* ([Appendix D](D-resources.md#appendix-d--resources-and-further-reading)), and the feature to learn first is C++20 concepts, which retire most of the tricks.
 
 ### Pitfalls
 

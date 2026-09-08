@@ -1,6 +1,6 @@
 ## Chapter 31 — Reading What the Tools Tell You
 
-Chapter 24's practice plan tells you, on Day 2, to break the Buffer three ways and "read its reports until they make sense". The book has never shown you one. This chapter is that omission repaired, plus the debugger and profiler skills that differ most from the C# experience.
+Chapter 15's sabotage runs tell you to break the Buffer on purpose and read what AddressSanitizer says. The book has never shown you a report. This chapter is that omission repaired, plus the debugger and profiler skills that differ most from the C# experience.
 
 The difference in posture is worth naming first. In C#, a failure comes to *you*: an exception with a type, a message, and a stack trace, thrown at the moment of the mistake. In C++, a failure is usually silent — the program keeps running with corrupted memory and dies somewhere unrelated, or doesn't die at all. The tools that turn silence into a report have to be invited in, at build time, before the run. That is why the sanitizer flags are in every command in this book.
 
@@ -184,9 +184,9 @@ Watchpoints are a scarce hardware resource — a handful at a time, each coverin
 
 The single biggest difference between fast and slow debugging is not tool knowledge. It is arriving with a hypothesis.
 
-Chapter 24's predict-then-run drill is the training for exactly this. Before you step, say what you expect the value to be. A debugger session that begins "let me look around" takes an hour; one that begins "I believe `size_` is stale by the time `At` runs, and I will know within two steps" takes two minutes — and if the prediction was wrong, *that* is the finding, and it goes in the notes file.
+Predicting before you run is the training for exactly this. Before you step, say what you expect the value to be. A debugger session that begins "let me look around" takes an hour; one that begins "I believe `size_` is stale by the time `At` runs, and I will know within two steps" takes two minutes — and if the prediction was wrong, *that* is the finding, and it goes in the notes file.
 
-Three questions that resolve most stuck moments before the debugger is even needed, in order — the ladder from Appendix C, sharpened:
+Three questions that resolve most stuck moments before the debugger is even needed, in order:
 
 1. **Which stage failed?** Preprocessor, compile, link, or run (Chapter 12). This decides which file you open.
 2. **What changed?** If it worked an hour ago, the diff is the suspect list. `git bisect` mechanizes this and is criminally underused for "when did this break".
@@ -233,8 +233,8 @@ Real problems do not arrive labelled with the chapter that owns them; they arriv
 | The host says objects are still live at shutdown | [Chapter 17](17-exercise-the-fakesdk.md#chapter-17--exercise-the-fakesdk), [Chapter 35](35-still-live-at-unload.md#chapter-35--still-live-at-unload) |
 | A crash inside a callback, or after the callback's owner died | [Chapter 18](18-exercise-the-device-sdk.md#chapter-18--exercise-the-device-sdk), [Chapter 22](22-exercise-lambda-lifetimes.md#chapter-22--exercise-lambda-lifetimes), [Chapter 29](29-concurrency.md#chapter-29--concurrency) |
 | Garbage — or mirrored — values decoded from a wire or a file | [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture) |
-| Sanitizers green, values wrong | Finding 10 in [Chapter 25](25-findings-from-practice.md#chapter-25--findings-from-practice-a-living-log), [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture) |
-| No leak report on a Mac that should have one | This chapter's leak section, and Finding 10 in [Chapter 25](25-findings-from-practice.md#chapter-25--findings-from-practice-a-living-log) |
+| Sanitizers green, values wrong | Finding 10 in [Chapter 25](25-findings-from-practice.md#chapter-25--gotchas-the-findings-log), [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture) |
+| No leak report on a Mac that should have one | This chapter's leak section, and Finding 10 in [Chapter 25](25-findings-from-practice.md#chapter-25--gotchas-the-findings-log) |
 | Non-ASCII text corrupts, or a string's length looks wrong | [Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings), Recipe 17 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) |
 | `-858993460` or `0xcccccccc` in a variable | [Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior) |
 | It broke when the library added a private member | [Chapter 27](27-dependency-management.md#chapter-27--dependency-management), [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) |

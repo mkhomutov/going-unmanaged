@@ -34,7 +34,7 @@ change: you build the driver thread yourself, out of `Device_Poll`.
    once — some runs pass, and only one of the two outcomes is the truth about
    the code. Then restore it and remove only the alive flag, predicting the
    failure before you run it.
-5. **Explain it out loud** (the Chapter 24 narration drill): why the flag is
+5. **Explain it out loud:** why the flag is
    published *before* the unregister, why the callback takes a weak reference
    rather than a strong one, and why no ordering you can write makes deleting
    the context safe.

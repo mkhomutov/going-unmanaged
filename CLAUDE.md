@@ -6,11 +6,13 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 42 chapters, appendices A–K), indexed by `book/README.md`. There
+(6 parts, chapters 1–42, appendices A–K — Chapter 24 and Appendix C were
+retired by SITE-PLAN.md step 3; a retired number or letter is never reused,
+and the Contents keeps a one-line entry for each so the ordered list still
+renders true), indexed by `book/README.md`. There
 is no single-file build any more: the book is read on GitHub and as the
 static site `scripts/build_site.sh` renders from the same files (SITE-PLAN.md,
-step 2 retired the concatenated file). Appendices run A–K with no
-gap — E is the glossary (item 10), G the bridge catalogue (item 16's
+step 2 retired the concatenated file). Appendices run A–K — E is the glossary (item 10), G the bridge catalogue (item 16's
 lookup half: the mechanism survey and decision table; no C++ listings —
 check_verbatim.sh enforces that no cpp fence lands there), H the choosing
 procedures (item 17: which container, how to take a parameter, what to
@@ -39,8 +41,8 @@ project has that an exercise does not — build systems, dependencies, testing,
 concurrency, authoring an ABI boundary, reading tool output. Chapter 29
 discharges the threading promises made in Ch 16/18; Chapter 30 is the
 authoring side of Ch 16's Bestiary (which only teaches consuming those
-shapes); Chapter 31 supplies the sanitizer reports Ch 24's Day 2 tells the
-reader to study but never shows. Chapters 32–37 are the ticket-shaped
+shapes); Chapter 31 supplies the sanitizer reports Chapter 15's sabotage runs tell
+the reader to study but never show. Chapters 32–37 are the ticket-shaped
 scenario chapters (ROADMAP items 11, 14 and 15, all DONE): symptom first,
 no concept named in advance, diagnosis behind a spoiler fold. Ch 33 adds the inversion the
 job supplies — the sanitizer report arrives attached to the ticket, and the
@@ -577,7 +579,7 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
   pedagogical spine ("in C# this would..."). British-neutral English.
 - Every exercise chapter follows: *trains / vendor code (if any) / the task /
   reference solution / pitfalls / stretch goals*.
-- Findings (Chapter 25) follow strictly: **Found in / The theory /
+- Findings (Chapter 25, titled *Gotchas*) follow strictly: **Symptom / The theory /
   broken-vs-fixed code / Habit**. Community findings via PR keep this shape.
 - Recipes (Appendix F) follow strictly: **In C# / The recipe / Why it looks
   like this / Trap** — the trap a one-line `[!WARNING]`, the why
@@ -716,8 +718,8 @@ stay on the list marked DONE so item numbers never shift. Short version:
   `exercises/bridgelab/` (the main-thread queue under a bounded-wait
   judge), plus Appendix G, the survey of mechanisms and its decision
   table.
-  The glossary was item 10 and is now Appendix E (letters run A–K with no
-  gap). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
+  The glossary was item 10 and is now Appendix E (letters run A–K; C has
+  since been retired). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
   timers), then 17 (UTF-8↔UTF-16), then 18–20 (find, optional, variant),
   then 21–23 (a custom exception, value-or-error, the empty string), then

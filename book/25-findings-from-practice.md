@@ -1,10 +1,10 @@
-## Chapter 25 — Findings from Practice: a Living Log
+## Chapter 25 — Gotchas: the Findings Log
 
-*A living log: weak spots discovered during hands-on exercises, each with the theory behind it, the broken and fixed code side by side, and the habit to build. New findings get appended as practice continues — this chapter is meant to grow.*
+*The mistakes hands-on work actually produced, each a numbered Finding: the symptom you see, the theory behind it, the broken and fixed code side by side, and the habit to build. Findings are cited by number across the book, so they append and are never renumbered.*
 
 ### Finding 1 — Copy-shaped moves: a move that doesn't steal is a copy with a misleading name
 
-**Found in:** the Tracer exercise — move operations written as `name = "moved from " + t.name;`.
+**Symptom:** a move that costs what a copy costs, and a moved-from object still holding its data — the Tracer's move operations written as `name = "moved from " + t.name;`.
 
 **The theory.** To understand moving, look at what a `std::string` physically is: roughly three fields — a pointer to heap-allocated characters, a size, and a capacity. "Moving a string" means something concrete about those fields:
 
@@ -54,7 +54,7 @@ Two details visible only in tracing code: in the move *constructor*, by the time
 
 ### Finding 2 — Member initializer list vs assignment in the body — construction happens before the brace
 
-**Found in:** the same Tracer — all four copy/move operations assigned `name` inside the body.
+**Symptom:** a member assigned in the constructor body — all four of the Tracer's copy/move operations set `name` after the brace — and, the day the member is `const` or a reference, a constructor that does not compile.
 
 **The theory.** Members are **constructed before the constructor body runs** (Chapter 4). So this:
 
@@ -78,7 +78,7 @@ Tracer(const Tracer& t) : name("copy of " + t.name) {   // one step
 
 ### Finding 3 — noexcept is a promise, not a decoration
 
-**Found in:** adding `noexcept` to a move that internally allocates.
+**Symptom:** `noexcept` on a move that allocates — so a `std::bad_alloc` inside it becomes `std::terminate`.
 
 **The theory.** `noexcept` tells callers — and especially `std::vector` — "this operation cannot throw." Vector uses it to choose its reallocation strategy: if your element's move constructor is noexcept, it *moves* elements to the new block; if not, it *copies* them, so that a mid-transfer exception can't leave the container half-destroyed. That is the behavior difference observed live in the Tracer output: `moved from v1 copy constructor` on reallocation before the keyword, a move after it.
 
@@ -90,7 +90,7 @@ Tracer(const Tracer& t) : name("copy of " + t.name) {   // one step
 
 ### Finding 4 — Assignment must deal with what you already hold
 
-**Found in:** Tracer's assignment operators — bodies identical to the constructors', which *happened* to be safe.
+**Symptom:** an assignment operator whose body is the constructor's — safe by luck in the Tracer, a leak the day the member is a raw pointer.
 
 **The theory.** Construction and assignment differ in one crucial way: at assignment time, **the target already owns something**. `name = ...` was safe in Tracer only because `std::string::operator=` internally releases the old buffer before taking the new value — the string did the dangerous step invisibly.
 
@@ -110,7 +110,7 @@ Correct assignment must release-then-acquire — or better, sidestep the orderin
 
 ### Finding 5 — The moved-from state: valid but unspecified
 
-**Found in:** the question "what state is `a` in?" after `Tracer c = std::move(a);`.
+**Symptom:** code that reads a moved-from object expecting something — the question "what state is `a` in?" after `Tracer c = std::move(a);`.
 
 **The theory.** A moved-from object is **not destroyed and not invalid** — it lives until its scope ends and its destructor runs normally (the Tracer output showed every moved-from object still getting a destructor line). The standard's phrase for its state is *valid but unspecified*: it is a real object satisfying its class invariants, but you must not assume anything about its contents.
 
@@ -129,7 +129,7 @@ One corner worth knowing: **self-move** (`a = std::move(a)`) must not corrupt th
 
 ### Finding 6 — Release-before-acquire assignment: exception safety is an ordering problem
 
-**Found in:** the Buffer exercise — copy assignment that deleted the old block, then allocated the new one.
+**Symptom:** copy assignment that deletes the old block, then allocates the new one — correct in every test where allocation succeeds, a double free on the day it throws.
 
 **The theory.** Assignment differs from construction in one way: the target already owns something (Finding 4). The naive order — free mine, then acquire the new — has a hidden failure mode:
 
@@ -161,7 +161,7 @@ Swap(tmp);           // noexcept pointer exchanges
 
 ### Finding 7 — `new T[n]` does not zero: indeterminate values are UB to read
 
-**Found in:** the Buffer constructor — `data_(new int[size])`.
+**Symptom:** fresh elements that read 0 on one machine and `-842150451` on another — the Buffer constructor's `data_(new int[size])`.
 
 **The theory.** `new int[size]` default-initializes the elements, and for built-in types default-initialization does *nothing*: the memory holds whatever bytes were there. Reading an element before writing it is undefined behavior of the quiet kind — on Linux and macOS it often prints 0 from pages the OS handed over zeroed, and garbage once that memory has been reused; MSVC's debug heap fills fresh allocations with `0xcd` instead, so you read `-842150451` there (Chapter 3's fill-pattern story, one allocator along). The Chapter 3 signature: works on my machine.
 
@@ -176,7 +176,7 @@ C# contrast worth noting: `new int[5]` in C# is always zeroed — the runtime gu
 
 ### Finding 8 — Accessors: return by reference, and provide the const-overload pair
 
-**Found in:** the Buffer — `int At(size_t) const` returning a copy, making the buffer write-only through its own API.
+**Symptom:** `buf.At(2) = 7` does not compile — `int At(size_t) const` returned a copy, making the Buffer write-only through its own API.
 
 **The theory.** Returning by value hands out a copy; `buf.At(2) = 7` does not compile at all — assignment needs a modifiable lvalue, and a returned `int` is a prvalue. Containers hand out **references** to their elements — and because a single `const` reference-returning accessor would hand out a mutable reference from a const object, the idiom is the pair.
 
@@ -195,7 +195,7 @@ Also decide the bounds contract explicitly: `assert` (documented precondition, f
 
 ### Finding 9 — Destructors: no null checks, no dead stores
 
-**Found in:** the Buffer destructor — `if (data_) delete[] data_; data_ = nullptr; size_ = 0;`.
+**Symptom:** a destructor doing more than freeing — `if (data_) delete[] data_; data_ = nullptr; size_ = 0;`.
 
 **The theory.** Three small misunderstandings in one function. `delete`/`delete[]` on a null pointer is a guaranteed safe no-op — the check is redundant. And assigning to members in a destructor is dead work: the object ceases to exist the instant the destructor returns; no code can legally observe those stores. (Compilers routinely eliminate them, confirming their meaninglessness.)
 
@@ -209,7 +209,7 @@ Beyond style, the busywork signals a mental model worth correcting: nulling memb
 
 ### Finding 10 — A clean sanitizer run is not a correctness proof
 
-**Found in:** the Buffer sabotage experiments — removing the self-move guard produced "no issues," which was itself the bug.
+**Symptom:** a sabotage run that should have failed came back clean — removing the Buffer's self-move guard produced "no issues," which was itself the bug.
 
 **The theory.** Walk the guardless move assignment through `c = std::move(c)`. First the shape this book's Buffer actually uses:
 

@@ -1669,8 +1669,9 @@ readings, and the book answers both without new code.
 first is a study habit, and the book's policy on it already exists; the
 second is a transport and two Bestiary shapes the reader can already read.
 
-**As a tool for learning and working:** Appendix C is the page, and its rule
-is the whole policy — review mode, and `scripts/check.sh` before belief,
+**As a tool for learning and working:** CONTRIBUTING.md's "Assistants, and
+the exercises" is the whole policy (it was Appendix C's page until SITE-PLAN
+step 3 retired the appendix) — review mode, and `scripts/check.sh` before belief,
 because in C++ the plausible-but-wrong answer compiles. **As a thing the
 plug-in calls:** a hosted model is JSON over HTTP — Recipes 25, 26, 41 and 46 —
 and it runs out of process by Chapter 38's invariant, since a model call
@@ -1681,8 +1682,7 @@ llama.cpp is an opaque-context Shape 2 (`llama_model*` freed by
 hands you an `OrtApi` function table, which
 is Chapter 40's `HostApi` shape — each a Chapter 27 dependency decision
 with a large binary and a licence attached. Chapter 27's batteries section
-carries the second reading in one paragraph; Appendix C gains one sentence
-pointing there for the reader who arrived with the first. Naming a vendor's
+carries the second reading in one paragraph. Naming a vendor's
 endpoint would break invariant 4 (no real product names in SDK material),
 which is one more reason Recipes 41 and 46 stay generic.
 
@@ -1718,4 +1718,6 @@ boundary, never a parallel syllabus. Decided 2026-09-08; the plan, the
 measurements behind it and the per-step acceptance tests live in
 [SITE-PLAN.md](SITE-PLAN.md). Step 1 (prove the generator on the unchanged
 book) is DONE — `scripts/build_site.sh`, strict, and a `site` CI job — and
-so is step 2 (the single-file build and the nav footers retired).
+so is step 2 (the single-file build and the nav footers retired); step 3's
+first PR, the cuts, has landed (Chapter 24 and Appendix C retired, Appendix D
+trimmed, the ticket tails gone, Chapter 25 retitled *Gotchas*).

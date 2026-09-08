@@ -6,9 +6,12 @@ you can attempt everything cold, without the book's reference solution on
 the next screen. Three directories are not exercises, and the paragraph
 after the table says which.
 
-The rule that makes it work (Chapter 24): **do the exercises cold** — compiler,
-debugger, sanitizer, and offline docs as your only feedback loops. Read the
-chapter's reference solution and pitfalls only *after* your own attempt.
+The rule that makes it work: **do the exercises cold** — compiler, debugger,
+sanitizer, and offline docs as your only feedback loops. Read the chapter's
+reference solution and pitfalls only *after* your own attempt. An assistant,
+if you use one, works in review mode — critique the attempt against the
+chapter's pitfalls, never write the solution — and its code goes through
+`scripts/check.sh` before it is believed.
 
 | Exercise | Chapter | Trains | Time | Reference solution |
 |---|---|---|---|---|
@@ -39,9 +42,9 @@ chapter's reference solution and pitfalls only *after* your own attempt.
 | [The Formula Field](exprlab/TASK.md) | 42 | user-typed text against injected objects: tokens, recursive descent, a bounded depth, a hand-computed value table | ~3 h | the files themselves: [expr.h](exprlab/expr.h) + [expr.cpp](exprlab/expr.cpp) + [main.cpp](exprlab/main.cpp) |
 | [The Const Lab](constlab/TASK.md) | Appendix I | const as one subject, judged by five builds that must fail | ~45 min | the files themselves: [counter.h](constlab/counter.h) + [main.cpp](constlab/main.cpp), plus five builds that must be refused |
 
-Chapter 24 (the practice plan) sequences everything above the dependency lab —
-the nine Part V exercises plus the Bestiary reading — into a one-week schedule;
-that row and the chapter rows below it belong to Part VI and come later, and the const lab sits last because its home is an appendix and nothing sequences it. The threaded
+The table is in the order to do them: the nine Part V exercises plus the
+Bestiary reading first — about a week of work; the dependency lab and the
+chapter rows below it belong to Part VI and come later, and the const lab sits last because its home is an appendix and nothing sequences it. The threaded
 callback assumes you have already done the Device SDK lab cold — it is that lab
 again with a driver thread in front of it — and the ABI lab assumes both SDK
 labs, since it asks you to publish the shapes those two taught you to consume.

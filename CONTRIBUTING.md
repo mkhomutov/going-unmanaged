@@ -41,13 +41,13 @@ writing it down properly.
 ## The Finding template
 
 Findings live in Chapter 25 — `book/25-findings-from-practice.md` — and follow
-one strict shape: **Found in / The theory / broken-vs-fixed code / Habit**. Community
+one strict shape: **Symptom / The theory / broken-vs-fixed code / Habit**. Community
 findings submitted via PR keep this shape. Concretely:
 
 ```markdown
 ## Finding N — <one-line title: the mistake, stated plainly>
 
-**Found in:** <which exercise or real-world situation surfaced it>.
+**Symptom:** <what you see — the wrong output, the refused build, the clean run that should not have been — and, briefly, where it surfaced>.
 
 **The theory.** <Why the language behaves this way — the mental model a C#
 developer is missing. Cite chapters by number where relevant.>
@@ -130,7 +130,7 @@ written down. A contribution answers the ones that apply **with a mechanism
 in the material itself** — a callout, a broken-vs-fixed pair, a check, an
 index entry — never with an intention in the PR description. Review reads
 new material against this list; the Finding template above is what the list
-looks like instantiated (**Found in** is the moment, **The theory** is the
+looks like instantiated (**Symptom** is the moment, **The theory** is the
 reflex, broken-vs-fixed is the failure, **Habit** is what survives).
 
 A correction needs only the last question. A new chapter, exercise, or
@@ -245,6 +245,33 @@ The book is also a static site, built from the same files:
 The build is strict — a link to a missing file or anchor fails it — so run
 it after editing `book/`; CI does. [SITE-PLAN.md](SITE-PLAN.md) is where the
 site is going.
+
+## Assistants, and the exercises
+
+The material was built with an assistant and is checked the way you would
+check one: every claim a program can make is pinned by a script, and the
+prose is re-derived against a compiler and the vendor docs. The same
+discipline is the rule for using an assistant *on* the material:
+
+- **Review mode, never author mode.** Ask it to critique your attempt against
+  the chapter's pitfalls; do not ask it for the solution. An assistant that
+  writes the solution has done the retrieval for you, which is to say it has
+  done the learning for you, which is to say nobody did. After the attempt
+  has met its real judges — the compiler, the sanitizers, the reference
+  solution — it is the ideal explainer of whatever gap remains.
+- **`scripts/check.sh` before belief.** Treat generated C++ as code from a
+  very confident colleague who does not test: in C++ the plausible-but-wrong
+  answer compiles. It goes through the canonical flags before it is believed,
+  exactly as your own does.
+- **What it cannot do is why the exercises exist.** It cannot make you
+  retrieve — what you produce unaided is the only honest measure of what you
+  own — and it cannot attach the evidence: a ticket chapter's sanitizer
+  report, hex capture or crash dump is real and CI keeps it real, where an
+  improvised exercise's bug may not be.
+
+Without an assistant the loop is docs, debugger and memory — slower, not
+weaker. It is also the maintainer's own mode when reviewing an attempt
+(CLAUDE.md, "Working with the maintainer").
 
 ## Where chapter code lives
 
@@ -397,8 +424,8 @@ Contribute, and become a co-author — concretely:
 
 - Accepted contributors are listed in the README's **Contributors** section
   (and permanently in the git history).
-- A contributed Finding may credit its finder in the **Found in** line, in
-  the book's own voice — e.g. *"**Found in:** the Buffer exercise (found by
+- A contributed Finding may credit its finder at the end of the **Symptom**
+  line, in the book's own voice — e.g. *"… the Buffer exercise (found by
   @handle)"*. Optional; say in your PR if you'd rather not be named.
 - The book text itself stays free of meta-commentary beyond that — no
   changelogs or credits inside chapters.
