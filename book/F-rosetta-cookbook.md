@@ -2125,7 +2125,8 @@ has no leak detector at all. sqlite_orm and SOCI wrap this; most native
 codebases speak it raw, and reading it is cheaper than a wrapper nobody
 else on the team uses. Needs `<sqlite3.h>` and a
 link against libsqlite3 — `pkg-config --cflags --libs sqlite3`, which
-`build_all.sh` adds under its probe and `check.sh` does not — `<memory>`,
+`build_all.sh` adds under its probe and `check.sh` does not; the CMake
+spelling, `find_package(SQLite3)`, is in [Appendix J](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue) — `<memory>`,
 `<stdexcept>`, `<string>`, `<vector>`.
 
 > [!WARNING]
