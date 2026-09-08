@@ -120,6 +120,10 @@ DIAGRAM_STYLE = (
 
 
 def _mmdc():
+    """A local install first, then a global one - check_mermaid.sh's order."""
+    local = pathlib.Path("node_modules/.bin/mmdc")
+    if local.is_file():
+        return str(local)
     return shutil.which("mmdc")
 
 
@@ -128,14 +132,21 @@ def _render_mermaid(source, theme, cache_dir):
     cached = cache_dir / f"{key}.svg"
     if cached.exists():
         return cached.read_text(encoding="utf-8")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    # --no-sandbox: Chrome's sandbox is unavailable in most CI containers, and
+    # the input is our own repository (the same setting check_mermaid.sh uses).
+    puppeteer = cache_dir / "puppeteer.json"
+    puppeteer.write_text('{"args":["--no-sandbox"]}\n', encoding="utf-8")
     with tempfile.TemporaryDirectory() as tmp:
         src = pathlib.Path(tmp) / "d.mmd"
         out = pathlib.Path(tmp) / "d.svg"
         src.write_text(source, encoding="utf-8")
-        subprocess.run([_mmdc(), "-q", "-i", str(src), "-o", str(out), "-t", theme, "-b", "transparent"],
-                       check=True, capture_output=True)
+        result = subprocess.run([_mmdc(), "-q", "-p", str(puppeteer), "-i", str(src), "-o", str(out),
+                                 "-t", theme, "-b", "transparent"],
+                                capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"mmdc failed on a {theme}-theme diagram:\n{result.stdout}{result.stderr}\n--- source ---\n{source}")
         svg = out.read_text(encoding="utf-8")
-    cache_dir.mkdir(parents=True, exist_ok=True)
     cached.write_text(svg, encoding="utf-8")
     return svg
 
