@@ -1,34 +1,33 @@
 // Appendix F, Recipes 1, 9, 38 and 49 - read and write a whole file; save one
 // without losing the old one; read a large file without copying it.
 //
-// The recipe functions below are quoted VERBATIM in book/F-rosetta-cookbook.md:
-// editing one means editing the appendix in the same commit (the testlab
-// discipline). main() is scaffolding, not part of any recipe - it asserts
-// what the recipes claim, so build_all.sh keeps the cookbook honest. For
-// Recipe 38 the load-bearing assertion is POSIX-only: after a save the name
-// must refer to a NEW file (a different inode), because a save that rewrote
-// the old file in place would pass every other check here and still leave a
-// torn file behind a crash. The saved file lives one directory BELOW the
-// temp directory on purpose: a save_file that put its temp in
-// temp_directory_path() instead of beside the file would otherwise be
-// indistinguishable from the recipe, and "same directory" is the recipe's
-// one claim about volumes. For Recipe 49 the judge is Chapter 36's
-// instrument: a replaced operator new counts heap allocations across the
-// mapping of a four-megabyte file, and the count must be zero - the recipe's
-// whole claim over a ReadAllBytes - with every byte compared against Recipe
-// 1's copy; on POSIX the file is then deleted under the live mapping and
-// read on, and the lowest free descriptor is compared before and after, so
-// a close left out of the constructor is seen. The delete-under-mapping
-// assertion runs on Windows too: the STL's remove asks for POSIX delete
-// semantics there (NTFS, Windows 10 1709 or later), so the name goes and
-// the section keeps the bytes - the old DeleteFile refused a mapped file
-// with ERROR_USER_MAPPED_FILE, and a first draft asserted that refusal
-// until the buildlab-msvc job showed the runner deleting it. A munmap left out of the destructor is the one
-// mistake no judge here sees: LeakSanitizer counts allocations, not
-// mappings. Under the buildlab-msvc job's ASan, a replaced operator new
-// costs that binary the new/delete mismatch checks (Microsoft documents
-// the trade); the count is worth it, and no other TU the job builds
-// replaces them.
+// The recipe functions below are included by book/F-rosetta-cookbook.md,
+// between their recipe-N section markers: edit here and the page follows, and
+// a marker moved is what the page shows. main() is scaffolding, not part of
+// any recipe - it asserts what the recipes claim, so build_all.sh keeps the
+// cookbook honest. For Recipe 38 the load-bearing assertion is POSIX-only:
+// after a save the name must refer to a NEW file (a different inode), because
+// a save that rewrote the old file in place would pass every other check here
+// and still leave a torn file behind a crash. The saved file lives one
+// directory BELOW the temp directory on purpose: a save_file that put its temp
+// in temp_directory_path() instead of beside the file would otherwise be
+// indistinguishable from the recipe, and "same directory" is the recipe's one
+// claim about volumes. For Recipe 49 the judge is Chapter 36's instrument: a
+// replaced operator new counts heap allocations across the mapping of a
+// four-megabyte file, and the count must be zero - the recipe's whole claim
+// over a ReadAllBytes - with every byte compared against Recipe 1's copy; on
+// POSIX the file is then deleted under the live mapping and read on, and the
+// lowest free descriptor is compared before and after, so a close left out of
+// the constructor is seen. The delete-under-mapping assertion runs on Windows
+// too: the STL's remove asks for POSIX delete semantics there (NTFS, Windows
+// 10 1709 or later), so the name goes and the section keeps the bytes - the
+// old DeleteFile refused a mapped file with ERROR_USER_MAPPED_FILE, and a
+// first draft asserted that refusal until the buildlab-msvc job showed the
+// runner deleting it. A munmap left out of the destructor is the one mistake
+// no judge here sees: LeakSanitizer counts allocations, not mappings. Under
+// the buildlab-msvc job's ASan, a replaced operator new costs that binary the
+// new/delete mismatch checks (Microsoft documents the trade); the count is
+// worth it, and no other TU the job builds replaces them.
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>

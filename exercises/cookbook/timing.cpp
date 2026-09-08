@@ -4,15 +4,16 @@
 //
 // report_batch_time(), RepeatingTimer, ScopedTimer, time_call(),
 // timestamp_utc(), the Device_Wait declaration and wait_for_sample() are
-// quoted VERBATIM in book/F-rosetta-cookbook.md: editing one means editing
-// the appendix in the same commit (the testlab discipline). run_the_batch()
-// and Device_Wait()'s body stand for whatever is being timed or called;
-// main() is scaffolding - it asserts that ticks arrive while the timer
-// lives and none after the join, that the scoped timer records on the
-// throwing path too, that the wrapper forwards an lvalue as an lvalue and
-// an rvalue as an rvalue (judged by a callee overloaded on the value
-// category, so a wrapper that copies or moves everything fails), that the timestamp has the shape and the century
-// it claims, and that a seconds literal reaches the C API multiplied out.
+// included by book/F-rosetta-cookbook.md, between their recipe-N section
+// markers: edit here and the page follows, and a marker moved is what the page
+// shows. run_the_batch() and Device_Wait()'s body stand for whatever is being
+// timed or called; main() is scaffolding - it asserts that ticks arrive while
+// the timer lives and none after the join, that the scoped timer records on
+// the throwing path too, that the wrapper forwards an lvalue as an lvalue and
+// an rvalue as an rvalue (judged by a callee overloaded on the value category,
+// so a wrapper that copies or moves everything fails), that the timestamp has
+// the shape and the century it claims, and that a seconds literal reaches the
+// C API multiplied out.
 #include <atomic>
 #include <cassert>
 #include <chrono>

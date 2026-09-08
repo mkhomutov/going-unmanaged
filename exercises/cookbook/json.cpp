@@ -6,10 +6,10 @@
 // "no local patches" recorded beside it) and included with -isystem so the
 // canonical flags keep meaning what they mean for this file. Reading,
 // to_json(), from_json(), serialize(), Config, load_config(), Channel,
-// read_channels() and count_numbers() are quoted VERBATIM in
-// book/F-rosetta-cookbook.md: editing one means editing the appendix in the
-// same commit (the testlab discipline). main() is scaffolding - it asserts
-// the round trip, the walk, and the traps.
+// read_channels() and count_numbers() are included by
+// book/F-rosetta-cookbook.md, between their recipe-N section markers: edit
+// here and the page follows, and a marker moved is what the page shows. main()
+// is scaffolding - it asserts the round trip, the walk, and the traps.
 #include <cassert>
 #include <nlohmann/json.hpp>
 #include <optional>

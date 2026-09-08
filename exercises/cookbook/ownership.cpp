@@ -1,11 +1,12 @@
 // Appendix F, Recipes 33 and 34 - hold an owned object as a field, and an
 // object too big for the stack.
 //
-// Log, Sink, Session, FrameBuffer and make_frame() are quoted VERBATIM in
-// book/F-rosetta-cookbook.md: editing one means editing the appendix in the
-// same commit (the testlab discipline). main() is scaffolding - it records
-// the order the fields die in, checks that a co-owned Sink outlives the
-// Session that shared it, and proves the big object landed on the heap.
+// Log, Sink, Session, FrameBuffer and make_frame() are included by
+// book/F-rosetta-cookbook.md, between their recipe-N section markers: edit
+// here and the page follows, and a marker moved is what the page shows. main()
+// is scaffolding - it records the order the fields die in, checks that a
+// co-owned Sink outlives the Session that shared it, and proves the big object
+// landed on the heap.
 #include <array>
 #include <cassert>
 #include <cstdint>

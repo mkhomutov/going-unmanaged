@@ -2,12 +2,13 @@
 // that is one of several kinds: the two sum types a C# developer has never
 // spelled.
 //
-// parse_port(), port_or_default(), digits_in(), and the Recipe 20 listing
-// from `struct Temperature` through describe() are quoted VERBATIM in
-// book/F-rosetta-cookbook.md: editing one means editing the appendix in the
-// same commit (the testlab discipline). main() is scaffolding - it asserts
-// what the recipes claim, and states the two refusals the appendix names as
-// comments, because a refusal cannot be compiled.
+// parse_port(), port_or_default(), digits_in(), and the Recipe 20 listing from
+// `struct Temperature` through describe() are included by
+// book/F-rosetta-cookbook.md, between their recipe-N section markers: edit
+// here and the page follows, and a marker moved is what the page shows. main()
+// is scaffolding - it asserts what the recipes claim, and states the two
+// refusals the appendix names as comments, because a refusal cannot be
+// compiled.
 #include <cassert>
 #include <charconv>
 #include <cstddef>

@@ -1,10 +1,10 @@
 // Appendix F, Recipes 8 and 18 - look up a key without inserting it; find
 // an element, an index, or a substring.
 //
-// apply_timeout_setting(), index_of() and contains_word() are quoted
-// VERBATIM in book/F-rosetta-cookbook.md: editing one means editing the
-// appendix in the same commit (the testlab discipline). main() is
-// scaffolding - it also demonstrates the traps the appendix names: reading
+// apply_timeout_setting(), index_of() and contains_word() are included by
+// book/F-rosetta-cookbook.md, between their recipe-N section markers: edit
+// here and the page follows, and a marker moved is what the page shows. main()
+// is scaffolding - it also demonstrates the traps the appendix names: reading
 // a missing key with [] inserts it, and std::find_if over a map is a linear
 // walk that compiles.
 #include <algorithm>

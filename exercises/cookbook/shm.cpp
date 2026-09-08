@@ -1,24 +1,24 @@
 // Appendix F, Recipe 43 - share a buffer with another process.
 //
-// Frame and SharedRegion are quoted VERBATIM in book/F-rosetta-cookbook.md:
-// editing either means editing the appendix in the same commit (the
-// testlab discipline). main() is scaffolding. On POSIX it forks: the child
-// writes a frame and bumps the sequence counter, the parent waits on the
-// counter with a DEADLINE (Chapter 38's judge - a hang would stop CI, not
-// fail it), asserts the fields, reaps the child, and unlinks; a second
-// phase asserts that after shm_unlink the name is gone - the leak Appendix
-// G names, demonstrated and then closed. On Windows the harness maps one
-// region twice in ONE process and asserts a write through one view is
-// visible through the other: the mechanism, with the cross-process claim
-// stated as unverified there, as Chapter 40 does for its toolchain file.
-// Two more judges, both scaffolding: a second create of the live name
-// through the class must be refused, and by shm_open itself - on macOS a
-// class without O_EXCL is refused by the second ftruncate instead, for the
-// wrong reason, and then unlinks a name it never owned - and the lowest free descriptor
-// is the same before and after the region lived, so a close left out of the
-// destructor is seen. One failure shape differs by platform: MAP_PRIVATE on
-// a shm object is refused by macOS's mmap outright, where Linux accepts it
-// and the parent's deadline is what fails.
+// Frame and SharedRegion are included by book/F-rosetta-cookbook.md, between
+// their recipe-N section markers: edit here and the page follows, and a marker
+// moved is what the page shows. main() is scaffolding. On POSIX it forks: the
+// child writes a frame and bumps the sequence counter, the parent waits on the
+// counter with a DEADLINE (Chapter 38's judge - a hang would stop CI, not fail
+// it), asserts the fields, reaps the child, and unlinks; a second phase
+// asserts that after shm_unlink the name is gone - the leak Appendix G names,
+// demonstrated and then closed. On Windows the harness maps one region twice
+// in ONE process and asserts a write through one view is visible through the
+// other: the mechanism, with the cross-process claim stated as unverified
+// there, as Chapter 40 does for its toolchain file. Two more judges, both
+// scaffolding: a second create of the live name through the class must be
+// refused, and by shm_open itself - on macOS a class without O_EXCL is refused
+// by the second ftruncate instead, for the wrong reason, and then unlinks a
+// name it never owned - and the lowest free descriptor is the same before and
+// after the region lived, so a close left out of the destructor is seen. One
+// failure shape differs by platform: MAP_PRIVATE on a shm object is refused by
+// macOS's mmap outright, where Linux accepts it and the parent's deadline is
+// what fails.
 //
 // No library: the platform is the dependency. Older glibc (< 2.34) needs
 // -lrt for shm_open, which build_all.sh adds on Linux.

@@ -1,20 +1,20 @@
 // Appendix F, Recipe 42 - open a local database and run a query.
 //
-// Db, Statement, Transaction and the functions below are quoted VERBATIM in
-// book/F-rosetta-cookbook.md: editing one means editing the appendix in the
-// same commit (the testlab discipline). main() is scaffolding, and its
-// oracle is an in-memory database - no file, no network, nothing outside
-// the run. Every claim the recipe makes has a line here that fails without
-// it (each was run as a mutant): the values a query returns, in ORDER BY's
-// order and not insertion order; the step-code sequence (100, 100, 101: two
-// successes that are not zero); a bound TEMPORARY read back after it died,
-// so SQLITE_TRANSIENT is load-bearing and SQLITE_STATIC is a use-after-free
-// ASan names; a transaction abandoned by a throw rolled back, and a COMMIT
-// that fails (a deferred foreign key) rolled back by the destructor, so the
-// order of commit()'s two statements matters; a failed open judged by
-// SQLite's own memory counter, so "own it BEFORE checking" is not a comment;
-// and - the load-bearing one - close_database returning SQLITE_OK at the
-// end, which it does ONLY when every statement was finalized first: the
+// Db, Statement, Transaction and the functions below are included by
+// book/F-rosetta-cookbook.md, between their recipe-N section markers: edit
+// here and the page follows, and a marker moved is what the page shows. main()
+// is scaffolding, and its oracle is an in-memory database - no file, no
+// network, nothing outside the run. Every claim the recipe makes has a line
+// here that fails without it (each was run as a mutant): the values a query
+// returns, in ORDER BY's order and not insertion order; the step-code sequence
+// (100, 100, 101: two successes that are not zero); a bound TEMPORARY read
+// back after it died, so SQLITE_TRANSIENT is load-bearing and SQLITE_STATIC is
+// a use-after-free ASan names; a transaction abandoned by a throw rolled back,
+// and a COMMIT that fails (a deferred foreign key) rolled back by the
+// destructor, so the order of commit()'s two statements matters; a failed open
+// judged by SQLite's own memory counter, so "own it BEFORE checking" is not a
+// comment; and - the load-bearing one - close_database returning SQLITE_OK at
+// the end, which it does ONLY when every statement was finalized first: the
 // close code is this recipe's leak detector, the job FakeSdk_LiveAllocations
 // did in Chapter 17. Delete Statement's destructor and that assertion is the
 // one that fails.

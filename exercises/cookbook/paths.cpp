@@ -1,20 +1,20 @@
 // Appendix F, Recipes 10-12 and 39 - paths: combine, the exists pair,
 // listing; create, copy, move and delete, and a whole tree.
 //
-// The recipe functions below are quoted VERBATIM in book/F-rosetta-cookbook.md:
-// editing one means editing the appendix in the same commit (the testlab
-// discipline). main() is scaffolding - it builds a small directory tree,
-// asserts what the recipes claim (the unspecified listing order included,
-// and Recipe 39's trap: dir / "" is dir/, so an empty entry name hands
-// remove_all the directory itself), and removes the tree again. The export
-// tree starts with a report and NO archive directory, so create_directories
-// is load-bearing on the first rotation; and on POSIX the moved report must
-// keep its inode, so a copy-and-remove cannot pass as File.Move. Two checks
-// are per platform and say so: the cross-volume rename refusal that Recipe
-// 38's Why names is the POSIX libraries' behaviour (MSVC copies instead) and
-// runs only on Linux, where /dev/shm is a second volume the CI runner has;
-// the u8path round trip runs only on Windows, the one platform where a path
-// is not made of char and the two constructors differ.
+// The recipe functions below are included by book/F-rosetta-cookbook.md,
+// between their recipe-N section markers: edit here and the page follows, and
+// a marker moved is what the page shows. main() is scaffolding - it builds a
+// small directory tree, asserts what the recipes claim (the unspecified
+// listing order included, and Recipe 39's trap: dir / "" is dir/, so an empty
+// entry name hands remove_all the directory itself), and removes the tree
+// again. The export tree starts with a report and NO archive directory, so
+// create_directories is load-bearing on the first rotation; and on POSIX the
+// moved report must keep its inode, so a copy-and-remove cannot pass as
+// File.Move. Two checks are per platform and say so: the cross-volume rename
+// refusal that Recipe 38's Why names is the POSIX libraries' behaviour (MSVC
+// copies instead) and runs only on Linux, where /dev/shm is a second volume
+// the CI runner has; the u8path round trip runs only on Windows, the one
+// platform where a path is not made of char and the two constructors differ.
 #include <algorithm>
 #include <cassert>
 #include <cstdint>

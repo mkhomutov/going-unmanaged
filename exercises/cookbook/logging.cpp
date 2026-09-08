@@ -1,13 +1,14 @@
 // Appendix F, Recipes 15 and 24 - print a diagnostic you will actually see;
 // compile a diagnostic out of Release.
 //
-// The three functions below are quoted VERBATIM in book/F-rosetta-cookbook.md:
-// editing one means editing the appendix in the same commit (the testlab
-// discipline). main() is scaffolding - it captures cerr into a buffer to
-// assert the text, so a green run stays silent on stderr. build_all.sh
-// builds this TU twice, the second time with -DNDEBUG, because Recipe 24's
-// claim is about what vanishes under that define - which is why the judges
-// here are plain ifs rather than asserts: an assert would vanish with it.
+// The three functions below are included by book/F-rosetta-cookbook.md,
+// between their recipe-N section markers: edit here and the page follows, and
+// a marker moved is what the page shows. main() is scaffolding - it captures
+// cerr into a buffer to assert the text, so a green run stays silent on
+// stderr. build_all.sh builds this TU twice, the second time with -DNDEBUG,
+// because Recipe 24's claim is about what vanishes under that define - which
+// is why the judges here are plain ifs rather than asserts: an assert would
+// vanish with it.
 #include <cassert>
 #include <iostream>
 #include <sstream>

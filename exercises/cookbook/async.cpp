@@ -1,10 +1,10 @@
 // Appendix F, Recipe 13 - run work on another thread and wait for it.
 //
-// overlap_work() is quoted VERBATIM in book/F-rosetta-cookbook.md: editing it
-// means editing the appendix in the same commit (the testlab discipline).
-// count_defects() and do_other_work() stand for real work; main() is
-// scaffolding, including the one C# behavior that ports exactly - a throw
-// inside the work surfaces at get().
+// overlap_work() is included by book/F-rosetta-cookbook.md, between its
+// recipe-N section markers: edit here and the page follows, and a marker moved
+// is what the page shows. count_defects() and do_other_work() stand for real
+// work; main() is scaffolding, including the one C# behavior that ports
+// exactly - a throw inside the work surfaces at get().
 #include <cassert>
 #include <future>
 #include <stdexcept>

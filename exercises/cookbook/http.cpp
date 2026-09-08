@@ -2,25 +2,24 @@
 // and read a JSON reply.
 //
 // Easy, HttpResult, append_chunk(), http_get(), HeaderList, http_post_json()
-// and json_reply() are quoted VERBATIM in book/F-rosetta-cookbook.md:
-// editing one means editing the appendix in the same commit (the testlab
-// discipline). main() is scaffolding, and its oracle needs no network. Two
-// halves: a file:// fixture, the one URL scheme with nothing behind it,
-// exercises the write callback (a 200 KB fixture arrives in many chunks, so
-// an append that assigned would lose all but the last) and the transport's
-// error path (a missing file is CURLE_FILE_COULDNT_READ_FILE, and response
-// code 0 because there was no server); and a small loopback server - POSIX
-// sockets, because the standard library has none (Chapter 27) - answers
-// with a redirect to follow, a 500 whose body is an error page, a stall
-// the client's deadline must cut short, and, for Recipe 46, an echo of the
-// request body and its Content-Type as JSON, so the POST is judged on what
-// the server RECEIVED, plus a 400 whose body is JSON (so only the status
-// refuses it), a 200 that is HTML, and a 200 whose JSON lacks the key the
-// caller needs. Every wait is bounded: the
-// server closes each connection after one canned reply, so a mutant that
-// waits in seconds where the recipe waits in milliseconds gets "server
-// returned nothing", never a hang. The harness's server is POSIX-only; the
-// cookbook is not built by the MSVC job.
+// and json_reply() are included by book/F-rosetta-cookbook.md, between their
+// recipe-N section markers: edit here and the page follows, and a marker moved
+// is what the page shows. main() is scaffolding, and its oracle needs no
+// network. Two halves: a file:// fixture, the one URL scheme with nothing
+// behind it, exercises the write callback (a 200 KB fixture arrives in many
+// chunks, so an append that assigned would lose all but the last) and the
+// transport's error path (a missing file is CURLE_FILE_COULDNT_READ_FILE, and
+// response code 0 because there was no server); and a small loopback server -
+// POSIX sockets, because the standard library has none (Chapter 27) - answers
+// with a redirect to follow, a 500 whose body is an error page, a stall the
+// client's deadline must cut short, and, for Recipe 46, an echo of the request
+// body and its Content-Type as JSON, so the POST is judged on what the server
+// RECEIVED, plus a 400 whose body is JSON (so only the status refuses it), a
+// 200 that is HTML, and a 200 whose JSON lacks the key the caller needs. Every
+// wait is bounded: the server closes each connection after one canned reply,
+// so a mutant that waits in seconds where the recipe waits in milliseconds
+// gets "server returned nothing", never a hang. The harness's server is
+// POSIX-only; the cookbook is not built by the MSVC job.
 //
 // This TU is the cookbook's third behind a probe: build_all.sh locates
 // libcurl through pkg-config and links it from the system - a dependency

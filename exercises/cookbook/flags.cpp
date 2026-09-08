@@ -3,11 +3,12 @@
 // operators.
 //
 // Features and Processor (Recipe 31), and Channel with its three operators
-// (Recipe 32), are quoted VERBATIM in book/F-rosetta-cookbook.md: editing
-// one means editing the appendix in the same commit (the testlab
-// discipline). main() is scaffolding - it sets the environment, reads the
-// flags once, asserts the branch, the read-once, the junk-keeps-the-default
-// parse and the bit arithmetic; the refusals the recipes name stay comments.
+// (Recipe 32), are included by book/F-rosetta-cookbook.md, between their
+// recipe-N section markers: edit here and the page follows, and a marker moved
+// is what the page shows. main() is scaffolding - it sets the environment,
+// reads the flags once, asserts the branch, the read-once, the
+// junk-keeps-the-default parse and the bit arithmetic; the refusals the
+// recipes name stay comments.
 #include <cassert>
 #include <charconv>
 #include <cstdint>

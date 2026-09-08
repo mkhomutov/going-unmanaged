@@ -3,10 +3,11 @@
 // a pattern matched with std::regex, and trim / compare-ignoring-case /
 // prefix / suffix over string_view.
 //
-// The recipe functions below are quoted VERBATIM in book/F-rosetta-cookbook.md:
-// editing one means editing the appendix in the same commit (the testlab
-// discipline). main() is scaffolding, not part of any recipe - it asserts
-// what the recipes claim, so build_all.sh keeps the cookbook honest.
+// The recipe functions below are included by book/F-rosetta-cookbook.md,
+// between their recipe-N section markers: edit here and the page follows, and
+// a marker moved is what the page shows. main() is scaffolding, not part of
+// any recipe - it asserts what the recipes claim, so build_all.sh keeps the
+// cookbook honest.
 #include <cassert>
 #include <cctype>
 #include <charconv>
