@@ -302,7 +302,7 @@ fi
 # --- 3. LeakSanitizer ---------------------------------------------------------
 # CLAUDE.md's platform NOTE, Chapter 31, and Finding 10: LSan is not supported
 # on macOS/arm64, so a leaking program under ASan reports nothing there and a
-# clean run says nothing about leaks. Chapter 24's Day 2 depends on this - the
+# clean run says nothing about leaks. Chapter 15's sabotage runs depend on this - the
 # non-virtual-destructor break is a leak, and "your platform may simply never
 # report it".
 echo "== leaksanitizer =="

@@ -137,6 +137,16 @@ paragraphs, the "In the wild" sections, the twelve questions in
 CONTRIBUTING.md (all technical criteria), the callout and diagram rules,
 and every hard invariant in CLAUDE.md.
 
+**Status.** PR 1 of 3, *the cuts*, is DONE: Chapter 24 and Appendix C
+retired (the file gone; the Contents keeps a one-line *Retired* entry for
+each so the ordered list still renders true, and the number and letter are
+never reused), Appendix D retitled *Resources and Further Reading* and
+trimmed, the six "Reproduce it cold" tails gone, Chapter 25 retitled
+*Gotchas: the Findings Log* with **Symptom:** in place of **Found in:** and
+CONTRIBUTING's template changed to match. Appendix C's rule lives on as
+CONTRIBUTING's "Assistants, and the exercises"; its offline-lifelines list
+was already Appendix D's. Next: PR 2, the tickets; PR 3, the entry points.
+
 **Acceptance:** `grep -rn -i "day [0-9]\|week [0-9]\|first week" book/`
 returns nothing outside code and quoted output; the six ticket pages are
 titled by symptom and open on the evidence; the symptom index has a row for

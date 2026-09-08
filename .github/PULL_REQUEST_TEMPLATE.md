@@ -22,7 +22,7 @@ One topic per PR: one Finding, one correction topic, or one exercise.
 - [ ] No existing chapter or Finding numbers changed — appending is fine;
       renumbering is a MAJOR version event (open an issue first)
 - [ ] Findings follow the Chapter 25 shape exactly:
-      **Found in / The theory / broken vs fixed code / Habit**
+      **Symptom / The theory / broken vs fixed code / Habit**
       (template in CONTRIBUTING.md)
 - [ ] Recipes follow the Appendix F shape exactly:
       **In C# / The recipe / Why it looks like this / Trap**, and the

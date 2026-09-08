@@ -1,4 +1,4 @@
-## Appendix D — Resources, Further Reading, and First-Week Tips
+## Appendix D — Resources and Further Reading
 
 ### C++ references and learning
 
@@ -26,18 +26,3 @@ One habit for this whole page: **check the pulse before you adopt.** A book stat
 - The vendor's developer forum or community — where the tribal knowledge lives; search before asking, ask early when needed (answers take days, not seconds).
 - The vendor's GitHub organization, if one exists — example plug-ins and helper libraries often live there, more current than the shipped samples.
 - For device work, the open ecosystems are excellent study material even if your device is proprietary: **libusb** and **HIDAPI** (USB/HID), **PortAudio** (audio I/O), **SQLite** and **zlib** (canonical C API design) — all small enough to read.
-
-### First-week questions to ask the team
-
-Asking these early is a strength signal, not a weakness:
-
-- Which host-application or SDK versions do we support? (Multi-version support shapes the whole codebase — expect `#if` version guards.)
-- Windows only, or Mac too? Which IDE/toolset versions are standard?
-- Where is the build documentation, and is there a known-gotchas wiki or its equivalent?
-- Who owns plug-in ID registration and code signing?
-- What's the code review process, and is there a house style (naming, vendor vs std:: containers, error-handling conventions)? Appendix A.8 has the three naming dialects you will meet, so the answer lands on a map.
-- Which parts of the API does our product touch most — elements, attributes, listing, dialogs, I/O?
-
-### A closing note
-
-Seventeen years of C# is not baggage here — it is architecture sense, debugging instinct, and professional judgment that transfer completely. The C++-specific layer on top is finite and learnable; most of it is in these pages. The rest arrives the way it always has: one compile error, one code review, one notes-file entry at a time.
