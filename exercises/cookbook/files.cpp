@@ -18,7 +18,14 @@
 // whole claim over a ReadAllBytes - with every byte compared against Recipe
 // 1's copy; on POSIX the file is then deleted under the live mapping and
 // read on, and the lowest free descriptor is compared before and after, so
-// a close left out of the constructor is seen.
+// a close left out of the constructor is seen; on Windows the delete is
+// asserted to be REFUSED while the mapping lives, the same reference seen
+// from the other side. A munmap left out of the destructor is the one
+// mistake no judge here sees: LeakSanitizer counts allocations, not
+// mappings. Under the buildlab-msvc job's ASan, a replaced operator new
+// costs that binary the new/delete mismatch checks (Microsoft documents
+// the trade); the count is worth it, and no other TU the job builds
+// replaces them.
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
@@ -29,6 +36,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <system_error>
 #if defined(_WIN32)
 #include <windows.h>
 #else
@@ -226,9 +234,9 @@ int main() {
     }
     const std::string copied = read_all_text(big);
     {
-        const std::size_t before = g_allocations;
+        const std::size_t allocs_before = g_allocations;
         MappedFile mapped(big);
-        const std::size_t during = g_allocations - before;
+        const std::size_t during = g_allocations - allocs_before;
         assert(mapped.bytes().size() == copied.size());
         assert(mapped.bytes() == copied);                           // every byte, through the mapping
         assert(during == 0);                                        // and not one heap allocation to get them
@@ -238,6 +246,13 @@ int main() {
         fs::remove(big);
         assert(!fs::exists(big));
         assert(mapped.bytes().substr(1000, 5) == std::string_view(copied).substr(1000, 5));
+#else
+        // Windows refuses to delete a file with a live mapping: the same
+        // reference, seen from the other side.
+        std::error_code refused;
+        fs::remove(big, refused);
+        assert(refused);
+        assert(fs::exists(big));
 #endif
     }
     fs::remove(big);

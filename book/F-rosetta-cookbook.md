@@ -2645,7 +2645,7 @@ libcrypto 3 as Recipe 36, `<memory>`, `<vector>`.
 
 ### Recipe 49 — Read a large file without copying it
 
-**In C#:** `using var mmf = MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, 0, MemoryMappedFileAccess.Read); using var view = mmf.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);` — or, far more often, `File.ReadAllBytes(path)`, which was fine until the file was the size of the machine's memory; the mapped form pages the file in as it is touched, and the runtime keeps both handles alive for the view
+**In C#:** `using var mmf = MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, 0, MemoryMappedFileAccess.Read); using var view = mmf.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);` — or, the reflex, `File.ReadAllBytes(path)`, fine until the file was the size of the machine's memory; the mapped form pages the file in as it is touched, and the runtime holds the file and mapping handles until the `using`s end, where the recipe closes both as soon as the view exists
 
 **The recipe:**
 
@@ -2706,7 +2706,7 @@ private:
 
 **Why it looks like this.** Recipe 1 copies the file into a `std::string`,
 the right shape for a config and the wrong one for a capture, a log or a
-media file: the copy costs a heap allocation the size of the file and a
+media file: the copy costs heap allocations the size of the file and a
 read of every byte before the first is looked at. A mapping asks the OS
 to make the file's pages appear in the process's address space as they
 are touched — the same `mmap` and `MapViewOfFile` as Recipe 43, with a
@@ -2714,28 +2714,32 @@ file where that recipe had a name, and read-only, private, so the file
 cannot change through the view. The class is Recipe 7 for a view: the
 descriptor is closed the moment the mapping exists, because the mapping
 holds its own reference to the file — which is also why, on POSIX, the
-file can be deleted under a live mapping and the bytes still read, the
-harness's second assertion (Windows refuses the delete instead). The
-empty file is the branch a first draft lacks: `mmap` of zero bytes is
+file can be deleted under a live mapping and the bytes still read, which
+the harness asserts there; on Windows it asserts the opposite face of
+the same reference, that the delete is refused while the mapping lives.
+The empty file is the branch a first draft lacks: `mmap` of zero bytes is
 `EINVAL` and `CreateFileMapping` of an empty file fails outright, so an
 empty file is an empty view, not an exception. `bytes()` is a
 `string_view`, [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
 non-owning window with that chapter's rule attached: valid exactly as
 long as the `MappedFile` is, and a view kept past the object reads
 unmapped memory, which ASan reports as a `SEGV on unknown address` with
-no allocation site — the pages were the kernel's, never the allocator's.
-The harness maps four megabytes, compares every byte against Recipe 1's
+no allocation site — the pages were the kernel's, never the allocator's —
+or, if the allocator has since reused the range, as an overflow on some
+unrelated heap object. The other side of that: a `munmap` left out of
+the destructor is a leak no sanitizer counts, which is the destructor's
+whole reason to exist. The harness maps four megabytes, compares every byte against Recipe 1's
 copy, and — [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s
 instrument — counts heap allocations across the mapping with a replaced
 `operator new`: zero, which is the recipe's whole claim over
 `ReadAllBytes` (both forms of `operator new` are replaced, because under
 ASan the array form does not route through the scalar one, and a copy
-made with `new char[]` passed the first draft of the judge). Needs
-`<filesystem>`, `<string_view>`; `<sys/mman.h>`, `<sys/stat.h>`,
+made with `new char[]` would otherwise count as zero). Needs
+`<filesystem>`, `<stdexcept>`, `<string>`, `<string_view>`; `<sys/mman.h>`, `<sys/stat.h>`,
 `<fcntl.h>`, `<unistd.h>` on POSIX; `<windows.h>` on Windows.
 
 > [!WARNING]
-> **Trap:** a file that shrinks while it is mapped — another process truncating the log you are reading — is, on Linux, a `SIGBUS` on the first touch of a page past the new end: plain memory, no allocation site, none of Chapter 31's shapes, and no sanitizer names it; on macOS the same read completes with the old byte, which `check_platform_claims.sh` holds each platform to. Map files nobody else writes, or copy what you need out of the view before anyone can — a mapping is not a copy, and the bytes change under you if the writer keeps writing.
+> **Trap:** a file that shrinks while it is mapped — another process truncating the log you are reading — is, on Linux, a `SIGBUS` on the first touch of a page past the new end: plain memory, no allocation site, none of Chapter 31's shapes, and no sanitizer names it; on macOS the same read completes with the old byte — `scripts/check_platform_claims.sh` holds each platform to its own answer. Map files nobody else writes, or copy what you need out of the view before anyone can — a mapping is not a copy, and the bytes change under you if the writer keeps writing.
 
 <!-- nav:begin -->
 [← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)

@@ -453,7 +453,8 @@ Chapter 25's Finding 10.
   constructor, libstdc++ throws — Recipe 23's trap, detected by macro rather
   than by OS), and what a file truncated under a live read-only mapping does
   (Recipe 49's trap: `SIGBUS` on Linux, a completed read of the old byte on
-  macOS — the one section where the two platforms are asserted to DIFFER). It also holds Chapter 26's macro-ODR pair — a define that
+  macOS — the one section that holds the two platforms to opposite
+  outcomes rather than to different codes for the same one). It also holds Chapter 26's macro-ODR pair — a define that
   changes a struct's layout in one TU only: silent link, order-dependent
   answer, and, unlike Chapter 27, no order caught by the sanitizers for that
   listing (the object is built in the larger layout), with `session.h`
