@@ -491,6 +491,16 @@ Chapter 25's Finding 10.
   rewrite into an in-page anchor
 - `.github/workflows/release.yml` — on a `v*` tag, builds the single file and
   attaches it to the GitHub release
+- `mkdocs.yml`, `scripts/site_hooks.py`, `scripts/site-requirements.txt`,
+  `scripts/build_site.sh` — the book as a static site (MkDocs Material) over
+  the unchanged `book/` files, built strictly into `build/site/`; the hooks
+  file generates the nav from the chapter headings and turns the GitHub
+  alerts into admonitions, and `pymdownx.slugs` reproduces GitHub's anchors
+  so no link changes. `SITE-PLAN.md` is the plan this serves — the book is
+  becoming a reference consulted daily, not a book read once — with the
+  measurements behind it and the next steps; read it before changing the
+  book's structure. CI's `site` job runs the strict build, which is also a
+  second link-and-anchor checker
 
 ## Where chapter code lives (decided once; full text in CONTRIBUTING.md)
 
@@ -731,6 +741,9 @@ stay on the list marked DONE so item numbers never shift. Short version:
   first; an entry that was never an item is recorded there directly
 - Structural item: splitting the book per-chapter under `book/` with a build
   script that concatenates — DONE, see the ROADMAP entry
+- Structural item 2: the web resource — IN PROGRESS, see `SITE-PLAN.md` (the
+  plan) and the ROADMAP entry; step 1, the generator over the unchanged book,
+  is done
 
 ## Versioning
 

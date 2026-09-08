@@ -1701,3 +1701,19 @@ per chapter and appendix with `book/README.md` as the Contents;
 `scripts/build_book.sh` rebuilds the single file (a release artifact, no
 longer checked in) and owns the generated nav footers. No chapter number
 moved. grep still works across the book with `book/*.md`.
+
+---
+
+## Structural item 2 (not content) — the web resource — IN PROGRESS
+
+The handbook becomes a reference consulted daily rather than a book read
+once: a static site over the unchanged `book/` files, entry by task, symptom
+or C# API rather than by Part; no print, PDF or single-file target; the
+timeline-shaped material (a practice week, first-week questions, the ticket
+chapters' episode framing) removed or moved out of the resource; the quoted
+listings included from the source files rather than copied into the pages;
+and Rust as a third column on the recipes and a third client at the ABI
+boundary, never a parallel syllabus. Decided 2026-09-08; the plan, the
+measurements behind it and the per-step acceptance tests live in
+[SITE-PLAN.md](SITE-PLAN.md). Step 1 (prove the generator on the unchanged
+book) is DONE — `scripts/build_site.sh`, strict, and a `site` CI job.

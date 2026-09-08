@@ -1,0 +1,71 @@
+# The book as a static site. scripts/build_site.sh builds it; SITE-PLAN.md is
+# the plan it serves. docs_dir is book/ itself - the same files GitHub renders,
+# with nothing copied or generated - and the hooks file supplies the nav and
+# the alert-to-admonition translation, so this file stays declarative.
+site_name: Going Unmanaged
+site_description: A hands-on C++ handbook for C# developers
+repo_url: https://github.com/mkhomutov/going-unmanaged
+edit_uri: edit/main/book/
+copyright: Text CC-BY 4.0, code MIT
+docs_dir: book
+site_dir: build/site
+use_directory_urls: false
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle: {icon: material/brightness-7, name: Dark mode}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle: {icon: material/brightness-4, name: Light mode}
+
+hooks:
+  - scripts/site_hooks.py
+
+plugins:
+  - search
+
+markdown_extensions:
+  - toc:
+      permalink: true
+      toc_depth: 3
+      # GitHub's slugs, including the double dash after "Chapter N", so every
+      # ](file.md#chapter-n--title) link in book/ resolves unchanged.
+      slugify: !!python/object/apply:pymdownx.slugs.slugify {kwds: {case: lower}}
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets:
+      # Include-from-file, the mechanism SITE-PLAN.md's step 4 moves the
+      # quoted listings onto: `--8<-- "exercises/cookbook/files.cpp:52:60"`.
+      base_path: [.]
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+# Strict mode turns every one of these into a build failure.
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
