@@ -1,12 +1,12 @@
 // bridge_core.h - the command registry over the queue: the bridge's public
 // surface, and the part that never changes when the transport does.
 //
-// Quoted IN FULL in Chapter 38 ("The registry"). Changing it means updating
-// that listing in the same commit - the same discipline the Fake* vendor
-// code is held to - and the chapter's TSan report cites this file by line
-// number (:34 and :49 today), so an edit that shifts lines re-checks both.
-// Construct it on the main thread: it learns the thread id it must never
-// wait on from where it is built.
+// Included IN FULL by Chapter 38 ("The registry") from below this banner: edit
+// here and the page follows. The chapter's TSan report cites this file by line
+// number (:34 and :49 today), so an edit that shifts lines re-checks that
+// report. Construct it on the main thread: it learns the thread id it must
+// never wait on from where it is built.
+// --8<-- [start:listing]
 #pragma once
 #include <cassert>
 #include <functional>
@@ -79,3 +79,4 @@ private:
     bool             started_ = false;
     std::map<std::string, Handler> handlers_;
 };
+// --8<-- [end:listing]

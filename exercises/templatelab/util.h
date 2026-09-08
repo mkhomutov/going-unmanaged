@@ -2,8 +2,9 @@
 // join with a fold expression, an if constexpr that branches on the type,
 // and a class template with a non-type parameter.
 //
-// Quoted VERBATIM in Chapter 41 below this banner: editing it means editing
-// the chapter in the same commit.
+// Included by Chapter 41 from below this banner: edit here and the page
+// follows.
+// --8<-- [start:listing]
 #pragma once
 #include <array>
 #include <cstddef>
@@ -66,3 +67,4 @@ private:
     std::size_t head_ = 0;
     std::size_t size_ = 0;
 };
+// --8<-- [end:listing]

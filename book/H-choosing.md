@@ -97,40 +97,13 @@ Branch by branch, with the reflex each one confronts:
 Two moves, in that last row, because `std::move` is a cast and nothing else ([Chapter 6](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics)): one move constructs the parameter, one moves it into the member.
 
 ```cpp
-class Widget {
-public:
-    void SetPayload(Counted c) { payload_ = std::move(c); }
-
-    // The const& alternative, for comparison. It cannot steal: assigning
-    // from a const reference copies, whatever the caller passed.
-    void SetPayloadByRef(const Counted& c) { payload_ = c; }
-
-private:
-    Counted payload_;
-};
+--8<-- "exercises/choosing/passing.cpp:widget"
 ```
 
 **And the cost that table cannot see.** Copies and moves are not the whole price. A by-value parameter is a *new* object, so its buffer is a fresh allocation; a `const&` copy-assignment writes into the buffer the member already owns. For a setter called once, that is nothing. For one called repeatedly with an lvalue — the shape of every `SetName` on a hot path — the sink allocates every time and the borrow allocates never:
 
 ```cpp
-void TheSinkAllocatesWhereTheBorrowDoesNot() {
-    Counted keep("mine");
-    Widget sink;
-    Widget borrow;
-    sink.SetPayload(keep);              // warm both members to the same
-    borrow.SetPayloadByRef(keep);       // size, so only the steady state counts
-
-    const long a0 = Allocations();
-    for (int i = 0; i < 100; ++i) sink.SetPayload(keep);
-    const long sink_allocs = Allocations() - a0;
-
-    const long b0 = Allocations();
-    for (int i = 0; i < 100; ++i) borrow.SetPayloadByRef(keep);
-    const long borrow_allocs = Allocations() - b0;
-
-    CHECK(sink_allocs == 100);      // one per call: the parameter is a new string
-    CHECK(borrow_allocs == 0);      // the member's buffer was big enough already
-}
+--8<-- "exercises/choosing/passing.cpp:sink-vs-borrow"
 ```
 
 **One thing the harness arranges on purpose.** `Counted`'s payload is a 200-character string, deliberately past every implementation's *small-string optimization* — the trick where a short string lives inside the string object itself rather than in a heap block, so copying it allocates nothing whatsoever. That is not a thumb on the scale; it is how you measure a cost that is real when it occurs. But it does mean the allocation counts above are the price of copying a string genuinely on the heap, and a `SetName("id7")` whose argument always fits inside the object pays none of them. The threshold is not standardised and nothing in the type announces which side of it you are on, so measure your own before moving a setter off `const&` on the strength of this table — the allocation counter in `exercises/choosing/` is the instrument, and the answer depends on how long your strings actually are.
@@ -160,36 +133,13 @@ flowchart LR
 **Return by value, including whole collections.** This is the branch a C# developer flinches at, and the flinch is obsolete. Returning a temporary outright is *elided* — since C++17 the object is constructed directly in the caller's storage, and no copy or move happens at all. Return a named local and you get the implicit move as the floor, with NRVO usually removing even that. The harness checks both, and checks them differently, because only one of them is guaranteed:
 
 ```cpp
-void ReturningCostsNoCopy() {
-    {   // a temporary: nothing happens at all
-        ResetTally();
-        Counted c = MakeTemporary();
-        CHECK(Tally().copies == 0);
-        CHECK(Tally().moves  == 0);      // mandatory elision, C++17
-        (void)c;
-    }
-    {   // a named local: never a copy; a move at worst
-        ResetTally();
-        Counted c = MakeNamed();
-        CHECK(Tally().copies == 0);      // guaranteed: the implicit move
-        CHECK(Tally().moves  <= 1);      // 0 with NRVO, 1 without - both legal
-        (void)c;
-    }
-}
+--8<-- "exercises/choosing/passing.cpp:returning-costs-no-copy"
 ```
 
 The two functions under test are one line and four:
 
 ```cpp
-Counted MakeTemporary() { return Counted("made"); }
-
-// A NAMED local: the return is treated as an rvalue, so the fallback is a
-// MOVE, never a copy. NRVO may remove even that - permitted, not
-// guaranteed, which is exactly why the assertion below allows either.
-Counted MakeNamed() {
-    Counted local("named");
-    return local;
-}
+--8<-- "exercises/choosing/passing.cpp:make-temporary-and-named"
 ```
 
 That `<= 1` is not hedging: NRVO is *permitted*, not required ([Chapter 6](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics)), which is why the book's own CI checks what MSVC does with `/Zc:nrvo`. With NRVO on, both shapes measure zero and the distinction is invisible — so `build_all.sh` builds this file a second time under `-fno-elide-constructors`, which leaves the mandatory C++17 elision alone and removes NRVO. `MakeTemporary` still costs nothing there; `MakeNamed` costs its move. Returning a `std::vector<T>` costs nothing per element either — the vector's own move takes three pointers, and the harness checks that no element is copied *or* moved.
@@ -223,40 +173,13 @@ flowchart LR
 2. **Address stability.** Growth relocates every element of a `vector<T>`, so any pointer, reference or iterator you kept is dangling — [Chapter 33](33-here-is-the-report.md#chapter-33--a-value-reads-zero-after-hot-plug)'s whole ticket. Both halves are checked, because "nothing moved" is also what you measure when nothing grew:
 
 ```cpp
-void GrowthRelocatesAndMovesEveryElement() {
-    std::vector<Counted> v;
-    v.reserve(8);
-    const int filled = FillToCapacity(v, [] { return Counted("x"); });
-    const std::uintptr_t before = BlockAddress(v);
-
-    ResetTally();
-    v.emplace_back("trigger");                  // the growth
-
-    CHECK(BlockAddress(v) != before);           // the ground really moved
-    CHECK(Tally().moves  == filled);            // every element, move-constructed anew
-    CHECK(Tally().copies == 0);                 // moved, not copied: noexcept pays
-}
+--8<-- "exercises/choosing/storing.cpp:growth-relocates-and-moves-every-element"
 ```
 
 Behind a `unique_ptr` the *pointers* move and the objects never do:
 
 ```cpp
-void BoxedElementsStandStillWhenTheVectorGrows() {
-    std::vector<std::unique_ptr<Counted>> v;
-    v.reserve(8);
-    FillToCapacity(v, [] { return std::make_unique<Counted>("x"); });
-    const Counted* object = v[0].get();         // a pointer to the OBJECT
-    const std::uintptr_t before = BlockAddress(v);
-
-    ResetTally();
-    v.push_back(std::make_unique<Counted>("trigger"));
-
-    CHECK(BlockAddress(v) != before);           // the same growth as above
-    CHECK(object == v[0].get());                // the pointers moved; the object did not
-    CHECK(!object->Payload().empty());          // ...and is still readable
-    CHECK(Tally().moves  == 0);                 // no element move-constructed
-    CHECK(Tally().copies == 0);
-}
+--8<-- "exercises/choosing/storing.cpp:boxed-elements-stand-still-when-the-vector-grows"
 ```
 
 3. **Cost of moving.** Reallocation move-constructs every element. Eight elements in a `vector<Counted>` cost **eight moves** on growth, while the same eight behind `unique_ptr` cost **zero** — only pointers were shuffled. For cheap-to-move types that is noise; for expensive or immovable ones it is the deciding number.
@@ -264,17 +187,7 @@ void BoxedElementsStandStillWhenTheVectorGrows() {
 **And one answer that is not a box.** The first reason above assumes the alternatives share a base. When they do not — a closed set of unrelated types you own, the events a device sends or the states of a small machine — the C# reflex is to invent the base so the list can hold them, and the C++ answer is `std::variant` ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)): the element *is* the variant, stored by value, and there is no base for anything to be sliced to.
 
 ```cpp
-void AClosedSetStoresByValueWithoutABase() {
-    std::vector<std::variant<Tri, Quad>> shapes;
-    shapes.emplace_back(Tri{});
-    shapes.emplace_back(Quad{});
-    int total = 0;
-    for (const auto& s : shapes) {
-        total += std::visit([](const auto& shape) { return shape.Sides(); }, s);
-    }
-    CHECK(total == 7);                          // 3 + 4: each kept its identity, unboxed
-    CHECK(std::holds_alternative<Tri>(shapes[0]));
-}
+--8<-- "exercises/choosing/storing.cpp:closed-set-by-value"
 ```
 
 The price is that the set is closed: a fourth alternative is a change to the type, and a set someone else extends stays a virtual base behind `unique_ptr`.
@@ -291,17 +204,11 @@ And the default remains `vector<T>`, by value. Boxing every element is the refle
 Every number on this page comes from `exercises/choosing/`, built and run under the canonical flags on every push. The instrument is a counting type: [Chapter 14](14-exercise-the-lifetime-tracer.md#chapter-14--exercise-the-lifetime-tracer)'s Tracer has the right shape but the wrong statics — it counts objects rather than operations, and its counter cannot tell a copy from a move — so this is the per-operation variant that difference forces, with the narration dropped:
 
 ```cpp
-struct Counts {
-    int copies = 0;
-    int moves  = 0;
-};
+--8<-- "exercises/choosing/counted.h:counts"
 ```
 
 ```cpp
-inline Counts& Tally() {
-    static Counts c;                 // Chapter 32's construct-on-first-use
-    return c;
-}
+--8<-- "exercises/choosing/counted.h:tally"
 ```
 
 Alongside it sits a heap-allocation counter — a replaced `operator new`, the instrument [Chapter 36](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded) built — because the sink's real price is an allocation the copy/move tally cannot see. The verdict is a `CHECK` macro that counts failures and sets the exit code, not `assert`: `assert` compiles to nothing under `-DNDEBUG`, which a CMake `Release` build defines ([Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)), and a harness that vanishes in Release while still printing its success line is worse than none.

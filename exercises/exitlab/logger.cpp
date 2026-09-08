@@ -21,7 +21,9 @@ void Logger::write(const char* line) {
 
 std::size_t Logger::lines() const { return lines_; }
 
+// --8<-- [start:the-logger]
 Logger& TheLogger() {
     static Logger logger;    // constructed the first time anyone asks
     return logger;
 }
+// --8<-- [end:the-logger]

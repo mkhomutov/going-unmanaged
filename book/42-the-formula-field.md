@@ -9,61 +9,7 @@ Here nobody does. There is no compiler in the process, no reflection, before C++
 Text in, a number out, and in between the objects the caller injects. That last clause is the design: the formula never knows what `wall.width` *is*, only who to ask. The header is the whole contract:
 
 ```cpp
-#pragma once
-#include <cstddef>
-#include <memory>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <variant>
-#include <vector>
-
-namespace formula {
-
-// Where the text went wrong, and why - a VALUE (Chapter 8): a formula the
-// user mistyped is the ordinary case of this parser, not an event.
-struct Error {
-    std::size_t pos;      // byte offset into the text: the caret goes here
-    std::string what;
-};
-
-// The seam (Chapters 28 and 41): the host's objects, as the formula sees
-// them. "wall.width" is one name to this interface - the dot belongs to the
-// provider, which is what lets the same formula run against a live host and
-// against a map in a test. nullopt means "no such name" and "no such
-// function, or wrong arity": both are errors the formula reports with the
-// position of the name.
-class ISymbols {
-public:
-    virtual ~ISymbols() = default;
-    virtual std::optional<double> Value(std::string_view name) const = 0;
-    virtual std::optional<double> Call(std::string_view name, const std::vector<double>& args) const = 0;
-};
-
-// A formula parsed once and evaluated many times - the shape of a computed
-// column: the text is checked when the user types it, and the tree is
-// walked per row. Both are bounded by max_depth - the nesting the parser
-// recurses through and the height of the tree the evaluator walks - because
-// the text is the user's and the stack is the host's.
-class Formula {
-public:
-    static std::variant<Formula, Error> Parse(std::string_view text, int max_depth = 64);
-    std::variant<double, Error> Evaluate(const ISymbols& symbols) const;
-
-    Formula(Formula&&) noexcept;
-    Formula& operator=(Formula&&) noexcept;
-    ~Formula();
-
-    struct Node;                                  // the tree: a closed set of node kinds behind one pointer
-private:
-    explicit Formula(std::unique_ptr<Node> root);
-    std::unique_ptr<Node> root_;
-};
-
-// One call for the one-off case: parse and evaluate, errors from either step.
-std::variant<double, Error> Evaluate(std::string_view text, const ISymbols& symbols, int max_depth = 64);
-
-}  // namespace formula
+--8<-- "exercises/exprlab/expr.h:listing"
 ```
 
 Four decisions live in those forty lines, and each is a chapter's. **A mistyped formula is a value, not an event** — [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s decision, made the way its drill made it for the malformed row: the ordinary outcome of a box the user types into is a typo, and a parser that throws once per keystroke has filed the common case under exceptional. The value carries a *position*, because a parser that says "syntax error" is one nobody can use; the caret goes at `pos`. **The provider is an interface** — [Chapter 28](28-testing.md#chapter-28--testing)'s seam, designed first: the vendor's document is one implementation, a map is another, and the whole lab runs against the map on a machine with nothing installed. [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write) offered the other seam, a template parameter, and its own question decides against it here: the provider is chosen at run time, by which document is open, so it stays a virtual base. **The formula is parsed once** and evaluated per row, which is why `Formula` is a type and not a function — the text is checked when the user types it, the tree is walked when the data changes, and `Formula::Node` is declared and never defined in the header, [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s PIMPL rule with the destructor and the moves defined where `Node` is complete. And **parsing is bounded**: `max_depth` exists because the text is the user's and the stack is the host's, which is the subject of the depth guard below.
@@ -75,18 +21,7 @@ Notice also what the header does not promise: `Evaluate` takes the provider on e
 The tokenizer — the lexer, in the compiler books — turns bytes into a vector of tokens, each a closed set of kinds and each carrying the byte offset it began at:
 
 ```cpp
-struct Number { double value; };
-struct Ident  { std::string name; };      // "wall.width": the dot is part of the name
-struct Op     { char c; };                // + - * / < > , (the two-character comparisons are Compare, below)
-struct Compare { std::string op; };       // "<=", ">=", "==", "!="
-struct LParen {};
-struct RParen {};
-struct End {};
-
-struct Token {
-    std::size_t pos;
-    std::variant<Number, Ident, Op, Compare, LParen, RParen, End> kind;
-};
+--8<-- "exercises/exprlab/expr.cpp:tokens"
 ```
 
 A `std::variant`, because the set is closed and every access to it is typed — the parser reads tokens through `get_if`, and a kind it did not ask about cannot be mistaken for one it did ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)); a `std::string` inside `Ident` rather than a `string_view`, because the tokens outlive the call that tokenized — they sit in the parser while the caller's text may not — and a view into a temporary is the Chapter 10 trap in its most common disguise. `Ident` also settles the injected-object question at the cheapest point: `wall.width` is one identifier, dot included, and what the dot means is the provider's decision, not the parser's. The parser has no idea there are objects. The provider does.
@@ -94,25 +29,7 @@ A `std::variant`, because the set is closed and every access to it is typed — 
 The scan takes the longest run of digits and dots and hands it to one function, whose one decision is the chapter's second trap:
 
 ```cpp
-// The number parse. from_chars, never strtod: strtod reads the C locale's
-// decimal separator, so on a German machine "1,5" parses as one and a half
-// and "1.5" stops at the dot - the bug that works on the bench. from_chars
-// knows one spelling, the wire's, on every machine. Where the library has
-// no from_chars for double, the same one spelling comes from strtod handed
-// a "C" locale of the parser's own, which asks the process's locale nothing.
-// Returns where the number ended, or nullptr if [first, last) is not one.
-const char* ParseNumber(const char* first, const char* last, double& value) {
-#ifdef FORMULA_HAS_FROM_CHARS_DOUBLE
-    const auto [end, ec] = std::from_chars(first, last, value);
-    return ec == std::errc{} ? end : nullptr;
-#else
-    static const locale_t c_locale = newlocale(LC_NUMERIC_MASK, "C", static_cast<locale_t>(nullptr));
-    const std::string copy(first, last);          // strtod wants a terminator
-    char* stop = nullptr;
-    value = strtod_l(copy.c_str(), &stop, c_locale);
-    return stop == copy.c_str() ? nullptr : first + (stop - copy.c_str());
-#endif
-}
+--8<-- "exercises/exprlab/expr.cpp:parse-number"
 ```
 
 `std::strtod`, `std::stod` and `atof` read the decimal separator from the process's C locale, and a plug-in does not own its process's locale: the host, or a library the host loaded, may have called `setlocale` for its own reasons. On such a machine `1,5` is one and a half and `1.5` is one — silently, with the formula's own tests green on every developer's machine, because a process starts in the C locale wherever it runs and only the host's `setlocale` changes that. `std::from_chars` (Recipe 19 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook)) knows one spelling and reads the same bytes the same way everywhere, which is [Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed)'s wire discipline applied to a number in a text box. The judge switches the process to `de_DE` where the machine has it, asserts nothing changed, and says which it did: macOS ships the locale and CI's Linux job generates it, so a skip is a line in the log rather than a silence.
@@ -127,18 +44,7 @@ The `#else` branch is [Appendix K](K-the-standards-catalogue.md#appendix-k--the-
 The tree — the abstract syntax tree, AST, of the compiler books — is one struct:
 
 ```cpp
-struct Formula::Node {
-    struct Literal  { double value; };
-    struct Name     { std::string name; };
-    struct Negate   { std::unique_ptr<Node> operand; };
-    struct Binary   { std::string op; std::unique_ptr<Node> lhs, rhs; };
-    struct CallExpr { std::string name; std::vector<std::unique_ptr<Node>> args; };
-    using Kind = std::variant<Literal, Name, Negate, Binary, CallExpr>;
-
-    std::size_t pos;                              // where this node's text began: the error's caret
-    int height;                                   // of this subtree: what Eval and the destructor recurse through
-    Kind kind;
-};
+--8<-- "exercises/exprlab/expr.cpp:node"
 ```
 
 Two of [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s decisions in one struct. The node *kinds* are a closed set nobody extends from outside, so they are a variant by value — no base class, no virtual `Eval`, and a `visit` whose last branch is a `static_assert`, so a kind with no branch does not compile. The *children* sit behind `unique_ptr`, and here the appendix's fourth procedure has its one structural answer rather than a preference: a `Node` cannot hold a `Node` by value, because the type would contain itself, so every edge goes through an indirection — a `unique_ptr` here, or a `std::vector<Node>`, which C++17 lets name an incomplete element type and which is the same box with a count on it. The `height` is the depth guard's other half, below. The C# reflex — a `Node` class hierarchy with a virtual `Evaluate` — is not wrong here; it is the open-set shape, and the set is closed. A reader who wants the hierarchy anyway has Chapter 5's rules to obey and gains nothing for it.
@@ -148,36 +54,13 @@ Two of [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and
 Recursive descent is the technique of writing the grammar down as functions, one per precedence level, each calling the level below it:
 
 ```cpp
-//   comparison := additive ( ('<' | '>' | '<=' | '>=' | '==' | '!=') additive )?
-//   additive   := term ( ('+' | '-') term )*
-//   term       := unary ( ('*' | '/') unary )*
-//   unary      := '-' unary | primary
-//   primary    := NUMBER | NAME | NAME '(' args ')' | '(' comparison ')'
-//
-// Left-associative by construction: additive LOOPS over its operands, so
-// 8 - 3 - 2 is (8 - 3) - 2. A version that recursed on the right instead
-// would give 8 - (3 - 2) = 7, and pass every test with one operator in it.
-// A comparison takes exactly two operands: 1 < 2 < 3 is refused at the
-// second '<', not read as (1 < 2) < 3.
+--8<-- "exercises/exprlab/expr.cpp:comparison"
 ```
 
 The whole of precedence is that `Term` is called *from* `Additive`, so a `*` is consumed before the `+` around it ever sees its operands. And the whole of associativity is in the shape of one function:
 
 ```cpp
-    std::variant<NodePtr, Error> Additive() {
-        auto lhs = Term();
-        if (std::holds_alternative<Error>(lhs)) return lhs;
-        for (;;) {
-            const std::size_t pos = Peek().pos;
-            char c = 0;
-            if (TakeOp('+')) c = '+'; else if (TakeOp('-')) c = '-'; else break;
-            auto rhs = Term();
-            if (std::holds_alternative<Error>(rhs)) return rhs;
-            lhs = Build(pos, Node::Binary{std::string(1, c), std::move(std::get<NodePtr>(lhs)), std::move(std::get<NodePtr>(rhs))});
-            if (std::holds_alternative<Error>(lhs)) return lhs;
-        }
-        return lhs;
-    }
+--8<-- "exercises/exprlab/expr.cpp:additive"
 ```
 
 A loop, folding each new operand into the tree on the left. The version that reads more naturally from the grammar — `additive := term ('+' additive)?`, recursing on the right — is the chapter's wrong-that-looks-like-working: it parses `8 - 3 - 2` as `8 - (3 - 2)` and returns 7, and every test with one operator in it passes, and so does every test with two operators of different precedence. Only two operators of the same precedence with `-` or `/` first tell the two apart — `8 - 3 - 2`, `16 / 4 / 2`, `8 - 3 + 2` — which is why the judge's table has the first two of those. This is [Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed)'s lesson about oracles: no sanitizer knows that 7 is wrong. A value table worked out by hand is the only judge there is, and the rows in it are chosen for the mistakes they can catch.
@@ -189,30 +72,11 @@ The error handling is [Chapter 8](08-error-handling.md#chapter-8--error-handling
 Every `(` and every unary `-` recurses one level deeper, which means the user's text sizes the host's stack:
 
 ```cpp
-    // The depth guard. Every parenthesis and every unary minus recurses, so
-    // "((((((((1" is a stack frame per byte - the user's text sized the
-    // host's stack. Refuse past max_depth with a position, before the stack
-    // does it with a signal (Recipe 34's crash, none of Chapter 31's shapes).
-    struct Depth {
-        Depth(int& d, int limit, bool& over) : depth_(d) { over = ++depth_ > limit; }
-        ~Depth() { --depth_; }
-        int& depth_;
-    };
+--8<-- "exercises/exprlab/expr.cpp:depth-guard"
 ```
 
 ```cpp
-    std::variant<NodePtr, Error> Unary() {
-        bool over = false;
-        Depth guard(depth_, max_depth_, over);
-        if (over) return Error{Peek().pos, "expression nests too deeply"};
-        const std::size_t pos = Peek().pos;
-        if (TakeOp('-')) {
-            auto operand = Unary();
-            if (std::holds_alternative<Error>(operand)) return operand;
-            return Build(pos, Node::Negate{std::move(std::get<NodePtr>(operand))});
-        }
-        return Primary();
-    }
+--8<-- "exercises/exprlab/expr.cpp:unary"
 ```
 
 A few hundred nested parentheses pasted into the box are a few hundred nested calls, each several frames deep through `Comparison`, `Additive`, `Term` and `Unary`; on [Chapter 3](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior)'s 512 KB macOS worker-thread stack that is a crash on some frame's entry. In the shipped build it is a bare `SEGV` or `BUS`, none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s report shapes and no frame of yours; under the canonical flags ASan names it `stack-overflow` and lists `Primary`, `Unary`, `Term`, `Additive` and `Comparison` a hundred times over, which tells you the crime and not the missing limit — Recipe 34's failure, delivered by a text box. On your own machine the main thread has 8 MB, so the same paste parses clean there: the demonstration needs the worker thread, or ten times the text. The guard is [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)'s RAII counting depth on the way in and out, and the refusal is a value with the position where the level too deep begins.
@@ -220,14 +84,7 @@ A few hundred nested parentheses pasted into the box are a few hundred nested ca
 That bounds what the parser recurses through, and it is only half. A flat sum — `1+1+1+…` for two hundred terms — never nests in the parser at all, because `Additive` loops; but each turn of the loop folds the sum so far under a new node, the tree grows one level taller per term, and `Eval` and the destructor recurse through that spine. Measured on the lab, two hundred terms overflow the 512 KB worker with the guard in place. So every node is built through one function that knows the limit:
 
 ```cpp
-    // Every node is built here, so the tree's height is checked once for all
-    // kinds: the guard above bounds what the parser recurses through, this
-    // bounds what the evaluator will. One limit serves both.
-    std::variant<NodePtr, Error> Build(std::size_t pos, Node::Kind kind) {
-        const int height = HeightOf(kind);
-        if (height > max_depth_) return Error{pos, "expression is too deep to evaluate"};
-        return std::make_unique<Node>(Node{pos, height, std::move(kind)});
-    }
+--8<-- "exercises/exprlab/expr.cpp:build"
 ```
 
 One limit serves both: the nesting the parser recurses through and the height the evaluator walks. Sixty-four is deeper than anything a person types and, measured on this lab under the canonical flags on macOS/arm64, still short of where the worker's stack runs out — about ninety levels of parser recursion; a generator that needs more raises `max_depth`, which is why it is a parameter. The judge accepts sixty-four levels, refuses sixty-five with the position, and refuses a thousand parentheses, a thousand minus signs and a thousand terms before the stack is touched.
@@ -235,11 +92,7 @@ One limit serves both: the nesting the parser recurses through and the height th
 ### The evaluator: the injected object answers
 
 ```cpp
-        } else if constexpr (std::is_same_v<K, Node::Name>) {
-            // The injected object answers, or the formula reports the name -
-            // the formula never knows what "wall.width" is, only who to ask.
-            if (const auto v = symbols.Value(k.name)) return *v;
-            return Error{node.pos, "unknown name '" + k.name + "'"};
+--8<-- "exercises/exprlab/expr.cpp:evaluate-name"
 ```
 
 `Eval` is one `std::visit` over the node variant, with `if constexpr` sorting the kinds ([Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s `Describe`, over a tree), and the `Name` branch is where the objects come in: the provider is asked, and the answer or the refusal comes back with the node's position, so an unknown property is reported at the character the user typed it. The same branch for `CallExpr` hands the provider a name and the evaluated arguments, and a `nullopt` there means either no such function or the wrong number of arguments — the provider decides, since it is the provider that knows what `max` takes. Division by zero is an `Error` at the `/`, not a NaN the row would display as `nan`; comparisons yield 1 or 0, the way the box's users read a filter.
@@ -247,15 +100,7 @@ One limit serves both: the nesting the parser recurses through and the height th
 The lab's provider is a map of objects, each a map of properties, and three functions:
 
 ```cpp
-    std::optional<double> Value(std::string_view name) const override {
-        const auto dot = name.find('.');
-        if (dot == std::string_view::npos) return std::nullopt;
-        const auto obj = objects_.find(std::string(name.substr(0, dot)));
-        if (obj == objects_.end()) return std::nullopt;
-        const auto prop = obj->second.find(std::string(name.substr(dot + 1)));
-        if (prop == obj->second.end()) return std::nullopt;
-        return prop->second;
-    }
+--8<-- "exercises/exprlab/main.cpp:provider"
 ```
 
 That is [Chapter 28](28-testing.md#chapter-28--testing)'s fake you own, and the reason the whole lab runs on a laptop: the host adapter that resolves `wall.width` against a live document — on the main thread, at the safe point, through [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out)'s queue if the formula is evaluated for a client — is one more `ISymbols`, and the tree, the parser and the judge never change.
@@ -265,38 +110,13 @@ That is [Chapter 28](28-testing.md#chapter-28--testing)'s fake you own, and the 
 Four things are asserted, because four things could be wrong in a way no tool reports:
 
 ```cpp
-    const std::vector<std::pair<const char*, double>> table = {
-        {"1 + 2 * 3", 7},                        // precedence: * binds tighter
-        {"(1 + 2) * 3", 9},                      // parentheses override it
-        {"8 - 3 - 2", 3},                        // LEFT-associative: (8-3)-2, not 8-(3-2)=7
-        {"16 / 4 / 2", 2},                       // same for division
-        {"-2 * -3", 6},                          // unary minus, twice
-        {"--4", 4},                              // stacked unary
-        {"wall.width * 2", 8},                   // the injected object
-        {"wall.width * wall.height", 10},
-        {"max(wall.width, door.offset) + 1", 5}, // a call with two arguments
-        {"abs(-wall.height)", 2.5},
-        {"wall.width > 3", 1},                   // comparisons yield 1 or 0
-        {"wall.width * 2 >= door.offset + 7", 0},
-        {"1.5 + .5", 2},                         // a leading-dot fraction
-        {" 2  +  2 ", 4},                        // whitespace anywhere
-        {"min(1, 2) == 1", 1},
-    };
+--8<-- "exercises/exprlab/main.cpp:value-table"
 ```
 
 **Values, worked out by hand** — the oracle of [Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed), and every row chosen for a mistake it can catch: the third row is the associativity bug, the fifth and sixth the unary minus, the seventh the injection. **Error positions**, not error presence — `1 + * 2` fails at 4, `wall.depth` at 0, `1 / (2 - 2)` at 2 — because a parser judged on "returned an error" would pass with `pos` always zero. **The depth limit** at exactly N and N + 1, and then at a thousand — nested, and flat. And **the locale**:
 
 ```cpp
-    CHECK(ErrorAt(Evaluate("1,5", host), 1));
-    const char* locale_used = nullptr;
-    for (const char* name : {"de_DE.UTF-8", "de_DE.utf8", "de_DE"}) {
-        if (std::setlocale(LC_NUMERIC, name) != nullptr) { locale_used = name; break; }
-    }
-    if (locale_used != nullptr) {
-        CHECK(ErrorAt(Evaluate("1,5", host), 1));
-        CHECK(ValueIs(Evaluate("1.5 * 2", host), 3));
-        std::setlocale(LC_NUMERIC, "C");
-    }
+--8<-- "exercises/exprlab/main.cpp:locale-judge"
 ```
 
 The second row inside the switch is the one that catches a `strtod`: the scan hands the number parse digits and dots only, so `1,5` is refused by the tokenizer whichever parse sits behind it, and it is `1.5` stopping at the dot under `de_DE` that tells the two apart. The judge is a `CHECK` that counts and sets the exit code, never `assert` — the `CHECK` [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage)'s measurements use, since `NDEBUG` compiles `assert` away in a Release build and a judge that vanishes is worse than none. `build_all.sh` builds the two translation units under the canonical flags and runs it on every push; the sanitizers watch the tree's pointers, and the table watches the arithmetic, and neither could do the other's job — Finding 10 of [Chapter 25](25-findings-from-practice.md#chapter-25--gotchas-the-findings-log), one more time.

@@ -3,12 +3,11 @@
 // This is the one cookbook TU built with -std=c++23, and scripts/build_all.sh
 // builds it as its own probe: on a toolchain that cannot compile it the
 // section prints SKIPPED, and CI passes --require-expected so it can never
-// skip there. Everything else in the cookbook is C++17, the book's pin,
-// which is why the C++17 Result in errors.cpp is the recipe's listing and
-// this file is Chapter 8's chaining example. channels_doubled() is quoted
-// VERBATIM in book/08-error-handling.md, whole and by name (the
-// check_verbatim UNITS table): editing it means editing the chapter in the
-// same commit. main() is scaffolding.
+// skip there. Everything else in the cookbook is C++17, the book's pin, which
+// is why the C++17 Result in errors.cpp is the recipe's listing and this file
+// is Chapter 8's chaining example. channels_doubled() is included by
+// book/08-error-handling.md between its channels-doubled section markers: edit
+// here and the page follows. main() is scaffolding.
 #include <cassert>
 #include <charconv>
 #include <expected>
@@ -32,6 +31,7 @@ std::expected<Config, ConfigError> load_config(std::string_view text) {
 
 // The chain: and_then for a step that may itself fail, transform for one
 // that cannot. Five early returns, spelled once.
+// --8<-- [start:channels-doubled]
 std::expected<int, ConfigError> channels_doubled(std::string_view text) {
     return load_config(text)
         .and_then([](Config c) -> std::expected<int, ConfigError> {
@@ -40,6 +40,7 @@ std::expected<int, ConfigError> channels_doubled(std::string_view text) {
         })
         .transform([](int n) { return n * 2; });
 }
+// --8<-- [end:channels-doubled]
 
 int main() {
     const auto good = load_config("16");

@@ -13,63 +13,7 @@ Two symptoms, and they do not obviously share a cause: a counter that drifts up,
 Chapter 17's SDK handed you a payload and one obligation: dispose exactly once. Version 2.0 replaces the payload with an opaque, reference-counted object — and the obligation with a *convention*:
 
 ```cpp
-// ============================================================================
-// FakeSDK2.h - version 2.0 of the FakeSDK: the project's Things are now
-// shared, REFERENCE-COUNTED objects behind opaque handles.
-// DO NOT MODIFY THIS FILE. Treat it as vendor code: read it, wrap it, obey it.
-//
-// THE OWNERSHIP CONVENTION (migration notes, section 2 - read it twice):
-//   - Thing_Acquire hands you a reference YOU OWN: the SDK retains it on
-//     your behalf, and you owe exactly one Thing_Release when you are done.
-//   - Project_PeekActive hands you a reference you DO NOT own: the project
-//     keeps it alive for now, and your pointer is valid only until the
-//     active Thing changes. Do not release it. Call Thing_Retain first if
-//     you intend to keep it.
-//   - Thing_Retain / Thing_Release return the new count FOR DIAGNOSTICS
-//     ONLY - do not base logic on it.
-// ============================================================================
-#pragma once
-#include <cstddef>
-
-using ErrCode = int;
-
-constexpr ErrCode NoErr        = 0;
-constexpr ErrCode ErrNullParam = 1;   // a required pointer was null
-constexpr ErrCode ErrBadIndex  = 2;   // no Thing with that index
-
-struct ThingRef;    // opaque: the SDK owns the definition
-
-// How many Things exist in the "project". Never fails if count is non-null.
-ErrCode Project_GetCount(size_t* count);
-
-// Fill *out with a reference to the Thing at 'index' (0-based). On success
-// the reference is RETAINED ON YOUR BEHALF - you own one Release.
-ErrCode Thing_Acquire(size_t index, ThingRef** out);
-
-// The project's currently-active Thing, or null if none. BORROWED: the
-// project keeps its own reference, and yours is valid only until the
-// active Thing changes. Retain it if you keep it; never release a peek.
-ThingRef* Project_PeekActive();
-
-size_t Thing_Retain(ThingRef* ref);    // +1; returns the new count (diagnostics only)
-size_t Thing_Release(ThingRef* ref);   // -1; frees the Thing at zero; returns the new count
-
-// Sum of the Thing's values. Requires a non-null ref.
-ErrCode Thing_Sum(const ThingRef* ref, double* sum);
-
-// Test-support: (re)build the fake project - thingCount Things, the one at
-// activeIndex marked active. Releases any previous project first.
-void FakeSdk2_Setup(size_t thingCount, size_t activeIndex);
-
-// Test-support: the host closing the document - the project releases its
-// own references and forgets its Things. Objects a client still holds
-// references to survive this.
-void FakeSdk2_Shutdown();
-
-// Test-support: how many Thing objects are currently alive. The host
-// checks this at plug-in unload, AFTER shutdown - it MUST be zero, and it
-// is this SDK's leak detector (v1's FakeSdk_LiveAllocations, grown up).
-size_t FakeSdk2_LiveObjects();
+--8<-- "exercises/comlab/FakeSDK2.h"
 ```
 
 This is Bestiary Shape 3 with the serial numbers filed off: status codes, out-parameters that arrive already retained, `Retain`/`Release` returning a count the docs immediately tell you not to trust — the exact posture of COM's `AddRef`/`Release` and of retain/release APIs everywhere. Note what the SDK does *not* do: nothing in it validates your counting. Like the real thing, it simply believes you.
@@ -193,60 +137,7 @@ This is also `shared_ptr`'s discipline with the count relocated — Chapter 16's
 Patching call sites is the 2.0.1 story again with more steps: every future call site retakes the same exam, and the codebase converges on correct only as fast as its slowest reviewer. The fix that closes the ticket is Chapter 16's habit applied to a count — *wrap the answers in a guard type* — and the migration notes' two sentences become two named constructors:
 
 ```cpp
-#pragma once
-#include "FakeSDK2.h"
-#include <utility>
-
-// The migration notes' two sentences, encoded as two named constructors.
-// adopt() wraps a reference some call already retained on your behalf
-// (Thing_Acquire's +1); share() wraps a borrowed pointer by taking a
-// reference of its own (Project_PeekActive). After this file, no line of
-// the plug-in spells Thing_Retain or Thing_Release again.
-class ThingHandle {
-public:
-    ThingHandle() = default;
-
-    static ThingHandle adopt(ThingRef* raw) {    // "you own one Release"
-        return ThingHandle(raw);
-    }
-    static ThingHandle share(ThingRef* raw) {    // "retain it if you keep it"
-        if (raw != nullptr) {
-            Thing_Retain(raw);
-        }
-        return ThingHandle(raw);
-    }
-
-    ThingHandle(const ThingHandle& other) : ref_(other.ref_) {
-        if (ref_ != nullptr) {
-            Thing_Retain(ref_);    // a copy duplicates the CLAIM, not the Thing
-        }
-    }
-    ThingHandle& operator=(const ThingHandle& other) {
-        ThingHandle tmp(other);              // copy-and-swap: Chapter 6's shape
-        std::swap(ref_, tmp.ref_);
-        return *this;                        // tmp's destructor pays our old debt
-    }
-    ThingHandle(ThingHandle&& other) noexcept : ref_(other.ref_) {
-        other.ref_ = nullptr;                // steal and null out - Chapter 6's rule
-    }
-    ThingHandle& operator=(ThingHandle&& other) noexcept {
-        std::swap(ref_, other.ref_);         // other's destructor pays our old debt
-        return *this;
-    }
-    ~ThingHandle() {
-        if (ref_ != nullptr) {
-            Thing_Release(ref_);             // every path pays, exactly once
-        }
-    }
-
-    ThingRef* get() const { return ref_; }
-    explicit operator bool() const { return ref_ != nullptr; }
-
-private:
-    explicit ThingHandle(ThingRef* raw) : ref_(raw) {}
-
-    ThingRef* ref_ = nullptr;
-};
+--8<-- "exercises/comlab/ref.h"
 ```
 
 This is the Chapter 15 Buffer's Rule of Five with one substitution that changes everything: the Buffer's copy constructor duplicated the *resource*; this one duplicates the *claim* — a retain, not an allocation — because the resource is shared by design. The move operations are unchanged from Chapter 6's rule (steal and null out, or the destructor pays twice), copy-and-swap makes assignment self-safe for free, and the destructor is the whole point: **every path pays, exactly once** — including the `continue` that silently leaked in the 2.0.0 loop. It is `Microsoft::WRL::ComPtr` at one-tenth scale, and building it once is what makes the full-size ones legible.
@@ -254,54 +145,7 @@ This is the Chapter 15 Buffer's Rule of Five with one substitution that changes 
 The ported feature, re-ported — and notice what is absent:
 
 ```cpp
-#include "FakeSDK2.h"
-#include "ref.h"
-#include <cstdio>
-
-int main() {
-    FakeSdk2_Setup(5, 2);    // five Things; the third is active
-
-    double total = 0.0;
-    double bestSum = -1.0;
-    double activeSum = 0.0;
-    {
-        size_t count = 0;
-        Project_GetCount(&count);
-        ThingHandle best;
-        for (size_t i = 0; i < count; ++i) {
-            ThingRef* raw = nullptr;
-            if (Thing_Acquire(i, &raw) != NoErr) {
-                continue;
-            }
-            ThingHandle t = ThingHandle::adopt(raw);    // Acquire's +1 is ours
-            double sum = 0.0;
-            if (Thing_Sum(t.get(), &sum) != NoErr) {
-                continue;                    // t still releases on this path
-            }
-            total += sum;
-            if (sum > bestSum) {
-                bestSum = sum;
-                best = t;                    // a copy: one more claim, retained
-            }
-        }
-
-        ThingHandle active = ThingHandle::share(Project_PeekActive());
-        if (active) {
-            Thing_Sum(active.get(), &activeSum);
-        }
-    }    // every handle returns its references here
-
-    FakeSdk2_Shutdown();     // the host closes the document...
-    const size_t live = FakeSdk2_LiveObjects();
-
-    std::printf("total %.1f, best %.1f, active %.1f, live at unload %zu\n",
-                total, bestSum, activeSum, live);
-    if (total != 45.0 || bestSum != 15.0 || activeSum != 9.0 || live != 0) {
-        std::printf("FAILED: the ledger does not balance\n");
-        return 1;
-    }
-    return 0;
-}
+--8<-- "exercises/comlab/main.cpp"
 ```
 
 Not one `Thing_Retain` or `Thing_Release` in it — grep the plug-in and the only hits are inside `ref.h`, which is Shape 3's "never call Release by hand" turned from advice into a property you can check in review. The acceptance test needs **two judges, one per direction**: the vendor's counter catches a release too few (the leak that no macOS sanitizer would name), and the sanitizers catch a release too many (the over-release that no counter can be trusted about, as the fold showed). `build_all.sh` runs exactly that on every push — the fixed port, copies in play, both acquisition conventions exercised, asserting the sums *and* `FakeSdk2_LiveObjects() == 0` after shutdown, under the full canonical flags.

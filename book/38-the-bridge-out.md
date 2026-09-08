@@ -51,60 +51,7 @@ sequenceDiagram
 The whole of it, from `exercises/bridgelab/`:
 
 ```cpp
-#pragma once
-#include <cstddef>
-#include <functional>
-#include <future>
-#include <mutex>
-#include <queue>
-#include <type_traits>
-#include <utility>
-
-class MainThreadQueue {
-public:
-    // Any thread. The job runs later, on the main thread; the future is how
-    // the caller waits for the answer. The whole contract is that a job
-    // accepted here is eventually RUN: policy (host busy, no document) lives
-    // inside the job, which can answer no - never in the queue, because a
-    // job dropped here is a client blocked on a future nothing will set.
-    template <class F>
-    auto Post(F fn) -> std::future<std::invoke_result_t<F>> {
-        using R = std::invoke_result_t<F>;
-        auto task = std::make_shared<std::packaged_task<R()>>(std::move(fn));
-        std::future<R> fut = task->get_future();
-        {
-            std::lock_guard<std::mutex> lock(m_);
-            jobs_.push([task] { (*task)(); });
-        }
-        return fut;
-    }
-
-    // Main thread only, at a point the host calls safe. Runs everything
-    // queued so far, in arrival order, and returns how many jobs ran. A job
-    // that pumps the event loop and lands here again nests to zero - the
-    // jobs posted meanwhile keep their turn, on the next outer Drain.
-    std::size_t Drain() {
-        if (draining_) return 0;      // refuse to nest: no job runs inside a job
-        draining_ = true;
-        std::queue<std::function<void()>> batch;
-        {
-            std::lock_guard<std::mutex> lock(m_);
-            batch.swap(jobs_);
-        }
-        const std::size_t ran = batch.size();
-        while (!batch.empty()) {
-            batch.front()();          // a throw stays inside the future:
-            batch.pop();              // packaged_task catches it for the caller
-        }
-        draining_ = false;
-        return ran;
-    }
-
-private:
-    std::mutex m_;
-    std::queue<std::function<void()>> jobs_;
-    bool draining_ = false;           // main thread only - it needs no lock
-};
+--8<-- "exercises/bridgelab/main_thread_queue.h:listing"
 ```
 
 Two design decisions in there carry the chapter. The queue *always* completes what it accepted — `Drain` runs every job, and any policy about the host being busy lives inside the job, which can answer no. And `Drain` refuses to nest, because reentrancy is not hypothetical: your handler opens a dialog, the dialog pumps the host's event loop, the host's idle callback fires, and `Drain` is suddenly executing *inside* a job it is executing. The guard turns that into "the new jobs wait one turn", which is boring, and boring is the point.
@@ -201,75 +148,7 @@ The write frame is the map's red-black tree *rebalancing itself* under a reader 
 Handlers need the host, and the chapter has so far waved at "SDK calls" without making any. That is deliberate, and it is [Chapter 28](28-testing.md#chapter-28--testing)'s move: the seam is designed first, as an interface, and the vendor's SDK becomes *one implementation of it*.
 
 ```cpp
-#pragma once
-#include <cassert>
-#include <functional>
-#include <string>
-#include <thread>
-#include <vector>
-
-// One result shape for every command: ok plus a payload, or not-ok plus a
-// reason the client can act on. The reasons are part of the wire contract -
-// "HOST_BUSY" is documented as retryable, so a client shows "host is busy,
-// close the dialog", not a spinner.
-struct CommandResult {
-    bool ok = false;
-    std::string text;
-};
-
-// What the SDK looks like from the bridge's point of view. One
-// implementation per host version translates these calls into vendor SDK
-// calls; nothing else in the bridge ever sees a vendor type.
-class IHostAdapter {
-public:
-    virtual ~IHostAdapter() = default;
-    virtual bool IsIdle() const = 0;
-    virtual std::string SelectionJson() = 0;
-    virtual CommandResult RunUndoable(const std::string& label,
-                                      const std::function<CommandResult()>& body) = 0;
-};
-
-// The stand-in - what FakeSDK and FakeDevice were for their chapters, a
-// double you can run under the sanitizers on a machine with nothing
-// installed. Every method opens by asserting the one contract no compiler
-// checks: that the call arrived on the thread that built the adapter.
-class StubHostAdapter : public IHostAdapter {
-public:
-    StubHostAdapter() : main_id_(std::this_thread::get_id()) {}
-
-    bool IsIdle() const override {
-        AssertMainThread();
-        return !modal_;
-    }
-    std::string SelectionJson() override {
-        AssertMainThread();
-        return R"(["wall-17","door-3"])";
-    }
-    CommandResult RunUndoable(const std::string& label,
-                              const std::function<CommandResult()>& body) override {
-        AssertMainThread();
-        CommandResult r = body();
-        if (r.ok) undo_.push_back(label);   // one command = one undo step
-        return r;
-    }
-
-    // Harness controls: the stub can do to you what a real host does.
-    void SetModal(bool modal) { AssertMainThread(); modal_ = modal; }
-    const std::vector<std::string>& UndoSteps() const {
-        AssertMainThread();             // "every method" means every method
-        return undo_;
-    }
-
-private:
-    void AssertMainThread() const {
-        // The habit this chapter trains: a function that touches the SDK
-        // asserts the thread on its first line.
-        assert(std::this_thread::get_id() == main_id_);
-    }
-    std::thread::id main_id_;
-    bool modal_ = false;
-    std::vector<std::string> undo_;
-};
+--8<-- "exercises/bridgelab/host.h:listing"
 ```
 
 You have met this pattern three times — FakeSDK, FakeDevice, and comlab's FakeSDK2 — always built by someone else, standing in for a vendor. This is the first one you write yourself, and the naming is deliberate: the `Fake*` doubles are frozen vendor contracts you consume, while the stub is *yours* — the lab expects you to extend it. It earns its keep twice over. Every method asserts the calling thread, so the affinity invariant is checked at the last line of defence on every single SDK touch, in a place no handler can forget to write. And it makes the entire bridge — queue, registry, transport — runnable under the sanitizers on a machine with no host installed, which is what the lab does on every push.
@@ -277,78 +156,7 @@ You have met this pattern three times — FakeSDK, FakeDevice, and comlab's Fake
 ### The registry
 
 ```cpp
-#pragma once
-#include <cassert>
-#include <functional>
-#include <future>
-#include <map>
-#include <string>
-#include <thread>
-#include <utility>
-
-#include "host.h"
-#include "main_thread_queue.h"
-
-class BridgeCore {
-public:
-    using Handler =
-        std::function<CommandResult(IHostAdapter&, const std::string&)>;
-
-    BridgeCore(IHostAdapter& host, MainThreadQueue& queue)
-        : host_(host), queue_(queue), main_id_(std::this_thread::get_id()) {}
-
-    // Main thread, before Start - and never after: the map is written here
-    // and read from every transport thread, so the freeze IS the lock.
-    void RegisterCommand(std::string name, Handler handler) {
-        assert(!started_);
-        handlers_[std::move(name)] = std::move(handler);
-    }
-
-    // The line between wiring and serving. After it, handlers_ is read-only,
-    // and concurrent readers of a map no writer touches are legal (Chapter
-    // 29: a race needs a writer) - so Invoke needs no lock at all.
-    void Start() { started_ = true; }
-
-    // Any thread. The future completes when the main thread has answered -
-    // with the result, or with a refusal like HOST_BUSY; never silently not
-    // at all. The caller owns the wait, and bounds it (see the harness).
-    std::future<CommandResult> Invoke(const std::string& name,
-                                      const std::string& args) {
-        assert(started_);             // reading started_ is safe: written once,
-                                      // before any transport thread existed
-        auto it = handlers_.find(name);
-        if (it == handlers_.end())
-            return Ready({false, "NO_SUCH_COMMAND: " + name});
-        // The job captures by value, deliberately: it outlives this frame
-        // whenever the caller gives up waiting, and a job must own what it
-        // reads - Chapter 22's lesson, now with a thread on each side.
-        const Handler& handler = it->second;
-        auto job = [this, handler, args]() -> CommandResult {
-            if (!host_.IsIdle())
-                return {false, "HOST_BUSY"};    // a refusal is a result
-            return handler(host_, args);
-        };
-        // A caller already on the main thread cannot wait for the main
-        // thread. Run the job right here instead: this call IS at the safe
-        // point, because the main thread is in it and not mid-Drain.
-        if (std::this_thread::get_id() == main_id_)
-            return Ready(job());
-        return queue_.Post(std::move(job));
-    }
-
-private:
-    static std::future<CommandResult> Ready(CommandResult r) {
-        std::promise<CommandResult> done;
-        done.set_value(std::move(r));
-        return done.get_future();
-    }
-
-    IHostAdapter&    host_;
-    MainThreadQueue& queue_;
-    std::thread::id  main_id_;
-    bool             started_ = false;
-    std::map<std::string, Handler> handlers_;
-};
+--8<-- "exercises/bridgelab/bridge_core.h:listing"
 ```
 
 Three details, each already earned. The handler and arguments are captured **by value** — the job outlives `Invoke`'s stack frame the moment a caller gives up waiting, and [Chapter 22](22-exercise-lambda-lifetimes.md#chapter-22--exercise-lambda-lifetimes)'s rule does not soften because the dangling would happen on somebody else's thread. The main-thread caller runs inline, which is break two's fix. And `started_` is written once, before any transport thread exists — thread creation publishes it, so the reads in `Invoke` are safe without an atomic, and the comment says so because the *next* reader of this code will not have this chapter open.
@@ -361,55 +169,13 @@ Three details, each already earned. The handler and arguments are captured **by 
 Two of the three breaks are hangs, and a hang is the one failure `build_all.sh` cannot see: a script with no timeout does not fail on a stuck binary, it *stops* — and CI stops with it, until some job-level timeout kills everything with a log naming nothing. [Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed) brought a hand decode because the sanitizers were silent, [Chapter 36](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded) an allocation counter for the same reason; this lab's judge is a **bounded wait**:
 
 ```cpp
-// Failures are counted, never thrown: a transport thread reporting through
-// an exception would just terminate (Chapter 29). Atomic, because EXPECT
-// runs on the client threads too.
-static std::atomic<int> g_failures{0};
-#define EXPECT(cond)                                                          \
-    do {                                                                      \
-        if (!(cond)) {                                                        \
-            std::fprintf(stderr, "FAILED %s:%d: %s\n", __FILE__, __LINE__,    \
-                         #cond);                                              \
-            ++g_failures;                                                     \
-        }                                                                     \
-    } while (0)
-
-// The judge this lab needs: a bounded wait. Two of the chapter's three
-// breaks are hangs, and a hang cannot fail this harness - it stops it, and
-// CI with it, until some job-level timeout fires naming nothing. So no wait
-// in this file is unbounded: every invoke takes a deadline, and a timeout
-// is a failed EXPECT with a line number instead of silence.
-static CommandResult InvokeChecked(BridgeCore& core, const std::string& name,
-                                   const std::string& args,
-                                   std::chrono::milliseconds deadline) {
-    std::future<CommandResult> fut = core.Invoke(name, args);
-    const std::future_status verdict = fut.wait_for(deadline);
-    EXPECT(verdict == std::future_status::ready);
-    if (verdict != std::future_status::ready)
-        return {false, "DEADLINE_EXCEEDED"};
-    return fut.get();
-}
+--8<-- "exercises/bridgelab/main.cpp:failure-counter"
 ```
 
 The harness around it runs four client threads, two hundred calls each, against a main thread that drains and goes modal one drain in four — so refusals genuinely happen, hundreds of them per run — and then checks the ledger: every call answered as a result or a `HOST_BUSY`, every successful mutation exactly one undo step in the stub, no wait past its deadline. Two deterministic phases follow with the concurrency turned off. The first is break two run against the fix — an `Invoke` from the main thread itself, with nothing draining any more, so only the inline path can answer at all — then a refusal (`SetModal(true)`, and the result *is* `HOST_BUSY`), then an unknown command. The second is the reentrancy guard's proof:
 
 ```cpp
-    // Phase 3 - reentrancy. A job that pumps the queue must nest to zero,
-    // and the job posted meanwhile must still run one Drain later - kept,
-    // not dropped: the queue completes everything it accepts.
-    std::future<int> later;
-    std::future<std::size_t> pumping = queue.Post([&queue, &later]() -> std::size_t {
-        later = queue.Post([] { return 41; });
-        return queue.Drain();          // nested: must refuse and run nothing
-    });
-    EXPECT(queue.Drain() == 1);        // ran the pumping job only
-    EXPECT(pumping.wait_for(kDeadline) == std::future_status::ready);
-    EXPECT(pumping.get() == 0);
-    EXPECT(later.wait_for(std::chrono::milliseconds(0)) ==
-           std::future_status::timeout);
-    EXPECT(queue.Drain() == 1);        // the kept job runs now
-    EXPECT(later.wait_for(kDeadline) == std::future_status::ready);
-    EXPECT(later.get() == 41);
+--8<-- "exercises/bridgelab/main.cpp:reentrancy-phase"
 ```
 
 Its second half matters more than its first: the nested `Drain` refusing is safety, but the deferred job still running one turn later — kept, not dropped — is the queue holding its only promise under the exact condition that tempts it to break it.

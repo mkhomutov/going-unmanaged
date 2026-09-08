@@ -1,8 +1,9 @@
-// Chapter 42's lab - the formula field: user-typed text evaluated against
-// the host's objects, through a provider the caller injects. This header is
-// quoted WHOLE in book/42-the-formula-field.md: editing it means editing the
-// chapter in the same commit (the testlab discipline). expr.cpp is quoted
-// by excerpt, main.cpp is the judge.
+// Chapter 42's lab - the formula field: user-typed text evaluated against the
+// host's objects, through a provider the caller injects. This header is
+// included WHOLE by book/42-the-formula-field.md from below this banner: edit
+// here and the page follows. expr.cpp is included by excerpt, between section
+// markers; main.cpp is the judge.
+// --8<-- [start:listing]
 #pragma once
 #include <cstddef>
 #include <memory>
@@ -58,3 +59,4 @@ private:
 std::variant<double, Error> Evaluate(std::string_view text, const ISymbols& symbols, int max_depth = 64);
 
 }  // namespace formula
+// --8<-- [end:listing]

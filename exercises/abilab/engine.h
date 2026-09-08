@@ -1,7 +1,5 @@
-// engine.h - consumable by C, C++, and anything with an FFI
-//
-// Quoted IN FULL in Chapter 30 ("Technique 3 - an extern \"C\" façade").
-// Changing it means updating that listing in the same commit.
+// engine.h is included IN FULL by Chapter 30 ("Technique 3 - an extern \"C\"
+// façade") from the marker below: edit there and the page follows.
 //
 // Compare it with exercises/fakedevice/FakeDevice.h when you have written your
 // own: opaque handle, output parameters, an error code on every function, an
@@ -15,6 +13,8 @@
 //       allocated nothing and Score scored nothing, so a caller may retry
 //       either - but Destroy has already begun freeing, so the handle is
 //       dead whatever this returns and retrying it is a double free.
+// --8<-- [start:listing]
+// engine.h - consumable by C, C++, and anything with an FFI
 #pragma once
 #ifdef __cplusplus
 extern "C" {
@@ -26,3 +26,4 @@ int Engine_Destroy(EngineHandle h);
 #ifdef __cplusplus
 }
 #endif
+// --8<-- [end:listing]

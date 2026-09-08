@@ -48,33 +48,7 @@ The report on your own platform will dress differently — a Linux core file ope
 Reduced to the plug-in's session accounting — the two files frame 0 will turn out to live in, plus the driver. The device's optional *calibration pack* exists only on units that report the capability; `session.h` says so in the place every reader passes:
 
 ```cpp
-#pragma once
-#include <memory>
-
-// The optional calibration pack: present only when the device reports the
-// capability. THE INVARIANT: cal_ may be null for an entire session, and
-// every path that touches it owns the check.
-struct Calibration {
-    double scale  = 1.0;
-    double offset = 0.0;
-    long   folded = 0;     // readings folded through this pack so far
-};
-
-class Session {
-public:
-    explicit Session(bool calibrated);
-
-    void Ingest(double reading);
-    double Report() const;                 // session close: the mean, calibrated
-    bool Calibrated() const { return cal_ != nullptr; }
-
-private:
-    double FoldedMean() const;             // applies the pack to the mean
-
-    double sum_   = 0.0;
-    long   count_ = 0;
-    std::unique_ptr<Calibration> cal_;     // null when the capability is absent
-};
+--8<-- "exercises/dumplab/session.h"
 ```
 
 And `session.cpp` as 3.4.0 shipped it:
@@ -161,33 +135,7 @@ Two names for the notes file. **Near-null fault address = member offset.** A cra
 One check, in the one function that skipped it — the fixed `session.cpp`:
 
 ```cpp
-#include "session.h"
-
-Session::Session(bool calibrated) {
-    if (calibrated) {
-        cal_ = std::make_unique<Calibration>();
-        cal_->scale  = 0.5;     // the capability's factory constants
-        cal_->offset = 1.0;
-    }
-}
-
-void Session::Ingest(double reading) {
-    sum_ += reading;
-    ++count_;
-}
-
-double Session::FoldedMean() const {
-    const double mean = count_ > 0 ? sum_ / static_cast<double>(count_) : 0.0;
-    if (cal_ == nullptr) {                 // the field configuration: no pack,
-        return mean;                       // so the mean ships uncalibrated
-    }
-    cal_->folded += count_;                // bookkeeping the pack expects
-    return mean * cal_->scale + cal_->offset;
-}
-
-double Session::Report() const {
-    return FoldedMean();
-}
+--8<-- "exercises/dumplab/session.cpp"
 ```
 
 Worth saying plainly: this is the *minimal* fix, and the chapter chose it because it is what the ticket gets on the day. The design debt it leaves is the invariant itself — "cal_ may be null and every path owns the check" is a rule enforced by vigilance, and vigilance is what just failed. The structural cures both remove the null instead of guarding it: an always-present *identity pack* (`scale 1.0, offset 0.0` — calibration that changes nothing), or absence folded into one place so no second path can ever forget. When the same null needs its third guard, stop counting guards and pick one of those.
@@ -195,32 +143,7 @@ Worth saying plainly: this is the *minimal* fix, and the chapter chose it becaus
 The acceptance test is the configuration matrix the project was missing, and the driver states it at the top:
 
 ```cpp
-#include "session.h"
-#include <cstdio>
-#include <cstdlib>
-
-int main(int argc, char** argv) {
-    // Device configuration under test. build_all.sh runs BOTH: 1 is the
-    // bench's calibrated unit, 0 the field's base model - the crash lived
-    // only in the second, and one configuration cannot prove both.
-    const bool calibrated = !(argc > 1 && std::atoi(argv[1]) == 0);
-
-    Session s(calibrated);
-    for (int i = 1; i <= 8; ++i) {
-        s.Ingest(static_cast<double>(i));    // mean 4.5, exactly
-    }
-    const double report = s.Report();
-
-    const double expected = calibrated ? 4.5 * 0.5 + 1.0 : 4.5;
-    if (report != expected) {
-        std::printf("FAILED: report %.3f, expected %.3f (calibrated=%d)\n",
-                    report, expected, calibrated ? 1 : 0);
-        return 1;
-    }
-    std::printf("session ok: %s device, report %.2f\n",
-                calibrated ? "calibrated" : "base-model", report);
-    return 0;
-}
+--8<-- "exercises/dumplab/main.cpp"
 ```
 
 `build_all.sh` runs it both ways under the canonical flags — the calibrated bench and the bare field unit — because the crash lived only in the configuration the matrix never had, and one configuration cannot prove a claim about both. The other half of the fix is institutional and was already in place, which is the only reason this ticket took an afternoon instead of a week: *the release job archived the symbol file next to the tag.* If your project's release process does not do that today, that is the actual action item of this chapter.

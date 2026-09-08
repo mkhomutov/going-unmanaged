@@ -124,9 +124,9 @@ canonical flags AND again under `-fsanitize=thread`:
 | The registry | `bridge_core.h` |
 | The harness and its judge | `main.cpp` |
 
-All four are Chapter 38's listings (the harness is excerpted there; the
-scaffolding between the excerpts is only here). Editing any of them means
-editing Chapter 38 in the same commit. The judge is the bounded wait:
+All four are Chapter 38's listings, included from these files (the harness
+by excerpt, between section markers; the scaffolding between the excerpts
+is only here): edit here and the page follows. The judge is the bounded wait:
 two of the three breaks above are hangs, and a hang cannot fail a script —
 it stops it, and CI with it — so no wait in `main.cpp` is unbounded, and a
 timeout fails with a line number instead of stopping the world.

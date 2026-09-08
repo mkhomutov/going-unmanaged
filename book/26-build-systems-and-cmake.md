@@ -180,16 +180,7 @@ C# has `#if DEBUG`, `[Conditional("DEBUG")]`, `DefineConstants` in the csproj, a
 The rule is about tool 3, and it is Chapter 27's diamond with a macro for a cause:
 
 ```cpp
-// session.h
-#pragma once
-struct Session {
-    int id;
-#ifdef AUDIT
-    int audit_count;     // present only where AUDIT is defined
-#endif
-    int timeout;
-};
-inline int GetTimeout(const Session& s) { return s.timeout; }
+--8<-- "scripts/check_platform_claims.sh:session-h"
 ```
 
 Compile one translation unit with `-DAUDIT` and one without, and there are two `Session`s in the program — eight bytes and twelve — and two `GetTimeout`s reading `timeout` at different offsets, both `inline`, so the linker keeps one, says nothing, and link order decides which: [Chapter 27](27-dependency-management.md#chapter-27--dependency-management)'s diamond, arriving through a define rather than a dependency, and that chapter has the mechanism in full. On this machine at `-O0`, `main` reads 30 in one link order and 0 in the other. What is worse than the diamond is what the sanitizers say, which is nothing: in this program the object is built in the larger translation unit, so every read lands inside it, and both orders exit 0 under the canonical flags. Build it in the smaller one instead and the larger layout's reader overreads — the same asymmetry Chapter 27 shows, and in a real program which direction you get is luck. `check_platform_claims.sh` holds the silent link, the disagreement, and this program's silence on both CI platforms.

@@ -1,59 +1,51 @@
 #!/usr/bin/env bash
-# The verbatim-sync check: code the book quotes must equal the code the repo
-# ships, mechanically. The discipline was always "edit both sides in the same
-# commit" (CLAUDE.md, CONTRIBUTING.md); this script exists because that
-# discipline once failed silently — solutions/tracer.cpp drifted from Chapter
-# 14's listing and nothing noticed until a review diffed them by hand.
+# The verbatim-sync check: code the book shows must be the code the repo
+# ships, mechanically. The discipline was once "edit both sides in the same
+# commit", and this script existed because that discipline failed silently
+# (solutions/tracer.cpp drifted from Chapter 14's listing and nothing noticed
+# until a review diffed them by hand). Since SITE-PLAN step 4 the pages do not
+# carry the code at all: a listing is `--8<-- "path:section"` inside a fence,
+# the section fenced in the source by `--8<-- [start:section]` and
+# `[end:section]` comment lines, and the site build renders the file. Drift
+# is impossible by construction; what this script checks is everything around
+# that construction:
 #
-# Four kinds of check, all substring containment on exact bytes:
-#   1. full        - the committed file appears verbatim inside its chapter
-#                    (vendor headers, ticket-lab fixed files, solution folds)
-#   2. banner      - same, after stripping the file's leading //-comment
-#                    provenance banner (testlab/abilab convention: the banner
-#                    names the sync rule and is not part of the quoted listing)
-#   3. includes/tasks - every `--8<-- "path:section"` a page includes names
-#                    a file that exists and a section marked exactly once in
-#                    it, and every section a source marks is included by a
-#                    page (Appendix F is entirely this shape now; SITE-PLAN
-#                    step 4 moves the other pairings onto it); and every
-#                    ```cpp fence in a
-#                    ticket TASK card appears in its chapter (the broken
-#                    listings are book-and-card, identical by rule);
-#                    bridgelab's card holds the same rule, and its chapter
-#                    is additionally checked the other way - every cpp
-#                    fence in Chapter 38 must live in exercises/bridgelab/
-#                    (committed code or the card's broken listings), since
-#                    the chapter quotes the lab by excerpt rather than by
-#                    whole file; Appendix H takes that same both-directions
-#                    rule against exercises/choosing/, which exists to
-#                    assert the costs that appendix quotes - forward, every
-#                    cpp fence on the page is in that directory; backward,
-#                    each unit its banners name is on the page WHOLE, since
-#                    that lab has no TASK card to carry the reverse the way
-#                    bridgelab's does; and Appendix G must hold NO cpp fence at
-#                    all - its recorded shape is lookup material with no
-#                    C++ listings (ROADMAP item 16's delivered note)
-#                    that same whole-unit table carries a page column, so
-#                    it also serves Chapter 6 (three units of
-#                    exercises/choosing/passing.cpp) and Chapter 8 (three
-#                    of the cookbook's, from errors.cpp and expected.cpp)
-#   4. generated   - a listing the book quotes that no lab commits, because
-#                    the code half is a script that writes it to a temp
-#                    directory: Chapter 27's ODR headers, generated and
-#                    asserted by scripts/check_platform_claims.sh. Runs
-#                    chapter -> script, per listing, since that script also
-#                    generates code the chapter never shows
+#   1. includes, forward  - every include names a file that exists and a
+#                           section that file marks exactly once (the strict
+#                           site build catches a missing file or section too;
+#                           this keeps the verdict in one script and catches
+#                           a marker duplicated by a paste, which the snippet
+#                           engine would resolve to the first)
+#   2. includes, reverse  - every section a source marks is included by some
+#                           page: a marked unit is a promise that a page shows
+#                           it (the old whole-unit rule, generalized)
+#   3. no copies          - no cpp or cmake fence of four lines or more on a
+#                           page is byte-identical to a region of a source
+#                           file: a listing pasted back into a page instead
+#                           of included is the drift this script was born
+#                           for, refused before it can happen
+#   4. cards              - the ticket and bridgelab TASK cards' broken
+#                           listings appear in their chapters verbatim: those
+#                           are book-and-card code with no compiled source
+#                           (they exist to fail), so they stay copied and are
+#                           held by containment
+#   5. pinned lines       - two one-line quotations, an if-statement in
+#                           Chapter 39 and a set() in Chapter 40, too short
+#                           for a marker, held by containment
+#   6. page shapes        - Appendix G holds no cpp fence and Appendix J no
+#                           cpp fence and at least one cmake fence, every one
+#                           of them an include: a page with nothing to compile
+#                           owes build_all.sh nothing, and a page with a
+#                           listing owes it exactly that listing
 #
 # Deliberately NOT checked: exercises/buildlab/CMakeLists.txt (assembled from
 # snippets, comments added - its own banner says so), solutions/Buffer.h and
 # solutions/buffer.cpp (Chapter 15 quotes the Buffer as ONE merged listing and
-# narrates the header/TU split; the demo's -Wself-move pragma block is
-# likewise acknowledged prose-side, not quoted), abilab engine.cpp (excerpted,
-# not quoted in full), solutions/device_threaded_solution.cpp (pointed at,
-# never quoted), and book/I-const.md (its five fences are teaching sketches,
-# not quotations of exercises/constlab/ - the lab's own claim, that five
-# violations are refused, is asserted by build_all.sh instead). Needs python3,
-# same as CI.
+# narrates the header/TU split), abilab engine.cpp (excerpted in prose, not
+# quoted), solutions/device_threaded_solution.cpp (pointed at, never quoted),
+# and book/I-const.md (its five fences are teaching sketches, not quotations
+# of exercises/constlab/ - the lab's own claim is asserted by build_all.sh).
+# Needs python3, same as CI.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -62,367 +54,115 @@ import glob, os, re, sys
 
 failures = []
 
-# The one fence shape every containment check below extracts. One definition,
-# because a tweak applied to two of three copies is a check gone silently lax.
-def cpp_fences(path):
-    return re.findall(r'```cpp\n(.*?)```', open(path).read(), re.S)
-
-def strip_banner(text):
-    lines = text.split('\n')
-    i = 0
-    while i < len(lines) and (lines[i].startswith('//') or lines[i].strip() == ''):
-        i += 1
-    return '\n'.join(lines[i:])
-
-def check(chapter, path, banner=False):
-    hay = open(chapter).read()
-    needle = open(path).read()
-    if banner:
-        needle = strip_banner(needle)
-    if needle.rstrip('\n') not in hay:
-        failures.append(f"{path} is not verbatim inside {chapter}"
-                        + (" (after banner strip)" if banner else ""))
-
-FULL = [
-    ('book/14-exercise-the-lifetime-tracer.md',   'solutions/tracer.cpp'),
-    ('book/17-exercise-the-fakesdk.md',           'exercises/fakesdk/FakeSDK.h'),
-    ('book/17-exercise-the-fakesdk.md',           'solutions/fakesdk_solution.cpp'),
-    ('book/18-exercise-the-device-sdk.md',        'exercises/fakedevice/FakeDevice.h'),
-    ('book/18-exercise-the-device-sdk.md',        'solutions/device_solution.cpp'),
-    ('book/19-exercise-the-word-counter.md',      'solutions/words.cpp'),
-    ('book/20-exercise-slicing-and-polymorphism.md', 'solutions/shapes.cpp'),
-    ('book/21-exercise-iterator-invalidation.md', 'solutions/invalid.cpp'),
-    ('book/22-exercise-lambda-lifetimes.md',      'solutions/lambdas.cpp'),
-    ('book/32-it-crashes-on-exit.md',             'exercises/exitlab/audit.cpp'),
-    ('book/33-here-is-the-report.md',             'exercises/reportlab/registry.cpp'),
-    ('book/33-here-is-the-report.md',             'exercises/reportlab/main.cpp'),
-    ('book/34-parse-this-capture.md',             'exercises/capturelab/wire.h'),
-    ('book/34-parse-this-capture.md',             'exercises/capturelab/wire.cpp'),
-    ('book/35-still-live-at-unload.md',           'exercises/comlab/FakeSDK2.h'),
-    ('book/35-still-live-at-unload.md',           'exercises/comlab/ref.h'),
-    ('book/35-still-live-at-unload.md',           'exercises/comlab/main.cpp'),
-    ('book/36-the-host-stutters.md',              'exercises/perflab/meter.h'),
-    ('book/36-the-host-stutters.md',              'exercises/perflab/meter.cpp'),
-    ('book/36-the-host-stutters.md',              'exercises/perflab/main.cpp'),
-    ('book/37-no-repro-dump-attached.md',         'exercises/dumplab/session.h'),
-    ('book/37-no-repro-dump-attached.md',         'exercises/dumplab/session.cpp'),
-    ('book/37-no-repro-dump-attached.md',         'exercises/dumplab/main.cpp'),
-    # Chapter 40 quotes its lab's build files whole, comments included - a
-    # CMake file's comments are the listing, not a banner - and deplab's
-    # install/export file, which Chapter 27 pointed at and never showed.
-    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/sdk/include/hostsdk/hostsdk.h'),
-    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/cmake/FindHostSDK.cmake'),
-    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/CMakeLists.txt'),
-    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/CMakePresets.json'),
-    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/monitor_export.h'),
-    ('book/40-cmake-for-the-plug-in.md',          'exercises/pluginlab/plugin/monitor.cpp'),
-    ('book/40-cmake-for-the-plug-in.md',          'exercises/deplab/mathlib/CMakeLists.txt'),
-]
-BANNER = [
-    ('book/28-testing.md',                  'exercises/testlab/tiny_test.h'),
-    ('book/28-testing.md',                  'exercises/testlab/buffer_test.cpp'),
-    ('book/30-authoring-an-abi-boundary.md', 'exercises/abilab/Widget.h'),
-    ('book/30-authoring-an-abi-boundary.md', 'exercises/abilab/Widget.cpp'),
-    ('book/30-authoring-an-abi-boundary.md', 'exercises/abilab/IScorer.h'),
-    ('book/30-authoring-an-abi-boundary.md', 'exercises/abilab/engine.h'),
-    ('book/41-templates-you-will-write.md',  'exercises/templatelab/session.h'),
-    ('book/41-templates-you-will-write.md',  'exercises/templatelab/policies.h'),
-    ('book/41-templates-you-will-write.md',  'exercises/templatelab/util.h'),
-    ('book/42-the-formula-field.md',          'exercises/exprlab/expr.h'),
-]
-
-for ch, f in FULL:
-    check(ch, f)
-for ch, f in BANNER:
-    check(ch, f, banner=True)
-
-# Included listings (SITE-PLAN step 4): a page that INCLUDES a listing -
-# `--8<-- "path:section"` inside its fence, the section fenced in the source
-# by `--8<-- [start:section]` / `[end:section]` comment lines - cannot drift
-# from it, because the site renders the file. What can still go wrong is
-# checked here, both ways. Forward: every include names a file that exists
-# and a section that file marks exactly once (the strict site build catches
-# a missing file or section too; this keeps the verdict in one script and
-# catches a marker duplicated by a careless paste, which snippets would
-# resolve to the first). Reverse: every section a source file marks is
-# included by some page - a marked unit is a promise that the page shows it,
-# the Appendix H whole-unit rule generalized - so a listing cut from a page
-# leaves a marker with no reader, and this says so.
 INCLUDE = re.compile(r'^--8<-- "([^":]+)(?::([^"]+))?"\s*$', re.M)
 MARK = re.compile(r'--8<-- \[(start|end):([A-Za-z0-9_.-]+)\]')
+FENCE = re.compile(r'```(cpp|cmake)\n(.*?)```', re.S)
+
+def fences(path, lang='cpp'):
+    return [b for l, b in FENCE.findall(open(path).read()) if l == lang]
+
+SOURCE_GLOBS = ('exercises/**/*.h', 'exercises/**/*.cpp', 'exercises/**/*.cmake',
+                'exercises/**/CMakeLists.txt', 'exercises/**/CMakePresets.json',
+                'solutions/*.h', 'solutions/*.cpp',
+                'scripts/check_platform_claims.sh', 'scripts/build_all.sh')
+sources = {}
+for pattern in SOURCE_GLOBS:
+    for path in sorted(glob.glob(pattern, recursive=True)):
+        if 'third_party' in path or '/build/' in path:
+            continue
+        sources[path] = open(path, errors='replace').read()
+
+# 1. includes, forward
 includes = []
-for page in sorted(glob.glob('book/*.md')):
+pages = sorted(glob.glob('book/*.md'))
+for page in pages:
     for path, section in INCLUDE.findall(open(page).read()):
         includes.append((page, path, section))
         if not os.path.exists(path):
             failures.append(f"{page} includes {path}, which does not exist")
             continue
         if section:
-            marks = MARK.findall(open(path).read())
+            marks = MARK.findall(open(path, errors='replace').read())
             starts = sum(1 for k, n in marks if k == 'start' and n == section)
             ends = sum(1 for k, n in marks if k == 'end' and n == section)
             if (starts, ends) != (1, 1):
                 failures.append(f"{page} includes {path}:{section}, marked {starts} start(s) and {ends} end(s) there (want exactly one each)")
-referenced = {(path, section) for _, path, section in includes if section}
-marked_files = 0
-for pattern in ('exercises/**/*.h', 'exercises/**/*.cpp', 'exercises/**/*.cmake',
-                'exercises/**/CMakeLists.txt', 'exercises/**/TASK.md',
-                'solutions/*.h', 'solutions/*.cpp',
-                'scripts/check_platform_claims.sh', 'scripts/build_all.sh'):
-    for path in sorted(glob.glob(pattern, recursive=True)):
-        if 'third_party' in path or '/build/' in path:
-            continue
-        marks = MARK.findall(open(path, errors='replace').read())
-        if not marks:
-            continue
-        marked_files += 1
-        for kind, name in marks:
-            if kind == 'start' and (path, name) not in referenced:
-                failures.append(f"{path} marks section {name!r}, which no page under book/ includes")
-# Appendix F is fully included: a cpp fence on that page is a listing nobody
-# checks any more, so there must be none.
-f_blocks = [b for b in cpp_fences('book/F-rosetta-cookbook.md') if not INCLUDE.match(b.strip())]
-if f_blocks:
-    failures.append(f"book/F-rosetta-cookbook.md holds {len(f_blocks)} cpp fence(s) with code; every recipe is included from exercises/cookbook/")
 
-# Ticket TASK cards: the broken listings are quoted in both places, identically.
+# 2. includes, reverse
+referenced = {(path, section) for _, path, section in includes if section}
+whole_files = {path for _, path, section in includes if not section}
+marked_files = 0
+for path, text in sources.items():
+    marks = MARK.findall(text)
+    if not marks:
+        continue
+    marked_files += 1
+    for kind, name in marks:
+        if kind == 'start' and (path, name) not in referenced:
+            failures.append(f"{path} marks section {name!r}, which no page under book/ includes")
+
+# 3. no copies
+copied = 0
+for page in pages:
+    for lang, block in FENCE.findall(open(page).read()):
+        body = block.rstrip('\n')
+        if INCLUDE.match(body.strip()) or sum(1 for l in body.split('\n') if l.strip()) < 4:
+            continue
+        for path, text in sources.items():
+            if body in text:
+                copied += 1
+                first = body.strip().split('\n')[0]
+                failures.append(f"{page}: a {lang} fence ({first!r}) is a copy of {path}; include it by a marked section instead")
+                break
+
+# 4. cards
 TICKETS = [('exitlab', '32-it-crashes-on-exit'),
            ('reportlab', '33-here-is-the-report'),
            ('capturelab', '34-parse-this-capture'),
            ('comlab', '35-still-live-at-unload'),
            ('perflab', '36-the-host-stutters'),
            ('dumplab', '37-no-repro-dump-attached'),
-           # A lab card rather than a ticket card, but the same rule: the
-           # broken listings are quoted in both places, identically.
            ('bridgelab', '38-the-bridge-out')]
+card_fences = 0
 for lab, ch in TICKETS:
     chapter = open(f'book/{ch}.md').read()
-    for i, block in enumerate(cpp_fences(f'exercises/{lab}/TASK.md'), 1):
+    for i, block in enumerate(fences(f'exercises/{lab}/TASK.md'), 1):
+        card_fences += 1
         if block.rstrip('\n') not in chapter:
             failures.append(f"exercises/{lab}/TASK.md cpp fence #{i} is not in book/{ch}.md")
 
-# Chapter 38's fences run the other direction too: every cpp fence in the
-# chapter must live in exercises/bridgelab/ - as committed code (the lab is
-# quoted by excerpt, so full-file containment does not apply) or as one of
-# the TASK card's broken listings, which the loop above pinned to the
-# chapter. Nothing in the chapter is quoted from nowhere.
-# Text sources only: a learner's stray a.out (or a scratch subdirectory)
-# in the lab must not crash the check with a decode error instead of a verdict.
-bridge = ''.join(open(p).read() for p in sorted(glob.glob('exercises/bridgelab/*.h')
-                                                + glob.glob('exercises/bridgelab/*.cpp')
-                                                + glob.glob('exercises/bridgelab/*.md')))
-ch38_fences = cpp_fences('book/38-the-bridge-out.md')
-for i, block in enumerate(ch38_fences, 1):
-    if block.rstrip('\n') not in bridge:
-        first = block.strip().split('\n')[0]
-        failures.append(f"book/38-the-bridge-out.md cpp fence #{i} ({first!r}) is in no exercises/bridgelab/ file")
-
-# Chapter 39 quotes exercises/interoplab/ by excerpt too, so it runs the same
-# forward direction as Chapter 38: every cpp fence in the chapter must be
-# byte-identical to something the lab commits. There is no reverse pass to
-# run - this lab's TASK card holds no cpp fence (nothing here is broken on
-# purpose), and Appendix H's whole-unit reverse cannot express a fence that
-# is one bare declaration lifted out of a header. Sources only, not the
-# card: a fence must be pinned to code build_all.sh actually compiles.
-interop = ''.join(open(p).read() for p in sorted(glob.glob('exercises/interoplab/*.h')
-                                                 + glob.glob('exercises/interoplab/*.cpp')))
-ch39_fences = cpp_fences('book/39-the-round-trip-home.md')
-for i, block in enumerate(ch39_fences, 1):
-    if block.rstrip('\n') not in interop:
-        first = block.strip().split('\n')[0]
-        failures.append(f"book/39-the-round-trip-home.md cpp fence #{i} ({first!r}) is in no exercises/interoplab/ file")
-
-# Chapter 42 quotes expr.cpp and main.cpp by excerpt (expr.h is whole, in
-# BANNER above), so it takes the Chapter 39 direction too: every cpp fence
-# in the chapter must be byte-identical to something in exercises/exprlab/.
-# Sources and the header only, not the card - the card carries no fence.
-exprlab = ''.join(open(p).read() for p in sorted(glob.glob('exercises/exprlab/*.h')
-                                                 + glob.glob('exercises/exprlab/*.cpp')))
-ch42_fences = cpp_fences('book/42-the-formula-field.md')
-for i, block in enumerate(ch42_fences, 1):
-    if block.rstrip('\n') not in exprlab:
-        first = block.strip().split('\n')[0]
-        failures.append(f"book/42-the-formula-field.md cpp fence #{i} ({first!r}) is in no exercises/exprlab/ file")
-
-# Appendix K quotes its probe by excerpt, the Chapter 39 way: every cpp fence
-# on the page must be byte-identical to something in the one file
-# build_all.sh builds at three standards. Nothing on that page is quoted
-# from nowhere, and a probe line that changes must change on the page too.
-standard = open('exercises/cookbook/standard.cpp').read()
-k_fences = cpp_fences('book/K-the-standards-catalogue.md')
-for i, block in enumerate(k_fences, 1):
-    if block.rstrip('\n') not in standard:
-        first = block.strip().split('\n')[0]
-        failures.append(f"book/K-the-standards-catalogue.md cpp fence #{i} ({first!r}) is not in exercises/cookbook/standard.cpp")
-
-# Appendix H quotes exercises/choosing/ by excerpt, so it takes the same
-# both-directions rule as Chapter 38. Forward: every cpp fence on the page
-# must be byte-identical to something the build actually compiles.
-choosing = ''.join(open(p).read() for p in sorted(glob.glob('exercises/choosing/*.h')
-                                                  + glob.glob('exercises/choosing/*.cpp')))
-h_fences = cpp_fences('book/H-choosing.md')
-for i, block in enumerate(h_fences, 1):
-    if block.rstrip('\n') not in choosing:
-        first = block.strip().split('\n')[0]
-        failures.append(f"book/H-choosing.md cpp fence #{i} ({first!r}) is in no exercises/choosing/ file")
-
-# Reverse: each unit the lab's banners promise is quoted must actually be on
-# its page, WHOLE. Chapter 38's reverse direction is carried by its TASK
-# card; exercises/choosing/ has no card (it is not an exercise), so the
-# named units are the contract instead - which is what stops a lab function
-# from growing a branch the page never shows. The table carries a page
-# column because more than one page quotes a lab by whole unit: Appendix H
-# and Chapter 6 for exercises/choosing/, Chapter 8 for the cookbook.
-# Whole-unit containment is the stronger check in both directions at once -
-# the fence cannot be truncated, and the lab unit cannot grow - which is
-# why no chapter gets a forward-only substring pass of its own.
-def whole_unit(path, opening):
-    """The text from the line starting with `opening` to where its braces close."""
-    lines = open(path).read().split('\n')
-    for i, line in enumerate(lines):
-        if line.startswith(opening):
-            depth, out, seen = 0, [], False
-            for body in lines[i:]:
-                out.append(body)
-                depth += body.count('{') - body.count('}')
-                seen = seen or '{' in body
-                if seen and depth <= 0:
-                    return '\n'.join(out)
-            break
-    return None
-
-H_PAGE = 'book/H-choosing.md'
-CH6 = 'book/06-the-rule-of-five-and-move-semantics.md'
-CH8 = 'book/08-error-handling.md'
-UNITS = [
-    (H_PAGE, 'exercises/choosing/counted.h',    'struct Counts {'),
-    (H_PAGE, 'exercises/choosing/counted.h',    'inline Counts& Tally() {'),
-    (H_PAGE, 'exercises/choosing/passing.cpp',  'class Widget {'),
-    (H_PAGE, 'exercises/choosing/passing.cpp',  'Counted MakeTemporary()'),
-    (H_PAGE, 'exercises/choosing/passing.cpp',  'Counted MakeNamed()'),
-    (H_PAGE, 'exercises/choosing/passing.cpp',  'void TheSinkAllocatesWhereTheBorrowDoesNot()'),
-    (H_PAGE, 'exercises/choosing/passing.cpp',  'void ReturningCostsNoCopy()'),
-    (H_PAGE, 'exercises/choosing/storing.cpp',  'void GrowthRelocatesAndMovesEveryElement()'),
-    (H_PAGE, 'exercises/choosing/storing.cpp',  'void BoxedElementsStandStillWhenTheVectorGrows()'),
-    (H_PAGE, 'exercises/choosing/storing.cpp',  'void AClosedSetStoresByValueWithoutABase()'),
-    (CH6,    'exercises/choosing/passing.cpp',  'Counted MakeNamedMoved()'),
-    (CH6,    'exercises/choosing/passing.cpp',  'void MovingFromAConstObjectCopies()'),
-    (CH6,    'exercises/choosing/passing.cpp',  'void ReturnStdMoveCostsTheMoveElisionRemoved()'),
-    # Chapter 8's translation layer quotes Recipe 22's Result and load_config,
-    # so Chapter 8, Appendix F and errors.cpp are one listing in three places.
-    (CH8,    'exercises/cookbook/errors.cpp',   'template <class T, class E>'),
-    (CH8,    'exercises/cookbook/errors.cpp',   'Result<Config, ConfigError> load_config('),
-    (CH8,    'exercises/cookbook/expected.cpp', 'std::expected<int, ConfigError> channels_doubled('),
+# 5. pinned lines
+PINNED = [
+    ('book/39-the-round-trip-home.md', 'exercises/interoplab/plugin.cpp',
+     'if (options->size != sizeof(PluginOptions)) return PLUGIN_VERSION_MISMATCH;'),
+    ('book/40-cmake-for-the-plug-in.md', 'exercises/pluginlab/plugin/CMakeLists.txt',
+     'set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")'),
 ]
-pages = {}
-for page, path, opening in UNITS:
-    text = pages.setdefault(page, open(page).read())
-    unit = whole_unit(path, opening)
-    if unit is None:
-        failures.append(f"{path}: no unit starting {opening!r} (check_verbatim's own list is stale)")
-    elif unit not in text:
-        failures.append(f"{path}: {opening!r} is not quoted whole in {page}")
+for page, path, line in PINNED:
+    if line not in open(page).read():
+        failures.append(f"{page}: the pinned line {line[:40]!r}... is no longer on the page (check_verbatim's own list is stale)")
+    elif line not in sources.get(path, ''):
+        failures.append(f"{path}: the line {page} quotes, {line[:40]!r}..., is no longer in the file")
 
-# Chapter 27's ODR diamond has no lab file to point at. It is an ill-formed
-# program whose FAILURE is the lesson, so it is generated into a temp directory
-# by scripts/check_platform_claims.sh rather than committed to a harness whose
-# contract is that programs succeed - which makes that script the code half of
-# a book<->code pair, and the only one that is not a file under exercises/ or
-# solutions/. The direction is chapter -> script, per listing rather than per
-# file: the script generates more than the chapter shows (the two .cpp that
-# include these headers are its own), so whole-file containment the other way
-# could never hold. One direction still catches drift from either side, because
-# both halves are pinned to the same fixed pair of blocks.
-GENERATED = [
-    ('book/27-dependency-management.md', 'scripts/check_platform_claims.sh',
-     ('// v1.h', '// v2.h')),
-    # Chapter 26's macro-ODR header, the same arrangement: an ill-formed
-    # program's one listing, generated and asserted by the same script.
-    ('book/26-build-systems-and-cmake.md', 'scripts/check_platform_claims.sh',
-     ('// session.h',)),
-]
-gen_pairs = 0
-for chapter, script, openings in GENERATED:
-    generator = open(script).read()
-    by_first = {b.strip().split('\n')[0]: b for b in cpp_fences(chapter)}
-    for opening in openings:
-        gen_pairs += 1
-        block = by_first.get(opening)
-        if block is None:
-            failures.append(f"{chapter}: no cpp fence starting {opening!r} "
-                            "(check_verbatim's own list is stale)")
-        elif block.rstrip('\n') not in generator:
-            failures.append(f"{chapter}: the {opening!r} listing is not verbatim "
-                            f"in {script}, which generates and asserts it")
-
-# Appendix J is Chapter 26/27/40's lookup half, and its CMake listings are
-# checked projects: the runtime-delivery one that build_all.sh generates into
-# a temp directory and holds both ways (installed executable loads through
-# INSTALL_RPATH; fails to load without it) - the generated arrangement above,
-# with a cmake fence instead of a cpp one - and the system-library one,
-# committed under exercises/cookbook/cmake/ and run under CTest. Every cmake
-# fence on the page must be verbatim in build_all.sh or, banner-stripped, in
-# one of the committed files; each committed file must be on the page whole
-# (the Appendix H both-ways rule, so editing the file means editing the
-# page); and the page holds no cpp fence, as Appendix G does not: a page with
-# nothing to compile owes build_all.sh nothing, and a page with a listing
-# owes it exactly that listing.
-def cmake_fences(path):
-    return re.findall(r'```cmake\n(.*?)```', open(path).read(), re.S)
-
-def cmake_body(path):
-    # a committed CMake file may open with a '#' banner the page omits: the
-    # leading comment lines up to the first blank line, and that blank. A
-    # comment after that blank is body, and the page must carry it.
-    lines = open(path).read().split('\n')
-    i = 0
-    while i < len(lines) and lines[i].startswith('#'):
-        i += 1
-    while i < len(lines) and not lines[i].strip():
-        i += 1
-    return '\n'.join(lines[i:]).rstrip('\n')
-
-J_CMAKE_FILES = ['exercises/cookbook/cmake/CMakeLists.txt']
-j_generator = open('scripts/build_all.sh').read()
-j_page = open('book/J-cmake-catalogue.md').read()
-j_bodies = {}
-for p in J_CMAKE_FILES:
-    if os.path.exists(p):
-        j_bodies[p] = cmake_body(p)
-    else:
-        failures.append(f"{p} is missing; book/J-cmake-catalogue.md quotes it whole")
-j_cmake = cmake_fences('book/J-cmake-catalogue.md')
+# 6. page shapes
+if fences('book/G-the-bridge-catalogue.md'):
+    failures.append("book/G-the-bridge-catalogue.md holds a cpp fence; its contract is no C++ listings (ROADMAP item 16's delivered note)")
+if fences('book/J-cmake-catalogue.md'):
+    failures.append("book/J-cmake-catalogue.md holds a cpp fence; its contract is no C++ listings")
+j_cmake = fences('book/J-cmake-catalogue.md', 'cmake')
 if not j_cmake:
-    failures.append("book/J-cmake-catalogue.md holds no cmake fence; its runtime-delivery listing is missing")
-for i, block in enumerate(j_cmake, 1):
-    text = block.rstrip('\n')
-    if text not in j_generator and not any(text in body for body in j_bodies.values()):
-        first = block.strip().split('\n')[0]
-        failures.append(f"book/J-cmake-catalogue.md cmake fence #{i} ({first!r}) is verbatim neither in scripts/build_all.sh nor in {', '.join(J_CMAKE_FILES)}")
-for p, body in j_bodies.items():
-    if body not in j_page:
-        failures.append(f"{p} (banner-stripped) is not on book/J-cmake-catalogue.md whole; the page quotes it, so edit both in one commit")
-j_cpp = cpp_fences('book/J-cmake-catalogue.md')
-if j_cpp:
-    failures.append(f"book/J-cmake-catalogue.md holds {len(j_cpp)} cpp fence(s); its contract is no C++ listings")
-
-# Appendix G holds the opposite contract: no cpp fence at all (ROADMAP item
-# 16's shape decision - a page with nothing to compile owes build_all.sh
-# nothing). The day one lands it becomes the book's only unverified listing.
-g_fences = cpp_fences('book/G-the-bridge-catalogue.md')
-if g_fences:
-    failures.append(f"book/G-the-bridge-catalogue.md holds {len(g_fences)} cpp fence(s); "
-                    "its contract is no C++ listings (ROADMAP item 16's delivered note)")
+    failures.append("book/J-cmake-catalogue.md holds no cmake fence; its two checked projects are missing")
+for block in j_cmake:
+    if not INCLUDE.match(block.strip()):
+        failures.append("book/J-cmake-catalogue.md holds a cmake fence with code; both of its listings are included from checked projects")
 
 if failures:
     print("check_verbatim.sh: DRIFT", file=sys.stderr)
     for f in failures:
         print(f"  {f}", file=sys.stderr)
     sys.exit(1)
-print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
-      f"{len(includes)} includes from {marked_files} marked files, {len(TICKETS)} cards, "
-      f"{len(ch38_fences)} ch38 fences, {len(ch39_fences)} ch39 fences, {len(ch42_fences)} ch42 fences, "
-      f"{len(h_fences)} appH fences + "
-      f"{len(UNITS)} whole units on {len(pages)} pages, {gen_pairs} generated, {len(j_cmake)} J cmake ({len(J_CMAKE_FILES)} committed), "
-      f"{len(k_fences)} appK fences, G and J cpp-free)")
+print(f"verbatim OK ({len(includes)} includes - {len(whole_files)} whole files, "
+      f"{len(referenced)} sections in {marked_files} marked files - no copied fence, "
+      f"{card_fences} card fences in {len(TICKETS)} chapters, {len(PINNED)} pinned lines, "
+      f"G cpp-free, J cmake-only)")
 PYEOF

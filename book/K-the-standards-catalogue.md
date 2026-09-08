@@ -9,16 +9,7 @@ It is [Appendix G](G-the-bridge-catalogue.md#appendix-g--the-bridge-catalogue) a
 In C# the language version is a line in the project file, `<LangVersion>`, and the compiler that reads it is the one that ships with the SDK — one artifact, one number. C++ has three things that version separately: the **standard** (an ISO document), the **compiler** (which implements some of it), and the **standard library** (a separate project, even when it ships in the same box, which implements the library half on its own schedule). So "which standard am I on" is three questions, and the probe asks all three:
 
 ```cpp
-    // The standard the compiler was TOLD to speak. On MSVC __cplusplus is
-    // 199711 unless /Zc:__cplusplus is passed - a lot of code once tested
-    // it, so the honest value became opt-in - and _MSVC_LANG carries the
-    // real answer whether or not the switch is on.
-    std::printf("%-32s %ld\n", "__cplusplus", static_cast<long>(__cplusplus));
-#ifdef _MSVC_LANG
-    std::printf("%-32s %ld\n", "_MSVC_LANG", static_cast<long>(_MSVC_LANG));
-#else
-    std::printf("%-32s absent (not MSVC)\n", "_MSVC_LANG");
-#endif
+--8<-- "exercises/cookbook/standard.cpp:standard-spoken-report"
 ```
 
 `__cplusplus` is the year and month of the standard the compiler was asked for — `201703` for C++17, `202002` for C++20, `202302` for C++23 — and the first trap is that MSVC reports `199711` for all of them unless you pass `/Zc:__cplusplus`, because too much old code tested the macro against that number for Microsoft to change the default. `_MSVC_LANG` carries the honest value on MSVC either way; a header that must know asks both. The `buildlab-msvc` job builds the probe twice and asserts both readings, because a vendor default is a fact that can change under a book without telling anyone.
@@ -29,15 +20,7 @@ In C# the language version is a line in the project file, `<LangVersion>`, and t
 The second half of the probe asks the library, and it is the half that matters more:
 
 ```cpp
-    // Library features: defined by the standard library's headers, so they
-    // track what THIS library has implemented - which can lag the year on
-    // the -std= switch by a release or more, and is the reason to ask the
-    // macro rather than __cplusplus before reaching for a feature.
-#ifdef __cpp_lib_optional
-    report("__cpp_lib_optional", __cpp_lib_optional);
-#else
-    report("__cpp_lib_optional", 0);
-#endif
+--8<-- "exercises/cookbook/standard.cpp:library-features"
 ```
 
 Every feature the standard adds gets a **feature-test macro** — `__cpp_if_constexpr` from the compiler for a language feature, `__cpp_lib_optional` from the library for a library one — whose value is the year and month the feature reached its current shape, and whose absence means the toolchain does not have it *whatever `__cplusplus` says*. The `<version>` header (C++20, but shipped in C++17 mode by all three libraries) carries the library half in one place. The question to ask before reaching for `std::expected` is therefore not "am I on C++23" but "is `__cpp_lib_expected` defined" — on the machine this page was written on, `-std=c++26` still leaves `__cpp_lib_move_only_function` absent, while the Linux runner's libstdc++ reports it under `-std=c++23` — a fact about two libraries, and no contradiction at all. On this machine, clang with libc++, the probe at the book's floor and at C++23:
@@ -61,12 +44,7 @@ Three spellings for the same switch, and one CMake pair that produces all of the
 The probe's first act is not a print statement but a refusal, and `build_all.sh` asks `-std=c++14` to build it so the refusal is asserted rather than assumed:
 
 ```cpp
-#ifdef _MSVC_LANG
-#define STANDARD_SPOKEN _MSVC_LANG
-#else
-#define STANDARD_SPOKEN __cplusplus
-#endif
-static_assert(STANDARD_SPOKEN >= 201703L, "this book's floor is C++17: pass -std=c++17 or /std:c++17");
+--8<-- "exercises/cookbook/standard.cpp:standard-spoken-macro"
 ```
 
 Five lines at the top of a project's one common header do the same job for a codebase: the floor, stated once, enforced by the compiler in a sentence instead of by whichever `optional` first fails to be found three headers deep — [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s judge, applied to the toolchain. The `#ifdef` is not decoration. The first draft of this probe asserted `__cplusplus` alone, and the `buildlab-msvc` job refused it at `/std:c++17` with the assertion's own sentence — the trap of the previous section, met before `main` ran, on the first build. And the Linux leg of the same run added a second lesson the section above only implied: GCC 13 reports `__cplusplus` as `202100` for `-std=c++23`, not `202302`, because the value is the compiler's opinion of a standard's date at the time the compiler shipped, and C++23 was not final until after GCC 13 was. Two compilers, one switch, two numbers — the year is a weak key, and the feature-test macro is the strong one.

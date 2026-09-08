@@ -2,8 +2,9 @@
 // FakeDevice.h, and a recording double that never touches a device. Same
 // three static functions, same Handle typedef, and Session cannot tell.
 //
-// Quoted VERBATIM in Chapter 41 below this banner: editing it means editing
-// the chapter in the same commit.
+// Included by Chapter 41 from below this banner: edit here and the page
+// follows.
+// --8<-- [start:listing]
 #pragma once
 #include "FakeDevice.h"
 
@@ -58,3 +59,4 @@ struct RecordingSdk {
         for (int s : scripts.at(h - 1)) sink(s);
     }
 };
+// --8<-- [end:listing]

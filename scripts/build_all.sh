@@ -903,6 +903,7 @@ if command -v cmake > /dev/null 2>&1; then
     rm -rf "$RL"
     mkdir -p "$RL/src"
     cat > "$RL/CMakeLists.txt" <<'EOF'
+# --8<-- [start:runtime-delivery]
 cmake_minimum_required(VERSION 3.16)
 project(rpathlab LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -931,6 +932,7 @@ endif()
 install(TARGETS telemetry report
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+# --8<-- [end:runtime-delivery]
 EOF
     cat > "$RL/src/telemetry.h" <<'EOF'
 #pragma once

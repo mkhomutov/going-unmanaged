@@ -1,8 +1,9 @@
 // Chapter 42's lab - the tokenizer, the parser and the evaluator behind
-// expr.h. The chapter quotes this file by excerpt: the token type, the
-// number scan, the precedence ladder, the depth guard, the height check and
-// the evaluator's name lookup. Editing a quoted unit means editing the
-// chapter in the same commit (the testlab discipline).
+// expr.h. The chapter quotes this file by excerpt: the token type, the number
+// scan, the precedence ladder, the depth guard, the height check and the
+// evaluator's name lookup. Each is included by the chapter between its section
+// markers: edit here and the page follows, and a marker moved is what the page
+// shows.
 #include "expr.h"
 
 #include <algorithm>
@@ -36,6 +37,7 @@ namespace {
 // A closed set of token kinds: a variant (Chapter 10), not a kind field
 // beside a union. Each token carries the byte offset it started at, so an
 // error can point at it.
+// --8<-- [start:tokens]
 struct Number { double value; };
 struct Ident  { std::string name; };      // "wall.width": the dot is part of the name
 struct Op     { char c; };                // + - * / < > , (the two-character comparisons are Compare, below)
@@ -48,11 +50,13 @@ struct Token {
     std::size_t pos;
     std::variant<Number, Ident, Op, Compare, LParen, RParen, End> kind;
 };
+// --8<-- [end:tokens]
 
 bool IsIdentStart(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'; }
 bool IsIdentChar(char c)  { return IsIdentStart(c) || (c >= '0' && c <= '9') || c == '.'; }
 bool IsDigit(char c)      { return c >= '0' && c <= '9'; }
 
+// --8<-- [start:parse-number]
 // The number parse. from_chars, never strtod: strtod reads the C locale's
 // decimal separator, so on a German machine "1,5" parses as one and a half
 // and "1.5" stops at the dot - the bug that works on the bench. from_chars
@@ -72,6 +76,7 @@ const char* ParseNumber(const char* first, const char* last, double& value) {
     return stop == copy.c_str() ? nullptr : first + (stop - copy.c_str());
 #endif
 }
+// --8<-- [end:parse-number]
 
 // The number scan: the longest run of digits and dots, which must parse
 // whole - "1..2" is not a number, and "1e5" is a number followed by a name.
@@ -139,6 +144,7 @@ std::variant<std::vector<Token>, Error> Tokenize(std::string_view text) {
 // tree, so the children sit behind unique_ptr: a Node cannot hold a Node by
 // value, and the pointer is the one reason to box that the appendix lists
 // as structural rather than a preference.
+// --8<-- [start:node]
 struct Formula::Node {
     struct Literal  { double value; };
     struct Name     { std::string name; };
@@ -151,6 +157,7 @@ struct Formula::Node {
     int height;                                   // of this subtree: what Eval and the destructor recurse through
     Kind kind;
 };
+// --8<-- [end:node]
 
 namespace {
 
@@ -181,6 +188,7 @@ int HeightOf(const Node::Kind& kind) {
 
 // ---- the parser: recursive descent, one function per precedence level ----
 //
+// --8<-- [start:comparison]
 //   comparison := additive ( ('<' | '>' | '<=' | '>=' | '==' | '!=') additive )?
 //   additive   := term ( ('+' | '-') term )*
 //   term       := unary ( ('*' | '/') unary )*
@@ -192,6 +200,7 @@ int HeightOf(const Node::Kind& kind) {
 // would give 8 - (3 - 2) = 7, and pass every test with one operator in it.
 // A comparison takes exactly two operands: 1 < 2 < 3 is refused at the
 // second '<', not read as (1 < 2) < 3.
+// --8<-- [end:comparison]
 class Parser {
 public:
     Parser(std::vector<Token> tokens, int max_depth) : tokens_(std::move(tokens)), max_depth_(max_depth) {}
@@ -214,6 +223,7 @@ private:
         return false;
     }
 
+// --8<-- [start:depth-guard]
     // The depth guard. Every parenthesis and every unary minus recurses, so
     // "((((((((1" is a stack frame per byte - the user's text sized the
     // host's stack. Refuse past max_depth with a position, before the stack
@@ -223,7 +233,9 @@ private:
         ~Depth() { --depth_; }
         int& depth_;
     };
+// --8<-- [end:depth-guard]
 
+// --8<-- [start:build]
     // Every node is built here, so the tree's height is checked once for all
     // kinds: the guard above bounds what the parser recurses through, this
     // bounds what the evaluator will. One limit serves both.
@@ -232,6 +244,7 @@ private:
         if (height > max_depth_) return Error{pos, "expression is too deep to evaluate"};
         return std::make_unique<Node>(Node{pos, height, std::move(kind)});
     }
+// --8<-- [end:build]
 
     std::variant<NodePtr, Error> Comparison() {
         auto lhs = Additive();
@@ -246,6 +259,7 @@ private:
         return Build(pos, Node::Binary{op, std::move(std::get<NodePtr>(lhs)), std::move(std::get<NodePtr>(rhs))});
     }
 
+// --8<-- [start:additive]
     std::variant<NodePtr, Error> Additive() {
         auto lhs = Term();
         if (std::holds_alternative<Error>(lhs)) return lhs;
@@ -260,6 +274,7 @@ private:
         }
         return lhs;
     }
+// --8<-- [end:additive]
 
     std::variant<NodePtr, Error> Term() {
         auto lhs = Unary();
@@ -276,6 +291,7 @@ private:
         return lhs;
     }
 
+// --8<-- [start:unary]
     std::variant<NodePtr, Error> Unary() {
         bool over = false;
         Depth guard(depth_, max_depth_, over);
@@ -288,6 +304,7 @@ private:
         }
         return Primary();
     }
+// --8<-- [end:unary]
 
     std::variant<NodePtr, Error> Primary() {
         Token t = Take();
@@ -340,11 +357,13 @@ std::variant<double, Error> Eval(const Node& node, const ISymbols& symbols) {
         using K = std::decay_t<decltype(k)>;
         if constexpr (std::is_same_v<K, Node::Literal>) {
             return k.value;
+// --8<-- [start:evaluate-name]
         } else if constexpr (std::is_same_v<K, Node::Name>) {
             // The injected object answers, or the formula reports the name -
             // the formula never knows what "wall.width" is, only who to ask.
             if (const auto v = symbols.Value(k.name)) return *v;
             return Error{node.pos, "unknown name '" + k.name + "'"};
+// --8<-- [end:evaluate-name]
         } else if constexpr (std::is_same_v<K, Node::Negate>) {
             auto v = Eval(*k.operand, symbols);
             if (auto* d = std::get_if<double>(&v)) return -*d;

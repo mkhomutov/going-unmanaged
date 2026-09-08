@@ -116,7 +116,7 @@ Chapter 25's Finding 10.
   (three non-exercise directories aside: `cookbook/`, `choosing/`, `skeleton/`);
   `exercises/README.md` is the index (exercise ↔ chapter ↔ solution)
 - `exercises/fakesdk/`, `exercises/fakedevice/` — also carry vendor-style code
-  users must NOT edit (contracts quoted verbatim in chapters 17/18)
+  users must NOT edit (contracts included whole by chapters 17/18)
 - `exercises/buildlab/` — Greeter.h/.cpp + main.cpp, the Chapter 23 starting
   point; built by build_all.sh so the scaffold stays green. Also
   `CMakeLists.txt`, Chapter 26's reference build description assembled from
@@ -130,8 +130,8 @@ Chapter 25's Finding 10.
   (`find_package(mathlib CONFIG)` against an installed prefix) — so the three
   `consume-*/CMakeLists.txt` are the whole lesson and the app cannot tell
   them apart. Nothing here is quoted in Chapter 27; `mathlib/CMakeLists.txt`
-  is quoted whole in Chapter 40 (a FULL pairing in check_verbatim.sh), so
-  editing it means editing Chapter 40 in the same commit. Four rules are
+  is included whole by Chapter 40, so an edit to it shows on that page at
+  once. Four rules are
   load-bearing and easy to undo by
   accident. (1) mathlib's install/export half is wrapped in a top-level
   guard: paths 1 and 2 reach it through `add_subdirectory`, which would
@@ -151,14 +151,14 @@ Chapter 25's Finding 10.
   `--require-git`; the two `.cpp` files are also built and run under the
   canonical flags in the flat section, since the CMake paths apply none
 - `exercises/testlab/` — Chapter 28's `tiny_test.h` and `buffer_test.cpp`,
-  verbatim from the chapter's listings (same discipline as the Fake* vendor
-  code: editing one means editing the chapter in the same commit), plus a
+  included by the chapter from below their banners (the page follows an
+  edit; nothing to mirror by hand), plus a
   TASK.md. build_all.sh builds the suite with `-I solutions` and runs it
 - `exercises/abilab/` — Chapter 30's three worked boundaries, plus a TASK.md:
   `Widget.h`/`.cpp` (PIMPL), `IScorer.h` + `scorer.cpp` (interface + factory),
   `engine.h`/`.cpp` (`extern "C"` façade), each with a `*_demo.cpp` caller.
-  Same sync discipline as testlab — the headers and the two full listings are
-  the chapter's, so editing one means editing Chapter 30 in the same commit.
+  The headers and the two full listings are included by the chapter from
+  below their banners, so an edit shows on the page at once.
   build_all.sh builds each as a separate binary of TWO translation units
   (implementation + caller): the caller seeing only the boundary header is the
   subject matter, so never merge a demo into one TU with its implementation
@@ -233,8 +233,8 @@ Chapter 25's Finding 10.
   (procedures 1 and 4), no TASK.md. Its banners name exactly which units
   Appendix H quotes — and which three of `passing.cpp`'s Chapter 6 quotes,
   the value-category traps priced with the same instrument — and
-  check_verbatim.sh holds every pairing BOTH ways: editing a named unit
-  means editing its page in the same commit. Two rules are load-bearing and easy to undo by accident: the
+  each named unit is included by its page between section markers, and
+  check_verbatim.sh holds that every marked section is on a page. Two rules are load-bearing and easy to undo by accident: the
   judge is `CHECK` (counts failures, sets the exit code), never `assert`,
   which a Release build compiles away; and build_all.sh builds
   `passing.cpp` a SECOND time under `-fno-elide-constructors`, because
@@ -316,8 +316,9 @@ Chapter 25's Finding 10.
 - `exercises/bridgelab/` — Chapter 38's lab. TASK.md carries the three
   broken shapes (book-and-card, identical by rule — they exist to fail);
   the committed headers + main.cpp are the FIXED state, quoted in the
-  chapter BY EXCERPT (check_verbatim runs both directions for this lab:
-  card fences must be in the chapter, chapter fences must be in the lab),
+  chapter BY EXCERPT (the three headers whole from below their banners,
+  two excerpts of `main.cpp` between section markers; the card's broken
+  listings are held in the chapter by containment),
   and build_all.sh builds it twice — canonical flags, then a second
   source in the probe-gated TSan section — because the three breaks
   split across the two builds. The harness allows no unbounded wait:
@@ -350,9 +351,9 @@ Chapter 25's Finding 10.
   builds both again with the sanitizer flags injected via CMAKE_CXX_FLAGS,
   all under the cmake probe; the buildlab-msvc job builds all three under
   Visual Studio and reads the module's exports and dependents back. Six
-  files are quoted whole in the chapter (FULL pairings in check_verbatim.sh:
-  the vendor header, four plug-in files and deplab's mathlib CMakeLists),
-  so editing one means editing Chapter 40 in the same commit
+  files are included whole by the chapter (the vendor header, four plug-in
+  files and deplab's mathlib CMakeLists), so an edit shows on the page at
+  once — and a one-line `set()` excerpt is pinned by containment
 - `exercises/templatelab/` — Chapter 41's lab: `session.h` (a `Session<Sdk>`
   over a policy, with the detection idiom `HasSdkShape` and a static_assert
   that names the missing function), `policies.h` (the real device over
@@ -362,15 +363,15 @@ Chapter 25's Finding 10.
   builds it once more with `-DTEMPLATELAB_BROKEN_POLICY` and asserts the
   build is REFUSED with the static_assert's own text as the first error
   (the constlab discipline: the diagnostic's message only, path cut away).
-  The three headers are quoted banner-stripped in the chapter (BANNER
-  pairings), so editing one means editing Chapter 41 in the same commit
+  The three headers are included by the chapter from below their banners,
+  and one `static_assert` from `main.cpp` between section markers
 - `exercises/exprlab/` — Chapter 42's lab: `expr.h` (an `Error` with a
   position, the `ISymbols` provider seam, a `Formula` parsed once and
   evaluated per row, `max_depth`), `expr.cpp` (tokenizer, recursive-descent
   parser, the tree, the evaluator) and the judging `main.cpp`, plus a
-  TASK.md that carries no listing. `expr.h` is quoted whole (a BANNER
-  pairing); every other cpp fence in the chapter must be in the lab's
-  sources (the Chapter 39 direction). build_all.sh builds the two TUs
+  TASK.md that carries no listing. `expr.h` is included whole from below
+  its banner; the other twelve listings are included from `expr.cpp` and
+  `main.cpp` between named section markers. build_all.sh builds the two TUs
   under the canonical flags and runs the judge; `from_chars` for numbers
   is load-bearing — `strtod` reads the locale, and the judge switches to
   `de_DE` where the machine has it (CI's Linux job generates the locale;
@@ -427,30 +428,28 @@ Chapter 25's Finding 10.
   /EHsc /fsanitize=address`, same source-list/vendor/run-args shapes; MSVC
   has no UBSan and no TSan, and the script says so). Smoke-tested by the
   buildlab-msvc CI job so it cannot rot on a Mac-based maintainer
-- `scripts/check_verbatim.sh` — enforces every book↔code verbatim pairing
-  mechanically: full-file containment (vendor headers, ticket-lab fixed
-  files, solution folds), banner-stripped containment for testlab/abilab
-  (the convention: a committed lab file may open with a `//` provenance
-  banner the chapter listing omits; the verbatim contract covers everything
-  below it), every listing a page INCLUDES — `--8<-- "path:section"`, the
-  section fenced in the source by `--8<-- [start:section]`/`[end:section]`
-  comment lines; Appendix F is entirely this shape, SITE-PLAN step 4 moves
-  the rest — held both ways (every include names a section its file marks
-  exactly once; every marked section is included by some page), and the seven
-  ticket/lab TASK cards' broken listings in their chapters — plus two
-  reverse directions: every cpp fence in Chapter 38 must live in
-  `exercises/bridgelab/`, and Appendix H is held to `exercises/choosing/`
-  both ways (every fence on the page is in that directory, and every unit
-  the lab's banners name is on the page whole — that lab has no TASK card
-  to carry the reverse the way bridgelab's does; the same whole-unit table
-  carries a page column, because Chapter 6 quotes three of `passing.cpp`'s
-  units and Chapter 8 two of `cookbook/errors.cpp`'s) — plus one pairing whose
-  code half is not a file under `exercises/` at all: Chapter 27's two ODR
-  headers are an ill-formed program that no harness may commit, so
-  `check_platform_claims.sh` generates them into a temp directory and
-  asserts the chapter's claims about them, and the page is held to that
-  script's heredocs. Run it after touching any quoted listing; adding a new
-  quoted pairing means adding it to this script in the same commit. CI runs
+- `scripts/check_verbatim.sh` — holds the book's listings to the code the
+  repo ships, now that a page does not carry code: a listing is
+  `--8<-- "path:section"` inside its fence, the section fenced in the source
+  by `--8<-- [start:section]`/`[end:section]` comment lines (or the whole
+  file, `--8<-- "path"`, where a chapter shows a file entire), and the site
+  build renders the file — drift is impossible by construction (SITE-PLAN
+  step 4). What the script checks is everything around that: every include
+  names a file that exists and a section marked exactly once in it; every
+  section a source marks is included by some page (a marked unit is a
+  promise a page shows it); no cpp or cmake fence of four lines or more on
+  any page is a copy of a source region (a listing pasted back instead of
+  included is refused); the seven ticket/lab TASK cards' broken listings
+  appear in their chapters (book-and-card code with no compiled source — it
+  exists to fail — so it stays copied, held by containment); two one-line
+  quotations (Chapter 39, Chapter 40) are held by containment; Appendix G
+  holds no cpp fence and Appendix J only cmake fences, every one an include.
+  Chapter 26's and 27's ODR listings are included from the heredocs in
+  `check_platform_claims.sh`, which generates and asserts them, and Appendix
+  J's runtime-delivery project from `build_all.sh`'s. A new listing goes on
+  the include form: mark the section, include it, and the script and the
+  strict site build both hold it. Never spell the marker syntax literally in
+  a comment or a page — the snippet engine takes it for a marker. CI runs
   it in the book job
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
   below over `book/`, plus one typographic rule:
@@ -548,10 +547,10 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
    invalid.cpp use `-std=c++20`; `exercises/cookbook/expected.cpp` is the
    one C++23 file, built as its own probe with `--require-expected` in CI). Run `./scripts/build_all.sh` after ANY
    change to code; it must print ALL GREEN.
-2. `exercises/*/Fake*.h|.cpp` are "vendor code": their public contracts are
-   quoted verbatim in the book. Changing them requires updating Chapter
-   17/18 (or 35, for comlab's FakeSDK2) in the same commit — and is almost
-   never the right move.
+2. `exercises/*/Fake*.h|.cpp` are "vendor code": the book includes their
+   public contracts whole, so a change shows on Chapter 17/18's page (or
+   35's, for comlab's FakeSDK2) the moment it is made — and is almost never
+   the right move.
 3. Chapter numbering is load-bearing: the book cross-references chapters by
    number ("Chapter 6", "Finding 3 of Chapter 25"). Inserting a chapter means
    renumbering ALL later chapters AND every in-text reference, including

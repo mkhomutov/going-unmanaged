@@ -14,6 +14,7 @@
 # What build_all.sh does with pkg-config in bash, this file does in CMake.
 # Built and run by build_all.sh under the cmake probe and the three
 # library probes together; each recipe's own harness is its judge.
+# --8<-- [start:system-libraries]
 cmake_minimum_required(VERSION 3.18)      # an ALIAS of an imported target needs 3.18
 
 project(cookbook_system_libraries LANGUAGES CXX)
@@ -66,3 +67,4 @@ enable_testing()
 add_test(NAME cb_database COMMAND cb_database)
 add_test(NAME cb_crypto COMMAND cb_crypto)
 add_test(NAME cb_http COMMAND cb_http)
+# --8<-- [end:system-libraries]

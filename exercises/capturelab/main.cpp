@@ -1,6 +1,7 @@
 #include "wire.h"
 #include <cstdio>
 
+// --8<-- [start:capture-bytes]
 // The ticket's capture, byte for byte: two temperature frames. Frame 1
 // starts at offset 0, frame 2 at offset 10 - deliberately off every
 // four-byte boundary. Decoding at any offset is the fix's claim, and one
@@ -9,6 +10,7 @@ static const unsigned char kCapture[] = {
     0xa5, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x01, 0x09, 0x29,
     0xa5, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02, 0x01, 0x09, 0x2b,
 };
+// --8<-- [end:capture-bytes]
 
 int main() {
     // The hand decode from the ICD is the oracle: no tool supplies these.

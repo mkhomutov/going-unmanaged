@@ -138,15 +138,19 @@ EOF
 # diagnostics it does print, so an odr_*.o here would make any unrelated warning
 # read as an ODR report. Do not rename these back.
 cat > "$OUT/v1.h" <<'EOF'
+// --8<-- [start:v1-h]
 // v1.h
 struct Config { int timeout; };
 inline int GetTimeout(const Config& c) { return c.timeout; }
+// --8<-- [end:v1-h]
 EOF
 
 cat > "$OUT/v2.h" <<'EOF'
+// --8<-- [start:v2-h]
 // v2.h
 struct Config { int retries; int timeout; };   // the new field went FIRST
 inline int GetTimeout(const Config& c) { return c.timeout; }   // byte-identical to v1's
+// --8<-- [end:v2-h]
 EOF
 
 cat > "$OUT/libpart.cpp" <<'EOF'
@@ -550,6 +554,7 @@ fi
 # Like section 5, these are linker claims and hold on every platform alike.
 echo "== macro odr =="
 cat > "$OUT/session.h" <<'EOF'
+// --8<-- [start:session-h]
 // session.h
 #pragma once
 struct Session {
@@ -560,6 +565,7 @@ struct Session {
     int timeout;
 };
 inline int GetTimeout(const Session& s) { return s.timeout; }
+// --8<-- [end:session-h]
 EOF
 cat > "$OUT/audit_lib.cpp" <<'EOF'
 // compiled WITHOUT -DAUDIT: an 8-byte Session

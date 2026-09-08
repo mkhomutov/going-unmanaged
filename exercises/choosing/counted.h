@@ -1,12 +1,11 @@
 // counted.h - a type that counts what happens to it, so the appendix's
 // recommendations are numbers rather than assurances.
 //
-// Quoted in Appendix H ("What this costs, counted"): `struct Counts` and
-// `Tally()` below - those two, whole, and nothing else in this file.
-// Editing either means editing the appendix in the same commit (the
-// cookbook discipline), and scripts/check_verbatim.sh checks that pairing
-// in BOTH directions: every cpp fence on the page must be in this
-// directory, and both of those must be on the page, whole.
+// Included by Appendix H ("What this costs, counted"): `struct Counts` and
+// `Tally()` below, each between its section markers - those two, whole, and
+// nothing else in this file. Edit here and the page follows;
+// scripts/check_verbatim.sh holds that every marked section is included by a
+// page and that no page copies code out of this directory.
 //
 // It is Chapter 14's Tracer in SHAPE only. That Tracer logs, and its two
 // statics count objects rather than operations - `counter_` is incremented
@@ -19,15 +18,19 @@
 #include <type_traits>
 #include <utility>
 
+// --8<-- [start:counts]
 struct Counts {
     int copies = 0;
     int moves  = 0;
 };
+// --8<-- [end:counts]
 
+// --8<-- [start:tally]
 inline Counts& Tally() {
     static Counts c;                 // Chapter 32's construct-on-first-use
     return c;
 }
+// --8<-- [end:tally]
 
 inline void ResetTally() { Tally() = Counts{}; }
 

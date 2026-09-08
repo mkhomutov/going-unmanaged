@@ -3,8 +3,9 @@
 // interface class, so the same Session compiles once against the vendor's
 // SDK and once against a recording double.
 //
-// Quoted VERBATIM in Chapter 41 (book/41-templates-you-will-write.md) below
-// this banner: editing it means editing the chapter in the same commit.
+// Included by Chapter 41 (book/41-templates-you-will-write.md) from below this
+// banner: edit here and the page follows.
+// --8<-- [start:listing]
 #pragma once
 #include <cstddef>
 #include <functional>
@@ -65,3 +66,4 @@ private:
     Handle handle_{};
     std::vector<int> samples_;
 };
+// --8<-- [end:listing]

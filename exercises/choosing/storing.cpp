@@ -1,13 +1,12 @@
 // Appendix H, procedures 1 and 4 - which container, and what goes in it.
 //
-// Quoted in Appendix H, whole and by name: `GrowthRelocatesAndMovesEveryElement`,
+// Included by Appendix H, whole, each between its section markers:
+// `GrowthRelocatesAndMovesEveryElement`,
 // `BoxedElementsStandStillWhenTheVectorGrows` and
-// `AClosedSetStoresByValueWithoutABase`. Editing one means editing
-// Appendix H in the same commit (the cookbook discipline), and
-// scripts/check_verbatim.sh checks that pairing in BOTH directions - every
-// cpp fence on the page must be in this directory, and each function named
-// above must be on the page, whole. Everything else here, main() and the
-// remaining measurements included, appears in no listing.
+// `AClosedSetStoresByValueWithoutABase`. Edit here and the page follows; a
+// marker moved is what the page shows, and scripts/check_verbatim.sh holds
+// that every marked section is included by a page. Everything else here,
+// main() and the remaining measurements included, appears in no listing.
 //
 // What every function here measures is address stability: the property a
 // reader cannot see by reading, and the one procedure 4 exists to separate
@@ -71,6 +70,7 @@ int FillToCapacity(Vec& v, Make make) {
 // Growing a vector<T> relocates every element: the block moves, and each
 // element is move-constructed into the new one. Both halves are asserted,
 // because "no moves" is also what you measure when nothing grew at all.
+// --8<-- [start:growth-relocates-and-moves-every-element]
 void GrowthRelocatesAndMovesEveryElement() {
     std::vector<Counted> v;
     v.reserve(8);
@@ -84,9 +84,11 @@ void GrowthRelocatesAndMovesEveryElement() {
     CHECK(Tally().moves  == filled);            // every element, move-constructed anew
     CHECK(Tally().copies == 0);                 // moved, not copied: noexcept pays
 }
+// --8<-- [end:growth-relocates-and-moves-every-element]
 
 // The same growth, with the elements behind unique_ptr: the block still
 // moves, the pointers still shuffle, and the objects never learn about it.
+// --8<-- [start:boxed-elements-stand-still-when-the-vector-grows]
 void BoxedElementsStandStillWhenTheVectorGrows() {
     std::vector<std::unique_ptr<Counted>> v;
     v.reserve(8);
@@ -103,6 +105,7 @@ void BoxedElementsStandStillWhenTheVectorGrows() {
     CHECK(Tally().moves  == 0);                 // no element move-constructed
     CHECK(Tally().copies == 0);
 }
+// --8<-- [end:boxed-elements-stand-still-when-the-vector-grows]
 
 // reserve is a promise: within the capacity it bought, nothing relocates.
 void ReserveHoldsAddressesStill() {
@@ -179,6 +182,7 @@ void StoringByValueSlicesAPolymorphicBase() {
 // The answer to procedure 4 that is not a box. A closed set of unrelated
 // alternatives needs no base class and no unique_ptr: the variant is the
 // element, stored by value, and there is no base for a Tri to be sliced to.
+// --8<-- [start:closed-set-by-value]
 void AClosedSetStoresByValueWithoutABase() {
     std::vector<std::variant<Tri, Quad>> shapes;
     shapes.emplace_back(Tri{});
@@ -190,6 +194,7 @@ void AClosedSetStoresByValueWithoutABase() {
     CHECK(total == 7);                          // 3 + 4: each kept its identity, unboxed
     CHECK(std::holds_alternative<Tri>(shapes[0]));
 }
+// --8<-- [end:closed-set-by-value]
 
 int main() {
     GrowthRelocatesAndMovesEveryElement();

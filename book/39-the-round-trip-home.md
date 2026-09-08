@@ -39,11 +39,7 @@ So: fixed-width integers only, from `<stdint.h>`. `int32_t`, never `int`; `int32
 Chapter 30 introduced a leading `size` field as a *versioning* device — a way for version two to append fields and still serve old callers. Across a P/Invoke boundary it acquires a second job, and the second one is more urgent.
 
 ```cpp
-typedef struct {
-    uint32_t size;        // caller sets this to sizeof(PluginOptions)
-    int32_t  gain;
-    int32_t  channels;
-} PluginOptions;
+--8<-- "exercises/interoplab/plugin.h:plugin-options"
 ```
 
 The managed side declares that again by hand — and the one thing you might have feared is the one thing that is safe: a C# `struct` is laid out sequentially already, because that is what the compiler emits for a value type, and a type whose layout is `Auto` cannot be marshalled at all — the marshaller refuses to compute offsets for it rather than inventing them. Nobody silently reorders your fields. Writing `[StructLayout(LayoutKind.Sequential)]` is still worth the line, because it says out loud what the declaration depends on and `Pack` lives on the same attribute — but it is not what protects you. Nothing does. Matching field order, matching field *widths*, matching pack: three things transcribed by hand, and the compiler on neither side is watching.
@@ -99,8 +95,7 @@ Two shapes are safe. The second is better because it does not require anyone to 
 2. **The caller allocates and you fill.** Called with a null buffer you report the size needed; called with a small one you say so and write nothing.
 
 ```cpp
-PluginResult Plugin_GetName(PluginHandle h, char* buffer, size_t capacity,
-                            size_t* needed);
+--8<-- "exercises/interoplab/plugin.h:get-name"
 ```
 
 Nothing you own ever crosses, so *which heap frees this* is not answered — it is never asked. On the managed side that call is a `byte[]` the GC already owns, and the interop layer becomes boring, which is the highest compliment an interop layer can be paid.

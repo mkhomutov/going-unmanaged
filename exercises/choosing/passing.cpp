@@ -2,16 +2,15 @@
 // plus two of Chapter 6's value-category traps, priced with the same
 // instrument.
 //
-// Quoted in Appendix H, whole and by name: `class Widget`, `MakeTemporary`,
-// `MakeNamed`, `TheSinkAllocatesWhereTheBorrowDoesNot` and
-// `ReturningCostsNoCopy`. Quoted in Chapter 6 ("Value categories in one
-// table"), whole and by name: `MakeNamedMoved`, `MovingFromAConstObjectCopies`
-// and `ReturnStdMoveCostsTheMoveElisionRemoved`. Editing a named unit means
-// editing its page in the same commit (the cookbook discipline), and
-// scripts/check_verbatim.sh holds every pairing in BOTH directions - each
-// unit named here must be on its page whole, and every cpp fence on Appendix
-// H must be in this directory. Everything else here, main() included,
-// appears in no listing.
+// Included by Appendix H, whole, each between its section markers: `class
+// Widget`, `MakeTemporary` with `MakeNamed`,
+// `TheSinkAllocatesWhereTheBorrowDoesNot` and `ReturningCostsNoCopy`. Included
+// by Chapter 6 ("Value categories in one table"), the same way:
+// `MakeNamedMoved`, `MovingFromAConstObjectCopies` and
+// `ReturnStdMoveCostsTheMoveElisionRemoved`. Edit here and the page follows; a
+// marker moved is what the page shows, and scripts/check_verbatim.sh holds
+// that every marked section is included by a page. Everything else here,
+// main() included, appears in no listing.
 #include <cstdio>
 #include <cstdlib>
 #include <new>
@@ -44,6 +43,7 @@ void operator delete(void* p, std::size_t) noexcept { std::free(p); }
 // "This function KEEPS a copy." By value plus std::move: one move from an
 // rvalue caller, one copy plus one move from an lvalue caller - and the
 // caller chooses which by what they pass, without a second overload.
+// --8<-- [start:widget]
 class Widget {
 public:
     void SetPayload(Counted c) { payload_ = std::move(c); }
@@ -55,6 +55,7 @@ public:
 private:
     Counted payload_;
 };
+// --8<-- [end:widget]
 
 // ---- procedure 2: the borrower ---------------------------------------------
 // "I only look at it, and only during the call." No copy, no ownership.
@@ -66,6 +67,7 @@ std::size_t PayloadSize(const Counted& c) { return c.Payload().size(); }
 // constructor need even exist. build_all.sh builds this file a second time
 // under -fno-elide-constructors, where this function's count is unchanged
 // and MakeNamed's is not: that is the whole difference, made visible.
+// --8<-- [start:make-temporary-and-named]
 Counted MakeTemporary() { return Counted("made"); }
 
 // A NAMED local: the return is treated as an rvalue, so the fallback is a
@@ -75,6 +77,7 @@ Counted MakeNamed() {
     Counted local("named");
     return local;
 }
+// --8<-- [end:make-temporary-and-named]
 
 // ---- Chapter 6: value categories, priced -----------------------------------
 // return std::move(local) casts a candidate for NRVO into a plain rvalue:
@@ -86,10 +89,12 @@ Counted MakeNamed() {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpessimizing-move"
 #endif
+// --8<-- [start:make-named-moved]
 Counted MakeNamedMoved() {
     Counted local("named");
     return std::move(local);             // the pessimizing move
 }
+// --8<-- [end:make-named-moved]
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
@@ -149,6 +154,7 @@ void SinkCostsPerCallerKind() {
 // The cost the tally cannot see, and the one that reverses the advice for
 // a setter called over and over: the sink allocates a fresh buffer every
 // call, while copy-assignment through const& reuses the member's.
+// --8<-- [start:sink-vs-borrow]
 void TheSinkAllocatesWhereTheBorrowDoesNot() {
     Counted keep("mine");
     Widget sink;
@@ -167,6 +173,7 @@ void TheSinkAllocatesWhereTheBorrowDoesNot() {
     CHECK(sink_allocs == 100);      // one per call: the parameter is a new string
     CHECK(borrow_allocs == 0);      // the member's buffer was big enough already
 }
+// --8<-- [end:sink-vs-borrow]
 
 void BorrowingCostsNothing() {
     Counted c("borrowed");
@@ -197,6 +204,7 @@ void TheMissingAmpersandCostsNCopies() {
 // The two return shapes, asserted differently because only one of them is
 // guaranteed. Under -fno-elide-constructors the first is unchanged and the
 // second costs its move - which is what "permitted, not required" means.
+// --8<-- [start:returning-costs-no-copy]
 void ReturningCostsNoCopy() {
     {   // a temporary: nothing happens at all
         ResetTally();
@@ -213,11 +221,13 @@ void ReturningCostsNoCopy() {
         (void)c;
     }
 }
+// --8<-- [end:returning-costs-no-copy]
 
 // A const object cannot be stolen from. std::move casts it to const&&, and
 // nothing a class writes takes const&& - so overload resolution falls back
 // to the copy constructor. No warning, no error: one silent copy, and the
 // source untouched.
+// --8<-- [start:moving-from-a-const-object-copies]
 void MovingFromAConstObjectCopies() {
     const Counted keep("const");
     ResetTally();
@@ -227,11 +237,13 @@ void MovingFromAConstObjectCopies() {
     CHECK(keep.Payload().size() > 0);    // nothing was taken from it
     (void)taken;
 }
+// --8<-- [end:moving-from-a-const-object-copies]
 
 // The move that elision would have removed, measured on both build passes:
 // ReturningCostsNoCopy allows MakeNamed zero or one move, because NRVO is
 // permitted; MakeNamedMoved is always exactly one, because the cast forbade
 // it. -fno-elide-constructors changes the first and not the second.
+// --8<-- [start:return-std-move]
 void ReturnStdMoveCostsTheMoveElisionRemoved() {
     ResetTally();
     Counted c = MakeNamedMoved();
@@ -239,6 +251,7 @@ void ReturnStdMoveCostsTheMoveElisionRemoved() {
     CHECK(Tally().moves  == 1);          // always one: NRVO was cast away
     (void)c;
 }
+// --8<-- [end:return-std-move]
 
 void ReturningAVectorCopiesNoElement() {
     ResetTally();

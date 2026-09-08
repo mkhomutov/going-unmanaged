@@ -94,34 +94,17 @@ Four traps fall straight out of that table, and every one of them compiles clean
 2. **`std::move` on a const object copies.** It casts to `const Buffer&&`, the last column: no move constructor takes that, the copy constructor does, and clang under this book's flags says nothing about it. `exercises/choosing/` prices it:
 
 ```cpp
-void MovingFromAConstObjectCopies() {
-    const Counted keep("const");
-    ResetTally();
-    Counted taken = std::move(keep);     // reads as a move, is a copy
-    CHECK(Tally().copies == 1);
-    CHECK(Tally().moves  == 0);
-    CHECK(keep.Payload().size() > 0);    // nothing was taken from it
-    (void)taken;
-}
+--8<-- "exercises/choosing/passing.cpp:moving-from-a-const-object-copies"
 ```
 
 3. **`return std::move(local);` costs the move that elision would have removed.** A plain `return local;` is eligible for NRVO (Chapter 14 watches it happen); the cast turns the operand into an xvalue the compiler may not elide. `-Wall` on clang and GCC names it, `-Wpessimizing-move`, and the lab measures exactly one move on both of its build passes:
 
 ```cpp
-Counted MakeNamedMoved() {
-    Counted local("named");
-    return std::move(local);             // the pessimizing move
-}
+--8<-- "exercises/choosing/passing.cpp:make-named-moved"
 ```
 
 ```cpp
-void ReturnStdMoveCostsTheMoveElisionRemoved() {
-    ResetTally();
-    Counted c = MakeNamedMoved();
-    CHECK(Tally().copies == 0);
-    CHECK(Tally().moves  == 1);          // always one: NRVO was cast away
-    (void)c;
-}
+--8<-- "exercises/choosing/passing.cpp:return-std-move"
 ```
 
 4. **`const T&` extends a temporary's life — through a member, not through a call.** `const std::string& s = MakeWidget().name;` keeps the whole Widget alive for as long as `s` exists; `const std::string& s = MakeWidget().Name();` binds to a reference *returned by* a function, the Widget dies at the semicolon, and AddressSanitizer reports a `stack-use-after-scope` on the next read. Chapter 10's dangling `string_view` is the same rule with a view in place of the reference.

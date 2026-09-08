@@ -1,14 +1,14 @@
 // Appendix K's probe: which standard is this translation unit being compiled
 // as, and which of the features the book names does this toolchain's LIBRARY
 // actually ship? Not a recipe - the one cookbook TU with no C# column - and
-// the only one built at more than one standard: scripts/build_all.sh builds
-// it at -std=c++17, -std=c++20 and (under the C++23 probe) -std=c++23 and
-// asserts what each run prints, then asks -std=c++14 to build it and asserts
-// the refusal below. The buildlab-msvc job builds it with and without
+// the only one built at more than one standard: scripts/build_all.sh builds it
+// at -std=c++17, -std=c++20 and (under the C++23 probe) -std=c++23 and asserts
+// what each run prints, then asks -std=c++14 to build it and asserts the
+// refusal below. The buildlab-msvc job builds it with and without
 // /Zc:__cplusplus, because Appendix K's first claim rests on that vendor
-// default. Every cpp fence in book/K-the-standards-catalogue.md is quoted
-// from this file (check_verbatim.sh holds that direction), so editing a
-// quoted line means editing the appendix in the same commit.
+// default. Every cpp fence in book/K-the-standards-catalogue.md is included
+// from this file between section markers (check_verbatim.sh holds both
+// directions), so edit here and the page follows.
 #include <cstdio>
 
 // The book's floor, enforced: a toolchain below it is refused with a
@@ -17,12 +17,14 @@
 // unless /Zc:__cplusplus is on, so _MSVC_LANG is the honest value there -
 // the first draft of this file tested __cplusplus alone, and MSVC refused
 // it at /std:c++17, which is Appendix K's first trap met before main().
+// --8<-- [start:standard-spoken-macro]
 #ifdef _MSVC_LANG
 #define STANDARD_SPOKEN _MSVC_LANG
 #else
 #define STANDARD_SPOKEN __cplusplus
 #endif
 static_assert(STANDARD_SPOKEN >= 201703L, "this book's floor is C++17: pass -std=c++17 or /std:c++17");
+// --8<-- [end:standard-spoken-macro]
 
 // <version> is the C++20 header that carries every library feature-test
 // macro; all three standard libraries ship it in C++17 mode too, so it is
@@ -49,6 +51,7 @@ static void report(const char* name, long value) {
 }
 
 int main() {
+// --8<-- [start:standard-spoken-report]
     // The standard the compiler was TOLD to speak. On MSVC __cplusplus is
     // 199711 unless /Zc:__cplusplus is passed - a lot of code once tested
     // it, so the honest value became opt-in - and _MSVC_LANG carries the
@@ -59,6 +62,7 @@ int main() {
 #else
     std::printf("%-32s absent (not MSVC)\n", "_MSVC_LANG");
 #endif
+// --8<-- [end:standard-spoken-report]
 
     // Language features: defined by the compiler, so they track -std= exactly.
 #ifdef __cpp_if_constexpr
@@ -82,6 +86,7 @@ int main() {
     report("__cpp_concepts", 0);
 #endif
 
+// --8<-- [start:library-features]
     // Library features: defined by the standard library's headers, so they
     // track what THIS library has implemented - which can lag the year on
     // the -std= switch by a release or more, and is the reason to ask the
@@ -91,6 +96,7 @@ int main() {
 #else
     report("__cpp_lib_optional", 0);
 #endif
+// --8<-- [end:library-features]
 #ifdef __cpp_lib_variant
     report("__cpp_lib_variant", __cpp_lib_variant);
 #else

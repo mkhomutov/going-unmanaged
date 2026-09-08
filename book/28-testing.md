@@ -19,65 +19,7 @@ Which means you can build one, and you should, once — the same way Chapter 18 
 ### A test framework in forty lines
 
 ```cpp
-// tiny_test.h - the three jobs of any test framework: register, check, report.
-#pragma once
-#include <functional>
-#include <iostream>
-#include <string>
-#include <utility>
-#include <vector>
-
-namespace tiny {
-
-struct Test { std::string name; std::function<void()> body; };
-
-// Function-local static: the registry is created on first use, so a registrar
-// running before main in ANY translation unit always finds it alive. A plain
-// namespace-scope vector would be a bet on initialization order.
-inline std::vector<Test>& Registry() {
-    static std::vector<Test> tests;
-    return tests;
-}
-
-inline int& FailureCount() { static int n = 0; return n; }
-
-struct Registrar {
-    Registrar(std::string name, std::function<void()> body) {
-        Registry().push_back({std::move(name), std::move(body)});
-    }
-};
-
-inline void Check(bool ok, const char* expr, const char* file, int line) {
-    if (!ok) {
-        ++FailureCount();
-        std::cout << "    FAILED: " << expr << "\n"
-                  << "    at " << file << ":" << line << "\n";
-    }
-}
-
-inline int RunAll() {
-    int failed_tests = 0;
-    for (const auto& t : Registry()) {
-        const int before = FailureCount();
-        t.body();
-        const bool ok = (FailureCount() == before);
-        if (!ok) ++failed_tests;
-        std::cout << (ok ? "  [ ok ] " : "  [FAIL] ") << t.name << "\n";
-    }
-    std::cout << Registry().size() << " tests, " << failed_tests << " failed\n";
-    return failed_tests == 0 ? 0 : 1;   // the EXIT CODE is the result CI reads
-}
-
-}  // namespace tiny
-
-// Macros, not functions: only the preprocessor can capture the source text of
-// the expression (#expr) and the call site (__FILE__ / __LINE__).
-#define CHECK(expr) ::tiny::Check((expr), #expr, __FILE__, __LINE__)
-
-#define TEST(name)                                          \
-    static void name();                                     \
-    static ::tiny::Registrar registrar_##name(#name, name); \
-    static void name()
+--8<-- "exercises/testlab/tiny_test.h:listing"
 ```
 
 The `TEST` macro is the interesting one. It declares a function, defines a namespace-scope object whose *constructor* pushes that function into the registry, and then opens the function body for you to fill in. Because namespace-scope objects are constructed before `main`, every test in every linked translation unit has registered itself by the time `RunAll` looks. That is the same static-initialization mechanism real frameworks use, minus about nine thousand lines of everything else.
@@ -93,82 +35,7 @@ So the first act of testing anything is the Chapter 26 split: the class moves to
 With `Buffer.h` extracted, the assertions write themselves — and notice what they are *about*. In C# you mostly assert on return values. Here the interesting properties are ownership and lifetime:
 
 ```cpp
-#include "Buffer.h"
-#include "tiny_test.h"
-#include <vector>
-
-TEST(ConstructorZeroInitializes) {
-    Buffer a(4);
-    CHECK(a.Size() == 4);
-    CHECK(a.At(0) == 0);             // new int[n]{} zero-fills (Finding 7)
-}
-
-TEST(CopyIsDeepNotShallow) {
-    Buffer a(3);
-    a.At(1) = 42;
-    Buffer copy = a;
-    copy.At(1) = 99;                 // if this were a shallow copy...
-    CHECK(a.At(1) == 42);            // ...the original would read 99
-    CHECK(copy.At(1) == 99);
-}
-
-TEST(CopyAssignAcrossSizes) {
-    Buffer a(2);
-    Buffer b(5);
-    b.At(4) = 7;
-    a = b;                           // the old, smaller block must be freed
-    CHECK(a.Size() == 5);
-    CHECK(a.At(4) == 7);
-}
-
-TEST(SelfAssignmentIsHarmless) {
-    Buffer a(2);
-    a.At(0) = 5;
-    const Buffer& alias = a;         // launder it past the compiler's warning
-    a = alias;
-    CHECK(a.Size() == 2);
-    CHECK(a.At(0) == 5);             // copy-and-swap makes this free
-}
-
-TEST(MoveLeavesSourceEmptyButValid) {
-    Buffer a(3);
-    a.At(2) = 11;
-    Buffer moved = std::move(a);
-    CHECK(moved.Size() == 3);
-    CHECK(moved.At(2) == 11);
-    CHECK(a.Size() == 0);            // the husk: valid, unspecified, destructible
-}
-
-TEST(MoveAssignFreesTheOldBlock) {
-    Buffer a(2);
-    Buffer b(5);
-    b.At(4) = 7;
-    a = std::move(b);                // a's own block must be freed, not leaked
-    CHECK(a.Size() == 5);
-    CHECK(a.At(4) == 7);
-    CHECK(b.Size() == 0);            // the source is a husk here too
-}
-
-TEST(SelfMoveIsHarmless) {
-    Buffer a(2);
-    a.At(0) = 5;
-    Buffer& alias = a;               // launder it past the compiler's warning
-    a = std::move(alias);            // without the guard: delete, then read it
-    CHECK(a.Size() == 2);
-    CHECK(a.At(0) == 5);
-}
-
-TEST(VectorReallocationPreservesContents) {
-    std::vector<Buffer> v;
-    for (int i = 0; i < 8; ++i) {    // force at least one reallocation
-        Buffer b(2);
-        b.At(0) = i;
-        v.push_back(std::move(b));
-    }
-    for (int i = 0; i < 8; ++i) CHECK(v[static_cast<size_t>(i)].At(0) == i);
-}
-
-int main() { return tiny::RunAll(); }
+--8<-- "exercises/testlab/buffer_test.cpp:listing"
 ```
 
 Green, that reads:

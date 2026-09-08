@@ -1,11 +1,11 @@
 // main_thread_queue.h - the one piece every bridge shares, whatever the
 // transport: foreign code never calls the SDK, it posts a job here.
 //
-// Quoted IN FULL in Chapter 38 ("The queue"). Changing it means updating
-// that listing in the same commit - the same discipline the Fake* vendor
-// code is held to. Write your own first: the lab's task card asks you to
-// build it from the chapter's constraints, and comparing afterwards is
+// Included IN FULL by Chapter 38 ("The queue") from below this banner: edit
+// here and the page follows. Write your own first: the lab's task card asks
+// you to build it from the chapter's constraints, and comparing afterwards is
 // the point.
+// --8<-- [start:listing]
 #pragma once
 #include <cstddef>
 #include <functional>
@@ -60,3 +60,4 @@ private:
     std::queue<std::function<void()>> jobs_;
     bool draining_ = false;           // main thread only - it needs no lock
 };
+// --8<-- [end:listing]

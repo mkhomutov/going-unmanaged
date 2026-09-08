@@ -175,13 +175,7 @@ The section above called translation at the boundary the spine of SDK work — a
 **At a module's edge, a throw becomes a value.** The parser throws — it is the deepest frame, and from where it stands a malformed file is the event pole — and the function that owns the edge catches once and returns:
 
 ```cpp
-Result<Config, ConfigError> load_config(std::string_view text) {
-    try {
-        return Result<Config, ConfigError>::ok(Config{parse_channel_count(text, 1)});
-    } catch (const ParseError& e) {          // the throw stops here: failure becomes a value
-        return Result<Config, ConfigError>::fail(ConfigError{e.line(), e.what()});
-    }
-}
+--8<-- "exercises/cookbook/errors.cpp:load-config"
 ```
 
 Nothing above that function ever sees a `ParseError`. The caller sees a result it must look at, on the signature — the property the error-code pole was always about. `Plugin_Process` above did the same thing into an `int32_t`; this is that entry point with a richer value on the way out.
@@ -191,23 +185,7 @@ Nothing above that function ever sees a `ParseError`. The caller sees a result i
 **The type in the middle.** `std::expected` is C++23 and this book pins C++17, so the type most readers write is a `Result<T, E>` of their own — a screenful over [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s `std::variant`:
 
 ```cpp
-template <class T, class E>
-class Result {
-public:
-    static Result ok(T value)   { return Result(std::in_place_index<0>, std::move(value)); }
-    static Result fail(E error) { return Result(std::in_place_index<1>, std::move(error)); }
-
-    bool has_value() const noexcept { return state_.index() == 0; }
-    explicit operator bool() const noexcept { return has_value(); }
-
-    const T& value() const { return std::get<0>(state_); }   // throws bad_variant_access on a failure
-    const E& error() const { return std::get<1>(state_); }   // ...and on a success
-
-private:
-    template <std::size_t I, class X>                        // built in place: one move, not two
-    Result(std::in_place_index_t<I> door, X&& x) : state_(door, std::forward<X>(x)) {}
-    std::variant<T, E> state_;                               // index 0 is the value, 1 the error
-};
+--8<-- "exercises/cookbook/errors.cpp:result-class"
 ```
 
 Two named doors, and the value behind an accessor rather than in a field, so no caller reads it without a line that says which door they expect. Recipe 22 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) sets this beside `optional`, and `exercises/cookbook/errors.cpp` asserts all of it — including that `value()` on a failure throws, and `error()` on a success.
@@ -215,14 +193,7 @@ Two named doors, and the value behind an accessor rather than in a field, so no 
 **Chaining.** Five steps that may each fail read, in C++17, as five early returns — `if (!r) return Result<U, E>::fail(r.error());` — the error-code pole's own shape, and nothing to apologize for. C++23's `expected` adds `and_then` for a step that may itself fail and `transform` for one that cannot, and the five lines become one expression:
 
 ```cpp
-std::expected<int, ConfigError> channels_doubled(std::string_view text) {
-    return load_config(text)
-        .and_then([](Config c) -> std::expected<int, ConfigError> {
-            if (c.channels > 64) return std::unexpected(ConfigError{1, "too many channels"});
-            return c.channels;
-        })
-        .transform([](int n) { return n * 2; });
-}
+--8<-- "exercises/cookbook/expected.cpp:channels-doubled"
 ```
 
 That is the cookbook's one C++23 listing, `exercises/cookbook/expected.cpp`, which `build_all.sh` builds as its own probe because the book's pin is C++17. Abseil's `StatusOr` and Boost.Outcome spell the same two verbs their own way; recognize the shape when a house type offers it, and do not build it before you need it.
