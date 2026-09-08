@@ -194,7 +194,11 @@ Chapter 25's Finding 10.
   on Linux, a fork in the harness so the cross-process claim is real, no
   TSan build because TSan sees one process, and the `buildlab-msvc` job
   builds the Win32 half through `check.ps1` (as it does `timing.cpp`,
-  `paths.cpp` and `files.cpp`) mapping one object twice in one process.
+  `paths.cpp` and `files.cpp`) mapping one object twice in one process. `files.cpp` also
+  carries Recipe 49 (a file mapped rather than read) with a replaced
+  `operator new` in BOTH forms as its judge — under ASan `new[]` does not
+  route through the scalar replacement, and a heap copy passed the judge
+  until the array form was replaced too.
   Same sync
   discipline as testlab: the recipe functions are quoted verbatim in the
   appendix, so editing one means editing `book/F-rosetta-cookbook.md` in the
@@ -447,7 +451,10 @@ Chapter 25's Finding 10.
   atos-vs-llvm-symbolizer point), and what a null `const char*` handed to
   `std::string` does under each standard library (libc++ faults in the
   constructor, libstdc++ throws — Recipe 23's trap, detected by macro rather
-  than by OS). It also holds Chapter 26's macro-ODR pair — a define that
+  than by OS), and what a file truncated under a live read-only mapping does
+  (Recipe 49's trap: `SIGBUS` on Linux, a completed read of the old byte on
+  macOS — the one section that holds the two platforms to opposite
+  outcomes rather than to different codes for the same one). It also holds Chapter 26's macro-ODR pair — a define that
   changes a struct's layout in one TU only: silent link, order-dependent
   answer, and, unlike Chapter 27, no order caught by the sanitizers for that
   listing (the object is built in the larger layout), with `session.h`
