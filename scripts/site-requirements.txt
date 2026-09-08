@@ -1,0 +1,7 @@
+# Pinned on purpose: Material's own team warns that MkDocs 2.0 removes the
+# plugin/hook system with no migration path, so the site build stays on the
+# 1.x line until that is settled. Bump all four together.
+mkdocs==1.6.1
+mkdocs-material==9.7.7
+pymdown-extensions==10.21.3
+Markdown==3.9

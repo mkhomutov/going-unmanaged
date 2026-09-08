@@ -371,3 +371,18 @@ jobs:
           # markdown file in the repo plus the build/ artifact.
           args: --offline --include-fragments --no-progress './**/*.md'
           fail: true
+
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # The book as a static site, over the unchanged book/ files - see
+      # SITE-PLAN.md. --strict (inside the script) makes this a second,
+      # independent link-and-anchor check beside lychee, with two things
+      # lychee cannot see: a page the nav does not know, and an include
+      # (--8<--) whose file or line range does not exist.
+      - run: ./scripts/build_site.sh
+      - run: test -f build/site/index.html
