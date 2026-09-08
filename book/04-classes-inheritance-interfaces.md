@@ -160,10 +160,3 @@ friend class Serializer;        // 'friend': grants ANOTHER class/function
 ### In the wild: C-style SDKs
 
 C++-side SDK layers use these patterns heavily: vendor base classes, interface-style pure virtual classes for observers and callbacks, and the occasional 'friend' in container internals. Your own model layer on top of any SDK is where you apply this — interface bases behind unique_ptr, always public inheritance, always virtual destructors.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 3 — Stack, Heap, and Undefined Behavior](03-stack-heap-and-undefined-behavior.md) · [Contents](README.md) · [Chapter 5 — Virtual Dispatch and the Virtual Destructor →](05-virtual-dispatch-and-the-virtual-destructor.md)
-<!-- nav:end -->

@@ -98,10 +98,3 @@ SDK structs are typically plain value types — created on the stack, zeroed wit
 
 > [!TIP]
 > **Key principle:** "C++ is value-semantic by default; I opt into reference semantics explicitly." | "I iterate with const auto& to avoid accidental copies." | "Polymorphic objects go behind unique_ptr — storing them by value slices them."
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 1 — Ownership and RAII](01-ownership-and-raii.md) · [Contents](README.md) · [Chapter 3 — Stack, Heap, and Undefined Behavior →](03-stack-heap-and-undefined-behavior.md)
-<!-- nav:end -->

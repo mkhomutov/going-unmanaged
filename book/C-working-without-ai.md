@@ -48,10 +48,3 @@ Practice this order deliberately; most "stuck" moments dissolve at steps 1–3 i
 
 > [!TIP]
 > **Habit:** Every surprise goes into the notes file the moment it happens — not "later". The file is only as good as its worst day.
-
----
-
-
-<!-- nav:begin -->
-[← Appendix B — Core Principles (Cheat Sheet)](B-core-principles.md) · [Contents](README.md) · [Appendix D — Resources, Further Reading, and First-Week Tips →](D-resources.md)
-<!-- nav:end -->

@@ -176,7 +176,3 @@ When a team raises `CMAKE_CXX_STANDARD` from 17 to 20, the rows above are the di
 | Concepts before C++20 | the detection idiom and a `static_assert`, [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write) | `enable_if` gymnastics |
 | To raise a codebase's floor | flip the switch, build clean, then adopt spellings where they read better | rewriting working code to look newer |
 | A vendor sample that is C++98 | read it as the Bestiary shape it is, wrap it in this book's spellings at the boundary | modernising the vendor's code |
-
-<!-- nav:begin -->
-[← Appendix J — The CMake Catalogue](J-cmake-catalogue.md) · [Contents](README.md)
-<!-- nav:end -->

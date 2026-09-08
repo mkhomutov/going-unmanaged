@@ -17,9 +17,8 @@ One topic per PR: one Finding, one correction topic, or one exercise.
 ## Checklist
 
 - [ ] `./scripts/build_all.sh` prints **ALL GREEN** locally
-- [ ] Book edits: `./scripts/build_book.sh` builds and `--check-nav` passes
-      (run `--write-nav` if you added or renamed a chapter file), and
-      `./scripts/check_markup.sh` passes
+- [ ] Book edits: `./scripts/build_site.sh` (strict) and
+      `./scripts/check_markup.sh` pass
 - [ ] No existing chapter or Finding numbers changed — appending is fine;
       renumbering is a MAJOR version event (open an issue first)
 - [ ] Findings follow the Chapter 25 shape exactly:

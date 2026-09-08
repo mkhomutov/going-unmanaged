@@ -2741,7 +2741,3 @@ made with `new char[]` would otherwise count as zero). Needs
 
 > [!WARNING]
 > **Trap:** a file that shrinks while it is mapped — another process truncating the log you are reading — is, on Linux, a `SIGBUS` on the first touch of a page past the new end: plain memory, no allocation site, none of Chapter 31's shapes, and no sanitizer names it; on macOS the same read completes with the old byte — `scripts/check_platform_claims.sh` holds each platform to its own answer. Map files nobody else writes, or copy what you need out of the view before anyone can — a mapping is not a copy, and the bytes change under you if the writer keeps writing.
-
-<!-- nav:begin -->
-[← Appendix E — Glossary](E-glossary.md) · [Contents](README.md) · [Appendix G — The Bridge Catalogue →](G-the-bridge-catalogue.md)
-<!-- nav:end -->

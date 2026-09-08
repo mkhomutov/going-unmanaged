@@ -6,9 +6,10 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, 42 chapters, appendices A–K), indexed by `book/README.md`. The
-single-file `going-unmanaged.md` is no longer checked in: it is a build
-artifact produced by `scripts/build_book.sh`. Appendices run A–K with no
+(6 parts, 42 chapters, appendices A–K), indexed by `book/README.md`. There
+is no single-file build any more: the book is read on GitHub and as the
+static site `scripts/build_site.sh` renders from the same files (SITE-PLAN.md,
+step 2 retired the concatenated file). Appendices run A–K with no
 gap — E is the glossary (item 10), G the bridge catalogue (item 16's
 lookup half: the mechanism survey and decision table; no C++ listings —
 check_verbatim.sh enforces that no cpp fence lands there), H the choosing
@@ -434,7 +435,7 @@ Chapter 25's Finding 10.
   quoted pairing means adding it to this script in the same commit. CI runs
   it in the book job
 - `scripts/check_markup.sh` — enforces the alert and mermaid-fence shapes
-  below over `book/` and the built single file, plus one typographic rule:
+  below over `book/`, plus one typographic rule:
   no two `---` rules with only blank lines between them, which GitHub draws
   as two dividers with a gap rather than the single separator the source
   looks like, and which seventeen files had acquired invisibly. Run by CI,
@@ -468,9 +469,6 @@ Chapter 25's Finding 10.
   `--required`, because the platform overclaims it exists to catch are exactly
   what a one-platform check cannot see. The broken programs are generated into
   a temp dir, never committed — `solutions/` stays clean
-- `scripts/build_book.sh` — concatenates `book/` back into the single-file
-  book at `build/going-unmanaged.md` (gitignored); `--write-nav` regenerates
-  the nav footers, `--check-nav` fails if one is stale
 - `.github/workflows/ci.yml` — runs build_all.sh on every push/PR, plus a
   `platform-claims` job (check_platform_claims.sh on ubuntu and macos), a
   `buildlab-msvc` job (Chapter 26's CMakeLists under MSVC both ways, then
@@ -482,15 +480,15 @@ Chapter 25's Finding 10.
   on a vendor default rather than on the standard — then a check.ps1 smoke
   test: one plain build, one through the fakesdk vendor path, and one in the
   ticket labs' multi-TU form, two reportlab sources plus a run arg), and a
-  `book` job: build_book.sh, --check-nav, check_markup.sh, check_verbatim.sh,
+  `book` job: check_markup.sh, check_verbatim.sh,
   check_mermaid.sh (which installs mermaid-cli, the job's one slow step),
   and a lychee link check
   (`--offline --include-fragments`: relative links and anchors are blocking,
-  external URLs are not checked). The check covers the built single file too,
-  on purpose — that is what catches a cross-file link the build does not
-  rewrite into an in-page anchor
-- `.github/workflows/release.yml` — on a `v*` tag, builds the single file and
-  attaches it to the GitHub release
+  external URLs are not checked); the `site` job below checks the same
+  links again through MkDocs' parser
+- `.github/workflows/release.yml` — on a `v*` tag, creates the GitHub
+  release page for it (notes point at CHANGELOG.md); it attaches nothing
+  since the single file retired
 - `mkdocs.yml`, `scripts/site_hooks.py`, `scripts/site-requirements.txt`,
   `scripts/build_site.sh` — the book as a static site (MkDocs Material) over
   the unchanged `book/` files, built strictly into `build/site/`; the hooks
@@ -560,9 +558,9 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
    redistributed. A network in CI is not an oracle: a recipe whose only
    judge is a server somewhere is a recipe nobody checks the day the server
    is down.
-6. The single file stays reproducible from `book/`: after ANY change there
-   run `./scripts/build_book.sh`, and `--write-nav` too if you added,
-   removed, or renamed a chapter file. CI runs both.
+6. The site stays buildable from `book/`: after ANY change there run
+   `./scripts/build_site.sh`, which is strict — a link to a missing file or
+   anchor, or a page the generated nav does not know, fails it. CI runs it.
 
 ## Content conventions
 
@@ -601,11 +599,10 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 - Adding a chapter = a new `NN-<slug>.md` file plus its entry in
   `book/README.md`'s Contents. Links between files keep the GitHub anchor as
   a suffix — `](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)`
-  — because `build_book.sh` rewrites `](<file>.md#<anchor>)` back to
-  `](#<anchor>)` for the single-file build. Same-file links stay `](#anchor)`.
-- Every chapter file ends with a generated nav footer between
-  `<!-- nav:begin -->` and `<!-- nav:end -->`. Never hand-edit one: run
-  `scripts/build_book.sh --write-nav`. The single-file build strips them.
+  — because that one spelling resolves on GitHub and on the site alike
+  (`pymdownx.slugs` reproduces GitHub's slugs). Same-file links stay
+  `](#anchor)`. Chapter files carry no navigation of their own: the site
+  supplies it, and GitHub has the Contents.
 - Reference solutions in exercise chapters sit inside `<details>` spoiler
   folds ("Show the solution — do the exercise cold first"); keep that shape
   for new exercise chapters.
@@ -632,11 +629,11 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
     or a `<details>` fold. A callout that must live there stays plain bold
     with no marker — there are none today. Blank line before the marker.
 - Diagrams are mermaid in a ```` ```mermaid ```` fence, rendered natively by
-  GitHub and carried into the single file untouched. The rules:
+  GitHub and by the site. The rules:
   - **A diagram is additive.** It illustrates prose that already stands on
-    its own — nothing is deleted or rewritten to make room, because mermaid
-    does not render outside GitHub (the release single file included). At
-    most one lead-in sentence.
+    its own — nothing is deleted or rewritten to make room, because a
+    renderer that blocks the script shows the fence and the prose must
+    still carry the point. At most one lead-in sentence.
   - **Basic `flowchart` and `sequenceDiagram` only**, no `style`/`classDef`
     and no hardcoded colours — GitHub themes mermaid for light and dark
     itself, and a hardcoded colour is unreadable in one of them.
@@ -755,7 +752,7 @@ at v1.0. Full policy in CONTRIBUTING.md.
 ## Licensing
 
 Dual, and the boundary runs *through* the chapter files: prose under `book/`
-(and the single file built from it) is CC-BY 4.0; all code is MIT — `exercises/`,
+(and the site built from it) is CC-BY 4.0; all code is MIT — `exercises/`,
 `solutions/`, `scripts/`, `.github/`, and every code sample inside a chapter, so
 a reader can paste a snippet without an attribution obligation.
 `exercises/third_party/` is the exception — vendored code under its author's
@@ -766,8 +763,8 @@ whole file against canonical MIT, and a preamble in it cost the repo its
 detected license once already (it reported `NOASSERTION` until the preamble came
 back out). The split lives in `NOTICE` instead. `LICENSE-CC-BY-4.0` is the
 verbatim CC-BY legal text — never reword it either. `book/README.md`'s front
-matter carries a license line because the release single file travels
-without the repo. Contributed material lands
+matter carries a license line because the site travels without the repo.
+Contributed material lands
 under the same split (CONTRIBUTING.md), so relicensing later would need every
 contributor's consent.
 

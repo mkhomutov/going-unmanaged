@@ -59,10 +59,3 @@ int main() {
 **The rule to leave with:** after any potentially-reallocating operation, treat every iterator, pointer, and reference into that vector as dead. Chapter 11's invalidation rules say which containers are gentler, and [Appendix H](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage) turns them into a column you can choose from — including why `map`'s stable iterators are sometimes worth its slower lookups.
 
 </details>
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 20 — Exercise: Slicing and Polymorphism](20-exercise-slicing-and-polymorphism.md) · [Contents](README.md) · [Chapter 22 — Exercise: Lambda Lifetimes →](22-exercise-lambda-lifetimes.md)
-<!-- nav:end -->

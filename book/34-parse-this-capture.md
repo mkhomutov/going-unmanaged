@@ -238,7 +238,3 @@ The oldest confession in the field is the sockets API's `htons`/`ntohl` family �
 ### Reproduce it cold
 
 A week or two from now, closed book, on paper first: invent a small wire record — three fields, mixed widths, big-endian — write its ICD table, hand-encode one frame as hex, and predict what `sizeof` says about the struct a naive port would transcribe it into. Then, in a fresh file, write the offset-and-shift readers from memory and decode your own capture at an odd offset. No sanitizer will grade this one — that is the chapter's lesson — so your hand decode is the oracle, exactly as it was here. The schedule is in [Chapter 24](24-practice-plan.md#chapter-24--practice-plan).
-
-<!-- nav:begin -->
-[← Chapter 33 — Here Is the Report](33-here-is-the-report.md) · [Contents](README.md) · [Chapter 35 — Still Live at Unload →](35-still-live-at-unload.md)
-<!-- nav:end -->

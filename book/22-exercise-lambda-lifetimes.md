@@ -64,10 +64,3 @@ int main() {
 **Task 3 — init-capture (`[v = std::move(big)]`).** Some things cannot be copied into a closure — `unique_ptr` foremost. C++14 init-captures move them in; the lambda becomes the owner, and consequently the lambda itself is now move-only (storing it requires `std::function` alternatives like `std::move_only_function` in C++23, or just `auto`). This is the pattern for handing expensive or unique resources to deferred work.
 
 **The rule to leave with,** verbatim from Chapter 10: capture by reference only when the lambda cannot outlive the scope; by copy or move when it escapes — stored, returned, or run async. "Escapes" is the operative test: `std::function` members, callback registries, and thread launches are all escape routes.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 21 — Exercise: Iterator Invalidation](21-exercise-iterator-invalidation.md) · [Contents](README.md) · [Chapter 23 — Exercise: The Build-Model Lab →](23-exercise-the-build-model-lab.md)
-<!-- nav:end -->

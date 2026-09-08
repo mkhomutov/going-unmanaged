@@ -323,7 +323,3 @@ Shape 3's ecosystem is built from exactly the pieces this ticket assembled. COM'
 ### Reproduce it cold
 
 A week or two from now, closed book: write the two ownership sentences of any refcounted contract from memory — who owns what a getter returns, who owns what an out-parameter delivers — then re-derive the wrapper: adopt and share as named constructors, the Rule of Five doing the counting, no bare Retain or Release anywhere below it. Prove it with both judges, because that is this chapter's habit: a counter at zero for a release too few, the sanitizers for a release too many. The schedule is in [Chapter 24](24-practice-plan.md#chapter-24--practice-plan).
-
-<!-- nav:begin -->
-[← Chapter 34 — Parse This Capture](34-parse-this-capture.md) · [Contents](README.md) · [Chapter 36 — The Host Stutters →](36-the-host-stutters.md)
-<!-- nav:end -->

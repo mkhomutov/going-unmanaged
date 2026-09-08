@@ -106,10 +106,3 @@ Invalidation rules to memorize: **vector** — insert/erase invalidates iterator
 ### In the wild: C-style SDKs
 
 Vendor container libraries (Qt, Unreal, and countless in-house ones) mirror the STL: same concepts, same invalidation logic, different spelling. C APIs additionally return dynamic arrays via pointer+count pairs or opaque handles (Chapter 17's payload pattern), which you often immediately wrap or copy into proper containers so the rest of your code lives in STL-land.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 10 — Modern C++ Fluency](10-modern-cpp-fluency.md) · [Contents](README.md) · [Chapter 12 — The Compilation Model →](12-the-compilation-model.md)
-<!-- nav:end -->

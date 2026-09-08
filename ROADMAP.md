@@ -1698,9 +1698,10 @@ Revisit when merge conflicts in `going-unmanaged.md` become a regular event.
 
 **DONE** — "Split the book into per-chapter files": `book/` now holds one file
 per chapter and appendix with `book/README.md` as the Contents;
-`scripts/build_book.sh` rebuilds the single file (a release artifact, no
-longer checked in) and owns the generated nav footers. No chapter number
-moved. grep still works across the book with `book/*.md`.
+`scripts/build_book.sh` rebuilt the single file (a release artifact, no
+longer checked in) and owned the generated nav footers. No chapter number
+moved. grep still works across the book with `book/*.md`. (Structural item 2
+below has since retired the single file, the script and the footers.)
 
 ---
 
@@ -1716,4 +1717,5 @@ and Rust as a third column on the recipes and a third client at the ABI
 boundary, never a parallel syllabus. Decided 2026-09-08; the plan, the
 measurements behind it and the per-step acceptance tests live in
 [SITE-PLAN.md](SITE-PLAN.md). Step 1 (prove the generator on the unchanged
-book) is DONE — `scripts/build_site.sh`, strict, and a `site` CI job.
+book) is DONE — `scripts/build_site.sh`, strict, and a `site` CI job — and
+so is step 2 (the single-file build and the nav footers retired).

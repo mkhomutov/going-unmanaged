@@ -77,18 +77,22 @@ The strict build is now a CI job (`site`), because it is also a second,
 independent link-and-anchor checker beside lychee, and it fails on an
 include whose file or line range does not exist.
 
-## Step 2 — retire the single file
+## Step 2 — retire the single file — DONE
 
-Remove `scripts/build_book.sh`, the `<!-- nav:begin -->` footers it
-generates, the `--check-nav` CI step, the `](file.md#anchor)` rewrite rule,
-`build/going-unmanaged.md`, and the release workflow's attachment of it.
-Links between files keep the GitHub anchor suffix — that is what makes the
-same file render on GitHub and on the site — but the reason for the rule is
-no longer "so the single file can rewrite it". `check_markup.sh` loses its
-"and the built single file" pass; lychee's glob loses `build/`.
+Removed `scripts/build_book.sh`, the `<!-- nav:begin -->` footers it
+generated (and the trailing `---` that sat above them in 41 of the 53 files —
+it was a chapter separator for the concatenation, and on its own it drew a
+stray divider under every last paragraph), the `--check-nav` CI step,
+`build/going-unmanaged.md`, and the release workflow's attachment of it (the
+workflow still creates the release page for a tag). Links between files keep
+the GitHub anchor suffix — that is what makes the same file render on GitHub
+and on the site — and CLAUDE.md now gives that as the reason. Hard invariant
+6 reads "the site stays buildable from `book/`". `check_markup.sh` lost its
+"and the built single file" pass.
 
-**Acceptance:** CI green with the book job shorter, `grep -rn "nav:begin"
-book/` empty, and the release workflow publishing nothing it does not build.
+**Acceptance, met:** CI green with the book job three steps shorter,
+`grep -rn "nav:begin" book/` empty, and the release workflow publishing
+nothing it does not build.
 
 ## Step 3 — the structural pass
 

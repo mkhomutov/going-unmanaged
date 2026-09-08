@@ -87,10 +87,3 @@ public:
 ### In the wild: C-style SDKs
 
 SDK surfaces are mostly C-style callbacks, but their C++ layers — and everything you build on top — use polymorphic hierarchies. Any class hierarchy you design for your own model needs virtual destructors the moment you store `unique_ptr<Base>` in a container. Which you will.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 4 — Classes, Inheritance, Interfaces](04-classes-inheritance-interfaces.md) · [Contents](README.md) · [Chapter 6 — The Rule of Five and Move Semantics →](06-the-rule-of-five-and-move-semantics.md)
-<!-- nav:end -->

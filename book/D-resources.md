@@ -41,10 +41,3 @@ Asking these early is a strength signal, not a weakness:
 ### A closing note
 
 Seventeen years of C# is not baggage here — it is architecture sense, debugging instinct, and professional judgment that transfer completely. The C++-specific layer on top is finite and learnable; most of it is in these pages. The rest arrives the way it always has: one compile error, one code review, one notes-file entry at a time.
-
----
-
-
-<!-- nav:begin -->
-[← Appendix C — Learning With (and Without) AI Assistants](C-working-without-ai.md) · [Contents](README.md) · [Appendix E — Glossary →](E-glossary.md)
-<!-- nav:end -->

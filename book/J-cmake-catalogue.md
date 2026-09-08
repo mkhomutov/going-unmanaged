@@ -166,7 +166,3 @@ add_test(NAME cb_http COMMAND cb_http)
 | A shipping archive | `CPack` from the install rules | a hand-written zip step that drifts from `install()` |
 | A Release binary that inlines across files | `CMAKE_INTERPROCEDURAL_OPTIMIZATION` after `check_ipo_supported` | shipping a static library built that way to another toolchain |
 | To know why configure did what it did | `--trace-expand`, `-LAH`, `--graphviz` | editing `CMakeCache.txt` |
-
-<!-- nav:begin -->
-[← Appendix I — Const-Correctness](I-const.md) · [Contents](README.md) · [Appendix K — The Standards Catalogue →](K-the-standards-catalogue.md)
-<!-- nav:end -->

@@ -273,10 +273,3 @@ Write the CMakeLists for the Greeter trio from scratch — file listed, then lib
 3. **Generate a native project.** With the full IDE installed, `cmake -S . -B build-ide -G Xcode` (or `-G "Visual Studio 17 2022"`), then open the result and build from the IDE. Same CMakeLists, same code, a project file you never wrote — the payoff for the two-step model. `cmake --help` lists the generators your installation actually offers, which is the honest way to find out what is available on your machine.
 4. **Split it.** Move Greeter into a `src/` subdirectory with its own CMakeLists and pull it in with `add_subdirectory`. That is the shape every real project has — the tree in *A layout that survives* — and doing it once removes the mystery. Put the root files in place too: a `.gitignore` with `build/`, and a `CMakePresets.json` naming the configure line you have been typing (Chapter 40's shape); afterwards `git status` should show nothing generated.
 5. **Prove a define's reach.** Configure with `-DGREETER_AUDIT=ON`, open `build/compile_commands.json`, and find `-DGREETER_AUDIT=1` on *both* `Greeter.cpp` and `main.cpp` — then change the `PUBLIC` to `PRIVATE`, reconfigure, and watch it vanish from `main.cpp` while the build stays green. Now give `Greeter` a member behind `#ifdef GREETER_AUDIT`, keep the `PRIVATE`, and run it in a build without the sanitizers: the two translation units disagree about `sizeof(Greeter)`, nothing reports it, and you have built the compile-time-switches section's diamond with your own hands. Then rebuild with `GREETER_SANITIZE=ON` and watch AddressSanitizer report a `stack-buffer-overflow` in `Greeter::Greeter` — the constructor *writes* the member into an object `main.cpp` allocated without it, which is the one shape of this bug the sanitizers can see, and Chapter 30's `Naive` break arriving through a define. The section's `session.h` only reads, and stays silent.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 25 — Findings from Practice: a Living Log](25-findings-from-practice.md) · [Contents](README.md) · [Chapter 27 — Dependency Management →](27-dependency-management.md)
-<!-- nav:end -->

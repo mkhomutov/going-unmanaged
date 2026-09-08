@@ -51,10 +51,3 @@ Learn your debugger's container visualizers (VS: built-in for vector/map; lldb: 
 ### Mac vs Windows for practice
 
 C++ practice transfers 100% either way (clang + ASan on Mac is first-class). Toolchain muscle memory does not: if the team is a Windows/Visual Studio shop, do the SDK days on Windows so project settings, attach-to-process, and MSVC's error dialect become familiar. Ask the team which platform(s) they develop on before investing setup time.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 12 — The Compilation Model](12-the-compilation-model.md) · [Contents](README.md) · [Chapter 14 — Exercise: The Lifetime Tracer →](14-exercise-the-lifetime-tracer.md)
-<!-- nav:end -->

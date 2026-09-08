@@ -181,9 +181,3 @@ The finished surface is `exercises/interoplab/` — write your own first, in a d
 3. **Add a callback with a written window**, then prove the window: register, pump, clear, mark the target dead, pump again, and assert nothing arrived.
 4. **Write the C# side on paper.** You cannot compile it here, and that is the exercise: transcribe your own header into `[LibraryImport]` declarations by hand, then read them back against the header looking for the four things nothing would have caught. Doing that once is what makes the rest of this chapter stick, because you will have been the person who gets it wrong.
 5. **Hardest.** Add a second version of the options struct with an appended field, and make one build of the library serve both callers correctly, using the size field alone to tell them apart.
-
----
-
-<!-- nav:begin -->
-[← Chapter 38 — The Bridge Out](38-the-bridge-out.md) · [Contents](README.md) · [Chapter 40 — CMake for the Plug-in →](40-cmake-for-the-plug-in.md)
-<!-- nav:end -->
