@@ -4,12 +4,13 @@
 # the alert-to-admonition translation, so this file stays declarative.
 site_name: Going Unmanaged
 site_description: A hands-on C++ handbook for C# developers
+site_url: https://mkhomutov.github.io/going-unmanaged/
 repo_url: https://github.com/mkhomutov/going-unmanaged
 edit_uri: edit/main/book/
 copyright: Text CC-BY 4.0, code MIT
 docs_dir: book
 site_dir: build/site
-use_directory_urls: false
+use_directory_urls: true
 
 theme:
   name: material

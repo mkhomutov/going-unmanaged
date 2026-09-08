@@ -1,12 +1,14 @@
 name: Site
 
-# Builds the book as a static site and deploys it to GitHub Pages - on demand
-# only. Nothing here runs on push: publishing is the maintainer's decision
-# (SITE-PLAN.md, open decisions), and the repository's Pages setting must be
-# "GitHub Actions" before the deploy step can succeed. Until it is run, the
-# site is read locally with scripts/build_site.sh --serve, and the strict
-# build that guards it runs in ci.yml's `site` job on every push.
+# Builds the book as a static site and deploys it to GitHub Pages on every
+# push to main (and on demand). The repository's Pages setting is "GitHub
+# Actions". mermaid-cli is installed so the hook renders every diagram to
+# SVG at build time and the published pages fetch nothing from a CDN; the
+# strict build that guards the site also runs in ci.yml's `site` job on
+# every push and pull request, with the same tool present.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -29,7 +31,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install -g @mermaid-js/mermaid-cli@11
       - run: ./scripts/build_site.sh
+      # Every diagram must have been rendered: a fence left for the browser
+      # here would mean mmdc was missing, and the published site would fetch
+      # from a CDN after all.
+      - run: '! grep -rl "language-mermaid\|class=\"mermaid\"" build/site --include=*.html'
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

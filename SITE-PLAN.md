@@ -228,18 +228,22 @@ Retitling is not renumbering. Under CONTRIBUTING.md's policy the structural
 pass is a MINOR release (content moves, nothing is renumbered, no citation
 breaks), and the same-commit rule for `book/README.md` still applies.
 
-## Open decisions
+## Decisions taken (2026-09-08, delegated)
 
-- **Hosting.** GitHub Pages from the `site` job's output is the obvious
-  choice; publishing is the maintainer's call and is not wired up by this
-  plan. Until then `scripts/build_site.sh --serve` is the reader.
-- **Diagrams at read time or at build time.** Material renders mermaid in
-  the browser from a CDN; a browser that blocks it (the proof's did) shows
-  the fence. A self-hosted `mermaid.min.js` was proven to work in step 1,
-  and CI already installs mermaid-cli for `check_mermaid.sh`, so rendering
-  to SVG at build time is the third option and the most "pure technical".
-  Decide in step 3, when the diagram rules get their site clause.
-- **Directory URLs.** The proof uses `file.html#anchor`, which mirrors the
-  GitHub links exactly; `use_directory_urls: true` is prettier and MkDocs
-  rewrites the links either way. Decide before hosting, since it changes
-  every URL once.
+- **Hosting: GitHub Pages, deployed on every push to `main`.**
+  `.github/workflows/site.yml` builds with mermaid-cli present and deploys
+  through `actions/deploy-pages`; the repository's Pages source is "GitHub
+  Actions". The site is https://mkhomutov.github.io/going-unmanaged/, the
+  root README and the book's front matter point at it, and it is the
+  reading surface — GitHub's rendering of `book/` shows include directives
+  where the site shows code.
+- **Diagrams at build time.** `site_hooks.py` renders each mermaid fence to
+  inline SVG twice, in mermaid's default and dark themes, and a style block
+  shows one per Material colour scheme; renders are cached under `build/`
+  by the hash of the fence and the theme. The published page loads nothing
+  from a CDN. A local build without `mmdc` falls back to browser-side
+  rendering, so a laptop without Node still builds; CI's `site` job and the
+  Pages workflow install mermaid-cli and refuse a page that still carries a
+  fence for the browser, so what is published is always the rendered form.
+- **Directory URLs.** `use_directory_urls: true` and `site_url` set, before
+  the first publish, so no address changes later.
