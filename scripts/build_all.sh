@@ -1246,7 +1246,7 @@ if command -v cmake > /dev/null 2>&1 && pkg-config --exists sqlite3 libcrypto li
         echo "build_all.sh: a cookbook recipe failed under CTest" >&2
         exit 1
     fi
-    echo "  ok   cookbook/cmake: SQLite::SQLite3, OpenSSL::Crypto and PkgConfig::CURL found; three judges green under CTest"
+    echo "  ok   cookbook/cmake: SQLite3::SQLite3, OpenSSL::Crypto and PkgConfig::CURL found; three judges green under CTest"
 elif [ "$REQUIRE_CMAKE" = 1 ] && [ "$REQUIRE_OPENSSL" = 1 ] && [ "$REQUIRE_CURL" = 1 ] && [ "$REQUIRE_SQLITE" = 1 ]; then
     echo "build_all.sh: cmake or one of sqlite3, libcrypto, libcurl is missing, and all four --require flags were given" >&2
     exit 1
