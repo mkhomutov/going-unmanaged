@@ -2713,11 +2713,12 @@ are touched — the same `mmap` and `MapViewOfFile` as Recipe 43, with a
 file where that recipe had a name, and read-only, private, so the file
 cannot change through the view. The class is Recipe 7 for a view: the
 descriptor is closed the moment the mapping exists, because the mapping
-holds its own reference to the file — which is also why, on POSIX, the
-file can be deleted under a live mapping and the bytes still read, which
-the harness asserts there; on Windows it asserts the opposite face of
-the same reference, that the delete is refused while the mapping lives.
-The empty file is the branch a first draft lacks: `mmap` of zero bytes is
+holds its own reference to the file — which is also why the file can be
+deleted under a live mapping and the bytes still read, which the harness
+asserts on every platform it runs on: on POSIX by design, and on Windows
+because the STL's `remove` asks for POSIX delete semantics on NTFS (the
+older `DeleteFile` refused a mapped file with `ERROR_USER_MAPPED_FILE`,
+which is what a hand-rolled delete still meets). The empty file is the branch a first draft lacks: `mmap` of zero bytes is
 `EINVAL` and `CreateFileMapping` of an empty file fails outright, so an
 empty file is an empty view, not an exception. `bytes()` is a
 `string_view`, [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s

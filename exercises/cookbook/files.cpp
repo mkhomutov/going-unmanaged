@@ -18,9 +18,12 @@
 // whole claim over a ReadAllBytes - with every byte compared against Recipe
 // 1's copy; on POSIX the file is then deleted under the live mapping and
 // read on, and the lowest free descriptor is compared before and after, so
-// a close left out of the constructor is seen; on Windows the delete is
-// asserted to be REFUSED while the mapping lives, the same reference seen
-// from the other side. A munmap left out of the destructor is the one
+// a close left out of the constructor is seen. The delete-under-mapping
+// assertion runs on Windows too: the STL's remove asks for POSIX delete
+// semantics there (NTFS, Windows 10 1709 or later), so the name goes and
+// the section keeps the bytes - the old DeleteFile refused a mapped file
+// with ERROR_USER_MAPPED_FILE, and a first draft asserted that refusal
+// until the buildlab-msvc job showed the runner deleting it. A munmap left out of the destructor is the one
 // mistake no judge here sees: LeakSanitizer counts allocations, not
 // mappings. Under the buildlab-msvc job's ASan, a replaced operator new
 // costs that binary the new/delete mismatch checks (Microsoft documents
@@ -36,7 +39,6 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <system_error>
 #if defined(_WIN32)
 #include <windows.h>
 #else
@@ -240,20 +242,13 @@ int main() {
         assert(mapped.bytes().size() == copied.size());
         assert(mapped.bytes() == copied);                           // every byte, through the mapping
         assert(during == 0);                                        // and not one heap allocation to get them
-#if !defined(_WIN32)
         // The mapping holds its own reference to the file: the name can go
-        // and the bytes stay - on POSIX; Windows refuses to delete a mapped file.
+        // and the bytes stay. On POSIX by design; on Windows because the
+        // STL's remove uses POSIX delete semantics where the volume allows
+        // (the msvc job's NTFS runner does).
         fs::remove(big);
         assert(!fs::exists(big));
         assert(mapped.bytes().substr(1000, 5) == std::string_view(copied).substr(1000, 5));
-#else
-        // Windows refuses to delete a file with a live mapping: the same
-        // reference, seen from the other side.
-        std::error_code refused;
-        fs::remove(big, refused);
-        assert(refused);
-        assert(fs::exists(big));
-#endif
     }
     fs::remove(big);
 

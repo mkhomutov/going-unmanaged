@@ -157,9 +157,11 @@ numbers may still move.
   allocations across the mapping with a replaced `operator new` — both
   forms, because under ASan the array form does not route through the
   scalar one and a `new char[]` copy passed the first draft — deletes
-  the file under the live mapping on POSIX and reads on, and checks the
-  descriptor was closed; the `buildlab-msvc` job builds and runs the
-  Win32 half. Its trap is one no tool names and the platforms answer
+  the file under the live mapping and reads on — on Windows too, where
+  the STL's `remove` uses POSIX delete semantics; a first draft asserted
+  the older `DeleteFile` refusal until the `buildlab-msvc` job showed the
+  runner deleting it — and checks the descriptor was closed; that job
+  builds and runs the Win32 half. Its trap is one no tool names and the platforms answer
   differently: a file truncated under a mapping is a `SIGBUS` on Linux
   and a completed read on macOS, and `check_platform_claims.sh` holds
   each platform to its own answer. Chapter 31 gains a row.
