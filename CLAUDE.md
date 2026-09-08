@@ -100,7 +100,18 @@ Chapter 25's Finding 10.
   `NN-<slug>.md` for chapters 01–42, `A-`…`K-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
-  someone opens `book/`, so it is the reader's entry point
+  someone opens `book/`, so it is the reader's entry point. The Contents
+  leads with three entry-point groups — `### Reference`, `### Concepts`,
+  `### Labs` — and the six-Part reading order follows. The site's nav is
+  built from those three groups (scripts/site_hooks.py), so every page under
+  `book/` must appear in exactly one of them; a page in none is missing from
+  the nav and the strict build fails
+- `book/symptoms.md` (Symptom Index: from what is on the screen to the page
+  that owns it — the table that closed Chapter 31 until SITE-PLAN step 3,
+  plus the Gotchas by symptom) and `book/components.md` (the pieces of the
+  labs and the cookbook usable as they stand, each with its judge) — the two
+  pages that are neither chapter nor appendix; H2-titled like a chapter, no
+  number or letter, linked from the Reference group
 - `exercises/` — one directory per exercise, each with a TASK.md task card
   (three non-exercise directories aside: `cookbook/`, `choosing/`, `skeleton/`);
   `exercises/README.md` is the index (exercise ↔ chapter ↔ solution)
@@ -494,8 +505,9 @@ Chapter 25's Finding 10.
 - `mkdocs.yml`, `scripts/site_hooks.py`, `scripts/site-requirements.txt`,
   `scripts/build_site.sh` — the book as a static site (MkDocs Material) over
   the unchanged `book/` files, built strictly into `build/site/`; the hooks
-  file generates the nav from the chapter headings and turns the GitHub
-  alerts into admonitions, and `pymdownx.slugs` reproduces GitHub's anchors
+  file generates the nav from `book/README.md`'s three entry-point groups,
+  turns the GitHub alerts into admonitions, marks the `<details>` folds for
+  md_in_html, and `pymdownx.slugs` reproduces GitHub's anchors
   so no link changes. `SITE-PLAN.md` is the plan this serves — the book is
   becoming a reference consulted daily, not a book read once — with the
   measurements behind it and the next steps; read it before changing the
@@ -598,8 +610,10 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
   one — legible enough that seventeen files carried one unnoticed.
   `check_markup.sh` enforces it; only `---` is checked, since that is the
   only spelling the book uses.
-- Adding a chapter = a new `NN-<slug>.md` file plus its entry in
-  `book/README.md`'s Contents. Links between files keep the GitHub anchor as
+- Adding a chapter = a new `NN-<slug>.md` file plus its entries in
+  `book/README.md`'s Contents: one in the reading order, one in whichever of
+  Reference / Concepts / Labs it belongs to (the site nav comes from those,
+  and a file in none of them fails the strict build). Links between files keep the GitHub anchor as
   a suffix — `](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)`
   — because that one spelling resolves on GitHub and on the site alike
   (`pymdownx.slugs` reproduces GitHub's slugs). Same-file links stay

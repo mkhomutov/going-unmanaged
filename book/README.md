@@ -2,15 +2,83 @@
 
 **A Hands-On C++ Handbook for C# Developers**
 
-You have spent years in managed code — the runtime tracked your objects, the GC cleaned up after you, and "unmanaged" was the scary word in the P/Invoke docs. This book is the journey to the other side: refresh, learn, practice.
+You have spent years in managed code — the runtime tracked your objects, the GC cleaned up after you, and "unmanaged" was the scary word in the P/Invoke docs. This handbook is the other side: the concepts, the labs you do cold, and the reference you keep open once you are there.
 
 *Who this is for:* developers with solid C# (or Java) experience who once knew C++ or are learning it now, and need to become productive in a real C++ codebase — typically one built around a vendor SDK: a plug-in API for a desktop application, a peripheral-device SDK, a game or media engine, an embedded HAL. Each chapter therefore ends with an "In the wild" section connecting the concept to the C-flavored APIs you will actually meet, and Part V trains on two miniature SDKs written in those idioms.
 
-*How to use it:* Parts I–IV are the syllabus — read once, then return by chapter when a topic resurfaces at work. Part V is where knowledge becomes skill: exercises done cold, and a growing log of the mistakes they produced. Part VI is the real codebase — what a project has that an exercise does not; read it when you land in one, or when the thing it covers lands on you. The appendices are the survival kit: the fundamentals refresher, the one-page cheat sheet for any morning, the curated resources, the glossary, the cookbook indexed by the C# API you are reaching for, the bridge catalogue for the meeting where the plug-in must speak to everything else, the choosing procedures for the four decisions every signature makes, const-correctness as one subject rather than five fragments, the CMake catalogue for the verb already in your head, and the standards catalogue for the spelling a newer codebase uses and the way to ask a toolchain which standard it speaks.
+*How to use it:* by the question in front of you, through the Reference list below — the symptom index, the cookbook, the choosing procedures and the catalogues. By topic, through the Concepts, when one surfaces at work. By doing, through the Labs, cold. Read in order, the Parts are the syllabus: I–IV the language and the toolchain, V the exercises and the mistakes they produced, VI the real codebase — what a project has that an exercise does not. The appendices are the survival kit: the fundamentals refresher, the one-page cheat sheet for any morning, the curated resources, the glossary, the cookbook indexed by the C# API you are reaching for, the bridge catalogue for the meeting where the plug-in must speak to everything else, the choosing procedures for the four decisions every signature makes, const-correctness as one subject rather than five fragments, the CMake catalogue for the verb already in your head, and the standards catalogue for the spelling a newer codebase uses and the way to ask a toolchain which standard it speaks.
 
 *For the Java reader:* the comparisons are written in C#, but most of them rest on facts your runtime shares — a GC, objects behind references, single inheritance, an `Object` root, immutable strings, exceptions as the culture — so they translate on sight, and the code always carries the lesson on its own. Read with this pocket dictionary once and you will rarely need it again: `using`/`IDisposable` → try-with-resources/`AutoCloseable`; `base` → `super`; `sealed` → `final`; `internal` → package-private; delegates and `event` → functional interfaces and listener registration; LINQ → Streams; `Task.Run` + `await` → `ExecutorService` + `Future.get`; NuGet → Maven/Gradle; `ArgumentNullException`/`InvalidOperationException` → `NullPointerException`/`IllegalStateException`. Three places the languages genuinely diverge, flagged in place when you get there: **C# has value types** — when Chapter 2 says everything assigns like a C# struct, read *like a Java primitive: the whole object copied on assignment, fields and methods included*; Java has no such type, and this one anchor you must build rather than borrow. **C# generics are reified**, so Chapter 7's baseline is the opposite of your erasure instinct — though C++ templates' T-is-gone-at-runtime half will feel like home. **C# methods are non-virtual by default**, like C++ — so in Chapter 5 it is *your* everything-is-virtual reflex, not the C# reader's, that is the dangerous one.
 
 ## Contents
+
+Three ways in. **Reference** is for the question in front of you; **Concepts** for the topic that has surfaced; **Labs** for the work you do cold. The [reading order](#reading-order) below them is the sequence the chapter numbers follow.
+
+### Reference
+
+- [Symptom Index](symptoms.md#symptom-index) — from what is on the screen to the page that owns it
+- [Appendix F — The Rosetta Cookbook](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) — everyday tasks, by the C# API you were reaching for
+- [Appendix H — Choosing: Signatures, Containers, and Storage](H-choosing.md#appendix-h--choosing-signatures-containers-and-storage) — which container, how to take a parameter, what to return, what goes inside the collection
+- [Appendix J — The CMake Catalogue](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue) — the CMake verb already in your head, and the page that owns it
+- [Appendix K — The Standards Catalogue](K-the-standards-catalogue.md#appendix-k--the-standards-catalogue) — which standard a toolchain speaks, and the newer spelling beside the taught one
+- [Appendix G — The Bridge Catalogue](G-the-bridge-catalogue.md#appendix-g--the-bridge-catalogue) — every way to connect a foreign client to a native host, priced
+- [Appendix I — Const-Correctness](I-const.md#appendix-i--const-correctness) — const as one subject
+- [Chapter 25 — Gotchas: the Findings Log](25-findings-from-practice.md#chapter-25--gotchas-the-findings-log) — the mistakes practice produced: symptom, theory, broken and fixed code, habit
+- [Chapter 31 — Reading What the Tools Tell You](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you) — sanitizer reports line by line; the debugger and the profiler where they differ from C#
+- [Chapter 13 — Toolchain Quick Reference](13-toolchain-quick-reference.md#chapter-13--toolchain-quick-reference) — the flags, and what MSVC calls the thing you know
+- [Chapter 16 — The SDK Bestiary](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary) — the shapes vendor APIs take, and how to read a header
+- [Appendix E — Glossary](E-glossary.md#appendix-e--glossary) — the terms of art, each pointing at its owning chapter
+- [Appendix B — Core Principles (Cheat Sheet)](B-core-principles.md#appendix-b--core-principles-cheat-sheet) — the one-page cheat sheet
+- [Appendix A — Fundamentals Refresher](A-fundamentals-refresher.md#appendix-a--fundamentals-refresher) — pointers, references, explicit, = delete, const, .lib files, signed vs unsigned, naming
+- [Components](components.md#components) — the pieces of the labs and the cookbook that are usable as they stand
+- [Appendix D — Resources and Further Reading](D-resources.md#appendix-d--resources-and-further-reading) — references, books, and the vendor-SDK study material
+
+### Concepts
+
+- [Chapter 1 — Ownership and RAII](01-ownership-and-raii.md#chapter-1--ownership-and-raii)
+- [Chapter 2 — Value Semantics](02-value-semantics.md#chapter-2--value-semantics)
+- [Chapter 3 — Stack, Heap, and Undefined Behavior](03-stack-heap-and-undefined-behavior.md#chapter-3--stack-heap-and-undefined-behavior)
+- [Chapter 4 — Classes, Inheritance, Interfaces](04-classes-inheritance-interfaces.md#chapter-4--classes-inheritance-interfaces)
+- [Chapter 5 — Virtual Dispatch and the Virtual Destructor](05-virtual-dispatch-and-the-virtual-destructor.md#chapter-5--virtual-dispatch-and-the-virtual-destructor)
+- [Chapter 6 — The Rule of Five and Move Semantics](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics)
+- [Chapter 7 — Templates vs C# Generics](07-templates-vs-csharp-generics.md#chapter-7--templates-vs-c-generics)
+- [Chapter 8 — Error Handling: Exceptions and Error Codes](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)
+- [Chapter 9 — Casts, Conversions, and Strings](09-casts-conversions-and-strings.md#chapter-9--casts-conversions-and-strings)
+- [Chapter 10 — Modern C++ Fluency](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)
+- [Chapter 11 — STL Containers, Algorithms, and Iterator Invalidation](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)
+- [Chapter 12 — The Compilation Model](12-the-compilation-model.md#chapter-12--the-compilation-model)
+- [Chapter 26 — Build Systems and CMake](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)
+- [Chapter 27 — Dependency Management](27-dependency-management.md#chapter-27--dependency-management)
+- [Chapter 28 — Testing](28-testing.md#chapter-28--testing)
+- [Chapter 29 — Concurrency](29-concurrency.md#chapter-29--concurrency)
+- [Chapter 30 — Authoring an ABI Boundary](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)
+- [Chapter 41 — Templates You Will Write](41-templates-you-will-write.md#chapter-41--templates-you-will-write)
+
+### Labs
+
+Each has a task card under `exercises/` so it can be attempted without the solution on the next screen; the six from Chapter 32 on are tickets — a symptom and the code it happened to, the diagnosis behind a fold.
+
+- [Chapter 14 — Exercise: The Lifetime Tracer](14-exercise-the-lifetime-tracer.md#chapter-14--exercise-the-lifetime-tracer)
+- [Chapter 15 — Exercise: The Buffer](15-exercise-the-buffer.md#chapter-15--exercise-the-buffer)
+- [Chapter 17 — Exercise: The FakeSDK](17-exercise-the-fakesdk.md#chapter-17--exercise-the-fakesdk)
+- [Chapter 18 — Exercise: The Device SDK](18-exercise-the-device-sdk.md#chapter-18--exercise-the-device-sdk)
+- [Chapter 19 — Exercise: The Word Counter](19-exercise-the-word-counter.md#chapter-19--exercise-the-word-counter)
+- [Chapter 20 — Exercise: Slicing and Polymorphism](20-exercise-slicing-and-polymorphism.md#chapter-20--exercise-slicing-and-polymorphism)
+- [Chapter 21 — Exercise: Iterator Invalidation](21-exercise-iterator-invalidation.md#chapter-21--exercise-iterator-invalidation)
+- [Chapter 22 — Exercise: Lambda Lifetimes](22-exercise-lambda-lifetimes.md#chapter-22--exercise-lambda-lifetimes)
+- [Chapter 23 — Exercise: The Build-Model Lab](23-exercise-the-build-model-lab.md#chapter-23--exercise-the-build-model-lab)
+- [Chapter 32 — Crash on Exit](32-it-crashes-on-exit.md#chapter-32--crash-on-exit)
+- [Chapter 33 — A Value Reads Zero After Hot-Plug](33-here-is-the-report.md#chapter-33--a-value-reads-zero-after-hot-plug)
+- [Chapter 34 — Every Capture Rejected as Malformed](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed)
+- [Chapter 35 — Objects Still Live at Unload](35-still-live-at-unload.md#chapter-35--objects-still-live-at-unload)
+- [Chapter 36 — Dropouts With the Plug-in Loaded](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded)
+- [Chapter 37 — Crash at Session Close, Field Units Only](37-no-repro-dump-attached.md#chapter-37--crash-at-session-close-field-units-only)
+- [Chapter 38 — The Bridge Out](38-the-bridge-out.md#chapter-38--the-bridge-out)
+- [Chapter 39 — The Round Trip Home](39-the-round-trip-home.md#chapter-39--the-round-trip-home)
+- [Chapter 40 — CMake for the Plug-in](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in)
+- [Chapter 42 — The Formula Field](42-the-formula-field.md#chapter-42--the-formula-field)
+
+### Reading order
 
 **[Part I — The Mental Shift](01-ownership-and-raii.md#part-i--the-mental-shift)**
 
