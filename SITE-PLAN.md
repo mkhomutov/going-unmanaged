@@ -188,7 +188,7 @@ optimises for.
 or a page names one that is not there; `build_all.sh` ALL GREEN, since the
 markers are comments.
 
-## Step 5 — Rust
+## Step 5 — Rust — IN PROGRESS
 
 In this order, each behind a `cargo` probe with a `--require-cargo` flag CI
 passes (the TSan and OpenSSL pattern):
@@ -207,6 +207,8 @@ passes (the TSan and OpenSSL pattern):
    language-neutral at the ABI; a Rust caller with `extern "C"` and
    `#[repr(C)]` joins C# and Python as one more consumer of the same seam,
    with a listing that CI links against abilab or interoplab.
+
+**Status.** PR 1: the machinery and Recipes 1–13. `exercises/cookbook/rust/` is a dependency-free crate, one module per cookbook domain, each recipe between the same `recipe-N` markers the C++ files use and each module's tests asserting the recipe's claims (nine tests, including Recipe 7's C handle through `extern "C"` and Recipe 13's panic surfacing at `join`). On the page each of the thirteen recipes is two tabs, C++ and Rust, both includes; four Why paragraphs close with one **In Rust** sentence where the language sharpens the point (a missing file is an `Err`; `Drop` is the destructor; `get` never inserts; `join` carries the panic in its type). `build_all.sh` runs `cargo test --offline` with warnings as errors behind a `--require-cargo` probe that CI passes. Recipes 14–49 follow by PR in the same shape.
 
 Not in scope: a Rust version of the labs. FakeSDK is about consuming a
 C-flavoured SDK from C++; the Rust version of that is bindgen and `unsafe`,

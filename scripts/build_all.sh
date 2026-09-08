@@ -17,6 +17,8 @@
 #                                             libcurl for Recipe 41 (CI)
 #   scripts/build_all.sh --require-sqlite   -> also fail if pkg-config cannot find
 #                                             sqlite3 for Recipe 42 (CI)
+#   scripts/build_all.sh --require-cargo    -> also fail if there is no cargo to
+#                                             test Appendix F's Rust tab (CI)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -27,6 +29,7 @@ REQUIRE_EXPECTED=0
 REQUIRE_OPENSSL=0
 REQUIRE_CURL=0
 REQUIRE_SQLITE=0
+REQUIRE_CARGO=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --require-cmake)    REQUIRE_CMAKE=1;    shift ;;
@@ -36,6 +39,7 @@ while [ $# -gt 0 ]; do
         --require-openssl)  REQUIRE_OPENSSL=1;  shift ;;
         --require-curl)     REQUIRE_CURL=1;     shift ;;
         --require-sqlite)   REQUIRE_SQLITE=1;   shift ;;
+        --require-cargo)    REQUIRE_CARGO=1;    shift ;;
         *) echo "build_all.sh: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -1077,6 +1081,33 @@ fi
 # 16 before 17), so a one-line probe of the header would pass on a compiler
 # that then cannot build the listing. The flags are the canonical set with
 # one token changed, derived rather than retyped so they cannot drift.
+# Appendix F's Rust tab: exercises/cookbook/rust/ is a crate with one module
+# per cookbook domain, each recipe included by the appendix from between its
+# section markers and each module's tests asserting what the recipe claims -
+# the C++ mains' judge, in Rust. Standard library only, so --offline needs
+# nothing but a toolchain; RUSTFLAGS=-D warnings is the -Wall -Wextra of it.
+# The probe DOES the thing: a cargo that is present but cannot build the crate
+# fails here, and --require-cargo refuses to skip, because a tab CI never
+# tests is a listing nobody checks. The target directory goes under $OUT so a
+# run leaves nothing in the tree.
+echo "== cookbook rust (Appendix F's Rust tab) =="
+if command -v cargo > /dev/null 2>&1; then
+    if RUSTFLAGS="-D warnings" cargo test --offline --quiet \
+           --manifest-path exercises/cookbook/rust/Cargo.toml \
+           --target-dir "$OUT/cargo-target" > "$OUT/cargo_test.log" 2>&1; then
+        echo "  ok   exercises/cookbook/rust: cargo test, warnings as errors"
+    else
+        echo "build_all.sh: cargo test failed for exercises/cookbook/rust:" >&2
+        sed 's/^/  /' "$OUT/cargo_test.log" >&2
+        exit 1
+    fi
+elif [ "$REQUIRE_CARGO" = 1 ]; then
+    echo "build_all.sh: no cargo on PATH, and --require-cargo was given" >&2
+    exit 1
+else
+    echo "  SKIPPED - no cargo here (CI runs this for real)"
+fi
+
 echo "== cookbook expected (c++23) =="
 FLAGS23=${FLAGS/-std=c++17/-std=c++23}
 if $CXX $FLAGS23 exercises/cookbook/expected.cpp -o "$OUT/cb_expected" > "$OUT/expected_build.log" 2>&1; then

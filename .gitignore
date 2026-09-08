@@ -79,3 +79,6 @@ Testing/
 
 # Sanitizer / debug artifacts
 *.dSYM/
+
+# cargo (Appendix F's Rust crate; build_all.sh keeps its target under build/)
+target/

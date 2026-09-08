@@ -19,7 +19,7 @@
 #   2. includes, reverse  - every section a source marks is included by some
 #                           page: a marked unit is a promise that a page shows
 #                           it (the old whole-unit rule, generalized)
-#   3. no copies          - no cpp or cmake fence of four lines or more on a
+#   3. no copies          - no cpp, cmake or rust fence of four lines or more on a
 #                           page is byte-identical to a region of a source
 #                           file: a listing pasted back into a page instead
 #                           of included is the drift this script was born
@@ -32,7 +32,9 @@
 #   5. pinned lines       - two one-line quotations, an if-statement in
 #                           Chapter 39 and a set() in Chapter 40, too short
 #                           for a marker, held by containment
-#   6. page shapes        - Appendix G holds no cpp fence and Appendix J no
+#   6. page shapes        - Appendix F holds no cpp or rust fence with code
+#                           (every recipe, in both languages, is an include),
+#                           Appendix G holds no cpp fence and Appendix J no
 #                           cpp fence and at least one cmake fence, every one
 #                           of them an include: a page with nothing to compile
 #                           owes build_all.sh nothing, and a page with a
@@ -54,14 +56,14 @@ import glob, os, re, sys
 
 failures = []
 
-INCLUDE = re.compile(r'^--8<-- "([^":]+)(?::([^"]+))?"\s*$', re.M)
+INCLUDE = re.compile(r'^[ \t]*--8<-- "([^":]+)(?::([^"]+))?"\s*$', re.M)   # indented inside a tab, or not
 MARK = re.compile(r'--8<-- \[(start|end):([A-Za-z0-9_.-]+)\]')
-FENCE = re.compile(r'```(cpp|cmake)\n(.*?)```', re.S)
+FENCE = re.compile(r'```(cpp|cmake|rust)\n(.*?)```', re.S)
 
 def fences(path, lang='cpp'):
     return [b for l, b in FENCE.findall(open(path).read()) if l == lang]
 
-SOURCE_GLOBS = ('exercises/**/*.h', 'exercises/**/*.cpp', 'exercises/**/*.cmake',
+SOURCE_GLOBS = ('exercises/**/*.h', 'exercises/**/*.cpp', 'exercises/**/*.rs', 'exercises/**/*.cmake',
                 'exercises/**/CMakeLists.txt', 'exercises/**/CMakePresets.json',
                 'solutions/*.h', 'solutions/*.cpp',
                 'scripts/check_platform_claims.sh', 'scripts/build_all.sh')
@@ -145,6 +147,9 @@ for page, path, line in PINNED:
         failures.append(f"{path}: the line {page} quotes, {line[:40]!r}..., is no longer in the file")
 
 # 6. page shapes
+f_code = [b for l in ('cpp', 'rust') for b in fences('book/F-rosetta-cookbook.md', l) if not INCLUDE.match(b.strip())]
+if f_code:
+    failures.append(f"book/F-rosetta-cookbook.md holds {len(f_code)} cpp/rust fence(s) with code; every recipe, in both languages, is included from exercises/cookbook/")
 if fences('book/G-the-bridge-catalogue.md'):
     failures.append("book/G-the-bridge-catalogue.md holds a cpp fence; its contract is no C++ listings (ROADMAP item 16's delivered note)")
 if fences('book/J-cmake-catalogue.md'):

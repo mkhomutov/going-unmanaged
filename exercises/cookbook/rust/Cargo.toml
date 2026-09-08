@@ -1,0 +1,15 @@
+# Appendix F's Rust column: one module per cookbook domain, each recipe
+# between section markers the appendix includes, each module's tests
+# asserting what its recipes claim. Standard library only, no dependencies,
+# so `cargo test --offline` needs nothing but a toolchain - scripts/build_all.sh
+# runs it behind a probe (--require-cargo refuses to skip; CI passes it).
+[package]
+name = "cookbook"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
