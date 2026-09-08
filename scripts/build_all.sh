@@ -1101,6 +1101,19 @@ if command -v cargo > /dev/null 2>&1; then
         sed 's/^/  /' "$OUT/cargo_test.log" >&2
         exit 1
     fi
+    # Chapter 30's Rust caller of the extern "C" façade: its build script
+    # compiles engine.cpp with $CXX and links the object, so the test proves
+    # the header's contract holds from a second language with no change to
+    # the header. Same flags, same verdict.
+    if CXX="$CXX" RUSTFLAGS="-D warnings" cargo test --offline --quiet \
+           --manifest-path exercises/abilab/rust_client/Cargo.toml \
+           --target-dir "$OUT/cargo-target-abilab" > "$OUT/cargo_abilab.log" 2>&1; then
+        echo "  ok   exercises/abilab/rust_client: cargo test against engine.cpp"
+    else
+        echo "build_all.sh: cargo test failed for exercises/abilab/rust_client:" >&2
+        sed 's/^/  /' "$OUT/cargo_abilab.log" >&2
+        exit 1
+    fi
 elif [ "$REQUIRE_CARGO" = 1 ]; then
     echo "build_all.sh: no cargo on PATH, and --require-cargo was given" >&2
     exit 1

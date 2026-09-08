@@ -1,0 +1,15 @@
+# Chapter 30's Technique 3 from the other side: a Rust caller of engine.h, the
+# extern "C" façade abilab publishes. No dependencies - build.rs compiles
+# engine.cpp with the C++ compiler itself and links the object, so the only
+# thing this crate shares with the C++ side is the header's contract.
+[package]
+name = "engine_client"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]

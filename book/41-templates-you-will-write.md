@@ -66,6 +66,10 @@ With the detection idiom in place the diagnosis is a sentence, and it arrives at
 
 SFINAE beyond the detection idiom; CRTP; expression templates; `std::enable_if` gymnastics; the metaprogramming that made Boost famous. All real, all in the standard library you use every day, and none of it is a plug-in author's to write in the first year — which is why this chapter is a working subset rather than a tutorial. When one of those names arrives in a review comment, Appendix E says what kind of thing it is; when you need to *write* one, the book to open is Vandevoorde, Josuttis and Gregor's *C++ Templates: The Complete Guide* ([Appendix D](D-resources.md#appendix-d--resources-and-further-reading)), and the feature to learn first is C++20 concepts, which retire most of the tricks.
 
+### In Rust
+
+The seam-as-a-type-parameter is Rust's ordinary generic: `struct Session<S: Sdk>` with a `trait Sdk { type Handle; fn open(..) -> Result<Self::Handle, Error>; fn close(..); fn poll(..); }`, and the recording double is a second type implementing it. The detection idiom is not needed and cannot be written — the trait bound *is* `HasSdkShape`, and a policy missing `poll` fails at its `impl Sdk for HalfSdk` block, in one sentence naming the function, whether or not anything ever calls `pump`; which is the property the lab's `static_assert` has to work to get. `Ring<T, N>` is `struct Ring<T, const N: usize>`; the `if constexpr` branch on a type is a trait with two impls; the fold-expression `Join` is an iterator or a declarative macro; and `static_assert` is `const _: () = assert!(..);`. Reading the error is the part that gets easier: a generic is checked once, at its definition, so the message names your bound, not the template's insides.
+
 ### Pitfalls
 
 - **A template parameter for a dependency chosen at run time.** It cannot be; the compiler needs the type. The tell is a `switch` on a string that instantiates one of three templates — that is a virtual interface wearing a template's clothes, and the interface is simpler.

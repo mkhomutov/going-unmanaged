@@ -146,6 +146,22 @@ The boundary is a promise, so plan for the version-two conversation before you h
 - **Static initialization across modules is not ordered.** A global in your library and a global in the host have no defined construction order relative to each other. Prefer the function-local static of Chapter 28's registry, which constructs on first use.
 - **Answer Chapter 16's four questions in your own documentation.** Who allocates, who releases and with which function, what the failure contract is, and what thread may call what. You know how much it costs when a vendor leaves one unanswered.
 
+### In Rust: the same seam, from the caller's side
+
+Technique 3 is the one a Rust program can consume, and doing so shows what the façade actually promised. Rust cannot include `engine.h`; the three declarations are written a second time, in Rust, which is Chapter 39's P/Invoke situation exactly — nothing compares the two copies, and the opaque handle becomes a raw pointer because that is all the header ever said it was:
+
+```rust
+--8<-- "exercises/abilab/rust_client/src/lib.rs:declarations"
+```
+
+Every call is `unsafe`, because the compiler cannot check C's contract; the caller's job is to make that surface small, which is Chapter 17's RAII wrapper again, on the other side of the language line — the handle owned, `Engine_Destroy` in `Drop` exactly once, the error codes turned into the `Result` the rest of the program speaks:
+
+```rust
+--8<-- "exercises/abilab/rust_client/src/lib.rs:wrapper"
+```
+
+The crate at `exercises/abilab/rust_client/` takes no dependency: its build script compiles `engine.cpp` with the C++ compiler and links the object, and names the C++ runtime — the one line that admits there is C++ on the other side. Its test is `engine_demo.cpp`'s assertions in Rust, and `build_all.sh` runs it under the cargo probe. Nothing in `engine.h` had to change to gain a second language, and nothing in the Rust caller knows there is a `std::string` inside the engine. That is the whole reach the technique buys, demonstrated rather than claimed.
+
 ### Pitfalls
 
 - **Exporting a class with inline methods.** The inline body is compiled into the caller; changing it later changes nothing for anyone who already built. It is a permanent commitment disguised as an implementation detail.

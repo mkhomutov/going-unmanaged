@@ -137,6 +137,8 @@ The material transfers almost intact. Layout, encoding, ownership and callback w
 
 [Appendix G](G-the-bridge-catalogue.md#appendix-g--the-bridge-catalogue) prices in-process co-residence from the other side — its Family A is you loading a runtime into a process you own rather than the other way round, and the costs are the same room — and [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out) builds the queue for the case where the foreign side must reach a host you do not own.
 
+A Rust caller of the same kind of boundary is in [Chapter 30](30-authoring-an-abi-boundary.md#in-rust-the-same-seam-from-the-callers-side): the declarations written a second time in `extern "C"`, the raw pointer where the header had an opaque struct, and a `Drop` where C# had `SafeHandle` — the four things nothing checks are the same four, in a language whose compiler checks everything else.
+
 ### Choosing what to publish
 
 | Instead of | Publish | Because |

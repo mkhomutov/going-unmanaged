@@ -196,6 +196,10 @@ shapes.push_back(std::move(s));          // unique_ptr can ONLY move - this
                                          // is how ownership transfer is spelled
 ```
 
+### In Rust
+
+The Rule of Zero is the language. A move is a bitwise copy after which the source is *dead* — the compiler refuses the next use — so there is no moved-from state to reason about, no husk, and no move constructor to write: every type moves, for free, unless it opts into `Copy`. Copying is the thing you ask for, with `Clone`, and it is always a visible call. There is no assignment operator to get wrong: assigning over a value drops the old one first, in one order, always. `std::move` becomes nothing (moving is the default) or `std::mem::take` when you need the source left in a valid state on purpose — the husk this chapter's Tracer paints by hand. The value-category table collapses to two questions, *do I own this or borrow it* and *is the borrow shared or exclusive*, and the traps priced above cannot be written: moving out of a `const` becomes moving out of a shared borrow, which is an error rather than a silent copy.
+
 ### In the wild: C-style SDKs
 
 Large C++ SDKs often ship their own unique_ptr analog (an "Owner" or "ScopedRef" type) with the same move-only behavior. Any RAII guard you write around SDK handles is exactly the "class holding a raw resource" case — either delete copy/move entirely (simplest, as in Chapter 1's guard), or implement moves properly when guards must be stored in containers or returned from factories (as Chapter 18's DeviceSession does — with a subtle twist worth meeting there).

@@ -228,7 +228,11 @@ Chapter 25's Finding 10.
   carry code (32 tests), and 13 carry a one-line note instead, because the
   standard library has no JSON, calendar, cryptography, HTTP, SQLite, regex
   (Recipe 44 gets a std answer anyway), shared memory or memory mapping and
-  the crate takes no dependency — the note names the ecosystem crate
+  the crate takes no dependency — the note names the ecosystem crate. Seven concept chapters (1, 4, 6, 7,
+  8, 10, 41) close with a short `### In Rust` section placed before their
+  last section — Rust where it sharpens the C++ point, never woven into
+  the explanation — and Chapters 38 and 39 point at Chapter 30's Rust
+  client as one more consumer of the C ABI
 - `exercises/constlab/` — Appendix I's lab, and the only one in the repo whose
   judge asserts a build FAILS. `counter.h` + `main.cpp` compile and run
   clean; five const violations behind `-DCONSTLAB_VIOLATION_1..5` must each

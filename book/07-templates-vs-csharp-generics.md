@@ -72,6 +72,10 @@ if (c) c->radius = 5;
 | Cost | — | slower builds, bigger binaries, ugly errors |
 | Reflection on T | yes | no |
 
+### In Rust
+
+Generics are the point on this chapter's line that both languages were reaching for. Like templates, a generic function is compiled once per type it is used with — monomorphized, no boxing, no runtime type — and lives where its callers can see it. Like C# generics, its parameter is *declared* with the operations it needs: `fn largest<T: PartialOrd>(items: &[T]) -> &T` is checked at the definition, so a misuse is one error at the call site naming the missing trait, never a page of instantiation stack. That is what C++20 concepts add to templates, made mandatory: there is no duck typing, no SFINAE, and the detection idiom has nothing to detect. What you give up is the last of Consequence 3 — no non-type tricks beyond `const` generics, no specialization on stable — and the erasure half of C# comes back as `dyn Trait` when you want it, opt-in and visible.
+
 ### In the wild: C-style SDKs
 
 Established C++ SDKs frequently ship their own template container libraries paralleling the STL — Qt's `QVector`/`QMap`, Unreal's `TArray`/`TMap`, and many vendor equivalents born before the STL was trustworthy on all platforms. STL fluency translates directly: the concepts (and the invalidation rules) are the same, only the spelling differs. Expect to read the vendor's containers in API samples and convert at the boundary.
