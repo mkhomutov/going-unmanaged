@@ -12,7 +12,12 @@ fn main() {
     let out = PathBuf::from(env::var("OUT_DIR").expect("cargo sets OUT_DIR"));
     let object = out.join("engine.o");
     let cxx = env::var("CXX").unwrap_or_else(|_| "c++".to_string());
-    let status = Command::new(&cxx)
+    // CXX may be more than one word ("ccache g++"): split it the way a shell
+    // would before handing it to the harness's `$CXX $FLAGS`.
+    let mut words = cxx.split_whitespace();
+    let program = words.next().expect("CXX is not empty");
+    let status = Command::new(program)
+        .args(words)
         .args(["-std=c++17", "-Wall", "-Wextra", "-O1", "-fPIC", "-c"])
         .arg(&engine_cpp)
         .arg("-o")
