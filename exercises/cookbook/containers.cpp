@@ -1,13 +1,13 @@
 // Appendix F, Recipe 27 - pre-size a collection: List<T>(capacity) is
 // reserve, new T[n] is vector(n), and the two are not the same thing.
 //
-// read_samples() and zeroed() are quoted VERBATIM in
-// book/F-rosetta-cookbook.md: editing one means editing the appendix in the
-// same commit (the testlab discipline). next_sample() stands for whatever
+// read_samples() and zeroed() are included by book/F-rosetta-cookbook.md,
+// between their recipe-N section markers: edit here and the page follows, and
+// a marker moved is what the page shows. next_sample() stands for whatever
 // produces the elements; main() is scaffolding - it asserts the two numbers
-// the recipe is about (size and capacity) on every path, and demonstrates
-// the resize-then-push_back trap and the reserve-in-the-loop one. The other
-// trap, reserve-then-index, is undefined behavior and stays a comment.
+// the recipe is about (size and capacity) on every path, and demonstrates the
+// resize-then-push_back trap and the reserve-in-the-loop one. The other trap,
+// reserve-then-index, is undefined behavior and stays a comment.
 #include <cassert>
 #include <cstddef>
 #include <vector>
@@ -20,6 +20,7 @@ namespace {
 }
 
 // Recipe 27 - new List<int>(capacity), and new double[n]
+// --8<-- [start:recipe-27]
 std::vector<int> read_samples(std::size_t expected) {
     std::vector<int> samples;
     samples.reserve(expected);            // List<T>(capacity): room for expected, size still 0
@@ -32,6 +33,7 @@ std::vector<int> read_samples(std::size_t expected) {
 std::vector<double> zeroed(std::size_t n) {
     return std::vector<double>(n);        // new double[n]: n elements, every one 0.0
 }
+// --8<-- [end:recipe-27]
 
 int main() {
     // reserve: the room is there, the elements are not, and the loop never

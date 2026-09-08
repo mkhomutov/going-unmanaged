@@ -2,14 +2,15 @@
 // return a value or an error, on C++17.
 //
 // ParseError, parse_channel_count(), channels_or_default(), Result,
-// ConfigError, Config and load_config() are quoted VERBATIM in
-// book/F-rosetta-cookbook.md, and Result and load_config() again in
-// Chapter 8's "Living in both dialects" (book/08-error-handling.md), whole
-// and by name - scripts/check_verbatim.sh holds both pages: editing one
-// means editing both pages in the same commit (the testlab discipline).
+// ConfigError, Config and load_config() are included by
+// book/F-rosetta-cookbook.md, between their recipe-21 and recipe-22 section
+// markers (edit here and the page follows), and Result and load_config() are
+// quoted VERBATIM in Chapter 8's "Living in both dialects"
+// (book/08-error-handling.md), whole and by name - scripts/check_verbatim.sh
+// holds that page: editing either means editing Chapter 8 in the same commit.
 // main() and log_line() are scaffolding - main() asserts what the recipes
-// claim, and records the catch-order trap as a comment, because a dead
-// handler is a warning rather than a behavior a test can observe.
+// claim, and records the catch-order trap as a comment, because a dead handler
+// is a warning rather than a behavior a test can observe.
 #include <cassert>
 #include <charconv>
 #include <cstddef>
@@ -30,6 +31,7 @@ namespace {
 }
 
 // Recipe 21 - class ParseException : Exception
+// --8<-- [start:recipe-21]
 class ParseError : public std::runtime_error {
 public:
     ParseError(int line, const std::string& what)
@@ -60,10 +62,12 @@ int channels_or_default(std::string_view text, int line) {
         return 2;
     }
 }
+// --8<-- [end:recipe-21]
 
 // Recipe 22 - the Result shape, on C++17: a variant behind two named doors.
 // This is what std::expected spells in C++23; most codebases are not there,
 // and ship one of these (Chapter 8 names the well-known ones).
+// --8<-- [start:recipe-22]
 template <class T, class E>
 class Result {
 public:
@@ -94,6 +98,7 @@ Result<Config, ConfigError> load_config(std::string_view text) {
         return Result<Config, ConfigError>::fail(ConfigError{e.line(), e.what()});
     }
 }
+// --8<-- [end:recipe-22]
 
 int main() {
     // Recipe 21: the derived handler runs, and what() carries the message

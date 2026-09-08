@@ -1,20 +1,20 @@
 // Appendix F, Recipes 10-12 and 39 - paths: combine, the exists pair,
 // listing; create, copy, move and delete, and a whole tree.
 //
-// The recipe functions below are quoted VERBATIM in book/F-rosetta-cookbook.md:
-// editing one means editing the appendix in the same commit (the testlab
-// discipline). main() is scaffolding - it builds a small directory tree,
-// asserts what the recipes claim (the unspecified listing order included,
-// and Recipe 39's trap: dir / "" is dir/, so an empty entry name hands
-// remove_all the directory itself), and removes the tree again. The export
-// tree starts with a report and NO archive directory, so create_directories
-// is load-bearing on the first rotation; and on POSIX the moved report must
-// keep its inode, so a copy-and-remove cannot pass as File.Move. Two checks
-// are per platform and say so: the cross-volume rename refusal that Recipe
-// 38's Why names is the POSIX libraries' behaviour (MSVC copies instead) and
-// runs only on Linux, where /dev/shm is a second volume the CI runner has;
-// the u8path round trip runs only on Windows, the one platform where a path
-// is not made of char and the two constructors differ.
+// The recipe functions below are included by book/F-rosetta-cookbook.md,
+// between their recipe-N section markers: edit here and the page follows, and
+// a marker moved is what the page shows. main() is scaffolding - it builds a
+// small directory tree, asserts what the recipes claim (the unspecified
+// listing order included, and Recipe 39's trap: dir / "" is dir/, so an empty
+// entry name hands remove_all the directory itself), and removes the tree
+// again. The export tree starts with a report and NO archive directory, so
+// create_directories is load-bearing on the first rotation; and on POSIX the
+// moved report must keep its inode, so a copy-and-remove cannot pass as
+// File.Move. Two checks are per platform and say so: the cross-volume rename
+// refusal that Recipe 38's Why names is the POSIX libraries' behaviour (MSVC
+// copies instead) and runs only on Linux, where /dev/shm is a second volume
+// the CI runner has; the u8path round trip runs only on Windows, the one
+// platform where a path is not made of char and the two constructors differ.
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
@@ -30,11 +30,14 @@
 #endif
 
 // Recipe 10 - Path.Combine
+// --8<-- [start:recipe-10]
 std::filesystem::path log_path(const std::filesystem::path& dir) {
     return dir / "logs" / "app.txt";    // '/' inserts the platform's separator
 }
+// --8<-- [end:recipe-10]
 
 // Recipe 11 - File.Exists / Directory.Exists
+// --8<-- [start:recipe-11]
 namespace fs = std::filesystem;
 
 bool config_present(const fs::path& p) {
@@ -44,8 +47,10 @@ bool config_present(const fs::path& p) {
 bool logs_dir_present(const fs::path& p) {
     return fs::is_directory(p);       // Directory.Exists: exists AND is a directory
 }
+// --8<-- [end:recipe-11]
 
 // Recipe 12 - Directory.GetFiles
+// --8<-- [start:recipe-12]
 std::vector<std::filesystem::path> list_files(const std::filesystem::path& dir) {
     std::vector<std::filesystem::path> files;
     for (const auto& entry : std::filesystem::directory_iterator(dir)) {
@@ -55,8 +60,10 @@ std::vector<std::filesystem::path> list_files(const std::filesystem::path& dir) 
     }
     return files;
 }
+// --8<-- [end:recipe-12]
 
 // Recipe 39 - Directory.CreateDirectory, File.Copy, File.Move, Directory.Delete
+// --8<-- [start:recipe-39]
 void rotate_export(const fs::path& export_dir, const fs::path& fresh_report) {
     fs::create_directories(export_dir / "archive");           // parents included; already there is not an error
     const fs::path current = export_dir / "report.txt";
@@ -70,6 +77,7 @@ void rotate_export(const fs::path& export_dir, const fs::path& fresh_report) {
 std::uintmax_t purge(const fs::path& dir) {
     return fs::remove_all(dir);    // Directory.Delete(recursive: true): the count removed, 0 if nothing was there
 }
+// --8<-- [end:recipe-39]
 
 static void write(const fs::path& p, const std::string& text) {
     std::ofstream(p, std::ios::binary) << text;

@@ -11,8 +11,12 @@
 #   2. banner      - same, after stripping the file's leading //-comment
 #                    provenance banner (testlab/abilab convention: the banner
 #                    names the sync rule and is not part of the quoted listing)
-#   3. cookbook/tasks - every ```cpp fence in Appendix F appears in some
-#                    exercises/cookbook/ TU, and every ```cpp fence in a
+#   3. includes/tasks - every `--8<-- "path:section"` a page includes names
+#                    a file that exists and a section marked exactly once in
+#                    it, and every section a source marks is included by a
+#                    page (Appendix F is entirely this shape now; SITE-PLAN
+#                    step 4 moves the other pairings onto it); and every
+#                    ```cpp fence in a
 #                    ticket TASK card appears in its chapter (the broken
 #                    listings are book-and-card, identical by rule);
 #                    bridgelab's card holds the same rule, and its chapter
@@ -132,13 +136,54 @@ for ch, f in FULL:
 for ch, f in BANNER:
     check(ch, f, banner=True)
 
-# Appendix F: every cpp fence is a recipe listing and must live in a cookbook TU.
-cookbook = ''.join(open(p).read() for p in sorted(glob.glob('exercises/cookbook/*.cpp')))
-f_blocks = cpp_fences('book/F-rosetta-cookbook.md')
-for i, block in enumerate(f_blocks, 1):
-    if block.rstrip('\n') not in cookbook:
-        first = block.strip().split('\n')[0]
-        failures.append(f"Appendix F cpp fence #{i} ({first!r}) is in no exercises/cookbook/ TU")
+# Included listings (SITE-PLAN step 4): a page that INCLUDES a listing -
+# `--8<-- "path:section"` inside its fence, the section fenced in the source
+# by `--8<-- [start:section]` / `[end:section]` comment lines - cannot drift
+# from it, because the site renders the file. What can still go wrong is
+# checked here, both ways. Forward: every include names a file that exists
+# and a section that file marks exactly once (the strict site build catches
+# a missing file or section too; this keeps the verdict in one script and
+# catches a marker duplicated by a careless paste, which snippets would
+# resolve to the first). Reverse: every section a source file marks is
+# included by some page - a marked unit is a promise that the page shows it,
+# the Appendix H whole-unit rule generalized - so a listing cut from a page
+# leaves a marker with no reader, and this says so.
+INCLUDE = re.compile(r'^--8<-- "([^":]+)(?::([^"]+))?"\s*$', re.M)
+MARK = re.compile(r'--8<-- \[(start|end):([A-Za-z0-9_.-]+)\]')
+includes = []
+for page in sorted(glob.glob('book/*.md')):
+    for path, section in INCLUDE.findall(open(page).read()):
+        includes.append((page, path, section))
+        if not os.path.exists(path):
+            failures.append(f"{page} includes {path}, which does not exist")
+            continue
+        if section:
+            marks = MARK.findall(open(path).read())
+            starts = sum(1 for k, n in marks if k == 'start' and n == section)
+            ends = sum(1 for k, n in marks if k == 'end' and n == section)
+            if (starts, ends) != (1, 1):
+                failures.append(f"{page} includes {path}:{section}, marked {starts} start(s) and {ends} end(s) there (want exactly one each)")
+referenced = {(path, section) for _, path, section in includes if section}
+marked_files = 0
+for pattern in ('exercises/**/*.h', 'exercises/**/*.cpp', 'exercises/**/*.cmake',
+                'exercises/**/CMakeLists.txt', 'exercises/**/TASK.md',
+                'solutions/*.h', 'solutions/*.cpp',
+                'scripts/check_platform_claims.sh', 'scripts/build_all.sh'):
+    for path in sorted(glob.glob(pattern, recursive=True)):
+        if 'third_party' in path or '/build/' in path:
+            continue
+        marks = MARK.findall(open(path, errors='replace').read())
+        if not marks:
+            continue
+        marked_files += 1
+        for kind, name in marks:
+            if kind == 'start' and (path, name) not in referenced:
+                failures.append(f"{path} marks section {name!r}, which no page under book/ includes")
+# Appendix F is fully included: a cpp fence on that page is a listing nobody
+# checks any more, so there must be none.
+f_blocks = [b for b in cpp_fences('book/F-rosetta-cookbook.md') if not INCLUDE.match(b.strip())]
+if f_blocks:
+    failures.append(f"book/F-rosetta-cookbook.md holds {len(f_blocks)} cpp fence(s) with code; every recipe is included from exercises/cookbook/")
 
 # Ticket TASK cards: the broken listings are quoted in both places, identically.
 TICKETS = [('exitlab', '32-it-crashes-on-exit'),
@@ -375,7 +420,7 @@ if failures:
         print(f"  {f}", file=sys.stderr)
     sys.exit(1)
 print(f"verbatim OK ({len(FULL)} full, {len(BANNER)} banner-stripped, "
-      f"{len(f_blocks)} cookbook fences, {len(TICKETS)} cards, "
+      f"{len(includes)} includes from {marked_files} marked files, {len(TICKETS)} cards, "
       f"{len(ch38_fences)} ch38 fences, {len(ch39_fences)} ch39 fences, {len(ch42_fences)} ch42 fences, "
       f"{len(h_fences)} appH fences + "
       f"{len(UNITS)} whole units on {len(pages)} pages, {gen_pairs} generated, {len(j_cmake)} J cmake ({len(J_CMAKE_FILES)} committed), "

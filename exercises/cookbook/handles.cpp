@@ -1,19 +1,21 @@
 // Appendix F, Recipe 7 - wrap a C handle so it frees itself.
 //
-// The alias and function below are quoted VERBATIM in
-// book/F-rosetta-cookbook.md: editing them means editing the appendix in the
-// same commit (the testlab discipline). main() is scaffolding - it asserts
-// both paths the appendix claims: scope end closes the file, and a failed
-// open is a null handle that no deleter ever touches.
+// The alias and function below are included by book/F-rosetta-cookbook.md,
+// between their recipe-N section markers: edit here and the page follows, and
+// a marker moved is what the page shows. main() is scaffolding - it asserts
+// both paths the appendix claims: scope end closes the file, and a failed open
+// is a null handle that no deleter ever touches.
 #include <cassert>
 #include <cstdio>
 #include <memory>
 
+// --8<-- [start:recipe-7]
 using FileHandle = std::unique_ptr<std::FILE, int (*)(std::FILE*)>;
 
 FileHandle open_file(const char* path, const char* mode) {
     return FileHandle(std::fopen(path, mode), &std::fclose);
 }
+// --8<-- [end:recipe-7]
 
 int main() {
     const char* path = "cookbook_handle.txt";

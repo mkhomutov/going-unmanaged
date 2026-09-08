@@ -6,10 +6,10 @@
 // "no local patches" recorded beside it) and included with -isystem so the
 // canonical flags keep meaning what they mean for this file. Reading,
 // to_json(), from_json(), serialize(), Config, load_config(), Channel,
-// read_channels() and count_numbers() are quoted VERBATIM in
-// book/F-rosetta-cookbook.md: editing one means editing the appendix in the
-// same commit (the testlab discipline). main() is scaffolding - it asserts
-// the round trip, the walk, and the traps.
+// read_channels() and count_numbers() are included by
+// book/F-rosetta-cookbook.md, between their recipe-N section markers: edit
+// here and the page follows, and a marker moved is what the page shows. main()
+// is scaffolding - it asserts the round trip, the walk, and the traps.
 #include <cassert>
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -20,6 +20,7 @@
 using json = nlohmann::json;
 
 // Recipe 25 - JsonSerializer.Serialize(record)
+// --8<-- [start:recipe-25]
 struct Reading {
     int sensor;
     double value;
@@ -41,8 +42,10 @@ void from_json(const json& j, Reading& r) {
 std::string serialize(const std::vector<Reading>& readings) {
     return json(readings).dump(2);            // 2 = indent; dump() alone is one line
 }
+// --8<-- [end:recipe-25]
 
 // Recipe 26 - JsonSerializer.Deserialize<Config>(text), with defaults
+// --8<-- [start:recipe-26]
 struct Config {
     int timeout = 30;
     std::string name;
@@ -55,8 +58,10 @@ Config load_config(std::string_view text) {
     c.name = j.at("name").get<std::string>();        // at(): required - missing throws out_of_range
     return c;
 }
+// --8<-- [end:recipe-26]
 
 // Recipe 35 - EnumerateObject / TryGetProperty / EnumerateArray over a document you do not own
+// --8<-- [start:recipe-35]
 struct Channel {
     std::string name;
     double gain = 1.0;
@@ -90,6 +95,7 @@ int count_numbers(const json& node) {         // walk anything: objects, arrays,
     }
     return n;
 }
+// --8<-- [end:recipe-35]
 
 int main() {
     // Recipe 25: the round trip is the assertion.

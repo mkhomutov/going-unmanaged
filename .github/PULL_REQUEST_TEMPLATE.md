@@ -26,7 +26,7 @@ One topic per PR: one Finding, one correction topic, or one exercise.
       (template in CONTRIBUTING.md)
 - [ ] Recipes follow the Appendix F shape exactly:
       **In C# / The recipe / Why it looks like this / Trap**, and the
-      listing matches `exercises/cookbook/` verbatim
+      listing is included from `exercises/cookbook/` by a marked section
       (template in CONTRIBUTING.md)
 - [ ] New chapters, exercises, or appendix sections walked once against
       CONTRIBUTING's "The questions every piece of material answers" —

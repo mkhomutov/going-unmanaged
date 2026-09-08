@@ -2,12 +2,13 @@
 // that is one of several kinds: the two sum types a C# developer has never
 // spelled.
 //
-// parse_port(), port_or_default(), digits_in(), and the Recipe 20 listing
-// from `struct Temperature` through describe() are quoted VERBATIM in
-// book/F-rosetta-cookbook.md: editing one means editing the appendix in the
-// same commit (the testlab discipline). main() is scaffolding - it asserts
-// what the recipes claim, and states the two refusals the appendix names as
-// comments, because a refusal cannot be compiled.
+// parse_port(), port_or_default(), digits_in(), and the Recipe 20 listing from
+// `struct Temperature` through describe() are included by
+// book/F-rosetta-cookbook.md, between their recipe-N section markers: edit
+// here and the page follows, and a marker moved is what the page shows. main()
+// is scaffolding - it asserts what the recipes claim, and states the two
+// refusals the appendix names as comments, because a refusal cannot be
+// compiled.
 #include <cassert>
 #include <charconv>
 #include <cstddef>
@@ -18,6 +19,7 @@
 #include <variant>
 
 // Recipe 19 - int.TryParse / ?? / ?.
+// --8<-- [start:recipe-19]
 std::optional<int> parse_port(std::string_view text) {
     int value = 0;
     const auto [end, ec] = std::from_chars(text.data(), text.data() + text.size(), value);
@@ -37,10 +39,12 @@ std::optional<std::size_t> digits_in(const std::optional<std::string>& text) {
     }
     return text->size();                  // -> is only legal once you have checked
 }
+// --8<-- [end:recipe-19]
 
 // Recipe 20 - switch (e) { case Temperature t: ... }. The overloaded idiom
 // is the two template lines: one callable with one operator() per
 // alternative, which C++17 does not ship and every codebase has.
+// --8<-- [start:recipe-20]
 struct Temperature { int centi; };        // centi-degrees, as the wire carries them
 struct Fault       { int code; };
 struct Heartbeat   {};
@@ -56,6 +60,7 @@ std::string describe(const Event& e) {
         [](Heartbeat)            { return std::string("heartbeat"); },
     }, e);
 }
+// --8<-- [end:recipe-20]
 
 int main() {
     // Recipe 19: one type, and the caller cannot forget to look because the

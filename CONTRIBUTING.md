@@ -106,18 +106,25 @@ Two rules beyond the shape. The listing is code, not prose: it lives in
 C++23, is the one cut by standard instead, and `json.cpp` the one with a
 dependency — with a `main()` that asserts
 what the recipe claims, wired into `build_all.sh`), and the appendix
-quotes it **verbatim** — editing either side means editing both in the same
-commit, exactly as testlab works. And the numbering is the Findings
-contract: add your recipe at the end with the next free number, add its row
-to the index table, never renumber existing ones.
+**includes** it rather than copying it: the function is fenced in the source
+by `// --8<-- [start:recipe-N]` and `// --8<-- [end:recipe-N]` comment lines,
+and the recipe's fence holds one line, `--8<-- "exercises/cookbook/<domain>.cpp:recipe-N"`,
+which the site build replaces with the section (GitHub's rendering shows
+the directive; the site is the reading surface). Edit the code in the file,
+never on the page. And the numbering is the Findings contract: add your
+recipe at the end with the next free number, add its row to the index table,
+never renumber existing ones.
 
-The verbatim rule, made precise (it applies to every quoted pairing, not
-just recipes): a committed lab file may open with a `//`-comment provenance
-banner that the chapter listing omits — the contract covers everything below
-the banner, character for character. `scripts/check_verbatim.sh` enforces
-all of it in CI, so a drifted pairing fails the build rather than waiting
-for a reader to notice; if you add a new quoted listing, add its pairing to
-that script in the same commit.
+The verbatim rule, made precise, for the pairings not yet on the include
+form (SITE-PLAN step 4 moves them group by group): a committed lab file may
+open with a `//`-comment provenance banner that the chapter listing omits —
+the contract covers everything below the banner, character for character.
+`scripts/check_verbatim.sh` enforces all of it in CI — the copied pairings by
+containment, the included ones by checking that every include names a
+section its file marks exactly once and that every marked section is
+included by some page — so a drifted pairing fails the build rather than
+waiting for a reader to notice. A new listing goes on the include form; a
+new copied pairing means adding it to that script in the same commit.
 
 ## The questions every piece of material answers
 

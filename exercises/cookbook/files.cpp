@@ -1,34 +1,33 @@
 // Appendix F, Recipes 1, 9, 38 and 49 - read and write a whole file; save one
 // without losing the old one; read a large file without copying it.
 //
-// The recipe functions below are quoted VERBATIM in book/F-rosetta-cookbook.md:
-// editing one means editing the appendix in the same commit (the testlab
-// discipline). main() is scaffolding, not part of any recipe - it asserts
-// what the recipes claim, so build_all.sh keeps the cookbook honest. For
-// Recipe 38 the load-bearing assertion is POSIX-only: after a save the name
-// must refer to a NEW file (a different inode), because a save that rewrote
-// the old file in place would pass every other check here and still leave a
-// torn file behind a crash. The saved file lives one directory BELOW the
-// temp directory on purpose: a save_file that put its temp in
-// temp_directory_path() instead of beside the file would otherwise be
-// indistinguishable from the recipe, and "same directory" is the recipe's
-// one claim about volumes. For Recipe 49 the judge is Chapter 36's
-// instrument: a replaced operator new counts heap allocations across the
-// mapping of a four-megabyte file, and the count must be zero - the recipe's
-// whole claim over a ReadAllBytes - with every byte compared against Recipe
-// 1's copy; on POSIX the file is then deleted under the live mapping and
-// read on, and the lowest free descriptor is compared before and after, so
-// a close left out of the constructor is seen. The delete-under-mapping
-// assertion runs on Windows too: the STL's remove asks for POSIX delete
-// semantics there (NTFS, Windows 10 1709 or later), so the name goes and
-// the section keeps the bytes - the old DeleteFile refused a mapped file
-// with ERROR_USER_MAPPED_FILE, and a first draft asserted that refusal
-// until the buildlab-msvc job showed the runner deleting it. A munmap left out of the destructor is the one
-// mistake no judge here sees: LeakSanitizer counts allocations, not
-// mappings. Under the buildlab-msvc job's ASan, a replaced operator new
-// costs that binary the new/delete mismatch checks (Microsoft documents
-// the trade); the count is worth it, and no other TU the job builds
-// replaces them.
+// The recipe functions below are included by book/F-rosetta-cookbook.md,
+// between their recipe-N section markers: edit here and the page follows, and
+// a marker moved is what the page shows. main() is scaffolding, not part of
+// any recipe - it asserts what the recipes claim, so build_all.sh keeps the
+// cookbook honest. For Recipe 38 the load-bearing assertion is POSIX-only:
+// after a save the name must refer to a NEW file (a different inode), because
+// a save that rewrote the old file in place would pass every other check here
+// and still leave a torn file behind a crash. The saved file lives one
+// directory BELOW the temp directory on purpose: a save_file that put its temp
+// in temp_directory_path() instead of beside the file would otherwise be
+// indistinguishable from the recipe, and "same directory" is the recipe's one
+// claim about volumes. For Recipe 49 the judge is Chapter 36's instrument: a
+// replaced operator new counts heap allocations across the mapping of a
+// four-megabyte file, and the count must be zero - the recipe's whole claim
+// over a ReadAllBytes - with every byte compared against Recipe 1's copy; on
+// POSIX the file is then deleted under the live mapping and read on, and the
+// lowest free descriptor is compared before and after, so a close left out of
+// the constructor is seen. The delete-under-mapping assertion runs on Windows
+// too: the STL's remove asks for POSIX delete semantics there (NTFS, Windows
+// 10 1709 or later), so the name goes and the section keeps the bytes - the
+// old DeleteFile refused a mapped file with ERROR_USER_MAPPED_FILE, and a
+// first draft asserted that refusal until the buildlab-msvc job showed the
+// runner deleting it. A munmap left out of the destructor is the one mistake
+// no judge here sees: LeakSanitizer counts allocations, not mappings. Under
+// the buildlab-msvc job's ASan, a replaced operator new costs that binary the
+// new/delete mismatch checks (Microsoft documents the trade); the count is
+// worth it, and no other TU the job builds replaces them.
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
@@ -49,6 +48,7 @@
 #endif
 
 // Recipe 1 - File.ReadAllText
+// --8<-- [start:recipe-1]
 std::string read_all_text(const std::filesystem::path& path) {
     std::ifstream in(path, std::ios::binary);
     if (!in) {
@@ -58,8 +58,10 @@ std::string read_all_text(const std::filesystem::path& path) {
     buffer << in.rdbuf();    // one streamed read; no line loop to get wrong
     return buffer.str();
 }
+// --8<-- [end:recipe-1]
 
 // Recipe 9 - File.WriteAllText
+// --8<-- [start:recipe-9]
 void write_all_text(const std::filesystem::path& path, const std::string& text) {
     std::ofstream out(path, std::ios::binary);
     if (!out) {
@@ -70,15 +72,19 @@ void write_all_text(const std::filesystem::path& path, const std::string& text) 
         throw std::runtime_error("write failed: " + path.string());
     }
 }
+// --8<-- [end:recipe-9]
 
 // Recipe 38 - File.Replace: write beside the file, then rename over it
+// --8<-- [start:recipe-38]
 void save_file(const std::filesystem::path& path, const std::string& text) {
     std::filesystem::path tmp = path;
     tmp += ".tmp";                           // += on purpose: a suffix, not a segment - same directory, same volume
     write_all_text(tmp, text);               // Recipe 9: flushed and checked, or it threw and path is untouched
     std::filesystem::rename(tmp, path);      // one atomic step: a reader sees the old file or the new, never half
 }
+// --8<-- [end:recipe-38]
 
+// --8<-- [start:recipe-49]
 // Recipe 49 - MemoryMappedFile.CreateFromFile: a file's bytes as a view,
 // mapped rather than read. Pages arrive as they are touched and leave with
 // the object; nothing is copied into the heap, and the file may be closed -
@@ -131,6 +137,7 @@ private:
     const void* view_ = nullptr;
     std::size_t size_ = 0;
 };
+// --8<-- [end:recipe-49]
 
 // The harness's judge for Recipe 49: a replaced operator new, Chapter 36's
 // instrument, so "no copy" is a count and not a claim. Scaffolding.

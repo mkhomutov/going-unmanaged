@@ -3,11 +3,12 @@
 // operators.
 //
 // Features and Processor (Recipe 31), and Channel with its three operators
-// (Recipe 32), are quoted VERBATIM in book/F-rosetta-cookbook.md: editing
-// one means editing the appendix in the same commit (the testlab
-// discipline). main() is scaffolding - it sets the environment, reads the
-// flags once, asserts the branch, the read-once, the junk-keeps-the-default
-// parse and the bit arithmetic; the refusals the recipes name stay comments.
+// (Recipe 32), are included by book/F-rosetta-cookbook.md, between their
+// recipe-N section markers: edit here and the page follows, and a marker moved
+// is what the page shows. main() is scaffolding - it sets the environment,
+// reads the flags once, asserts the branch, the read-once, the
+// junk-keeps-the-default parse and the bit arithmetic; the refusals the
+// recipes name stay comments.
 #include <cassert>
 #include <charconv>
 #include <cstdint>
@@ -15,6 +16,7 @@
 #include <string_view>
 
 // Recipe 31 - IConfiguration read at startup, once
+// --8<-- [start:recipe-31]
 struct Features {
     bool audit = false;                  // the defaults ARE the off state
     bool fast_path = false;
@@ -49,8 +51,10 @@ public:
 private:
     Features features_;
 };
+// --8<-- [end:recipe-31]
 
 // Recipe 32 - [Flags] enum Channel, and HasFlag
+// --8<-- [start:recipe-32]
 enum class Channel : std::uint8_t { None = 0, Left = 1, Right = 2, Sub = 4 };   // [Flags] enum Channel
 
 constexpr Channel operator|(Channel a, Channel b) {
@@ -60,6 +64,7 @@ constexpr Channel operator&(Channel a, Channel b) {
     return static_cast<Channel>(static_cast<std::uint8_t>(a) & static_cast<std::uint8_t>(b));
 }
 constexpr bool has(Channel set, Channel flag) { return (set & flag) == flag; }   // set.HasFlag(flag)
+// --8<-- [end:recipe-32]
 
 namespace {
     void set_env(const char* name, const char* value) {

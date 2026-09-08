@@ -4,15 +4,16 @@
 //
 // report_batch_time(), RepeatingTimer, ScopedTimer, time_call(),
 // timestamp_utc(), the Device_Wait declaration and wait_for_sample() are
-// quoted VERBATIM in book/F-rosetta-cookbook.md: editing one means editing
-// the appendix in the same commit (the testlab discipline). run_the_batch()
-// and Device_Wait()'s body stand for whatever is being timed or called;
-// main() is scaffolding - it asserts that ticks arrive while the timer
-// lives and none after the join, that the scoped timer records on the
-// throwing path too, that the wrapper forwards an lvalue as an lvalue and
-// an rvalue as an rvalue (judged by a callee overloaded on the value
-// category, so a wrapper that copies or moves everything fails), that the timestamp has the shape and the century
-// it claims, and that a seconds literal reaches the C API multiplied out.
+// included by book/F-rosetta-cookbook.md, between their recipe-N section
+// markers: edit here and the page follows, and a marker moved is what the page
+// shows. run_the_batch() and Device_Wait()'s body stand for whatever is being
+// timed or called; main() is scaffolding - it asserts that ticks arrive while
+// the timer lives and none after the join, that the scoped timer records on
+// the throwing path too, that the wrapper forwards an lvalue as an lvalue and
+// an rvalue as an rvalue (judged by a callee overloaded on the value category,
+// so a wrapper that copies or moves everything fails), that the timestamp has
+// the shape and the century it claims, and that a seconds literal reaches the
+// C API multiplied out.
 #include <atomic>
 #include <cassert>
 #include <chrono>
@@ -39,6 +40,7 @@ void run_the_batch() {
 }
 
 // Recipe 6 - Stopwatch
+// --8<-- [start:recipe-6]
 void report_batch_time() {
     const auto start = std::chrono::steady_clock::now();
     run_the_batch();    // the code being timed
@@ -46,8 +48,10 @@ void report_batch_time() {
     const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
     std::cout << ms.count() << " ms\n";
 }
+// --8<-- [end:recipe-6]
 
 // Recipe 16 - System.Timers.Timer
+// --8<-- [start:recipe-16]
 class RepeatingTimer {
 public:
     RepeatingTimer(std::chrono::milliseconds interval, std::function<void()> tick)
@@ -70,9 +74,11 @@ private:
     std::atomic<bool> stop_{false};    // declared before worker_: initialized first
     std::thread worker_;
 };
+// --8<-- [end:recipe-16]
 
 // Recipe 28 - Stopwatch.StartNew() with the stop in a finally, so it runs on
 // every exit path, and a wrapper that times one call and hands its result back
+// --8<-- [start:recipe-28]
 class ScopedTimer {
 public:
     explicit ScopedTimer(std::chrono::nanoseconds& record)
@@ -92,8 +98,10 @@ auto time_call(std::chrono::nanoseconds& record, F&& f, Args&&... args)
     ScopedTimer timer(record);
     return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);   // each argument passed on as it arrived
 }
+// --8<-- [end:recipe-28]
 
 // Recipe 29 - DateTime.UtcNow.ToString("o"), to the millisecond rather than the tick
+// --8<-- [start:recipe-29]
 std::string timestamp_utc() {
     const auto now = std::chrono::system_clock::now();          // the wall clock: the one with a calendar
     const auto since_epoch = now.time_since_epoch();
@@ -111,13 +119,16 @@ std::string timestamp_utc() {
         << '.' << std::setw(3) << std::setfill('0') << millis.count() << 'Z';
     return out.str();
 }
+// --8<-- [end:recipe-29]
 
 // Recipe 30 - TimeSpan.FromSeconds(2) handed to an SDK that wants an integer
+// --8<-- [start:recipe-30]
 int Device_Wait(std::uint32_t timeout_ms);   // the vendor's declaration: a bare integer, the unit in the name
 
 int wait_for_sample(std::chrono::milliseconds timeout) {
     return Device_Wait(static_cast<std::uint32_t>(timeout.count()));   // the unit left the type HERE, and only here
 }
+// --8<-- [end:recipe-30]
 
 namespace {
     std::uint32_t last_timeout_ms = 0;

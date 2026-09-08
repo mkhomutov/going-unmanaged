@@ -1,11 +1,12 @@
 // Appendix F, Recipes 33 and 34 - hold an owned object as a field, and an
 // object too big for the stack.
 //
-// Log, Sink, Session, FrameBuffer and make_frame() are quoted VERBATIM in
-// book/F-rosetta-cookbook.md: editing one means editing the appendix in the
-// same commit (the testlab discipline). main() is scaffolding - it records
-// the order the fields die in, checks that a co-owned Sink outlives the
-// Session that shared it, and proves the big object landed on the heap.
+// Log, Sink, Session, FrameBuffer and make_frame() are included by
+// book/F-rosetta-cookbook.md, between their recipe-N section markers: edit
+// here and the page follows, and a marker moved is what the page shows. main()
+// is scaffolding - it records the order the fields die in, checks that a
+// co-owned Sink outlives the Session that shared it, and proves the big object
+// landed on the heap.
 #include <array>
 #include <cassert>
 #include <cstdint>
@@ -16,6 +17,7 @@
 #include <vector>
 
 // Recipe 33 - a field of class type, and who disposes it
+// --8<-- [start:recipe-33]
 class Log {                                  // polymorphic: lives behind a pointer (Chapter 2)
 public:
     virtual ~Log() = default;
@@ -44,8 +46,10 @@ private:
     std::unique_ptr<Log> log_;               // one owner, polymorphic, optional: behind a unique_ptr
     std::shared_ptr<Sink> sink_;             // co-owned: alive while anyone still holds it
 };   // no Dispose to write: the fields die in reverse order of declaration, then the object
+// --8<-- [end:recipe-33]
 
 // Recipe 34 - an object too big for the stack
+// --8<-- [start:recipe-34]
 struct FrameBuffer {
     std::array<std::uint8_t, 4 * 1024 * 1024> pixels{};   // 4 MB inline: a class this size has no business on a stack
 };
@@ -54,6 +58,7 @@ static_assert(sizeof(FrameBuffer) > 1024 * 1024, "FrameBuffer is a heap object b
 std::unique_ptr<FrameBuffer> make_frame() {
     return std::make_unique<FrameBuffer>();  // one owner on the stack, four megabytes on the heap
 }
+// --8<-- [end:recipe-34]
 
 namespace {
     // A Log that reports its own death AND how many owners the Sink had at

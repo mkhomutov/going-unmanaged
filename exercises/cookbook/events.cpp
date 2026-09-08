@@ -1,9 +1,10 @@
 // Appendix F, Recipe 14 - expose an event.
 //
-// SampleSource is quoted VERBATIM in book/F-rosetta-cookbook.md: editing it
-// means editing the appendix in the same commit (the testlab discipline).
-// main() is scaffolding - it asserts subscription order, token-based
-// unsubscribe, and that raising with no subscribers is a plain no-op.
+// SampleSource is included by book/F-rosetta-cookbook.md, between its recipe-N
+// section markers: edit here and the page follows, and a marker moved is what
+// the page shows. main() is scaffolding - it asserts subscription order,
+// token-based unsubscribe, and that raising with no subscribers is a plain
+// no-op.
 #include <algorithm>
 #include <cassert>
 #include <functional>
@@ -11,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+// --8<-- [start:recipe-14]
 class SampleSource {
 public:
     using Handler = std::function<void(int)>;
@@ -36,6 +38,7 @@ private:
     std::vector<std::pair<int, Handler>> handlers_;
     int next_id_ = 0;
 };
+// --8<-- [end:recipe-14]
 
 int main() {
     SampleSource source;

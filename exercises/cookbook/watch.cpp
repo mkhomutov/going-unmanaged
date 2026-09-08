@@ -1,23 +1,23 @@
 // Appendix F, Recipe 40 - notice a file changed.
 //
-// FileWatcher below is quoted VERBATIM in book/F-rosetta-cookbook.md: editing
-// it means editing the appendix in the same commit (the testlab discipline).
-// main() is scaffolding, and every claim the recipe makes has a line here
-// that fails without it (each was run as a mutant): an unchanged file raises
-// nothing; a rewrite of a different size with the SAME timestamp is noticed
-// (so the size field is load-bearing, not the time - the coarse-timestamp
-// trap the recipe names, staged by hand since no harness can wait for a
-// filesystem to be slow); a file restored with an OLDER timestamp is noticed
-// (the != claim: a > sleeps through it); deletion is a change; a change made
-// while the destructor is stopping the worker is NOT delivered (the stop
-// check after the sleep, which "no callback after the join" alone cannot
-// see); a file created and deleted thousands of times under a 1 ms poll
+// FileWatcher below is included by book/F-rosetta-cookbook.md, between its
+// recipe-N section markers: edit here and the page follows, and a marker moved
+// is what the page shows. main() is scaffolding, and every claim the recipe
+// makes has a line here that fails without it (each was run as a mutant): an
+// unchanged file raises nothing; a rewrite of a different size with the SAME
+// timestamp is noticed (so the size field is load-bearing, not the time - the
+// coarse-timestamp trap the recipe names, staged by hand since no harness can
+// wait for a filesystem to be slow); a file restored with an OLDER timestamp
+// is noticed (the != claim: a > sleeps through it); deletion is a change; a
+// change made while the destructor is stopping the worker is NOT delivered
+// (the stop check after the sleep, which "no callback after the join" alone
+// cannot see); a file created and deleted thousands of times under a 1 ms poll
 // never throws on the worker (the error_code overloads: absence is a state);
 // and nothing arrives after the join. Every wait is a DEADLINE, never an
 // unbounded get - Chapter 38's judge, since a watcher that never fires would
-// otherwise hang CI rather than fail it. Changes are delivered by Recipe
-// 38's rename, because a truncate-then-write can be polled mid-way and
-// counted twice - measured, not imagined.
+// otherwise hang CI rather than fail it. Changes are delivered by Recipe 38's
+// rename, because a truncate-then-write can be polled mid-way and counted
+// twice - measured, not imagined.
 #include <atomic>
 #include <cassert>
 #include <chrono>
@@ -33,6 +33,7 @@
 #include <utility>
 
 // Recipe 40 - FileSystemWatcher, in the one spelling the standard library has
+// --8<-- [start:recipe-40]
 class FileWatcher {
 public:
     FileWatcher(std::filesystem::path path, std::chrono::milliseconds interval,
@@ -93,6 +94,7 @@ private:
     std::atomic<bool> stop_{false};     // declared before worker_: initialized first (Recipe 16)
     std::thread worker_;
 };
+// --8<-- [end:recipe-40]
 
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;
