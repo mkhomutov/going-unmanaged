@@ -87,9 +87,17 @@ where each lands — the map the timing recipes teach one row at a time:
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/files.cpp:recipe-1"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/files.cpp:recipe-1"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/files.rs:recipe-1"
+    ```
 
 **Why it looks like this.** There is no `File` static class: the stream
 object *is* the open file, and
@@ -103,7 +111,7 @@ differently per platform. The parameter is a `std::filesystem::path`
 rather than a `std::string`, because on Windows a path is not made of
 `char` (Recipe 10) and the stream constructors have taken a `path` since
 C++17 — a string argument still converts. Needs `<filesystem>`,
-`<fstream>`, `<sstream>`, `<stdexcept>`.
+`<fstream>`, `<sstream>`, `<stdexcept>`. **In Rust** the same call is `std::fs::read_to_string`, and the trap below cannot happen: a missing file is an `Err`, not an empty string, and the `?` at the call site is the check you would otherwise forget.
 
 > [!WARNING]
 > **Trap:** a stream that failed to open does not throw — every read on it quietly produces nothing, so without the `if (!in)` check a missing file becomes an empty string and no error. That check is the part `File.ReadAllText` did for you.
@@ -114,9 +122,17 @@ C++17 — a string argument still converts. Needs `<filesystem>`,
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/strings.cpp:recipe-2"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/strings.cpp:recipe-2"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/strings.rs:recipe-2"
+    ```
 
 **Why it looks like this.** `std::string` ships no `Split`, and this loop is
 the idiom the ecosystem converged on: `getline`'s third argument makes any
@@ -136,9 +152,17 @@ mean. Needs `<sstream>`, `<vector>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/strings.cpp:recipe-3"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/strings.cpp:recipe-3"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/strings.rs:recipe-3"
+    ```
 
 **Why it looks like this.** The guard clause is the whole trick: append the
 separator only once something is already there, and the fencepost problem
@@ -155,9 +179,17 @@ codebase; most codebases already have, so grep before adding yours.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/strings.cpp:recipe-4"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/strings.cpp:recipe-4"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/strings.rs:recipe-4"
+    ```
 
 **Why it looks like this.** `std::string` *is* the string builder.
 `StringBuilder` exists because C# strings are immutable, so `+=` there
@@ -176,9 +208,17 @@ class C# taught you to avoid in a loop is the right default in C++.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/strings.cpp:recipe-5"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/strings.cpp:recipe-5"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/strings.rs:recipe-5"
+    ```
 
 **Why it looks like this.** The honest answer: C++17 has no interpolation.
 `std::format`, the true analogue, arrives in C++20 — and toolchains around
@@ -199,9 +239,17 @@ speak it natively). Needs `<sstream>` and `<iomanip>`, or `<cstdio>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/timing.cpp:recipe-6"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/timing.cpp:recipe-6"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/timing.rs:recipe-6"
+    ```
 
 **Why it looks like this.** A stopwatch is two time points and a subtraction;
 `steady_clock` is the monotonic clock, which is what `Stopwatch` was
@@ -219,9 +267,17 @@ and `<chrono>` will not let you mix units by accident. Needs `<chrono>`, `<iostr
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/handles.cpp:recipe-7"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/handles.cpp:recipe-7"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/handles.rs:recipe-7"
+    ```
 
 **Why it looks like this.** The most load-bearing three lines of the
 transition: the deleter is part of the pointer's *type*, so destruction calls
@@ -235,7 +291,7 @@ the C API taught you. When there is more to manage than one close — a
 callback registration, a paired init/deinit with state — graduate to the
 wrapper class of
 [Chapter 18](18-exercise-the-device-sdk.md#chapter-18--exercise-the-device-sdk).
-Needs `<memory>`, `<cstdio>`.
+Needs `<memory>`, `<cstdio>`. **In Rust** the wrapper is a struct with `Drop` — the destructor by another name — around the raw handle, and the C functions are declared with `extern "C"`; the `unsafe` blocks mark exactly the two lines that trust C, which is the boundary Chapter 39 draws by hand.
 
 > [!WARNING]
 > **Trap:** a plain `std::unique_ptr<std::FILE>` compiles happily and then calls `delete` on a pointer C code allocated — undefined behavior every time. The deleter must match the allocator, which is the whole reason it is part of the type.
@@ -246,9 +302,17 @@ Needs `<memory>`, `<cstdio>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/lookups.cpp:recipe-8"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/lookups.cpp:recipe-8"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/lookups.rs:recipe-8"
+    ```
 
 **Why it looks like this.** `find` is `TryGetValue` with the iterator playing
 the out-parameter: one lookup, no exception, no insertion. Its two siblings
@@ -257,7 +321,7 @@ do different jobs — `at()` is the throwing indexer, and `operator[]` is
 [Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation)
 owns the container story; this is its most-used line, pulled out to where you
 will look for it. Needs `<map>` — or `<unordered_map>`; the recipe is
-identical.
+identical. **In Rust** `HashMap::get` and `BTreeMap::get` never insert, and the inserting lookup has its own name, `entry` — the distinction C++ hides behind `[]`.
 
 > [!WARNING]
 > **Trap:** reading a missing key with `settings["timeout"]` default-constructs a value and inserts it — the read mutates the map. That is also why `[]` does not compile on a `const` map: the compiler is telling you it writes.
@@ -268,9 +332,17 @@ identical.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/files.cpp:recipe-9"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/files.cpp:recipe-9"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/files.rs:recipe-9"
+    ```
 
 **Why it looks like this.** The mirror of
 [Recipe 1](#recipe-1--read-a-whole-file-into-a-string), with one asymmetry
@@ -293,9 +365,17 @@ bytes as written, no platform newline translation — and the parameter is a
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/paths.cpp:recipe-10"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/paths.cpp:recipe-10"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/paths.rs:recipe-10"
+    ```
 
 **Why it looks like this.** `std::filesystem::path` (C++17) overloads
 division, so the code reads like the path it builds, and the separator is
@@ -326,9 +406,17 @@ platform where the two constructors differ. Needs `<filesystem>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/paths.cpp:recipe-11"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/paths.cpp:recipe-11"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/paths.rs:recipe-11"
+    ```
 
 **Why it looks like this.** The split is the same split C# makes:
 `is_regular_file` is `File.Exists` (it exists *and* is a file),
@@ -349,9 +437,17 @@ everyone writes. Needs `<filesystem>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/paths.cpp:recipe-12"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/paths.cpp:recipe-12"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/paths.rs:recipe-12"
+    ```
 
 **Why it looks like this.** The iterator *is* the enumeration: range-`for`
 over a `directory_iterator` visits each entry once, the entry answers
@@ -369,9 +465,17 @@ spares you a glob dialect. Needs `<filesystem>`, `<vector>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/async.cpp:recipe-13"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/async.cpp:recipe-13"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/async_work.rs:recipe-13"
+    ```
 
 **Why it looks like this.** `std::async` is `Task.Run` without the runtime:
 on gcc/clang usually a fresh OS thread, no pool unless you build one; MSVC
@@ -384,7 +488,7 @@ result arrives; nothing suspends, nothing resumes elsewhere. The
 work to run lazily inside `.get()`, on this thread, which is the opposite of
 what `Task.Run` means. One behavior ports exactly: a throw inside the work
 is captured and rethrown at `.get()`, the same unwrapping `await` did for
-you. Needs `<future>`.
+you. Needs `<future>`. **In Rust** the future is a `JoinHandle`, and `join()` returns a `Result` whose `Err` carries the panic — the exception-surfaces-at-`get()` behaviour, made visible in the type.
 
 > [!WARNING]
 > **Trap:** the future returned by `std::async` blocks in its destructor until the work finishes — dropping it to fire-and-forget turns "run this in the background" into "stop here until it is done", silently serializing the program.

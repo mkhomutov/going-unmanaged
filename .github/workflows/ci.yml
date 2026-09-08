@@ -35,6 +35,10 @@ jobs:
       # is a listing nobody checks. Both hosted images ship a compiler with
       # <expected>; the flag exists so a runner image that stops doing so
       # fails loudly rather than skipping quietly.
+      # --require-cargo: Appendix F's Rust tab is a crate under
+      # exercises/cookbook/rust/, tested offline with warnings as errors; both
+      # hosted images ship cargo, and a tab CI never tests is a listing nobody
+      # checks.
       # --require-openssl: Recipes 36-37 link the system's libcrypto through
       # pkg-config; on macOS the runner's OpenSSL is keg-only, so the path is
       # pointed at it first. SKIPPED on a laptop without it; never here.
@@ -54,7 +58,7 @@ jobs:
           if [ "$(uname -s)" = Darwin ]; then export PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"; fi
           if [ "$(uname -s)" = Darwin ] && ! pkg-config --exists libcurl; then export PKG_CONFIG_PATH="$(brew --prefix curl)/lib/pkgconfig:$PKG_CONFIG_PATH"; fi
           if [ "$(uname -s)" = Linux ]; then sudo apt-get update -qq && sudo apt-get install -y -qq libcurl4-openssl-dev libsqlite3-dev pkg-config && sudo locale-gen de_DE.UTF-8; fi
-          ./scripts/build_all.sh --require-cmake --require-git --require-tsan --require-expected --require-openssl --require-curl --require-sqlite
+          ./scripts/build_all.sh --require-cmake --require-git --require-tsan --require-expected --require-openssl --require-curl --require-sqlite --require-cargo
 
   # Chapter 26's root files, held to their own tools. exercises/skeleton/ is
   # the one directory the repository formats by machine - the labs keep

@@ -1725,4 +1725,6 @@ chapters titled by symptom, openings and cards without the series framing), and 
 three entry points, the Symptom Index and Components pages) — step 3 is DONE.
 Step 4 is DONE too: every listing the book shows from a lab, a solution or a
 script heredoc is included from the file by a marked section (132 includes),
-and `check_verbatim.sh` refuses a copy pasted back.
+and `check_verbatim.sh` refuses a copy pasted back. Step 5 has begun: the
+cookbook's Rust tab (`exercises/cookbook/rust/`, a tested crate behind a
+cargo probe) covers Recipes 1–13 so far.

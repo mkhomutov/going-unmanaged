@@ -217,7 +217,15 @@ Chapter 25's Finding 10.
   functions are INCLUDED by the appendix, each between `// --8<-- [start:recipe-N]`
   and `[end:recipe-N]` marker comments: edit the function in the file and the
   page follows; moving a marker changes what the page shows (the mains are
-  scaffolding and appear in no listing)
+  scaffolding and appear in no listing). `rust/` is the same cookbook in
+  Rust (SITE-PLAN step 5): a dependency-free crate, one module per domain
+  (`files.cpp` → `src/files.rs`; `async.cpp` → `src/async_work.rs`, since
+  `async` is a keyword), each recipe between the same `recipe-N` markers and
+  each module's tests asserting what the recipe claims. On the page a recipe
+  is two tabs, C++ and Rust, each an include. build_all.sh runs
+  `cargo test --offline` with `RUSTFLAGS=-D warnings` behind a probe
+  (`--require-cargo`, which CI passes); Recipes 1–13 have a Rust tab so far,
+  the rest follow by PR
 - `exercises/constlab/` — Appendix I's lab, and the only one in the repo whose
   judge asserts a build FAILS. `counter.h` + `main.cpp` compile and run
   clean; five const violations behind `-DCONSTLAB_VIOLATION_1..5` must each
@@ -559,7 +567,10 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 4. No real vendor/product names in the book's SDK material (the point is
    generality). Open-source ecosystems named as study material are fine
    (libusb, PortAudio, SQLite, Qt, Unreal, STM32 HAL, COM as a technology).
-5. Solutions never use anything beyond the standard library. `exercises/`
+5. Solutions never use anything beyond the standard library, and the Rust
+   crate under `exercises/cookbook/rust/` never beyond Rust's (no
+   `[dependencies]`; Recipe 7 declares its two C functions with
+   `extern "C"` rather than pull in the libc crate). `exercises/`
    may carry a vendored third-party header under `exercises/third_party/`
    (today: nlohmann/json, for the cookbook's three JSON recipes), included
    with `-isystem`, with the version and any patch recorded in that
@@ -600,8 +611,14 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 - Recipes (Appendix F) follow strictly: **In C# / The recipe / Why it looks
   like this / Trap** — the trap a one-line `[!WARNING]`, the why
   cross-references to the owning chapter, numbers append-only like Findings.
-  The recipe fence is one line, `--8<-- "exercises/cookbook/<domain>.cpp:recipe-N"`;
-  the code lives only in the file, between its `recipe-N` markers.
+  The recipe is two tabs — `=== "C++"` and `=== "Rust"` — each holding one
+  indented include, `--8<-- "exercises/cookbook/<domain>.cpp:recipe-N"` and
+  `--8<-- "exercises/cookbook/rust/src/<module>.rs:recipe-N"`; the code
+  lives only in the files, between their `recipe-N` markers. A recipe with
+  no idiomatic Rust answer says so in one line under the tab instead of
+  carrying a strained one. Where Rust sharpens the point, one sentence
+  opening **In Rust** closes the Why paragraph; never a parallel
+  explanation.
 - Key-principle quotes are in speakable first person ("I check every error
   code...") — they double as a cheat sheet (Appendix B mirrors them; keep
   the two in sync when adding one).

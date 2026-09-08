@@ -89,9 +89,17 @@ strict shape, the Finding template's sibling:
 
 **The recipe:**
 
-```cpp
-// the idiom, complete enough to paste
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/<domain>.cpp:recipe-N"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/<module>.rs:recipe-N"
+    ```
 
 **Why it looks like this.** <Two to four sentences: why C++ spells it this
 way, anchored to the chapter that owns the concept — cross-reference, don't
@@ -104,14 +112,19 @@ re-teach. End with the headers it needs.>
 Two rules beyond the shape. The listing is code, not prose: it lives in
 `exercises/cookbook/` (one translation unit per domain — `expected.cpp`,
 C++23, is the one cut by standard instead, and `json.cpp` the one with a
-dependency — with a `main()` that asserts
-what the recipe claims, wired into `build_all.sh`), and the appendix
-**includes** it rather than copying it: the function is fenced in the source
-by `// --8<-- [start:recipe-N]` and `// --8<-- [end:recipe-N]` comment lines,
-and the recipe's fence holds one line, `--8<-- "exercises/cookbook/<domain>.cpp:recipe-N"`,
-which the site build replaces with the section (GitHub's rendering shows
-the directive; the site is the reading surface). Edit the code in the file,
-never on the page. And the numbering is the Findings contract: add your
+dependency — with a `main()` that asserts what the recipe claims, wired into
+`build_all.sh`) and, for the Rust tab, in the crate under
+`exercises/cookbook/rust/` (one module per domain, standard library only,
+a `#[test]` per claim, run by `build_all.sh` under `cargo test` with
+warnings as errors). The appendix **includes** both rather than copying
+them: each function is fenced in its source by `// --8<-- [start:recipe-N]`
+and `// --8<-- [end:recipe-N]` comment lines, and each tab's fence holds one
+line, the include, which the site build replaces with the section (GitHub's
+rendering shows the directive; the site is the reading surface). Edit the
+code in the files, never on the page. A recipe with no idiomatic Rust answer
+says so in one line under the tab rather than carrying a strained one; where
+Rust sharpens the point, one sentence opening **In Rust** closes the Why
+paragraph. And the numbering is the Findings contract: add your
 recipe at the end with the next free number, add its row to the index table,
 never renumber existing ones.
 

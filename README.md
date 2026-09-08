@@ -29,7 +29,7 @@ going is in [SITE-PLAN.md](SITE-PLAN.md).
 - **Part V (Chapters 14–23):** learning by doing — ten exercises with reference solutions and pitfall analyses, including two miniature vendor SDKs written in the real-world idioms: **FakeSDK** (error codes + owned payloads, the desktop-plugin style) and **FakeDevice** (opaque handles + C callbacks, the peripheral-device style).
 - **Chapter 25:** the Findings log — real mistakes made during real practice, each with the theory behind it, broken and fixed code, and the habit to build.
 - **Part VI (Chapter 26 onward):** the real codebase — what a project has that an exercise does not, starting with build systems, dependency management, testing, concurrency, authoring an ABI boundary, and reading what the tools tell you. This is where the roadmap's appended chapters land.
-- **Appendices:** a fundamentals refresher, a one-page cheat sheet, a playbook for learning with (and without) AI assistants, curated resources, a glossary, the Rosetta Cookbook indexed by the C# API you are reaching for, the bridge catalogue for the day the plug-in must speak to everything else, and the choosing procedures for the four decisions every signature makes.
+- **Appendices:** a fundamentals refresher, a one-page cheat sheet, curated resources, a glossary, the Rosetta Cookbook indexed by the C# API you are reaching for — each recipe in C++ and, increasingly, in Rust, both included from tested code — the bridge catalogue for the day the plug-in must speak to everything else, and the choosing procedures for the four decisions every signature makes.
 
 ## How to use it
 
