@@ -94,7 +94,7 @@ and on the site — and CLAUDE.md now gives that as the reason. Hard invariant
 `grep -rn "nav:begin" book/` empty, and the release workflow publishing
 nothing it does not build.
 
-## Step 3 — the structural pass
+## Step 3 — the structural pass — DONE
 
 The reading order becomes three entry points. Files do not move and numbers
 do not change (see *Numbering* below); the nav in `site_hooks.py` and a new
@@ -145,7 +145,7 @@ trimmed, the six "Reproduce it cold" tails gone, Chapter 25 retitled
 *Gotchas: the Findings Log* with **Symptom:** in place of **Found in:** and
 CONTRIBUTING's template changed to match. Appendix C's rule lives on as
 CONTRIBUTING's "Assistants, and the exercises"; its offline-lifelines list
-was already Appendix D's. PR 2 of 3, *the tickets*, is DONE: the six chapters are titled by symptom (Crash on Exit; A Value Reads Zero After Hot-Plug; Every Capture Rejected as Malformed; Objects Still Live at Unload; Dropouts With the Plug-in Loaded; Crash at Session Close, Field Units Only — file names unchanged, anchors updated everywhere), the openings state the evidence and the rule without narrating the series, the ticket numbers are gone from chapters and cards alike, and the fixtures — profile, crash report, capture, report, migration notes — are untouched. Next: PR 3, the entry points.
+was already Appendix D's. PR 2 of 3, *the tickets*, is DONE: the six chapters are titled by symptom (Crash on Exit; A Value Reads Zero After Hot-Plug; Every Capture Rejected as Malformed; Objects Still Live at Unload; Dropouts With the Plug-in Loaded; Crash at Session Close, Field Units Only — file names unchanged, anchors updated everywhere), the openings state the evidence and the rule without narrating the series, the ticket numbers are gone from chapters and cards alike, and the fixtures — profile, crash report, capture, report, migration notes — are untouched. PR 3 of 3, *the entry points*, is DONE: `book/README.md` leads with the three groups (Reference / Concepts / Labs, every page in exactly one) and keeps the six-Part reading order below them; the site nav is built from those groups and a page in none of them fails the strict build; `book/symptoms.md` is the Symptom Index (Chapter 31's table promoted to its own page, its three "this chapter" rows now links, plus the Gotchas by symptom) and `book/components.md` the Components page; the two "month N" openers (Chapters 38 and 42) are gone. The prerequisites line was not added page by page: a grep for reading-order glue found four sentences in eighteen concept pages, all already carrying links to the chapter they lean on, so the inline links do that job.
 
 **Acceptance:** `grep -rn -i "day [0-9]\|week [0-9]\|first week" book/`
 returns nothing outside code and quoted output; the six ticket pages are

@@ -3,11 +3,13 @@
 Two jobs, both small on purpose, so that nothing but this file stands between
 the markdown under book/ and the renderer:
 
-1. on_config builds the navigation from the chapter files themselves - the
-   reading order is the file order (digits sort before letters), a part's H1
-   opens a section, and each page's title is its own `## Chapter N` line - so
-   adding a chapter file needs no edit here, and the chapter files carry no
-   navigation of their own.
+1. on_config builds the navigation from book/README.md's three entry-point
+   groups - the `### Reference`, `### Concepts` and `### Labs` lists under
+   Contents - in the order the README gives them, each page titled by its
+   own `## ` line. A page in none of the three groups is left out of the nav,
+   which MkDocs reports and --strict turns into a failure: adding a chapter
+   file means adding it to a group, and the build says so. The chapter files
+   carry no navigation of their own.
 
 2. on_page_markdown turns GitHub alerts (`> [!TIP]` then a blockquote body)
    into Material admonitions. Only the shape the book uses is handled; the
@@ -63,17 +65,31 @@ def _headings(path):
     return h1, h2
 
 
+GROUPS = ("Reference", "Concepts", "Labs")
+LINK = re.compile(r"\]\(([0-9A-Za-z][^)#]*\.md)#")
+
+
 def on_config(config):
     docs = pathlib.Path(config["docs_dir"])
+    readme = (docs / "README.md").read_text(encoding="utf-8")
     nav = [{"Contents": "README.md"}]
-    section_title, section = None, None
-    for path in sorted(p for p in docs.glob("*.md") if p.name != "README.md"):
-        h1, h2 = _headings(path)
-        if h1 is not None:
-            section_title, section = h1, []
-            nav.append({section_title: section})
-        entry = {h2 or path.stem: path.name}
-        (section if section is not None else nav).append(entry)
+    current = None
+    for line in readme.splitlines():
+        if line.startswith("### "):
+            title = line[4:].strip()
+            if title in GROUPS:
+                current = []
+                nav.append({title: current})
+            else:
+                current = None
+            continue
+        if current is None:
+            continue
+        for name in LINK.findall(line):
+            if any(name in entry.values() for entry in current):
+                continue
+            _, h2 = _headings(docs / name)
+            current.append({h2 or pathlib.Path(name).stem: name})
     config["nav"] = nav
     return config
 

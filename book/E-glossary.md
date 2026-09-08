@@ -1,6 +1,6 @@
 ## Appendix E — Glossary
 
-The book uses these terms in the ordinary course of explaining things, the way your future colleagues will — which is precisely why they need one page. Each entry is a sentence or two and a pointer to the chapter where the idea actually lives; the definition here is for recognition, the chapter is for understanding. Two groups: terms this book uses, then terms you will merely *hear* — review comments and hallway conversation use them without introduction, and knowing which kind of thing each one is beats nodding along. If what you have is a symptom rather than a term — a report, an error message, a wrong number — the other half of this appendix is [Chapter 31's symptom index](31-reading-what-the-tools-tell-you.md#the-symptom-index).
+The book uses these terms in the ordinary course of explaining things, the way your future colleagues will — which is precisely why they need one page. Each entry is a sentence or two and a pointer to the chapter where the idea actually lives; the definition here is for recognition, the chapter is for understanding. Two groups: terms this book uses, then terms you will merely *hear* — review comments and hallway conversation use them without introduction, and knowing which kind of thing each one is beats nodding along. If what you have is a symptom rather than a term — a report, an error message, a wrong number — the other half of this appendix is [Chapter 31's symptom index](symptoms.md#symptom-index).
 
 ### Terms this book uses
 

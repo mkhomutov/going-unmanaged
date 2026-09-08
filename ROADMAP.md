@@ -1721,4 +1721,5 @@ book) is DONE — `scripts/build_site.sh`, strict, and a `site` CI job — and
 so is step 2 (the single-file build and the nav footers retired); step 3's
 first PR, the cuts, has landed (Chapter 24 and Appendix C retired, Appendix D
 trimmed, the ticket tails gone, Chapter 25 retitled *Gotchas*), and so has the second (the six ticket
-chapters titled by symptom, openings and cards without the series framing).
+chapters titled by symptom, openings and cards without the series framing), and the third (the README's
+three entry points, the Symptom Index and Components pages) — step 3 is DONE.
