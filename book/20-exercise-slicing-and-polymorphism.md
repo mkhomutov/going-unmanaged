@@ -78,10 +78,3 @@ int main() {
 **`final` on the leaves** documents that the hierarchy ends here and lets the compiler devirtualize calls where it can prove the type.
 
 **`const auto&` in the loop** — copying a `unique_ptr` doesn't compile (deleted), so the wrong loop here fails loudly rather than silently. Notice how the ownership design converts Chapter 2's silent copy trap into a compile error: good types make wrong code not compile.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 19 — Exercise: The Word Counter](19-exercise-the-word-counter.md) · [Contents](README.md) · [Chapter 21 — Exercise: Iterator Invalidation →](21-exercise-iterator-invalidation.md)
-<!-- nav:end -->

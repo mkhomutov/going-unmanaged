@@ -262,10 +262,3 @@ The lab is `exercises/templatelab/` — the task card walks the same road as thi
 3. **Break a policy and read the error, twice.** Delete `Poll` from a policy and build: green, if nothing calls `Pump`. Call it, build again, and find the two lines that matter. Then add the detection idiom and build once more: one sentence, at the class, with or without the call. That last build, refused by name, is the lab's judge.
 4. **Write the three utilities** from their descriptions: `Describe` with `if constexpr`, `Join` with a fold, `Ring<T, N>`. Assert each, and put a `static_assert` on the ring's size.
 5. **Stretch: the concept.** On a C++20 toolchain, replace `HasSdkShape` with a `concept SdkShape` and `template <SdkShape Sdk>`, and compare the error text for the broken policy with the `static_assert`'s: the concept's names the exact expression that failed; the `static_assert`'s can only list what it asked for.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 40 — CMake for the Plug-in](40-cmake-for-the-plug-in.md) · [Contents](README.md) · [Chapter 42 — The Formula Field →](42-the-formula-field.md)
-<!-- nav:end -->

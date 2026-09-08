@@ -184,10 +184,3 @@ int main() {
 **Why the guard is non-copyable and non-movable.** It aliases one struct for one scope. A copy would mean two guards disposing the same payload — double-dispose (the FileHandle argument from Chapter 1). Movability has no use case at this scope and would complicate the invariant. Deleting both is not a limitation; it is the design stated in code.
 
 **The empty-project scenario is a specification question, not a coding one.** Zero Things means `NoErr`, total 0, skipped 0 — the loop simply never runs. The exercise includes it because real plug-ins constantly meet empty selections and empty documents, and "what does success mean on empty input" is a question to settle *before* writing the loop, not after a bug report.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 16 — The SDK Bestiary](16-the-sdk-bestiary.md) · [Contents](README.md) · [Chapter 18 — Exercise: The Device SDK →](18-exercise-the-device-sdk.md)
-<!-- nav:end -->

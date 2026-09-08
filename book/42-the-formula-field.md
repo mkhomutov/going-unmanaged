@@ -331,9 +331,3 @@ The lab is `exercises/exprlab/` — the task card walks the same road as this ch
 4. **Add the depth guard**, then paste a thousand parentheses and confirm you get a position, not a signal. Remove the guard once and run the same input under the canonical flags — on a thread with a 512 KB stack, or with ten thousand parentheses on the main thread's 8 MB — and read what the sanitizer does and does not say: `stack-overflow` and a hundred of your frames, and no byte of the text. Then bound the tree's height too, and paste a thousand terms of `1+1+…`.
 5. **Write the judge**: the value table by hand first, the error positions, the depth limit at N and N + 1, and the locale switch. `../../scripts/check.sh expr.cpp main.cpp` from the lab directory is the one-line build.
 6. **Stretch:** string literals and a `contains` function over them; a `Formula::Names()` that lists the identifiers a formula references, so the host can subscribe to exactly those properties; the seam as a template policy ([Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)), and a sentence on why the run-time provider was the right default.
-
----
-
-<!-- nav:begin -->
-[← Chapter 41 — Templates You Will Write](41-templates-you-will-write.md) · [Contents](README.md) · [Appendix A — Fundamentals Refresher →](A-fundamentals-refresher.md)
-<!-- nav:end -->

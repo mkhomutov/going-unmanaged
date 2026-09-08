@@ -260,10 +260,3 @@ Real problems do not arrive labelled with the chapter that owns them; they arriv
 | A process reading one file uses as much memory as the file — or, on Linux, dies with `SIGBUS` on a plain read, no allocation site, none of the shapes above, after another process truncated the file it had mapped | Recipe 49 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook): map it rather than copy it, and map only what nobody else writes |
 
 **When more than one row fits, and you have no stack yet.** *It crashes at shutdown or unload* is the common case: it matches the first row, the still-live-at-shutdown row and the callback row equally well, and the ticket that brought it rarely says which. Two questions settle the order, and both are answerable from your own source without reproducing anything. **Does a global or function-local static own something on the failing path?** If so start at [Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit) — your source names the statics, but not the order they are destroyed in, which is that chapter's whole subject. **Does anything the host owns still hold a pointer to you — a registered callback, an observer, a refcount?** Then [Chapter 29](29-concurrency.md#chapter-29--concurrency) for the threaded case, [Chapter 35](35-still-live-at-unload.md#chapter-35--still-live-at-unload) for the refcounted one. If both are true, rule out the static first: it is the cheaper of the two, because it needs no repro to investigate.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 30 — Authoring an ABI Boundary](30-authoring-an-abi-boundary.md) · [Contents](README.md) · [Chapter 32 — It Crashes on Exit →](32-it-crashes-on-exit.md)
-<!-- nav:end -->

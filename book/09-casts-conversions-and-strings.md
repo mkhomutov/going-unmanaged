@@ -61,10 +61,3 @@ VendorString back = VendorString::FromUtf8(utf8);
 > **Trap:** Encoding bugs are THE classic plug-in pitfall: user file and project names with non-ASCII characters (German umlauts, Cyrillic, CJK...) silently corrupt if you treat UTF-16 vendor strings as byte strings. Always convert explicitly with the encoding named.
 
 The conversion itself — including the honest news that the standard library deprecated its own answer and what real codebases use instead — is Recipe 17 in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook), with the mechanism spelled out once so it stops being magic.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 8 — Error Handling: Exceptions and Error Codes](08-error-handling.md) · [Contents](README.md) · [Chapter 10 — Modern C++ Fluency →](10-modern-cpp-fluency.md)
-<!-- nav:end -->

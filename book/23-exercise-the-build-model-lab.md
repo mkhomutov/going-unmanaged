@@ -19,10 +19,3 @@ Split a trivial `Greeter` class across `Greeter.h` / `Greeter.cpp` with a `main.
 ### Why this lab earns its place
 
 Half of all confusing C++ errors are build-model errors (Chapter 12). At work, against a vendor SDK with heavy headers and multi-project solutions, error-stage triage is the first move of every debugging session: *which tool complained — preprocessor, compiler, or linker — and therefore which file do I open?* After this lab, that triage takes five seconds.
-
----
-
-
-<!-- nav:begin -->
-[← Chapter 22 — Exercise: Lambda Lifetimes](22-exercise-lambda-lifetimes.md) · [Contents](README.md) · [Chapter 24 — Practice Plan →](24-practice-plan.md)
-<!-- nav:end -->

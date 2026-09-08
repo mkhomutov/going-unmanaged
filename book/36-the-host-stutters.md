@@ -292,7 +292,3 @@ The rule this chapter derives is written, in almost these words, in every real-t
 ### Reproduce it cold
 
 A week or two from now, closed book: write the allocation-counting harness from memory — the replaced `operator new` and `delete`, a counter, a before/after around the code on trial — and point it at any loop you believe is clean. Then re-state, in one sentence each: what a sampling profile can prove, what it structurally cannot, and what zero allocations proves that a fast timing does not. If you can also name where a by-value argument's copy shows up in a call tree — whose frame, whose name — the profile will never acquit the wrong party in front of you again. The schedule is in [Chapter 24](24-practice-plan.md#chapter-24--practice-plan).
-
-<!-- nav:begin -->
-[← Chapter 35 — Still Live at Unload](35-still-live-at-unload.md) · [Contents](README.md) · [Chapter 37 — No Repro, Dump Attached →](37-no-repro-dump-attached.md)
-<!-- nav:end -->

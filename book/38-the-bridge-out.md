@@ -459,7 +459,3 @@ The lab is `exercises/bridgelab/` — the task card walks the same road as this 
 6. **Stretch:** a loopback-socket transport that parses lines into `Invoke` calls without touching `bridge_core.h` — and a `batch` command that makes twenty client edits one undo step.
 
 What you should be able to say afterwards, from memory: why the queue completes even the jobs it refuses, why the main thread must never wait on its own queue, why registration freezes, and why every wait in the harness carries a deadline. Those four sentences are the bridge; the rest is transport.
-
-<!-- nav:begin -->
-[← Chapter 37 — No Repro, Dump Attached](37-no-repro-dump-attached.md) · [Contents](README.md) · [Chapter 39 — The Round Trip Home →](39-the-round-trip-home.md)
-<!-- nav:end -->
