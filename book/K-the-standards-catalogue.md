@@ -118,7 +118,7 @@ The spelling this book teaches is the C++17 one, and the *newer spelling* column
 | `find_if` with a lambda, the map-to-vector dance | ranges and views | `__cpp_lib_ranges` | [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency), [Chapter 19](19-exercise-the-word-counter.md#chapter-19--exercise-the-word-counter) |
 | the detection idiom, `static_assert` on a trait | concepts and `requires` | `__cpp_concepts` | [Chapter 7](07-templates-vs-csharp-generics.md#chapter-7--templates-vs-c-generics), [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write) |
 | `__FILE__` and `__LINE__` through a macro | `std::source_location` | `__cpp_lib_source_location` | [Chapter 28](28-testing.md#chapter-28--testing) |
-| shifts at documented offsets | `std::endian`, `std::bit_cast` — the advice does not change | `__cpp_lib_endian`, `__cpp_lib_bit_cast` | [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture) |
+| shifts at documented offsets | `std::endian`, `std::bit_cast` — the advice does not change | `__cpp_lib_endian`, `__cpp_lib_bit_cast` | [Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed) |
 | `size_t` loops and `<` comparisons | `std::ssize`, `std::cmp_less` | `__cpp_lib_ssize`, `__cpp_lib_integer_comparison_functions` | [Appendix A](A-fundamentals-refresher.md#appendix-a--fundamentals-refresher) |
 | `u8path` | `path(u8"...")` with `char8_t` | `__cpp_char8_t` | Recipe 10 |
 | `localtime_r` and an offset you read yourself | `std::chrono::zoned_time`, `clock_cast` | `__cpp_lib_chrono` at `201907` or later — every C++17 library defines it at `201611`, so its presence says nothing | Recipes 6, 29, 39 |

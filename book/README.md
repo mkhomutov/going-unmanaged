@@ -60,12 +60,12 @@ You have spent years in managed code — the runtime tracked your objects, the G
 29. [Concurrency](29-concurrency.md#chapter-29--concurrency) — no runtime, no await, and the thread that calls you back
 30. [Authoring an ABI Boundary](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) — the other side of the Bestiary: shipping the thing someone else loads
 31. [Reading What the Tools Tell You](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you) — sanitizer reports line by line, and the debugger and profiler skills that differ
-32. [It Crashes on Exit](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit) — the first ticket: a crash after `main` returns that support cannot reproduce — work it cold
-33. [Here Is the Report](33-here-is-the-report.md#chapter-33--here-is-the-report) — the second ticket: a sanitizer report arrives attached, and the guilty line is in none of its stacks
-34. [Parse This Capture](34-parse-this-capture.md#chapter-34--parse-this-capture) — the third ticket: an attached hex dump the vendor's viewer decodes fine and your parser doesn't — while every sanitizer stays green
-35. [Still Live at Unload](35-still-live-at-unload.md#chapter-35--still-live-at-unload) — the fourth ticket: the vendor's 2.0 is refcounted, and the host says objects are still live at unload
-36. [The Host Stutters](36-the-host-stutters.md#chapter-36--the-host-stutters) — the fifth ticket: dropouts with your plug-in loaded, and an attached profile that says you are innocent
-37. [No Repro, Dump Attached](37-no-repro-dump-attached.md#chapter-37--no-repro-dump-attached) — the sixth ticket: a crash report from a machine you will never see, and every bench rig is green
+32. [Crash on Exit](32-it-crashes-on-exit.md#chapter-32--crash-on-exit) — a crash after `main` returns that support cannot reproduce — work it cold
+33. [A Value Reads Zero After Hot-Plug](33-here-is-the-report.md#chapter-33--a-value-reads-zero-after-hot-plug) — a sanitizer report arrives attached, and the guilty line is in none of its stacks
+34. [Every Capture Rejected as Malformed](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed) — an attached hex dump the vendor's viewer decodes fine and your parser doesn't — while every sanitizer stays green
+35. [Objects Still Live at Unload](35-still-live-at-unload.md#chapter-35--objects-still-live-at-unload) — the vendor's 2.0 is refcounted, and the host says objects are still live at unload
+36. [Dropouts With the Plug-in Loaded](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded) — a click every few minutes with your plug-in loaded, and an attached profile that says you are innocent
+37. [Crash at Session Close, Field Units Only](37-no-repro-dump-attached.md#chapter-37--crash-at-session-close-field-units-only) — a crash report from a machine you will never see, and every bench rig is green
 38. [The Bridge Out](38-the-bridge-out.md#chapter-38--the-bridge-out) — serving C#, Python, and the rest from inside the host: one queue, one seam, and a deadline on every wait
 39. [The Round Trip Home](39-the-round-trip-home.md#chapter-39--the-round-trip-home) — P/Invoke from the native side: a signature written twice in two languages, and the four things nothing checks
 40. [CMake for the Plug-in](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in) — a MODULE with one exported symbol, an SDK that ships no config package, and the build decisions Chapter 26 never had to make

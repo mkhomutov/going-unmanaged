@@ -1,10 +1,10 @@
-## Chapter 34 — Parse This Capture
+## Chapter 34 — Every Capture Rejected as Malformed
 
-The third ticket-shaped chapter, and this one takes something away. Chapters 32 and 33 both ended with a sanitizer naming the crime; here the handbook's flags stay green from the first run to the last, because none of what is wrong in this ticket — and three separate things are wrong — is anything a sanitizer checks. The evidence attached this time is a bus capture and the vendor's own header table, and the oracle is you: the ticket is solved on paper, by decoding the bytes by hand, before the compiler contributes anything but confirmation.
+Nothing that is wrong in this ticket — and three separate things are wrong — is anything a sanitizer checks, so the handbook's flags stay green from the first run to the last. The evidence attached this time is a bus capture and the vendor's own header table, and the oracle is you: the ticket is solved on paper, by decoding the bytes by hand, before the compiler contributes anything but confirmation.
 
 ### The ticket
 
-> **#5347 — Ingest rejects every capture from the new analyzer (bring-up).** The new bus analyzer's telemetry feed is being brought up. The vendor's own viewer opens every capture file fine; our ingest calls every one of them malformed. The developer who started the bring-up notes that the sync byte parses fine — and that the header's kind field comes back 165 on a frame the vendor's viewer calls a temperature reading (kind 1). A minimal capture is attached, two frames straight off the bus, along with the ICD's header table.
+> **Ingest rejects every capture from the new analyzer (bring-up).** The new bus analyzer's telemetry feed is being brought up. The vendor's own viewer opens every capture file fine; our ingest calls every one of them malformed. The developer who started the bring-up notes that the sync byte parses fine — and that the header's kind field comes back 165 on a frame the vendor's viewer calls a temperature reading (kind 1). A minimal capture is attached, two frames straight off the bus, along with the ICD's header table.
 
 A bring-up ticket, not a regression: nothing used to work, so there is no diff to suspect and no "what changed?" to ask. All you have is a document, twenty bytes, and a parser that disagrees with both.
 
@@ -118,7 +118,7 @@ And beneath both lies, the cast itself was never legal. The standard lets an `un
 
 **One family of targets where it is not silent.** The paragraph above holds on x86-64 and on the Cortex-M3/M4/M7 parts most of this work meets, where an unaligned multi-byte load is merely slower. ARMv6-M — Cortex-M0 and M0+, the low end of the same STM32 line [Chapter 16](16-the-sdk-bestiary.md#chapter-16--the-sdk-bestiary)'s Shape 4 names — has no unaligned access at all, so the unpacked overlay's word load faults on the spot rather than quietly handing back the scrambled number. That is the *better* failure, and worth knowing which one your target hands you — but note which overlay it is: packing drops the alignment requirement to one, the compiler emits byte loads instead, and the *mirrored* numbers arrive as silently on an M0 as they do here. This parser reaches neither read, dying on frame 0's length check in both states; the stretch goal at step 6 is the one that gets past it.
 
-Which is the real finding of this ticket, beyond its two mechanisms: every read here was in bounds, aligned by luck on frame 0, and wrong. The teacher of the last two chapters has nothing to say. What convicted the parser was twenty bytes decoded by hand against a table — and that oracle was in the ticket from the start.
+Which is the real finding of this ticket, beyond its two mechanisms: every read here was in bounds, aligned by luck on frame 0, and wrong. The sanitizer has nothing to say. What convicted the parser was twenty bytes decoded by hand against a table — and that oracle was in the ticket from the start.
 
 </details>
 
@@ -219,7 +219,7 @@ static const unsigned char kCapture[] = {
 };
 ```
 
-`build_all.sh` runs exactly that on every push. The two earlier ticket labs proved their fixes by varying what the bug depended on — link order, growth — and this one does the same: the capture keeps one frame aligned and one not, because offset-independence is part of what "decoded correctly" means for a stream.
+`build_all.sh` runs exactly that on every push. The exit-crash and hot-plug labs proved their fixes by varying what the bug depended on — link order, growth — and this one does the same: the capture keeps one frame aligned and one not, because offset-independence is part of what "decoded correctly" means for a stream.
 
 ### Pitfalls
 

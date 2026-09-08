@@ -12,7 +12,7 @@ All four decisions are the same question at different scopes:
 
 A **container** is the shape you have chosen for a whole population at once — the one decision that constrains the other three, because it fixes whether an element can be pointed at. A **parameter** is a loan for the duration of the call — unless the function keeps a copy, in which case it is a transfer. A **return** is a new object you have given away — unless it is a view into something you kept, in which case it is a loan whose term the caller cannot see. A **container element** is ownership for the container's lifetime, plus one promise the reader never thinks to ask about until it bites: whether the element's *address* survives the container growing.
 
-[Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report) named this vocabulary while debugging a dangling pointer — *"the loan sentence is everywhere once you look for it."* It is: the four procedures below are that sentence, written four ways.
+[Chapter 33](33-here-is-the-report.md#chapter-33--a-value-reads-zero-after-hot-plug) named this vocabulary while debugging a dangling pointer — *"the loan sentence is everywhere once you look for it."* It is: the four procedures below are that sentence, written four ways.
 
 > [!TIP]
 > **Key principle:** "Before I write a signature I ask who owns this, how long it lives, and who may see it — one question, and the four answers are the container, the parameter, the return, and what goes in the collection."
@@ -135,7 +135,7 @@ void TheSinkAllocatesWhereTheBorrowDoesNot() {
 
 **One thing the harness arranges on purpose.** `Counted`'s payload is a 200-character string, deliberately past every implementation's *small-string optimization* — the trick where a short string lives inside the string object itself rather than in a heap block, so copying it allocates nothing whatsoever. That is not a thumb on the scale; it is how you measure a cost that is real when it occurs. But it does mean the allocation counts above are the price of copying a string genuinely on the heap, and a `SetName("id7")` whose argument always fits inside the object pays none of them. The threshold is not standardised and nothing in the type announces which side of it you are on, so measure your own before moving a setter off `const&` on the strength of this table — the allocation counter in `exercises/choosing/` is the instrument, and the answer depends on how long your strings actually are.
 
-So the honest rule is narrower than "prefer the sink". Take the sink when callers hand you temporaries, or when the call is rare enough that one allocation does not matter — it buys generality with one extra move and, on repeat calls, one allocation. Take `const&` when the caller keeps its object and calls you often, and on a deadline thread take `const&` and mean it ([Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters): the allocator is I/O).
+So the honest rule is narrower than "prefer the sink". Take the sink when callers hand you temporaries, or when the call is rare enough that one allocation does not matter — it buys generality with one extra move and, on repeat calls, one allocation. Take `const&` when the caller keeps its object and calls you often, and on a deadline thread take `const&` and mean it ([Chapter 36](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded): the allocator is I/O).
 
 > [!TIP]
 > **Key principle:** "The question that picks a parameter's shape is whether it is a polymorphic base, and then whether the function keeps a copy: if it keeps one, take it by value and move; if it only borrows, take it by const& — and count the allocations before I put a sink on a hot path."
@@ -220,7 +220,7 @@ flowchart LR
 **Three independent reasons produce the same shape** — which is why two of the arrows above land on one box — and the book teaches them in three different places without ever saying they are different reasons. Separating them is the point of this procedure:
 
 1. **Slicing.** A `std::vector<Shape>` storing `Circle`s keeps only the `Shape` part — silently, virtuals included ([Chapter 2](02-value-semantics.md#chapter-2--value-semantics), and [Chapter 20](20-exercise-slicing-and-polymorphism.md#chapter-20--exercise-slicing-and-polymorphism)'s lab). If the element is a polymorphic base, the pointer is not an optimisation, it is the only correct answer.
-2. **Address stability.** Growth relocates every element of a `vector<T>`, so any pointer, reference or iterator you kept is dangling — [Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)'s whole ticket. Both halves are checked, because "nothing moved" is also what you measure when nothing grew:
+2. **Address stability.** Growth relocates every element of a `vector<T>`, so any pointer, reference or iterator you kept is dangling — [Chapter 33](33-here-is-the-report.md#chapter-33--a-value-reads-zero-after-hot-plug)'s whole ticket. Both halves are checked, because "nothing moved" is also what you measure when nothing grew:
 
 ```cpp
 void GrowthRelocatesAndMovesEveryElement() {
@@ -304,7 +304,7 @@ inline Counts& Tally() {
 }
 ```
 
-Alongside it sits a heap-allocation counter — a replaced `operator new`, the instrument [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters) built — because the sink's real price is an allocation the copy/move tally cannot see. The verdict is a `CHECK` macro that counts failures and sets the exit code, not `assert`: `assert` compiles to nothing under `-DNDEBUG`, which a CMake `Release` build defines ([Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)), and a harness that vanishes in Release while still printing its success line is worse than none.
+Alongside it sits a heap-allocation counter — a replaced `operator new`, the instrument [Chapter 36](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded) built — because the sink's real price is an allocation the copy/move tally cannot see. The verdict is a `CHECK` macro that counts failures and sets the exit code, not `assert`: `assert` compiles to nothing under `-DNDEBUG`, which a CMake `Release` build defines ([Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)), and a harness that vanishes in Release while still printing its success line is worse than none.
 
 If a future toolchain makes one of these claims false, the build fails rather than the page quietly lying — which is the standard every other verified claim in this book is held to, and the reason this appendix is allowed to state costs at all.
 

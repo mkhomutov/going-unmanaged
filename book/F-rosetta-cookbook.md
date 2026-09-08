@@ -703,7 +703,7 @@ helpers. [Chapter 9](09-casts-conversions-and-strings.md#chapter-9--casts-conver
 rule is only that the conversion is *named*, wherever it lives. What
 hand-rolling the mechanism once buys you is the demystification: seventy
 lines cover every code point Unicode will ever assign, both directions are
-bit-work at documented offsets — [Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
+bit-work at documented offsets — [Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed)'s
 wire discipline applied to text — and damaged input becomes `U+FFFD` (the
 browser convention) instead of an exception, which is the policy question
 every converter must answer and most APIs bury. `char16_t` is the portable
@@ -1051,7 +1051,7 @@ overload is declared behind a guard that is never open, fixed upstream
 in #4742 and unreleased at the time of writing); there is no
 `JsonIgnoreCondition.WhenWritingNull`, so strip the null before `dump`,
 or accept that absent and null are one word on your wire and write that
-down ([Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)). Needs `<nlohmann/json.hpp>` (`-isystem exercises/third_party` on the
+down ([Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed)). Needs `<nlohmann/json.hpp>` (`-isystem exercises/third_party` on the
 compile line, which `scripts/check.sh` adds), `<string>`, `<vector>`, and
 `using json = nlohmann::json;`.
 
@@ -1128,10 +1128,10 @@ value-initialized elements, which is `new T[n]`'s contract and not
 `2n` elements, the first `n` of them zero. Reserve once, before the loop —
 a reserve inside it is either a no-op or, at `size() + 1`, a reallocation
 on every pass, the amortized doubling switched off by hand. On
-[Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s
+[Chapter 36](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded)'s
 deadline path a reserve at setup keeps a `push_back` in the callback from
 allocating, for as long as the count stays inside it; and it does not
-*pin* — [Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)'s
+*pin* — [Chapter 33](33-here-is-the-report.md#chapter-33--a-value-reads-zero-after-hot-plug)'s
 pitfall stands. Needs `<vector>`.
 
 > [!WARNING]
@@ -1183,12 +1183,12 @@ the call ([Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
 a function pointer or a member pointer alike. Both write into a record you
 own rather than printing, so a test can assert on it — and a number from
 either is a mean, which
-[Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters) says
+[Chapter 36](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded) says
 can only acquit a mean; count allocations when the question is the worst
 case. Needs `<chrono>`, `<functional>`, `<type_traits>`, `<utility>`.
 
 > [!WARNING]
-> **Trap:** a timed call whose result nobody reads is a call the optimizer may delete outright, so the timer brackets nothing and reports nanoseconds — use the result, and measure at `-O2` without the sanitizers, because [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s factor of twenty is not uniform across code shapes.
+> **Trap:** a timed call whose result nobody reads is a call the optimizer may delete outright, so the timer brackets nothing and reports nanoseconds — use the result, and measure at `-O2` without the sanitizers, because [Chapter 36](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded)'s factor of twenty is not uniform across code shapes.
 
 ### Recipe 29 — Stamp a log line with the time
 
@@ -1330,7 +1330,7 @@ the member did not follow — and the broken shape, `std::getenv` inside
 Needs `<charconv>`, `<cstdlib>`, `<string_view>`.
 
 > [!WARNING]
-> **Trap:** reading the flag at the point of use — `std::getenv` in the loop, a configuration lookup per call — is a walk of a shared table — under a lock, on macOS and Windows — on [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s deadline path, and nothing names it: it compiles, runs, passes, and the sanitizers are silent, so the constructor is the only place the read may live.
+> **Trap:** reading the flag at the point of use — `std::getenv` in the loop, a configuration lookup per call — is a walk of a shared table — under a lock, on macOS and Windows — on [Chapter 36](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded)'s deadline path, and nothing names it: it compiles, runs, passes, and the sanitizers are silent, so the constructor is the only place the read may live.
 
 ### Recipe 32 — Combine flags as an enum class
 
@@ -1423,7 +1423,7 @@ Rule of Zero: copy deleted, move generated, nothing written. Needs
 `<memory>`, `<string>`, `<vector>`.
 
 > [!WARNING]
-> **Trap:** fields die in reverse *declaration* order, so a field that another field's destructor uses must be declared before it — declare a by-value `Sink` after a `Log` whose destructor writes a last line into it, and that line lands in a dead field; nothing warns, because `-Wreorder` is about the constructor's list, not the class's, and under libc++ the sanitizers stay quiet too, since the container annotation un-poisons the slot before the write ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit)'s first pitfall).
+> **Trap:** fields die in reverse *declaration* order, so a field that another field's destructor uses must be declared before it — declare a by-value `Sink` after a `Log` whose destructor writes a last line into it, and that line lands in a dead field; nothing warns, because `-Wreorder` is about the constructor's list, not the class's, and under libc++ the sanitizers stay quiet too, since the container annotation un-poisons the slot before the write ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--crash-on-exit)'s first pitfall).
 
 ### Recipe 34 — An object too big for the stack
 
@@ -1669,7 +1669,7 @@ decides for you is the envelope: `AesGcm.Encrypt` hands the C# side
 three separate buffers and says nothing about how they travel, and the
 moment your bytes must open on another machine, the nonce length, the
 tag length and the order the three are written in are a wire format in
-[Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
+[Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed)'s
 sense — documented offsets, and a published test vector as the oracle.
 The comment above `seal` is that document — the 16-byte tag is one of
 its rows, so the C# side hands `Decrypt` a 16-byte tag span, which the
@@ -1954,7 +1954,7 @@ page, where `HttpClient` follows by default. The `.count()` is Recipe
 30's: the duration becomes libcurl's bare integer on the one line next to
 the `_MS` option. `curl_global_init` runs once per process before any
 thread exists — the init entry point in a plug-in, never a static
-initializer ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit))
+initializer ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--crash-on-exit))
 — and a POST is the same handle turned around, Recipe 46. The harness
 needs no network and
 has two halves: a `file://` fixture, the one URL scheme with nothing
@@ -2112,7 +2112,7 @@ on the file, busy is exceptional here; a plug-in sharing the file with a
 host decides the way the drill does, with `sqlite3_busy_timeout` on the
 connection or a retry around `step`, before it reaches for `throw`. And
 `sqlite3_column_text` is the loan
-[Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)
+[Chapter 33](33-here-is-the-report.md#chapter-33--a-value-reads-zero-after-hot-plug)
 quoted as its in-the-wild example — good until the next step, reset or
 finalize — so the accessor copies out on the spot; `SQLITE_TRANSIENT` is
 the same question asked in the other direction, whether SQLite may keep
@@ -2256,7 +2256,7 @@ The bytes are read by a process with its own compiler, its own build and
 its own address space, so
 [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s
 one rule applies with
-[Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
+[Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed)'s
 extension — fixed-width fields, a version first, no `std::string`, no
 pointer (an address in *your* process) — and the three `static_assert`s
 are [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s
@@ -2267,7 +2267,7 @@ either — a child's address read by the parent is garbage, or correct
 until the day the mapping lands elsewhere; that half of the rule is yours
 to keep. (Not `is_trivially_copyable`, which an atomic fails on one
 standard library and passes on two.) This is also the overlay
-[Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)
+[Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed)
 bans for a captured wire, and here it is the tool: the region *is* the
 object's storage, the atomic must be operated in place, and the second
 view is read through the cast — the standard has no model of a second
@@ -2329,7 +2329,7 @@ a cache of compiled patterns behind the static call; here nothing caches
 for you, and a `std::regex` built inside the function it serves is
 parsed and compiled on every call — a function-local `static const`
 builds it once, on first use, thread-safely since C++11
-([Chapter 32](32-it-crashes-on-exit.md#chapter-32--it-crashes-on-exit)'s
+([Chapter 32](32-it-crashes-on-exit.md#chapter-32--crash-on-exit)'s
 shape). `regex_match` is `IsMatch` with `^` and `$` built in — the
 pattern keeps them so it reads as the C# one — and `regex_search` is the
 unanchored one; `smatch` is the `Match` object, and `m[1]` is
@@ -2346,7 +2346,7 @@ match before a final `\n`. Needs `<regex>`, `<optional>`, `<charconv>`,
 `<string>`.
 
 > [!WARNING]
-> **Trap:** `std::regex` is slow and it allocates — on this machine a match through the `static const` above costs about 800 nanoseconds and eleven heap allocations, where `starts_with` plus Recipe 19's `from_chars` on the same input costs a few nanoseconds and none, which the harness counts with [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s replaced `operator new`; and one hostile line against a pattern with nested repetition backtracks for seconds under libstdc++ and, under libc++, throws `std::regex_error` out of `regex_match` in milliseconds, which this recipe does not catch — so it belongs in a config parser and never on the per-sample path, and a regex that must be fast is a [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) dependency, RE2 or PCRE2.
+> **Trap:** `std::regex` is slow and it allocates — on this machine a match through the `static const` above costs about 800 nanoseconds and eleven heap allocations, where `starts_with` plus Recipe 19's `from_chars` on the same input costs a few nanoseconds and none, which the harness counts with [Chapter 36](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded)'s replaced `operator new`; and one hostile line against a pattern with nested repetition backtracks for seconds under libstdc++ and, under libc++, throws `std::regex_error` out of `regex_match` in milliseconds, which this recipe does not catch — so it belongs in a config parser and never on the per-sample path, and a regex that must be fast is a [Chapter 27](27-dependency-management.md#chapter-27--dependency-management) dependency, RE2 or PCRE2.
 
 ### Recipe 45 — Trim, compare ignoring case, prefix and suffix
 
@@ -2469,7 +2469,7 @@ a matching free — `curl_slist_free_all`, Recipe 7's shape for the
 second time on one page — and `CURLOPT_POSTFIELDS` is the reason the
 serialized body has a name: libcurl keeps the *pointer*, not a copy, and
 reads the bytes during `perform`
-([Chapter 33](33-here-is-the-report.md#chapter-33--here-is-the-report)'s
+([Chapter 33](33-here-is-the-report.md#chapter-33--a-value-reads-zero-after-hot-plug)'s
 loan, with the SDK on the borrowing side). `PostAsJsonAsync` set the
 content type for you; here it is the one header the list carries,
 because without it libcurl's default is
@@ -2569,7 +2569,7 @@ usually comes from, and the C++ call has no defaults at all — every
 parameter is yours to write down. Salt, iteration count and `info` are not
 secrets, and they travel: a key that must be re-derived on the C# side
 needs the same three, so they are a wire format in
-[Chapter 34](34-parse-this-capture.md#chapter-34--parse-this-capture)'s
+[Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed)'s
 sense, written down next to the envelope of Recipe 37. The harness
 holds both functions to published vectors — RFC 7914's PBKDF2-HMAC-SHA-256
 cases and RFC 5869's first HKDF case — because a derivation that agrees
@@ -2730,7 +2730,7 @@ or, if the allocator has since reused the range, as an overflow on some
 unrelated heap object. The other side of that: a `munmap` left out of
 the destructor is a leak no sanitizer counts, which is the destructor's
 whole reason to exist. The harness maps four megabytes, compares every byte against Recipe 1's
-copy, and — [Chapter 36](36-the-host-stutters.md#chapter-36--the-host-stutters)'s
+copy, and — [Chapter 36](36-the-host-stutters.md#chapter-36--dropouts-with-the-plug-in-loaded)'s
 instrument — counts heap allocations across the mapping with a replaced
 `operator new`: zero, which is the recipe's whole claim over
 `ReadAllBytes` (both forms of `operator new` are replaced, because under

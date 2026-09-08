@@ -1,12 +1,12 @@
-# The Host Stutters — ticket card (Chapter 36)
+# Dropouts With the Plug-in Loaded — ticket card (Chapter 36)
 
-This lab is a **ticket, not a task** — the fifth one, and the first where
-the attached evidence appears to *acquit* you. Chapter 36 states everything
+This lab is a **ticket, not a task** — and the attached evidence appears
+to *acquit* you. Chapter 36 states everything
 in full and walks the diagnosis behind a spoiler fold — work the ticket
 cold first, and work it **on paper first**: no compiler until your
 diagnosis is written down.
 
-> **#5788 — Audio dropouts with our meter loaded (since 2.1.0).** A
+> **Audio dropouts with our meter loaded (since 2.1.0).** A
 > mastering studio reports intermittent dropouts — a click every few
 > minutes during long sessions, worse on their 16-channel template, gone
 > the moment our meter plug-in is disabled. 2.1.0 is the release that

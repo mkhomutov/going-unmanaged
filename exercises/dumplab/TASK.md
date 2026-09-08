@@ -1,13 +1,12 @@
-# No Repro, Dump Attached — ticket card (Chapter 37)
+# Crash at Session Close, Field Units Only — ticket card (Chapter 37)
 
-This lab is a **ticket, not a task** — the sixth, and the first with
-nothing to run: the program already ran, on a machine you will never see,
+This lab is a **ticket, not a task** — with nothing to run: the program already ran, on a machine you will never see,
 and died. What you have is the paperwork. Chapter 37 states everything in
 full and walks the diagnosis behind a spoiler fold — work the ticket cold
 first, and work it **on paper first**: the report, the source below, and
 arithmetic are sufficient to name the guilty line.
 
-> **#6117 — Crash at session close, field units only (3.4.0).** Three
+> **Crash at session close, field units only (3.4.0).** Three
 > crash reports from two customer sites in ten days, all at session
 > close, all on base-model field units. The bench cannot reproduce it —
 > support has closed hundreds of sessions on every rig in the building,

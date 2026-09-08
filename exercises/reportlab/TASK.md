@@ -1,4 +1,4 @@
-# Here Is the Report — ticket card (Chapter 33)
+# A Value Reads Zero After Hot-Plug — ticket card (Chapter 33)
 
 This lab is a **ticket, not a task** — and this ticket comes with the
 evidence already attached. Chapter 33 states everything in full and walks
@@ -6,7 +6,7 @@ the diagnosis behind a spoiler fold — work the ticket cold first, and work
 it **on paper first**: the rule of this exercise is no compiler until your
 diagnosis is written down.
 
-> **#5124 — Watched sensor reads 0.0 after hot-plug (since 2.6.0).** The
+> **Watched sensor reads 0.0 after hot-plug (since 2.6.0).** The
 > dashboard lets the operator pin one sensor as "watched". A nine-sensor
 > site reports that the watched value drops to 0.0 the moment the ninth
 > sensor is plugged in; re-pinning the sensor fixes it, until the next
