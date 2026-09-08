@@ -499,9 +499,17 @@ you. Needs `<future>`. **In Rust** the future is a `JoinHandle`, and `join()` re
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/events.cpp:recipe-14"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/events.cpp:recipe-14"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/events.rs:recipe-14"
+    ```
 
 **Why it looks like this.** `event` is language sugar over a delegate field;
 here the field is explicit — a vector of callables — and `std::function` is
@@ -515,7 +523,7 @@ Two C# habits to check at the door: a handler that unsubscribes *during*
 `raise` mutates the vector mid-loop — Chapter 21's invalidation, arriving
 through an event — and the whole consuming side of this pattern is
 [Chapter 22](22-exercise-lambda-lifetimes.md#chapter-22--exercise-lambda-lifetimes)'s
-subject. Needs `<functional>`, `<vector>`, `<algorithm>`, `<utility>`.
+subject. Needs `<functional>`, `<vector>`, `<algorithm>`, `<utility>`. **In Rust** the handler list is `Vec<(u32, Box<dyn FnMut(i32)>)>`, `retain` is the unsubscribe, and the borrow checker asks the question C# never did: a handler that captures the source itself cannot be written without `Rc<RefCell<…>>`, which is the cycle made visible.
 
 > [!WARNING]
 > **Trap:** the C# leak runs the other way here — C#'s classic event bug is the publisher keeping dead subscribers *alive*; nothing here keeps anything alive, so a subscriber that dies without `unsubscribe` leaves a dangling capture, and the next `raise` is a use-after-free delivered by your own class.
@@ -526,9 +534,17 @@ subject. Needs `<functional>`, `<vector>`, `<algorithm>`, `<utility>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/logging.cpp:recipe-15"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/logging.cpp:recipe-15"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/logging.rs:recipe-15"
+    ```
 
 **Why it looks like this.** The mapping is direct — `cout` is `Console.Out`,
 `cerr` is `Console.Error` — but the split that matters is buffering.
@@ -555,9 +571,17 @@ timing (Chapter 31's point); reach for the sanitizer instead. Needs
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/timing.cpp:recipe-16"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/timing.cpp:recipe-16"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/timing.rs:recipe-16"
+    ```
 
 **Why it looks like this.** The standard library has no timer, and the
 honest answer has two halves. In plug-in work, *the host's tick or idle
@@ -573,7 +597,7 @@ uninitialized flag. And the captured `this` is why the type must not move —
 Chapter 18's re-register-on-move lesson; the user-declared destructor
 conveniently suppresses the moves. Teardown waits out at most one interval;
 a `condition_variable` turns that into an immediate wake when it matters.
-Needs `<atomic>`, `<chrono>`, `<functional>`, `<thread>`.
+Needs `<atomic>`, `<chrono>`, `<functional>`, `<thread>`. **In Rust** the timer is the same two fields, an `AtomicBool` behind an `Arc` and a `JoinHandle`, and `Drop` does the join — which is why the handle is an `Option`: `join` consumes it, and a destructor only gets `&mut self`.
 
 > [!WARNING]
 > **Trap:** a timer whose tick touches an object must not outlive it — and C# let you forget `Stop()` because the GC kept the target alive; here the join in the destructor *is* the Stop, and skipping it (a detached thread) is a tick delivered into freed memory.
@@ -584,9 +608,17 @@ Needs `<atomic>`, `<chrono>`, `<functional>`, `<thread>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/strings.cpp:recipe-17"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/strings.cpp:recipe-17"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/strings.rs:recipe-17"
+    ```
 
 **Why it looks like this.** The honest part first: the standard library has
 no good answer — `<codecvt>` was deprecated in C++17 with no replacement —
@@ -602,7 +634,7 @@ wire discipline applied to text — and damaged input becomes `U+FFFD` (the
 browser convention) instead of an exception, which is the policy question
 every converter must answer and most APIs bury. `char16_t` is the portable
 spelling of "16-bit unit"; on Windows it and `wchar_t` are the same bits.
-Needs `<string>`, `<string_view>`.
+Needs `<string>`, `<string_view>`. **In Rust** the two directions are one call each, `encode_utf16` and `String::from_utf16_lossy`, and the third half of the problem — bytes that are not valid UTF-8 — is `String::from_utf8_lossy`, because a `&str` cannot hold them in the first place.
 
 > [!WARNING]
 > **Trap:** none of the three `size()`s counts characters — "Grüße" is five characters, seven UTF-8 bytes and five UTF-16 units, while one 𝄞 is one, four and two. A length check that "worked for years" on ASCII is an encoding bug with a long fuse.
@@ -613,9 +645,17 @@ Needs `<string>`, `<string_view>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/lookups.cpp:recipe-18"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/lookups.cpp:recipe-18"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/lookups.rs:recipe-18"
+    ```
 
 **Why it looks like this.** "Not found" has three spellings in C++: an
 algorithm says `end()`, a string says `npos` — the largest `size_t` there
@@ -638,9 +678,17 @@ owns the algorithm story. Needs `<algorithm>`, `<iterator>`, `<optional>`,
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/alternatives.cpp:recipe-19"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/alternatives.cpp:recipe-19"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/alternatives.rs:recipe-19"
+    ```
 
 **Why it looks like this.** `std::optional<T>` is `T?` with the value kept
 behind `*` and `->` rather than in front of them, so the caller has to
@@ -664,9 +712,17 @@ decides when absence is the right answer at all. Needs `<optional>`,
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/alternatives.cpp:recipe-20"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/alternatives.cpp:recipe-20"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/alternatives.rs:recipe-20"
+    ```
 
 **Why it looks like this.** C# pattern-matches on the runtime type of an
 object; C++17 has no runtime type for three unrelated structs, so the
@@ -677,7 +733,7 @@ into one callable with one `operator()` each; the standard library does not
 ship it, and every codebase on C++17 has a copy.
 [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency) owns
 the type, and says when a variant beats the class hierarchy you would have
-written in C#. Needs `<variant>`, `<string>`.
+written in C#. Needs `<variant>`, `<string>`. **In Rust** the closed set is an `enum` with data on its variants and the switch is `match`, which the compiler holds to exhaustiveness: add a fourth kind and every `match` without it stops compiling, where `std::visit` over an incomplete `overloaded` does the same one template error at a time.
 
 > [!WARNING]
 > **Trap:** leave one alternative out of the visitor and the build fails — which is the feature; the same omission in a `switch` on a `kind` field compiles and falls through, and that is how a vendor's new event type crashes a plug-in a year after it shipped.
@@ -688,9 +744,17 @@ written in C#. Needs `<variant>`, `<string>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/errors.cpp:recipe-21"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/errors.cpp:recipe-21"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/errors.rs:recipe-21"
+    ```
 
 **Why it looks like this.** Derive from `std::runtime_error` (or
 `std::logic_error` for a caller bug) so every `catch (const std::exception&)`
@@ -701,7 +765,7 @@ constructor, because `what()` returns a `const char*` that cannot be
 assembled later. Anything `what()` cannot carry is a member with an
 accessor. Throw by value, catch by `const&` (Chapter 8): a catch by value
 slices the payload off. Needs `<stdexcept>`, `<string>`, `<string_view>`,
-`<charconv>`.
+`<charconv>`. **In Rust** there is no throw: the type is a struct with `Display` and `std::error::Error`, the function returns `Result<i32, ParseError>`, and the catch-order rule disappears because there is nothing to catch in order — the caller matches on the value.
 
 > [!WARNING]
 > **Trap:** catch clauses are tried in order, so a `catch (const std::exception&)` written above the `catch (const ParseError&)` makes the second handler dead code — both compilers warn by default (clang names it `-Wexceptions`), so a codebase that silences warnings ships it.
@@ -712,9 +776,17 @@ slices the payload off. Needs `<stdexcept>`, `<string>`, `<string_view>`,
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/errors.cpp:recipe-22"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/errors.cpp:recipe-22"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/errors.rs:recipe-22"
+    ```
 
 **Why it looks like this.** Three spellings of one idea, chosen by what the
 caller needs to know: `std::optional<T>` (Recipe 19) when absence needs no
@@ -728,7 +800,7 @@ builds as the cookbook's one C++23 listing. The `Result` above is
 [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency)'s
 `std::variant` behind two named doors, and the `try` inside `load_config`
 is that section's edge: the parser throws, the function returns. Needs
-`<variant>`, `<utility>`, `<cstddef>`, `<string>`, `<string_view>`.
+`<variant>`, `<utility>`, `<cstddef>`, `<string>`, `<string_view>`. **In Rust** `Result<T, E>` is the standard library's, `?` is the translation layer in one character, and this recipe's only work is the `map_err` from one error type to the other.
 
 > [!WARNING]
 > **Trap:** `value()` on the error side throws — `bad_variant_access` here, `bad_expected_access<E>` in C++23 — so a caller that skips the check has not written error-code style, it has written an exception with a worse name; test with `if (r)` first, and `value()` is for the one frame allowed to throw.
@@ -739,9 +811,17 @@ is that section's edge: the parser throws, the function returns. Needs
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/strings.cpp:recipe-23"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/strings.cpp:recipe-23"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/strings.rs:recipe-23"
+    ```
 
 **Why it looks like this.** `IsNullOrEmpty` exists because a C# `string`
 can be null *and* empty and callers rarely care which; C++ separates the
@@ -752,7 +832,7 @@ test, "no string at all" is Recipe 19's `optional<std::string>`, and the
 one null in the picture is the `const char*` a C API returns, which is what
 this recipe guards. The copy into a `std::string` is deliberate: returning
 a view would inherit the C buffer's lifetime, Chapter 10's dangling view.
-Needs `<string>`.
+Needs `<string>`. **In Rust** the null cannot reach a `&str` at all; the check happens where the raw pointer arrives, inside an `unsafe` function whose contract is written above it.
 
 > [!WARNING]
 > **Trap:** `std::string name = Thing_GetName(h);` with a null return is undefined behavior that reads like an assignment — libc++ dies inside the constructor and libstdc++ throws `std::logic_error` — and `scripts/check_platform_claims.sh` asserts both, because neither is a report you would expect from that line.
@@ -763,9 +843,17 @@ Needs `<string>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/logging.cpp:recipe-24"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/logging.cpp:recipe-24"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/logging.rs:recipe-24"
+    ```
 
 **Why it looks like this.** `assert` is [Appendix E](E-glossary.md#appendix-e--glossary)'s
 `assert / NDEBUG` entry wearing `[Conditional("DEBUG")]`'s job, with two
@@ -789,9 +877,15 @@ so) and why a macro — `#ifdef NDEBUG` / `#define CHECK_CHANNELS(x) ((void)0)`
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/json.cpp:recipe-25"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/json.cpp:recipe-25"
+    ```
+
+=== "Rust"
+
+    Rust's standard library has no JSON. The ecosystem's answer is `serde` with `serde_json` — `#[derive(Serialize, Deserialize)]` on the struct is the whole `[JsonPropertyName]` table — and it is a dependency, which is Chapter 27's decision, not this page's; the crate stays dependency-free.
 
 **Why it looks like this.** The standard library has no JSON
 ([Chapter 27](27-dependency-management.md#chapter-27--dependency-management)),
@@ -827,9 +921,15 @@ compile line, which `scripts/check.sh` adds), `<string>`, `<vector>`, and
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/json.cpp:recipe-26"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/json.cpp:recipe-26"
+    ```
+
+=== "Rust"
+
+    As for Recipe 25: `serde_json::from_str` into a struct with `#[serde(default)]` on the optional fields is the idiom, and it is a dependency this crate does not take.
 
 **Why it looks like this.** Three outcomes, three spellings, and they are
 [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
@@ -853,9 +953,17 @@ point. Needs `<nlohmann/json.hpp>` (`-isystem exercises/third_party`),
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/containers.cpp:recipe-27"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/containers.cpp:recipe-27"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/containers.rs:recipe-27"
+    ```
 
 **Why it looks like this.** A vector carries two numbers and C# showed you
 one: `size()` is `Count`, the elements that exist; `capacity()` is the room
@@ -884,9 +992,17 @@ pitfall stands. Needs `<vector>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/timing.cpp:recipe-28"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/timing.cpp:recipe-28"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/timing.rs:recipe-28"
+    ```
 
 **Why it looks like this.** The `finally` is a destructor —
 [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)'s
@@ -919,9 +1035,15 @@ case. Needs `<chrono>`, `<functional>`, `<type_traits>`, `<utility>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/timing.cpp:recipe-29"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/timing.cpp:recipe-29"
+    ```
+
+=== "Rust"
+
+    The standard library has the wall clock (`SystemTime`) but no calendar: formatting a `SystemTime` as a date is the `time` or `chrono` crate's job, a dependency this crate does not take. What std gives you honestly is `SystemTime::now().duration_since(UNIX_EPOCH)` — seconds and millis since the epoch, which a log line can carry as a number.
 
 **Why it looks like this.** Recipe 6 said intervals come from
 `steady_clock`; a timestamp is the other clock's job, because
@@ -950,9 +1072,17 @@ until your toolchain is there, this is the spelling. Needs `<chrono>`,
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/timing.cpp:recipe-30"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/timing.cpp:recipe-30"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/timing.rs:recipe-30"
+    ```
 
 **Why it looks like this.** A C API has no `TimeSpan`: a timeout arrives
 as a bare integer with the unit in the parameter name — the shape of every
@@ -969,7 +1099,7 @@ where the *range* leaves: a `milliseconds` count is 64 bits wide and the
 vendor's `uint32_t` wraps at forty-nine days, silently, so a wrapper whose
 callers can pass anything long clamps before the cast. The literals need
 `using namespace std::chrono_literals;` in the scope that uses them. Needs
-`<chrono>`, `<cstdint>`.
+`<chrono>`, `<cstdint>`. **In Rust** the same conversion is `as_millis()` at the call, `u32::try_from` rather than a cast, and the vendor's declaration is `unsafe extern "C" fn` — the unit still leaves the type in exactly one place.
 
 > [!WARNING]
 > **Trap:** `.count()` has no idea what unit it is counting — `seconds(2).count()` handed to a `_ms` parameter compiles and waits two milliseconds — so the parameter type of your wrapper, not the caller's discipline, is what puts the thousand in.
@@ -980,9 +1110,17 @@ callers can pass anything long clamps before the cast. The literals need
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/flags.cpp:recipe-31"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/flags.cpp:recipe-31"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/flags.rs:recipe-31"
+    ```
 
 **Why it looks like this.** A feature flag is the first of
 [Chapter 26](26-build-systems-and-cmake.md#chapter-26--build-systems-and-cmake)'s
@@ -1008,9 +1146,17 @@ Needs `<charconv>`, `<cstdlib>`, `<string_view>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/flags.cpp:recipe-32"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/flags.cpp:recipe-32"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/flags.rs:recipe-32"
+    ```
 
 **Why it looks like this.** `[Flags]` is a promise to the formatter and to
 `HasFlag`; the arithmetic itself C# gives every enum for free. An
@@ -1023,7 +1169,7 @@ compile the `|` and hand back an `int`, the type gone. The
 which is [Chapter 39](39-the-round-trip-home.md#chapter-39--the-round-trip-home)'s
 reason for never publishing an enum across a boundary at all; inside one,
 it keeps the bits the width the field holds. And `has(set, Channel::None)`
-is true for every set, exactly as `HasFlag(0)` is. Needs `<cstdint>`.
+is true for every set, exactly as `HasFlag(0)` is. Needs `<cstdint>`. **In Rust** a `[Flags]` enum is not an `enum` — an enum value must be one of its variants — but a newtype over the bits with associated constants and `BitOr`; the `bitflags` crate generates exactly that.
 
 > [!WARNING]
 > **Trap:** `(set & flag) != Channel::None` reads as `HasFlag` and is wrong for a *combined* flag — with `Stereo = Left | Right`, a set holding only `Left` tests true — which is why `has` compares against the flag itself, as `HasFlag` does.
@@ -1034,9 +1180,17 @@ is true for every set, exactly as `HasFlag(0)` is. Needs `<cstdint>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/ownership.cpp:recipe-33"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/ownership.cpp:recipe-33"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/ownership.rs:recipe-33"
+    ```
 
 **Why it looks like this.** The C# question — can a field own something,
 and who disposes it — has a shorter answer here: every field is destroyed
@@ -1055,7 +1209,7 @@ co-owned and the cycle question is answered
 `unique_ptr` field also settles the class's copies —
 [Chapter 6](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics)'s
 Rule of Zero: copy deleted, move generated, nothing written. Needs
-`<memory>`, `<string>`, `<vector>`.
+`<memory>`, `<string>`, `<vector>`. **In Rust** `Box<dyn Log>` is the polymorphic owner, `Option` is where absence lives rather than the pointer, and the shared sink needs `Rc<RefCell<Sink>>` because sharing and mutating are two separate permissions.
 
 > [!WARNING]
 > **Trap:** fields die in reverse *declaration* order, so a field that another field's destructor uses must be declared before it — declare a by-value `Sink` after a `Log` whose destructor writes a last line into it, and that line lands in a dead field; nothing warns, because `-Wreorder` is about the constructor's list, not the class's, and under libc++ the sanitizers stay quiet too, since the container annotation un-poisons the slot before the write ([Chapter 32](32-it-crashes-on-exit.md#chapter-32--crash-on-exit)'s first pitfall).
@@ -1066,9 +1220,17 @@ Rule of Zero: copy deleted, move generated, nothing written. Needs
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/ownership.cpp:recipe-34"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/ownership.cpp:recipe-34"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/ownership.rs:recipe-34"
+    ```
 
 **Why it looks like this.** [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii)'s
 decision asked whether the object outlives its scope and whether it has
@@ -1088,7 +1250,7 @@ answer with the count decided at run time. The `static_assert` is the
 reason for the heap written down where it cannot go stale
 ([Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write)'s
 judge): a reviewer who changes the array's size meets the sentence.
-Needs `<array>`, `<cstdint>`, `<memory>`.
+Needs `<array>`, `<cstdint>`, `<memory>`. **In Rust** the trap has a spelling: `Box::new([0u8; N])` builds the array on the stack and then moves it, so a large object is made with `vec![0; N].into_boxed_slice()`, which allocates in place — the test builds one on a 256 KB thread stack to prove it.
 
 > [!WARNING]
 > **Trap:** the failure is a crash on *entry* to the function, before its first line runs, and the report is none of [Chapter 31](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you)'s four shapes — AddressSanitizer names it `stack-overflow` only when the faulting write lands within 64 KB of the stack pointer, and a bare `SEGV`/`BUS` "on unknown address" otherwise, which depends on what happens to be mapped below the thread's stack rather than on the platform or the frame size (the same binary answers differently between runs on Linux) — with no allocation site to read either way.
@@ -1099,9 +1261,15 @@ Needs `<array>`, `<cstdint>`, `<memory>`.
 
 **The recipe:**
 
-```cpp
---8<-- "exercises/cookbook/json.cpp:recipe-35"
-```
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/json.cpp:recipe-35"
+    ```
+
+=== "Rust"
+
+    As for Recipe 25: walking a document you do not own is `serde_json::Value`, matched on as an enum — the `is_structured` question becomes a `match` arm — and it is a dependency this crate does not take.
 
 **Why it looks like this.** Recipes 25 and 26 mapped a document onto a
 type you own; this is the other case, a document whose shape belongs to
