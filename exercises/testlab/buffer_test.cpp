@@ -3,8 +3,7 @@
 //
 // Buffer.h is the Chapter 15 solution's class, extracted so both the demo
 // (solutions/buffer.cpp) and this binary can include it; build_all.sh passes
-// -I solutions.
-// --8<-- [start:listing]
+// -I solutions.  --8<-- [start:listing]
 #include "Buffer.h"
 #include "tiny_test.h"
 #include <vector>
