@@ -10,7 +10,42 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
-## [Unreleased]
+## [0.12.0] — 2026-09-08
+
+The same instrument, run a fourth time — thirty-five topics against
+0.11.0 — and for the first time the list came back mostly covered:
+twenty-one outright, seven with one follow-up each, five held as the
+decisions 0.11.0 recorded. What remained was one partial subject and one
+absent one, and a handful of recipes the earlier reviews had left as
+"covered in pieces". The partial subject was the C++ standards story,
+present forty times and collected nowhere, and it is now Appendix K, with
+a probe that asks the compiler which standard it was told to speak and
+asserts the answer under three flags and two toolchains — which taught
+the release its two toolchain lessons, MSVC's `__cplusplus` and GCC's
+`202100`. The absent one was the formula field: user-typed text
+evaluated against the host's objects, the one place in a plug-in where
+text decides what the program does next, and it is Chapter 42 with a lab
+whose judge is a value table worked out by hand, error positions, a depth
+limit held at N and N + 1 both nested and flat, and a German locale
+switched on where the machine has it. The chapter's review measured two
+things the draft had asserted: a parser depth guard bounds only the
+parser, not the tree the evaluator walks, and Apple's libc++ has no
+`from_chars` for `double` before a macOS 26 deployment target.
+
+The recipes are the pieces: a pattern matched with `std::regex` and the
+four string operations the standard library never spelled; a JSON body
+posted and a JSON reply read; a key derived from a password or a secret
+and a message signed and verified, which closes item 24; and a file
+mapped rather than read, whose trap the two platforms answer differently
+and `check_platform_claims.sh` now holds each to its own answer — and
+whose harness refuted, on the Windows runner, a refusal two reviewers and
+the author had asserted from memory, which is what the harness is for. Two
+things the book had described and nothing had checked are checked:
+Chapter 26's project tree exists as a directory to copy, held to its own
+`.clang-format` and `.clang-tidy` by a CI job that refuses a reserved
+identifier on purpose; and Chapter 27's fourth strategy has its CMake
+spelling in Appendix J, a committed project that builds the three probed
+recipes a second way under CTest.
 
 ### Added
 
