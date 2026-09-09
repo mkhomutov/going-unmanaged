@@ -316,6 +316,9 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_namespaces > /dev/null
 # runs under use the Itanium ABI, and the substring is what is stable.
 echo "== cb_namespaces symbols"
 if command -v nm > /dev/null 2>&1; then
+    # Plain -c, no warnings and no sanitizers: the question is what the
+    # compiler wrote into the symbol table, and an instrumented object adds
+    # the runtime's own symbols to read past for nothing.
     $CXX -std=c++17 -c exercises/cookbook/namespaces.cpp -o "$OUT/namespaces.o"
     SYMS=$(nm "$OUT/namespaces.o")
     for want in 5audio2v110frame_size 5audio2v210frame_size; do
