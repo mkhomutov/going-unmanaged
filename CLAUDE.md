@@ -249,8 +249,8 @@ Chapter 25's Finding 10.
   each module's tests asserting what the recipe claims. On the page a recipe
   is two tabs, C++ and Rust, each an include. build_all.sh runs
   `cargo test --offline` with `RUSTFLAGS=-D warnings` behind a probe
-  (`--require-cargo`, which CI passes). All 52 recipes have the tab: 39
-  carry code (38 tests), and 13 carry a one-line note instead, because the
+  (`--require-cargo`, which CI passes). All 53 recipes have the tab: 39
+  carry code (38 tests), and 14 carry a one-line note instead, because the
   standard library has no JSON, calendar, cryptography, HTTP, SQLite, regex
   (Recipe 44 gets a std answer anyway), shared memory or memory mapping and
   the crate takes no dependency — the note opens with the reason there is no

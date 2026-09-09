@@ -15,7 +15,7 @@ where they appear. Each recipe carries a **Rust** tab beside its C++ one, and
 that tab has two shapes: code, where Rust's standard library answers the
 question, and a single line naming the crate that does, where it has no
 answer at all — no JSON, no calendar, no cryptography, no HTTP, no SQLite, no
-shared memory, no memory mapping. Thirteen of the fifty-two read that way,
+shared memory, no memory mapping. Fourteen of the fifty-three read that way,
 and the line says which crate and why there is nothing to show; the crate
 under `exercises/cookbook/rust/` takes no dependency, which is what makes the
 tested half tested. The recipes live as code in
@@ -78,6 +78,7 @@ stays right.
 | `internal` / a `private static` helper | package-private | [Recipe 50 — Keep a helper out of every other file](#recipe-50--keep-a-helper-out-of-every-other-file) |
 | `[DoesNotReturn]` / `[Obsolete]` / an analyzer attribute | `@Deprecated` / `@CheckReturnValue` | [Recipe 51 — Tell the compiler what a function promises](#recipe-51--tell-the-compiler-what-a-function-promises) |
 | `Math.Round` / `Math.Floor` / `Math.Ceiling` / `(int)x` | `Math.round` / `Math.floor` / `Math.ceil` / `(int)` | [Recipe 52 — Round a number, and turn it into an integer](#recipe-52--round-a-number-and-turn-it-into-an-integer) |
+| `JsonConverter<T>` + `[JsonConverter(typeof(...))]` | a Jackson `JsonSerializer<T>` in a `SimpleModule` | [Recipe 53 — Serialize a type you do not own](#recipe-53--serialize-a-type-you-do-not-own) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 **The clocks, by name.** The five things `System` gave you for time, and
@@ -2171,3 +2172,41 @@ to zero — defined where the C++ cast is not.
 
 > [!WARNING]
 > **Trap:** the unguarded `static_cast<int>(1e20)` is undefined behavior, and this is one of the rare traps in this appendix the tools *do* catch: under `-fsanitize=undefined` it reports `1e+20 is outside the range of representable values of type 'int'`. In a Release build with no sanitizer it is whatever the instruction happened to do — `2147483647` on this machine, and not a number you may rely on.
+
+### Recipe 53 — Serialize a type you do not own
+
+**In C#:** `class InstantConverter : JsonConverter<DateTimeOffset>` registered in `JsonSerializerOptions.Converters`, because you cannot put an attribute on a type from someone else's assembly
+
+**The recipe:**
+
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/json.cpp:recipe-53"
+    ```
+
+=== "Rust"
+
+    `serde` has the same wall and the same two ways round it: `#[serde(with = "module")]` on the *field*, or `#[serde(remote = "Type")]` on a local mirror of the foreign type — because the orphan rule forbids implementing `Serialize` for a type from another crate, which is Recipe 25's namespace problem under a different name. Both are `serde`, a dependency this crate does not take.
+
+**Why it looks like this.** Recipe 25's `to_json` and `from_json` are found by
+argument-dependent lookup ([Chapter 12](12-the-compilation-model.md#chapter-12--the-compilation-model)),
+which means they must live in the *type's own* namespace — fine for a type
+you wrote, impossible for `std::chrono::system_clock::time_point`, for a
+vendor's struct, or for anything in a namespace you are not allowed to add
+to. Specializing the library's own `adl_serializer` is the way in that needs
+no cooperation from the type at all: the template belongs to `nlohmann`, so
+you are extending *your own dependency* rather than someone else's namespace,
+and the two static functions have the same shape as the free pair. What you
+get for it is composition — the specialization is found for the type on its
+own, inside a `std::vector`, and inside another struct's document, which the
+harness asserts all three ways and which a conversion written at each call
+site never gives you. The format here is whole seconds rather than a
+formatted string, because a serialization format is a decision in
+[Chapter 34](34-parse-this-capture.md#chapter-34--every-capture-rejected-as-malformed)'s
+sense and a number has no locale, no time zone and no parser to get wrong;
+Recipe 29 makes the other choice, for a log a human reads. Needs
+`<nlohmann/json.hpp>` and `<chrono>`.
+
+> [!WARNING]
+> **Trap:** the specialization is found at the point of *instantiation*, so it must be visible wherever the conversion happens and not merely where you wrote it — a translation unit that converts the type without having seen your specialization gets the library's default answer, or a compile error, and neither points at the file you forgot to include. Put it in a header beside the type's other adaptations, and include that header rather than remembering to.

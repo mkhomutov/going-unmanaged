@@ -40,6 +40,23 @@ The one piece of *metaprogramming* worth owning before C++20 is in `session.h` a
 > [!TIP]
 > **Key principle:** "A claim about a type is a static_assert, not a comment — its size, its noexcept move, the shape a policy must have — and a template I write checks its parameter up front, so the error is a sentence rather than a novel."
 
+### Asking the compiler about a type
+
+The traits above answer yes-or-no questions about a type. The three spellings here *name* one, and you will read all three long before you write any of them — in the standard library's own signatures, in a colleague's template, and in the error when one goes wrong. [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency) introduced `decltype` in a paragraph and promised the rest here.
+
+```cpp
+--8<-- "exercises/templatelab/main.cpp:type-computations"
+```
+
+**`decltype(expr)`** is the type that expression has, answered by the compiler with nothing run — C# has no counterpart, because `typeof` hands back a runtime object and `var` is only `auto`'s half. Its everyday use is naming a type you must not retype: a vendor's function-pointer signature, a member's type, the element type of a container someone else declared. And it has one rule that surprises everyone once: `decltype(name)` is that name's *declared* type, while `decltype((name))` — the same name, in parentheses — is a reference, because the parenthesised thing is an expression rather than a declaration. One character, two answers, and the asserts above pin both.
+
+**`decltype(auto)`** exists for return types, and the bug it prevents is worth more than the definition. A function returning `auto` gets the type you would get by *copying*: write `auto Value() { return cache_.at(key); }` and the reference is gone, every caller takes a copy, and nothing warns. `decltype(auto)` says "whatever that expression's type is, reference and all". The pair above shows exactly that difference on one underlying function. The rule of thumb: `auto` when you mean a value, `decltype(auto)` when you are passing someone else's answer straight through and must not change it.
+
+**`std::decay_t<T>`** is what `auto` does, spelled out and available as a type: drop the reference, drop `const` and `volatile`, turn an array into a pointer to its first element and a function into a pointer to it. You reach for it at exactly one moment — when a deduced `T` has to be **stored** rather than passed on. A member, a container element, a `std::function`, a queued job: none of them can hold a reference or an array the way a parameter can, so the deduced type must be decayed before it is kept. That is why [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out)'s queue stores its jobs the way it does, and Recipe 28's timing wrapper forwards without storing at all.
+
+> [!WARNING]
+> **Trap:** `std::thread` decays its arguments, so `std::thread t(Work, counter)` hands `Work` a *copy* of `counter` even where the parameter is `int&` — and the code either fails to compile with an error about the reference, or, worse, compiles and updates a copy nobody reads. `std::ref(counter)` is the opt-out, and it is the same decay in `std::bind`, `std::make_tuple` and `std::async`.
+
 ### The three utilities every codebase writes
 
 ```cpp

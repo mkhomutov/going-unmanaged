@@ -67,7 +67,7 @@ The spelling this book teaches is the C++17 one, and the *newer spelling* column
 | `<thread>`, `<mutex>`, `<atomic>`, `<condition_variable>`, `<future>` | C++11 | [Chapter 29](29-concurrency.md#chapter-29--concurrency), Recipe 13 |
 | `<chrono>` | C++11 | Recipes 6, 28–30 |
 | variadic templates | C++11 | [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write) |
-| init-captures (`[v = std::move(big)]`), generic lambdas (`auto` parameters), `decltype(auto)` | C++14 | [Chapter 22](22-exercise-lambda-lifetimes.md#chapter-22--exercise-lambda-lifetimes), [Chapter 19](19-exercise-the-word-counter.md#chapter-19--exercise-the-word-counter) |
+| init-captures (`[v = std::move(big)]`), generic lambdas (`auto` parameters), `decltype(auto)`, the `_t` trait aliases (`std::decay_t`) | C++14 | [Chapter 22](22-exercise-lambda-lifetimes.md#chapter-22--exercise-lambda-lifetimes), [Chapter 19](19-exercise-the-word-counter.md#chapter-19--exercise-the-word-counter), [Chapter 41](41-templates-you-will-write.md#chapter-41--templates-you-will-write) |
 
 **C++17 — the floor.** Everything here is spelled as taught, everywhere in the book.
 

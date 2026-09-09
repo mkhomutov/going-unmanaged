@@ -39,6 +39,7 @@ HttpClient	F-rosetta-cookbook/#recipe-41
 SqliteConnection	F-rosetta-cookbook/#recipe-42
 MemoryMappedFile	F-rosetta-cookbook/#recipe-43
 Math.Round	F-rosetta-cookbook/#recipe-52
+adl_serializer	F-rosetta-cookbook/#recipe-53
 Regex.IsMatch	F-rosetta-cookbook/#recipe-44
 AesGcm	F-rosetta-cookbook/#recipe-37
 
@@ -53,6 +54,7 @@ std::forward	06-the-rule-of-five-and-move-semantics/
 static_cast	09-casts-conversions-and-strings/
 emplace_back	11-stl-containers-and-algorithms/
 size_t	A-fundamentals-refresher/
+decay_t	41-templates-you-will-write/
 std::invoke	F-rosetta-cookbook/#recipe-28
 feature test macro	K-the-standards-catalogue/
 target_link_libraries	J-cmake-catalogue/
