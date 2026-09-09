@@ -11,7 +11,14 @@ reading.
 Every listing compiles, runs, and holds under the canonical flags — all but
 one, which is C++23; that one, the two that need libcrypto, the one that
 needs libcurl and the one that needs sqlite3 build behind probes, and say so
-where they appear. The recipes live as code in
+where they appear. Each recipe carries a **Rust** tab beside its C++ one, and
+that tab has two shapes: code, where Rust's standard library answers the
+question, and a single line naming the crate that does, where it has no
+answer at all — no JSON, no calendar, no cryptography, no HTTP, no SQLite, no
+shared memory, no memory mapping. Thirteen of the forty-nine read that way,
+and the line says which crate and why there is nothing to show; the crate
+under `exercises/cookbook/rust/` takes no dependency, which is what makes the
+tested half tested. The recipes live as code in
 `exercises/cookbook/`, and `scripts/build_all.sh` asserts what each one
 claims on every push. Recipe numbers are stable —
 recipes append and are never renumbered — so a note that says "Recipe 7"
@@ -929,7 +936,7 @@ compile line, which `scripts/check.sh` adds), `<string>`, `<vector>`, and
 
 === "Rust"
 
-    As for Recipe 25: `serde_json::from_str` into a struct with `#[serde(default)]` on the optional fields is the idiom, and it is a dependency this crate does not take.
+    Rust's standard library has no JSON either, so this is Recipe 25's crate read the other way: `serde_json::from_str` into a struct with `#[serde(default)]` on the fields that may be absent is the idiom. A dependency this crate does not take.
 
 **Why it looks like this.** Three outcomes, three spellings, and they are
 [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
@@ -1269,7 +1276,7 @@ Needs `<array>`, `<cstdint>`, `<memory>`. **In Rust** the trap has a spelling: `
 
 === "Rust"
 
-    As for Recipe 25: walking a document you do not own is `serde_json::Value`, matched on as an enum — the `is_structured` question becomes a `match` arm — and it is a dependency this crate does not take.
+    Still no JSON in the standard library (Recipe 25): walking a document you do not own is `serde_json::Value`, matched on as an enum — the `is_structured` question becomes a `match` arm, exhaustively. A dependency this crate does not take.
 
 **Why it looks like this.** Recipes 25 and 26 mapped a document onto a
 type you own; this is the other case, a document whose shape belongs to
@@ -1358,7 +1365,7 @@ entry.
 
 === "Rust"
 
-    As for Recipe 36: `aes-gcm` from RustCrypto seals and opens the same nonce‖ciphertext‖tag envelope, and the layout stays the ICD it is here. A dependency this crate does not take.
+    Rust's standard library has no cryptography either (Recipe 36): `aes-gcm` from RustCrypto seals and opens the same nonce‖ciphertext‖tag envelope, and the layout stays the ICD it is here. A dependency this crate does not take.
 
 **Why it looks like this.** The cipher is the easy half — `AesGcm` with
 a 32-byte key is AES-256-GCM, and authenticated means a flipped byte is
@@ -1824,7 +1831,7 @@ analyzers nag about. Needs `<cctype>`, `<string_view>`. **In Rust** `trim` retur
 
 === "Rust"
 
-    As for Recipe 41: `ureq::post(url).send_json(body)` and `into_json()` on the reply, with the same two verdicts kept apart; `serde_json` as in Recipe 25. Dependencies this crate does not take.
+    The standard library has TCP sockets and nothing above them (Recipe 41), so the client is a crate: `ureq::post(url).send_json(body)` and `into_json()` on the reply, with the same two verdicts kept apart, and `serde_json` for the body as in Recipe 25. Dependencies this crate does not take.
 
 **Why it looks like this.** Recipe 41 with the request turned around and
 Recipe 25 on both ends of it. The header list is one more C handle with
@@ -1882,7 +1889,7 @@ Recipe 25, `<chrono>`, `<memory>`, `<optional>`, `<string>`.
 
 === "Rust"
 
-    As for Recipe 36: `pbkdf2` and `hkdf` from RustCrypto, each a few lines against the same published vectors. Dependencies this crate does not take.
+    Rust's standard library has no cryptography (Recipe 36): `pbkdf2` and `hkdf` from RustCrypto, each a few lines held to the same published vectors as here. Dependencies this crate does not take.
 
 **Why it looks like this.** Recipe 37 took a `Key` and never said where
 one comes from; these are the two answers, and which one is a question
@@ -1939,7 +1946,7 @@ Recipe 37 refuses to open. Needs
 
 === "Rust"
 
-    As for Recipe 36: `hmac` with `sha2`, and its `verify_slice` is the constant-time comparison this recipe's `==` warns about. Dependencies this crate does not take.
+    Rust's standard library has no cryptography (Recipe 36): `hmac` with `sha2`, whose `verify_slice` is the constant-time comparison this recipe's `==` warns about — the trap answered by the API rather than by remembering. Dependencies this crate does not take.
 
 **Why it looks like this.** An HMAC is the answer to a question Recipe
 37 does not ask — *did the bytes I can read come from someone holding
