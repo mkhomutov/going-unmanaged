@@ -1686,6 +1686,62 @@ carries the second reading in one paragraph. Naming a vendor's
 endpoint would break invariant 4 (no real product names in SDK material),
 which is one more reason Recipes 41 and 46 stay generic.
 
+### Graphics — image processing, 3D, animation, and matrix maths
+
+**Asked for as four separate topics in the fifth coverage review
+(2026-09-09, fifty-nine topics): "image processing including
+transformation", "work with 3D", "animation", and "matrices, matrix
+operations and their application".** All four are absent, and the search
+found nothing to build on — no `matrices`, no `OpenGL`, no `SIMD`, and
+every occurrence of `image` meaning a *binary* image: Chapter 8's unwind
+tables costing image size, Chapter 40's Mach-O images bound to their own
+copies. Not once a picture.
+
+**Out of scope because it is a different product, not a missing chapter.**
+The test this file applies is whether the SDK-work transition presents the
+topic in the first months, and for a C# developer arriving at a native
+codebase these do not: they are the subject matter of whatever domain the
+host happens to be in, and a reader whose host is a CAD package needs a
+book about geometry, not a chapter about it. Each of the four is also
+deep enough that a chapter would be a bad map — image processing is
+colour spaces and resampling before it is code, 3D is linear algebra plus
+a graphics API, and animation is interpolation plus a clock. The
+handbook's own subject, which it can teach, is what happens *around* that
+code: the value semantics that make a `std::vector<Point>` one cache-warm
+block rather than a million scattered objects (Chapter 2), the allocation
+counting that finds the copy on a deadline path (Chapter 36), and the
+byte-level discipline a texture or a mesh buffer needs (Chapter 34).
+
+**The one part that is genuinely ours, and is now written down:** a maths
+library is a dependency decision, so Chapter 27's four strategies own it —
+Eigen and glm are header-only, which is that chapter's second strategy and
+its longest-compile warning, and they are the answer to "matrices" for
+nearly every plug-in author. The chapter names them in one sentence rather
+than teaching the maths.
+
+### Low-level system development — mostly taught, and the rest is item 21
+
+**Asked for as "low-level system development" in the fifth coverage
+review, and the honest answer is three answers.** Most of what the phrase
+usually means is already here and not filed under that name: memory
+mapping and shared memory (Recipes 43 and 49), opaque handles and C
+callbacks (Chapters 17 and 18), byte order and struct padding and strict
+aliasing (Chapter 34), the ABI and the loader (Chapters 30 and 40),
+threads and the memory model (Chapter 29), and reading a stripped crash
+report (Chapter 37).
+
+**The one untaught slice is already an item.** Code that runs in an
+interrupt context — no allocation, no lock, no unbounded wait — is item 21
+above, sequenced after item 19, and adding a second entry for it would
+split one gap across two numbers.
+
+**Out of scope beyond that, because the reader is in user space.** Kernel
+modules, device drivers proper, and bare-metal firmware are a different
+job with a different toolchain, a different debugger and a different
+standard library — usually none. This book's reader is inside somebody
+else's application process, which is where every chapter's assumptions
+live; a driver chapter would have to unsay most of them.
+
 ---
 
 ## Structural item (not content) — DONE
