@@ -13,6 +13,7 @@ pub mod flags;
 pub mod handles;
 pub mod logging;
 pub mod lookups;
+pub mod namespaces;
 pub mod ownership;
 pub mod paths;
 pub mod strings;

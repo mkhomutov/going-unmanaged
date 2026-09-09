@@ -136,6 +136,13 @@ run "cb_errors"   $CXX $FLAGS   exercises/cookbook/errors.cpp           -o $OUT/
 run "cb_containers" $CXX $FLAGS exercises/cookbook/containers.cpp     -o $OUT/cb_containers
 run "cb_flags"    $CXX $FLAGS   exercises/cookbook/flags.cpp            -o $OUT/cb_flags
 run "cb_ownership" $CXX $FLAGS  exercises/cookbook/ownership.cpp        -o $OUT/cb_ownership
+# Recipe 50 and Chapter 12's inline namespace. TWO translation units, and
+# that is the subject rather than a build detail: an unnamed namespace's
+# claim is about what happens ACROSS them - the same helper name defined
+# twice with two different bodies, and no collision - which one file cannot
+# demonstrate. The symbol half of the inline-namespace claim is read back
+# with nm further down, since a program cannot see its own mangled names.
+run "cb_namespaces" $CXX $FLAGS exercises/cookbook/namespaces.cpp exercises/cookbook/namespaces_other.cpp -o $OUT/cb_namespaces
 run "cb_watch"    $CXX $FLAGS   exercises/cookbook/watch.cpp            -o $OUT/cb_watch
 # Recipe 43 is the platform, not a library: POSIX shm_open/mmap here, Win32
 # under check.ps1 in the buildlab-msvc job. glibc before 2.34 keeps
@@ -298,6 +305,45 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_errors > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_containers > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_flags > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_ownership > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_namespaces > /dev/null
+# The half of Chapter 12's namespace section a running program cannot check:
+# what the compiler wrote into the SYMBOL. Both claims on the page are about
+# the object file, so nm is the only witness - internal linkage means the
+# helper is not in the table at all, and an inline namespace means the
+# version is in the name while the short spelling is in no symbol anywhere,
+# which is exactly why an old caller's binary keeps resolving to v1.
+# Mangled substrings rather than c++filt output: both compilers this script
+# runs under use the Itanium ABI, and the substring is what is stable.
+echo "== cb_namespaces symbols"
+if command -v nm > /dev/null 2>&1; then
+    $CXX -std=c++17 -c exercises/cookbook/namespaces.cpp -o "$OUT/namespaces.o"
+    SYMS=$(nm "$OUT/namespaces.o")
+    for want in 5audio2v110frame_size 5audio2v210frame_size; do
+        if ! printf '%s\n' "$SYMS" | grep -q "$want"; then
+            echo "build_all.sh: namespaces.o has no symbol matching $want - Chapter 12 says both versions ship:" >&2
+            printf '%s\n' "$SYMS" | sed 's/^/  /' >&2
+            exit 1
+        fi
+    done
+    # The point of the inline namespace: `audio::frame_size` is spelled in the
+    # source and exists as no symbol of its own.
+    if printf '%s\n' "$SYMS" | grep -q '5audio10frame_size'; then
+        echo "build_all.sh: namespaces.o carries a symbol for the unqualified audio::frame_size;" >&2
+        echo "  an inline namespace is supposed to leave the version in the name." >&2
+        exit 1
+    fi
+    # Recipe 50: internal linkage keeps the helper out of the table entirely.
+    if nm -g --defined-only "$OUT/namespaces.o" 2>/dev/null | grep -q 'clamp_to_range' \
+       || nm -g "$OUT/namespaces.o" 2>/dev/null | grep -q 'T .*clamp_to_range'; then
+        echo "build_all.sh: namespaces.o exports clamp_to_range - the unnamed namespace" >&2
+        echo "  should have given it internal linkage (Recipe 50's whole claim)." >&2
+        exit 1
+    fi
+    echo "  ok   v1 and v2 both in the symbol table, no unqualified audio::frame_size,"
+    echo "       clamp_to_range not exported"
+else
+    echo "  ok   (no nm here to read the symbols)"
+fi
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_watch > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_shm > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_json > /dev/null

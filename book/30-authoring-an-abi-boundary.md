@@ -138,6 +138,7 @@ The boundary is a promise, so plan for the version-two conversation before you h
 - **Append, never insert.** In structs, in vtables, in enum values. An offset that has been published is a number someone else's compiled code is already using.
 - **Add functions rather than changing them.** `Engine_Create2` is ugly and it is also the thing that lets a five-year-old binary keep working.
 - **Never change the meaning of an existing error code.** Add new ones.
+- **An inline namespace ships two versions of a C++ name at once.** `namespace acme { namespace v1 { ... } inline namespace v2 { ... } }` puts the version into the mangled symbol while leaving `acme::Session` meaning the current one, so a caller's *binary* keeps resolving to the version it was built against and their *source* keeps compiling unchanged — [Chapter 12](12-the-compilation-model.md#chapter-12--the-compilation-model) has the mechanism and the object file that proves it. It is the C++-name half of the size field above, and it applies to exactly one of the three techniques: PIMPL and the pure-virtual interface are C++ names and can use it, the `extern "C"` façade cannot, because `extern "C"` is the switch that turns mangling off — there the answer stays `Engine_Create2`.
 
 ### In the wild: shipping a plug-in
 

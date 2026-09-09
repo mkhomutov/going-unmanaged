@@ -61,6 +61,7 @@ The spelling this book teaches is the C++17 one, and the *newer spelling* column
 | `unique_ptr`, `shared_ptr`, `weak_ptr` (`make_unique` is C++14) | C++11 | [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii) |
 | rvalue references, `std::move`, the move operations | C++11 | [Chapter 6](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics) |
 | `nullptr`, `enum class`, `override`, `final`, `= default`, `= delete`, `constexpr`, `static_assert` | C++11 | [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency), [Appendix A](A-fundamentals-refresher.md#appendix-a--fundamentals-refresher) |
+| inline namespaces (the version in the mangled symbol) | C++11 | [Chapter 12](12-the-compilation-model.md#chapter-12--the-compilation-model), [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) |
 | member initializers in the class body, delegating constructors | C++11 | [Chapter 4](04-classes-inheritance-interfaces.md#chapter-4--classes-inheritance-interfaces) |
 | `<thread>`, `<mutex>`, `<atomic>`, `<condition_variable>`, `<future>` | C++11 | [Chapter 29](29-concurrency.md#chapter-29--concurrency), Recipe 13 |
 | `<chrono>` | C++11 | Recipes 6, 28–30 |
