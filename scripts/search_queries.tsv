@@ -41,6 +41,9 @@ MemoryMappedFile	F-rosetta-cookbook/#recipe-43
 Math.Round	F-rosetta-cookbook/#recipe-52
 adl_serializer	F-rosetta-cookbook/#recipe-53
 Ed25519	F-rosetta-cookbook/#recipe-54
+JNI	G-the-bridge-catalogue/
+banker's rounding	F-rosetta-cookbook/#recipe-52
+NOMINMAX	12-the-compilation-model/
 secrets at rest	27-dependency-management/
 keychain	27-dependency-management/
 Regex.IsMatch	F-rosetta-cookbook/#recipe-44
@@ -82,6 +85,7 @@ profiling	31-reading-what-the-tools-tell-you/
 what does a copy cost	L-what-things-cost/
 false sharing	L-what-things-cost/
 arena allocator	L-what-things-cost/
+std::pmr	L-what-things-cost/
 pimpl	30-authoring-an-abi-boundary/
 pinvoke	39-the-round-trip-home/
 p/invoke	39-the-round-trip-home/	5
