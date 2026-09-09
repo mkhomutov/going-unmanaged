@@ -41,6 +41,46 @@ static_assert(HasSdkShape<RecordingSdk>::value && HasSdkShape<FakeDeviceSdk>::va
 static_assert(!HasSdkShape<int>::value);
 // --8<-- [end:nothrow-move-assert]
 
+// The three type computations of Chapter 41's "asking the compiler" section,
+// asserted rather than described. Nothing here runs: every one of these is
+// answered before the program exists, which is the whole point of the
+// section and the reason the judge for it is a static_assert.
+// --8<-- [start:type-computations]
+// A static member's type, named without retyping it - and renamed with it if
+// the policy ever changes. Chapter 10's `decltype(&Device_SetCallback)` is
+// this, applied to a vendor's function pointer.
+using ScriptTable = decltype(RecordingSdk::scripts);
+static_assert(std::is_same_v<ScriptTable, std::vector<std::vector<int>>>);
+
+// decltype answers with the expression's own type, reference and all;
+// `auto` answers with the type you would get by copying it. On a RETURN that
+// difference is a whole class of accidental-copy bug, and this is its shape:
+int shared_counter = 0;
+int& counter_by_ref() { return shared_counter; }
+
+auto by_auto() { return counter_by_ref(); }                     // int  - the & is gone
+decltype(auto) by_decltype_auto() { return counter_by_ref(); }  // int& - it is not
+
+static_assert(std::is_same_v<decltype(by_auto()), int>);
+static_assert(std::is_same_v<decltype(by_decltype_auto()), int&>);
+
+// And the parenthesis rule, which surprises everyone once: decltype of a
+// NAME is that name's declared type; decltype of an expression that happens
+// to be one name in parentheses is a reference, because that is what the
+// expression is.
+static_assert(std::is_same_v<decltype(shared_counter), int>);
+static_assert(std::is_same_v<decltype((shared_counter)), int&>);
+
+// std::decay_t IS what `auto` does, spelled out: strip the reference, strip
+// const and volatile, turn an array into a pointer and a function into a
+// pointer to it. Reach for it when a deduced T must be STORED - in a member,
+// in a container, in a std::function - because none of those can hold a
+// reference or an array the way a parameter can.
+static_assert(std::is_same_v<std::decay_t<const int&>, int>);
+static_assert(std::is_same_v<std::decay_t<int(&)[8]>, int*>);
+static_assert(std::is_same_v<std::decay_t<int(int)>, int (*)(int)>);
+// --8<-- [end:type-computations]
+
 int main() {
     // The double: scripted samples, no device, and the counts prove RAII.
     // Side effects stay outside the asserts (Recipe 24's trap).

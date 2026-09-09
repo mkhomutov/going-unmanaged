@@ -11,6 +11,7 @@
 // here and the page follows, and a marker moved is what the page shows. main()
 // is scaffolding - it asserts the round trip, the walk, and the traps.
 #include <cassert>
+#include <chrono>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
@@ -97,7 +98,54 @@ int count_numbers(const json& node) {         // walk anything: objects, arrays,
 }
 // --8<-- [end:recipe-35]
 
+// Recipe 53 - JsonConverter<T> for a type whose namespace is not yours
+// --8<-- [start:recipe-53]
+// Recipe 25's two free functions need a namespace you are allowed to add to.
+// For a type from the standard library, or from a vendor's header, you are
+// not - so the library's other customization point is a specialization of
+// its own template, which needs no cooperation from the type at all.
+namespace nlohmann {
+    template <>
+    struct adl_serializer<std::chrono::system_clock::time_point> {
+        using TimePoint = std::chrono::system_clock::time_point;
+
+        // Whole seconds since the epoch: a number, not a formatted string,
+        // because a wire format is a decision (Chapter 34) and this one has
+        // no locale, no time zone and no parser to get wrong. Recipe 29 is
+        // the other choice, made the other way, for a log a human reads.
+        static void to_json(json& j, const TimePoint& value) {
+            j = std::chrono::duration_cast<std::chrono::seconds>(
+                    value.time_since_epoch()).count();
+        }
+
+        static void from_json(const json& j, TimePoint& value) {
+            value = TimePoint{std::chrono::seconds{j.get<long long>()}};
+        }
+    };
+}
+// --8<-- [end:recipe-53]
+
 int main() {
+    // Recipe 53: a type nobody may add a function beside, round-tripped -
+    // on its own, inside a container, and inside another type's document,
+    // which is the property that makes a serializer worth writing over a
+    // conversion at each call site.
+    {
+        using namespace std::chrono;
+        const auto when = system_clock::time_point{seconds{1'700'000'000}};
+        const json j = when;
+        assert(j.dump() == "1700000000");
+        assert(j.get<system_clock::time_point>() == when);
+
+        const std::vector<system_clock::time_point> stamps{when, when + hours{1}};
+        const json list = stamps;
+        assert(list.dump() == "[1700000000,1700003600]");
+        assert(list.get<std::vector<system_clock::time_point>>() == stamps);
+
+        const json wrapped = json{{"recorded", when}};
+        assert(wrapped.at("recorded").get<system_clock::time_point>() == when);
+    }
+
     // Recipe 25: the round trip is the assertion.
     const std::vector<Reading> readings{{3, 21.5, "C"}, {9, 0.75, "V"}};
     const std::string text = serialize(readings);
