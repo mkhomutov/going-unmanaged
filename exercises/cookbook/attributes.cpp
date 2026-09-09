@@ -12,7 +12,7 @@
 // compiler says no and says why:
 //
 //   -DATTR_DISCARD_RESULT   ignores a [[nodiscard]] result   -> "nodiscard"
-//   -DATTR_NO_NORETURN      removes [[noreturn]] from fatal  -> "return-type"
+//   -DATTR_NO_NORETURN      the same shape, unattributed     -> "return-type"
 //   -DATTR_USE_DEPRECATED   calls the [[deprecated]] one     -> "deprecated"
 //
 // Take the attribute away and the clean build stays clean, which is exactly
@@ -22,18 +22,16 @@
 #include <cstdlib>
 #include <string>
 
-#ifdef ATTR_NO_NORETURN
-#  define MAYBE_NORETURN
-#else
-#  define MAYBE_NORETURN [[noreturn]]
-#endif
-
 enum class Status { Ok, Busy, Failed };
+
+namespace {
+    int busy_seen = 0;
+}
 
 // --8<-- [start:recipe-51]
 // Never comes back. The caller needs no `return` after it, and the compiler
 // stops asking about the path that falls off the end.
-MAYBE_NORETURN void fatal(const char* why) {
+[[noreturn]] void fatal(const char* why) {
     std::fprintf(stderr, "fatal: %s\n", why);
     std::abort();
 }
@@ -50,10 +48,14 @@ const char* describe(Status status, [[maybe_unused]] int verbosity) {
         case Status::Ok:
             return "ok";
         case Status::Busy:
-            [[fallthrough]];          // deliberate, and said out loud
+            ++busy_seen;              // a statement, so the fall is real...
+            [[fallthrough]];          // ...and this is how you say it was meant
         case Status::Failed:
             return "not available";
     }
+    // Not dead code: an enum may hold a value no enumerator names, which is
+    // Chapter 8's tenth scenario and the reason a switch over one is not a
+    // proof of coverage.
     return "unknown";
 }
 
@@ -79,6 +81,26 @@ int required_channel(int configured) {
 }
 // --8<-- [end:recipe-51]
 
+#ifdef ATTR_NO_NORETURN
+// The mutation for the third refusal, deliberately OUTSIDE the listing: the
+// same shape one attribute short. Nothing tells the compiler this ends the
+// process, so it must assume the call returns, and -Wreturn-type fires on the
+// function below. That is the entire difference the attribute makes - and it
+// is written here rather than by taking [[noreturn]] off `fatal`, so the page
+// shows the attribute it is about instead of a macro standing in for it.
+void stop_without_saying_so(const char* why) {
+    std::fprintf(stderr, "fatal: %s\n", why);
+    std::abort();
+}
+
+int required_channel_unattributed(int configured) {
+    if (configured > 0) {
+        return configured;
+    }
+    stop_without_saying_so("channel not configured");
+}
+#endif
+
 int main() {
     // The values, which the attributes do not touch - stated so the listing
     // is a program and not five declarations.
@@ -90,6 +112,7 @@ int main() {
     assert(std::string(describe(bad, 0)) == "not available");
     assert(std::string(describe(Status::Busy, 0)) == "not available");
     assert(required_channel(3) == 3);
+    assert(busy_seen == 1);          // the fallthrough ran its statement once
 
 #ifdef ATTR_DISCARD_RESULT
     // Must be refused: the result is [[nodiscard]] and nobody looks at it.
