@@ -203,7 +203,7 @@ Chapter 25's Finding 10.
   system's libcrypto through `pkg-config` (`--require-openssl` in CI, which
   sets PKG_CONFIG_PATH on macOS), nothing vendored, and its judge is
   published test vectors — NIST's, the GCM specification's, and for Recipes
-  47–48 RFC 7914's, 5869's and 4231's — because a round trip would prove
+  47–48 and 54 RFC 7914's, 5869's, 4231's and 8032's — because a round trip would prove
   only that seal and open agree with each other. `http.cpp` is the third probe, libcurl the same way
   (`--require-curl`), judged with no network: a `file://` fixture runs the
   write callback and the transport's error path exactly as for `https://`,
@@ -249,8 +249,8 @@ Chapter 25's Finding 10.
   each module's tests asserting what the recipe claims. On the page a recipe
   is two tabs, C++ and Rust, each an include. build_all.sh runs
   `cargo test --offline` with `RUSTFLAGS=-D warnings` behind a probe
-  (`--require-cargo`, which CI passes). All 53 recipes have the tab: 39
-  carry code (38 tests), and 14 carry a one-line note instead, because the
+  (`--require-cargo`, which CI passes). All 54 recipes have the tab: 39
+  carry code (38 tests), and 15 carry a one-line note instead, because the
   standard library has no JSON, calendar, cryptography, HTTP, SQLite, regex
   (Recipe 44 gets a std answer anyway), shared memory or memory mapping and
   the crate takes no dependency — the note opens with the reason there is no

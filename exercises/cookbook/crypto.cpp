@@ -183,7 +183,73 @@ bool verify_hmac_sha256(const Bytes& key, const Bytes& data, const Bytes& tag) {
 }
 // --8<-- [end:recipe-48]
 
+// Recipe 54 - a signature, where the verifier must NOT be able to sign
+// --8<-- [start:recipe-54]
+using PrivateKey = std::array<std::uint8_t, 32>;   // Ed25519's seed: kept, never shipped
+using PublicKey  = std::array<std::uint8_t, 32>;   // ships with the plug-in, in the clear
+using Signature  = std::array<std::uint8_t, 64>;
+
+using PKey  = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;       // Recipe 7's shape
+using MdCtx = std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)>;
+
+// The public half, derived from the private one - so the two cannot drift.
+PublicKey public_key_of(const PrivateKey& secret) {
+    PKey key(EVP_PKEY_new_raw_private_key(EVP_PKEY_ED25519, nullptr, secret.data(), secret.size()),
+             &EVP_PKEY_free);
+    PublicKey pub{};
+    std::size_t size = pub.size();
+    if (!key || EVP_PKEY_get_raw_public_key(key.get(), pub.data(), &size) != 1 || size != pub.size()) {
+        throw std::runtime_error("Ed25519 public key derivation failed");
+    }
+    return pub;
+}
+
+// Signing needs the private key. Nothing on the customer's machine has it.
+Signature sign_ed25519(const PrivateKey& secret, const Bytes& message) {
+    PKey key(EVP_PKEY_new_raw_private_key(EVP_PKEY_ED25519, nullptr, secret.data(), secret.size()),
+             &EVP_PKEY_free);
+    MdCtx ctx(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
+    Signature signature{};
+    std::size_t size = signature.size();
+    // No digest argument: Ed25519 is a one-shot over the whole message, which
+    // is why this is EVP_DigestSign and not the init/update/final of Recipe 48.
+    if (!key || !ctx
+        || EVP_DigestSignInit(ctx.get(), nullptr, nullptr, nullptr, key.get()) != 1
+        || EVP_DigestSign(ctx.get(), signature.data(), &size,
+                          message.data(), message.size()) != 1
+        || size != signature.size()) {
+        throw std::runtime_error("Ed25519 signing failed");
+    }
+    return signature;
+}
+
+// Verifying needs only the public key - and a wrong answer is a return value,
+// not an exception, because a bad signature is a value (Chapter 8).
+bool verify_ed25519(const PublicKey& pub, const Bytes& message, const Signature& signature) {
+    PKey key(EVP_PKEY_new_raw_public_key(EVP_PKEY_ED25519, nullptr, pub.data(), pub.size()),
+             &EVP_PKEY_free);
+    MdCtx ctx(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
+    if (!key || !ctx
+        || EVP_DigestVerifyInit(ctx.get(), nullptr, nullptr, nullptr, key.get()) != 1) {
+        throw std::runtime_error("Ed25519 verification could not start");
+    }
+    return EVP_DigestVerify(ctx.get(), signature.data(), signature.size(),
+                            message.data(), message.size()) == 1;
+}
+// --8<-- [end:recipe-54]
+
 static Bytes bytes_of(std::string_view s) { return Bytes(s.begin(), s.end()); }
+
+// The published vectors below are written as hex, the way the RFC prints them.
+template <std::size_t N>
+static std::array<std::uint8_t, N> unhex(std::string_view text) {
+    std::array<std::uint8_t, N> out{};
+    for (std::size_t i = 0; i < N; ++i) {
+        out[i] = static_cast<std::uint8_t>(
+            std::stoul(std::string(text.substr(i * 2, 2)), nullptr, 16));
+    }
+    return out;
+}
 
 int main() {
     // Recipe 36 against NIST's published vectors: the digest of "abc", and
@@ -277,5 +343,46 @@ int main() {
     assert(!verify_hmac_sha256(bytes_of("Jeff"), message, tag));
     assert(!verify_hmac_sha256(jefe, bytes_of("what do ya want for nothing"), tag));
     assert(!verify_hmac_sha256(jefe, message, Bytes(tag.begin(), tag.end() - 1)));
+    // Recipe 54 against RFC 8032's own Ed25519 vectors (section 7.1, TEST 1
+    // and TEST 2). The public keys are DERIVED from the secrets here and
+    // must equal the published ones, and the signatures must equal the
+    // published ones byte for byte - so this is the RFC checking us, not us
+    // checking ourselves. A round trip would pass with a broken
+    // implementation that was broken consistently.
+    {
+        const auto secret1 = unhex<32>("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60");
+        const auto public1 = unhex<32>("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a");
+        const auto sig1 = unhex<64>(
+            "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e0652249015"
+            "55fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b");
+        assert(public_key_of(secret1) == public1);
+        assert(sign_ed25519(secret1, Bytes{}) == sig1);
+        assert(verify_ed25519(public1, Bytes{}, sig1));
+
+        const auto secret2 = unhex<32>("4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb");
+        const auto public2 = unhex<32>("3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c");
+        const auto sig2 = unhex<64>(
+            "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69d"
+            "a085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00");
+        const Bytes message2{0x72};
+        assert(public_key_of(secret2) == public2);
+        assert(sign_ed25519(secret2, message2) == sig2);
+        assert(verify_ed25519(public2, message2, sig2));
+
+        // And the four ways a verifier must say no. The last is the one the
+        // recipe exists for: the OTHER key holder's signature is refused,
+        // which is what a shared HMAC key cannot promise.
+        Bytes tampered = message2;
+        tampered[0] = 0x73;
+        assert(!verify_ed25519(public2, tampered, sig2));
+
+        Signature bent = sig2;
+        bent[0] ^= 0x01;
+        assert(!verify_ed25519(public2, message2, bent));
+
+        assert(!verify_ed25519(public1, message2, sig2));
+        assert(!verify_ed25519(public2, Bytes{}, sig1));
+    }
+
     return 0;
 }

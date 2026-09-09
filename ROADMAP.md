@@ -968,7 +968,7 @@ decision so the tutorial request does not arrive twice.
 
 **Still open from this item:** nothing.
 
-### 24. Cryptography, and ciphertext a C# reader can open — DONE (Recipes 36–37, 47–48)
+### 24. Cryptography, and ciphertext a C# reader can open — DONE (Recipes 36–37, 47–48, 54)
 
 **Missing:** the whole subject. The word did not occur: no hash, no cipher, no
 "there is no `System.Security.Cryptography`" beside Chapter 27's "there
@@ -1011,17 +1011,25 @@ stated as an ICD because it is one.
 
 Filed here by number beside items 22 and 23; its subject is Tier 3's, ciphertext a C# reader can open.
 
-**Still open from this item:** the signature only. Recipes 47–48
-(2026-09-07, the fourth coverage review) closed the key: Recipe 47
-derives it — PBKDF2-HMAC-SHA-256 from a password, HKDF-SHA-256 from a
-secret with entropy — and Recipe 48 signs and verifies with HMAC-SHA-256
-and a constant-time compare, each held to its RFC's vectors. What stays
-open: the licence-key shape the Evidence paragraph names, which needs an
-asymmetric signature (Ed25519) because the verifier on the customer's
-machine must not be able to sign — Recipe 48's Trap says so, and no
-recipe builds it; key *storage* (the platform's keychain or DPAPI) is a
-platform-API question outside the cookbook; and TLS stays out of scope
-because Appendix G already places the bridge on loopback with a token.
+**Nothing open from this item.** Recipes 47–48 (2026-09-07, the fourth
+coverage review) closed the key: Recipe 47 derives it —
+PBKDF2-HMAC-SHA-256 from a password, HKDF-SHA-256 from a secret with
+entropy — and Recipe 48 signs and verifies with HMAC-SHA-256 and a
+constant-time compare, each held to its RFC's vectors. The fifth review
+(2026-09-09) closed the last two halves. **Recipe 54** is the licence-key
+shape the Evidence paragraph named: Ed25519 through `EVP_DigestSign`,
+because the verifier on the customer's machine must not be able to sign,
+held to RFC 8032's own vectors with the public keys *derived* rather than
+stored — so the RFC checks the code instead of the code checking itself.
+**Key storage** stayed out of the cookbook, as this item said it would,
+and went where the reader meets the question instead: Chapter 27's
+batteries section, as three rules that cost nothing (not in the binary,
+not in the repository, not in a log or a crash report) and a four-row
+table of the platform's options, ending on the row that sizes the whole
+subject — a plug-in runs on a machine its user administers, so no store
+on that list defends against the machine's owner and none is meant to.
+TLS stays out of scope because Appendix G already places the bridge on
+loopback with a token.
 
 ### 25. The formula field — user-typed text against injected objects — DONE (Chapter 42)
 

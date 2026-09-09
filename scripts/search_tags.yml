@@ -205,6 +205,13 @@
   - targets
 27-dependency-management.md:
   - dependencies
+  # Chapter 27 also owns "where does the key live" - the platform-API half
+  # of the crypto recipes. Distinctive words only: `key` and `secret` are
+  # everywhere in this book ("key principle", a map's key), and would
+  # hijack every query containing them.
+  - keychain
+  - DPAPI
+  - secrets
   - vendoring
   - FetchContent
   - vcpkg

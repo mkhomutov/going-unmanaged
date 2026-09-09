@@ -40,6 +40,9 @@ SqliteConnection	F-rosetta-cookbook/#recipe-42
 MemoryMappedFile	F-rosetta-cookbook/#recipe-43
 Math.Round	F-rosetta-cookbook/#recipe-52
 adl_serializer	F-rosetta-cookbook/#recipe-53
+Ed25519	F-rosetta-cookbook/#recipe-54
+secrets at rest	27-dependency-management/
+keychain	27-dependency-management/
 Regex.IsMatch	F-rosetta-cookbook/#recipe-44
 AesGcm	F-rosetta-cookbook/#recipe-37
 

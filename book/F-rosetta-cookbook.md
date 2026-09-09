@@ -15,7 +15,7 @@ where they appear. Each recipe carries a **Rust** tab beside its C++ one, and
 that tab has two shapes: code, where Rust's standard library answers the
 question, and a single line naming the crate that does, where it has no
 answer at all — no JSON, no calendar, no cryptography, no HTTP, no SQLite, no
-shared memory, no memory mapping. Fourteen of the fifty-three read that way,
+shared memory, no memory mapping. Fifteen of the fifty-four read that way,
 and the line says which crate and why there is nothing to show; the crate
 under `exercises/cookbook/rust/` takes no dependency, which is what makes the
 tested half tested. The recipes live as code in
@@ -79,6 +79,7 @@ stays right.
 | `[DoesNotReturn]` / `[Obsolete]` / an analyzer attribute | `@Deprecated` / `@CheckReturnValue` | [Recipe 51 — Tell the compiler what a function promises](#recipe-51--tell-the-compiler-what-a-function-promises) |
 | `Math.Round` / `Math.Floor` / `Math.Ceiling` / `(int)x` | `Math.round` / `Math.floor` / `Math.ceil` / `(int)` | [Recipe 52 — Round a number, and turn it into an integer](#recipe-52--round-a-number-and-turn-it-into-an-integer) |
 | `JsonConverter<T>` + `[JsonConverter(typeof(...))]` | a Jackson `JsonSerializer<T>` in a `SimpleModule` | [Recipe 53 — Serialize a type you do not own](#recipe-53--serialize-a-type-you-do-not-own) |
+| `Ed25519.SignData` / `VerifyData` (.NET 10), or `ECDsa` / `RSA.SignData` | `Signature.getInstance("Ed25519")` | [Recipe 54 — Sign so that the verifier cannot forge](#recipe-54--sign-so-that-the-verifier-cannot-forge) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 **The clocks, by name.** The five things `System` gave you for time, and
@@ -1975,7 +1976,7 @@ changed message and a short tag all refuse. Needs `<openssl/evp.h>`,
 libcrypto 3 as Recipe 36, `<memory>`, `<vector>`.
 
 > [!WARNING]
-> **Trap:** `verify_hmac_sha256` on a licence blob compiles, runs and verifies — and the key that verifies is the key that signs, so the plug-in checking the licence on the customer's machine carries everything needed to forge one; when the verifier must not be able to sign, that is a signature (Ed25519, `EVP_DigestSign` with a private key), a different recipe with a different key shape.
+> **Trap:** `verify_hmac_sha256` on a licence blob compiles, runs and verifies — and the key that verifies is the key that signs, so the plug-in checking the licence on the customer's machine carries everything needed to forge one; when the verifier must not be able to sign, that is a signature, which is [Recipe 54](#recipe-54--sign-so-that-the-verifier-cannot-forge).
 
 ### Recipe 49 — Read a large file without copying it
 
@@ -2210,3 +2211,50 @@ Recipe 29 makes the other choice, for a log a human reads. Needs
 
 > [!WARNING]
 > **Trap:** the specialization is found at the point of *instantiation*, so it must be visible wherever the conversion happens and not merely where you wrote it — a translation unit that converts the type without having seen your specialization gets the library's default answer, or a compile error, and neither points at the file you forgot to include. Put it in a header beside the type's other adaptations, and include that header rather than remembering to.
+
+### Recipe 54 — Sign so that the verifier cannot forge
+
+**In C#:** `Ed25519.SignData(privateKey, data)` and `Ed25519.VerifyData(publicKey, data, signature)` in .NET 10; before it, `ECDsa` over a named curve, or a signature algorithm from a package
+
+**The recipe:**
+
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/crypto.cpp:recipe-54"
+    ```
+
+=== "Rust"
+
+    Rust's standard library has no cryptography (Recipe 36): `ed25519-dalek` is the crate, `SigningKey` and `VerifyingKey` are these two halves with the asymmetry written into the type names, and a `Signature` is the same 64 bytes. Dependencies this crate does not take.
+
+**Why it looks like this.** Recipe 48's Trap is this recipe's whole reason
+for existing: an HMAC is verified with **the key that signs it**, so a
+plug-in checking a licence on a customer's machine is carrying everything
+needed to mint one. A signature splits that in two. The private key stays on
+your build machine and signs; the public key ships inside the binary, in the
+clear, verifies, and *cannot sign* — which is the one sentence a shared
+secret can never say, and the reason this is a separate recipe rather than a
+parameter to that one.
+Ed25519 is the default worth having: fixed 32-byte keys and 64-byte
+signatures, no curve to name, no padding mode, no parameters to get wrong,
+and no random number needed at signing time — which removes the failure that
+has broken deployed ECDSA more than once. The EVP shape is Recipe 48's with
+one visible difference: `EVP_DigestSign` is a single call rather than
+init/update/final, because Ed25519 hashes the whole message itself and there
+is no digest to name. `public_key_of` exists so the two halves cannot drift —
+derive the public key from the private one rather than storing both and
+trusting them to match. And verification returns a `bool` rather than
+throwing, because a bad signature is
+[Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)'s
+*value*: it is the expected outcome of checking something you did not write.
+The harness holds all of it to RFC 8032's own vectors — the public keys
+derived here must equal the published ones and the signatures must match
+byte for byte, so it is the RFC checking the code rather than the code
+checking itself. Needs `<openssl/evp.h>` and libcrypto as Recipe 36, plus
+`<array>`, `<memory>`, `<stdexcept>` and `<vector>`. Where the private key
+lives is [Chapter 27](27-dependency-management.md#chapter-27--dependency-management)'s
+question, not this page's.
+
+> [!WARNING]
+> **Trap:** a signature proves who wrote the bytes and nothing else. A signed licence file is still a *file*: it can be copied to another machine, restored after an uninstall, or replayed a year later, and every one of those verifies perfectly. Whatever must not be replayed — a machine id, an expiry, a nonce — has to be *inside* the signed bytes, because a signature over the wrong bytes is a check that always passes.
