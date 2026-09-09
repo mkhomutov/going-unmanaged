@@ -267,6 +267,13 @@ run "cho_storing"  $CXX $FLAGS   exercises/choosing/storing.cpp          -o $OUT
 # alone and removes NRVO, so the two return shapes finally cost different
 # things. Same idiom as exitlab's two link orders: one build checks half.
 run "cho_noelide"  $CXX $FLAGS -fno-elide-constructors exercises/choosing/passing.cpp -o $OUT/cho_noelide
+# Appendix L's measurements, the way exercises/choosing/ holds Appendix H's.
+# The instrument is Chapter 36's replaced operator new, in both forms (under
+# ASan the array form does not route through the scalar one), because the
+# page's claims are counts: 501 allocations become 1 through an arena and 0
+# through a pmr container over a stack buffer. A timing could not check any
+# of it - it would measure this machine, this run and the sanitizers.
+run "cost_alloc"   $CXX $FLAGS   exercises/cost/allocating.cpp           -o $OUT/cost_alloc
 
 echo "== running =="
 $OUT/tracer > /dev/null
@@ -462,6 +469,18 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/templatelab > /dev/null
 # ones. The third is the same source with NRVO switched off.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_passing > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_storing > /dev/null
+# Not silenced: the three allocation counts are the page's numbers, quoted
+# there as a block. Printed AND asserted, because a quoted block is the one
+# shape check_verbatim.sh cannot hold - it pins cpp and cmake fences, not
+# program output, so this is where Appendix L's numbers are kept honest.
+$OUT/cost_alloc | tee "$OUT/cost_alloc.log"
+for cost_line in "501 allocations" "1 allocation " "0 allocations"; do
+    if ! grep -q "$cost_line" "$OUT/cost_alloc.log"; then
+        echo "build_all.sh: exercises/cost/allocating.cpp no longer prints '$cost_line'," >&2
+        echo "  which book/L-what-things-cost.md quotes. Update the page with the run." >&2
+        exit 1
+    fi
+done
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cho_noelide > /dev/null
 
 # Appendix I's other judge, and the only place in this script that asserts a

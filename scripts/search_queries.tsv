@@ -79,6 +79,9 @@ which container	H-choosing/
 dependency management	27-dependency-management/
 unit testing	28-testing/
 profiling	31-reading-what-the-tools-tell-you/
+what does a copy cost	L-what-things-cost/
+false sharing	L-what-things-cost/
+arena allocator	L-what-things-cost/
 pimpl	30-authoring-an-abi-boundary/
 pinvoke	39-the-round-trip-home/
 p/invoke	39-the-round-trip-home/	5

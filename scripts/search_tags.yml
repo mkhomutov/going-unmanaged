@@ -359,6 +359,14 @@ J-cmake-catalogue.md:
   - target_link_libraries
   - find_package
   - install
+L-what-things-cost.md:
+  - cost
+  - performance
+  - allocations
+  - arena
+  - pmr
+  - efficiency
+  - benchmarking
 K-the-standards-catalogue.md:
   - standards
   - __cplusplus
