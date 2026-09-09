@@ -169,9 +169,15 @@ Chapter 25's Finding 10.
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
   (files, strings, timing, handles, lookups, paths, async, events, logging,
   alternatives, errors, expected, json, containers, flags, ownership,
-  crypto, watch, http, database, shm, namespaces, macros, attributes), each
-  with a `main()` asserting what its recipes claim; build_all.sh builds and
-  runs all twenty-four. Two of those are not recipes, like `standard.cpp`:
+  crypto, watch, http, database, shm, namespaces, macros, attributes,
+  numbers), each with a `main()` asserting what its recipes claim;
+  build_all.sh builds and runs all twenty-five. `numbers.cpp` is Recipe 52,
+  and its main() is a value table rather than a smoke test: half its rows
+  exist because C++ answers them differently from C# (`Math.Round(2.5)` is 2,
+  `std::round(2.5)` is 3), and the out-of-range cast the recipe guards is UB,
+  so it is never executed — UBSan's report on it is quoted in the Trap, along
+  with the reason the same guard is silently wrong if retyped for `int64_t`.
+  Two other TUs are not recipes either, like `standard.cpp`:
   `macros.cpp` carries Chapter 12's four preprocessor hazards, and asserts
   the BROKEN spelling of each as well as the fixed one, because the whole
   point is that all four compile clean under `-Wall -Wextra` and answer
@@ -243,8 +249,8 @@ Chapter 25's Finding 10.
   each module's tests asserting what the recipe claims. On the page a recipe
   is two tabs, C++ and Rust, each an include. build_all.sh runs
   `cargo test --offline` with `RUSTFLAGS=-D warnings` behind a probe
-  (`--require-cargo`, which CI passes). All 51 recipes have the tab: 38
-  carry code (35 tests), and 13 carry a one-line note instead, because the
+  (`--require-cargo`, which CI passes). All 52 recipes have the tab: 39
+  carry code (38 tests), and 13 carry a one-line note instead, because the
   standard library has no JSON, calendar, cryptography, HTTP, SQLite, regex
   (Recipe 44 gets a std answer anyway), shared memory or memory mapping and
   the crate takes no dependency — the note opens with the reason there is no
