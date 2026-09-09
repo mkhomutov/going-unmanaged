@@ -1,0 +1,85 @@
+# The queries the site's search must answer, and the page that owns each.
+#
+# scripts/check_search.sh runs every line against the index the site actually
+# publishes and fails when the expected page is not in the first few results.
+# The file exists because search quality is the one part of the site nothing
+# else checks: mkdocs --strict proves every link resolves and says nothing
+# about whether a reader can find the page at all, and a search that quietly
+# stops answering a query is invisible until somebody gives up looking.
+#
+# Format: query <TAB> expected location prefix, and optionally <TAB> n to
+# widen the default tolerance of three. Blank lines and # are skipped. The
+# prefix may name a page (`29-concurrency/`) or one section of one
+# (`F-rosetta-cookbook/#recipe-40`). Add a line whenever a page is added or a
+# topic moves; a query here is a promise the site keeps, and a widened
+# tolerance is a limit recorded rather than hidden.
+#
+# Three kinds of query, because readers arrive three ways (book/README.md):
+# by the C# API already in their head, by the C++ spelling, and by what is
+# on the screen.
+
+# --- Reaching for a C# API ---------------------------------------------
+File.ReadAllText	F-rosetta-cookbook/#recipe-1
+string.Split	F-rosetta-cookbook/#recipe-2
+StringBuilder	F-rosetta-cookbook/#recipe-4
+Stopwatch	F-rosetta-cookbook/#recipe-6
+TryGetValue	F-rosetta-cookbook/#recipe-8
+Path.Combine	F-rosetta-cookbook/#recipe-10
+Directory.GetFiles	F-rosetta-cookbook/#recipe-12
+# `Task.Run` is two of the commonest words in a book of exercises: `task*`
+# matches every "The task" heading and `run*` most instructions, and no tag
+# can lift the recipe without hijacking both words for the whole site. The
+# wider tolerance is the honest record of that - the recipe is findable, just
+# not first, and Appendix F's own index table is the route that works.
+Task.Run	F-rosetta-cookbook/#recipe-13	8
+Encoding.UTF8	F-rosetta-cookbook/#recipe-17
+JsonSerializer.Serialize	F-rosetta-cookbook/#recipe-25
+FileSystemWatcher	F-rosetta-cookbook/#recipe-40
+HttpClient	F-rosetta-cookbook/#recipe-41
+SqliteConnection	F-rosetta-cookbook/#recipe-42
+MemoryMappedFile	F-rosetta-cookbook/#recipe-43
+Regex.IsMatch	F-rosetta-cookbook/#recipe-44
+AesGcm	F-rosetta-cookbook/#recipe-37
+
+# --- Reaching for a C++ spelling ---------------------------------------
+std::optional	10-modern-cpp-fluency/
+std::variant	10-modern-cpp-fluency/
+std::string_view	10-modern-cpp-fluency/
+unique_ptr	01-ownership-and-raii/
+shared_ptr	01-ownership-and-raii/
+std::expected	08-error-handling/
+std::forward	06-the-rule-of-five-and-move-semantics/
+static_cast	09-casts-conversions-and-strings/
+emplace_back	11-stl-containers-and-algorithms/
+size_t	A-fundamentals-refresher/
+std::invoke	F-rosetta-cookbook/#recipe-28
+feature test macro	K-the-standards-catalogue/
+target_link_libraries	J-cmake-catalogue/
+
+# --- Reaching for a concept --------------------------------------------
+iterator invalidation	11-stl-containers-and-algorithms/
+virtual destructor	05-virtual-dispatch-and-the-virtual-destructor/
+rule of five	06-the-rule-of-five-and-move-semantics/
+object slicing	20-exercise-slicing-and-polymorphism/
+name mangling	12-the-compilation-model/
+undefined behavior	03-stack-heap-and-undefined-behavior/
+data race	29-concurrency/
+threads	29-concurrency/
+deadlock	38-the-bridge-out/
+const correctness	I-const/
+which container	H-choosing/
+dependency management	27-dependency-management/
+unit testing	28-testing/
+profiling	31-reading-what-the-tools-tell-you/
+pimpl	30-authoring-an-abi-boundary/
+pinvoke	39-the-round-trip-home/
+p/invoke	39-the-round-trip-home/	5
+templates	07-templates-vs-csharp-generics/
+exceptions	08-error-handling/
+
+# --- Reaching from what is on the screen -------------------------------
+crash on exit	32-it-crashes-on-exit/
+unresolved external symbol	12-the-compilation-model/
+use after free	31-reading-what-the-tools-tell-you/
+memory leak	31-reading-what-the-tools-tell-you/
+stack overflow	03-stack-heap-and-undefined-behavior/

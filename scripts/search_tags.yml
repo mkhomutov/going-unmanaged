@@ -1,0 +1,372 @@
+# Search synonyms, one list per page under book/.
+#
+# scripts/site_hooks.py reads this file and sets each page's `tags`, which
+# Material's search plugin indexes as a third field. The tags are not rendered:
+# nothing about the page changes, on the site or on GitHub, which is why they
+# live here rather than as front matter in the book - book/ stays the files
+# GitHub shows, with nothing generated in them (CLAUDE.md), exactly as the nav
+# already comes from book/README.md rather than from fifty front-matter blocks.
+#
+# Why the field exists at all: the index weights a title a thousand times a
+# word in the body, and this book's chapter titles are deliberately literary -
+# *Still Live at Unload*, *The Bridge Out*, *No Repro, Dump Attached*. That is
+# right for a reading order and useless to a reader who arrives sideways,
+# mid-task, typing what is on their screen. Tags are where the words they
+# actually type live.
+#
+# FOUR RULES, each learned by measuring against scripts/search_queries.tsv:
+#
+# 1. Tags apply to EVERY SECTION of the page, so a tag must name the whole
+#    page's subject. Appendix F is 49 unrelated recipes and gets only the
+#    words that mean "the cookbook"; its recipes are found by the C# API in
+#    their own text, which is what a recipe opens with.
+#
+# 2. A tag outweighs a title by a thousand and a body word by a million, so a
+#    tag that is a common word HIJACKS every query containing it. `task`,
+#    `file`, `code`, `build`, `value` are not tags. Distinctive tokens only.
+#
+# 3. Tags are tokenized like everything else, on the separator in mkdocs.yml.
+#    `std::forward` is not a tag - it becomes `std` and `forward`, and `std`
+#    on one page would win every `std::anything` query in the book.
+#
+# 4. EVERY term the reader types matches as a prefix - Material appends the
+#    wildcard to all of them, not only the last, which is the thing to get
+#    wrong here. So a tag answers every query whose word it starts with:
+#    `forwarding` answers `forward` and `std::forward` alike, and `containers`
+#    would answer `contain`. Prefer the word the reader types over a longer
+#    one, and check the fixture after adding any tag - a tag that helps one
+#    query and breaks another is the normal case, not the surprise.
+#
+# 5. A tag is reachable by any query word it starts with, so a one- or
+#    two-letter word in a typed sentence - the `I` in "which container should
+#    I use" - matches `interfaces`, `iterators`, `interop` and every other
+#    tag beginning with it, each weighted a million. Nothing prevents that;
+#    it is why the fixture keeps short, realistic queries rather than
+#    sentences, and why a new tag is worth a thought about its first letters.
+#
+# Every page under book/ must be listed; the hook fails the build otherwise,
+# the same rule the nav already enforces. An empty list is a decision, so it
+# carries the reason.
+
+# --- Part I ------------------------------------------------------------
+01-ownership-and-raii.md:
+  - raii
+  - ownership
+  - unique_ptr
+  - shared_ptr
+  - weak_ptr
+  - make_unique
+  - IDisposable
+  - deleter
+  - destructor
+02-value-semantics.md:
+  - semantics
+  - slicing
+  - copies
+  - copying
+03-stack-heap-and-undefined-behavior.md:
+  - undefined
+  - stack
+  - heap
+  - uninitialized
+  - overflow
+  - indeterminate
+
+# --- Part II -----------------------------------------------------------
+04-classes-inheritance-interfaces.md:
+  - inheritance
+  - interfaces
+  - diamond
+  - sealed
+  - friend
+  - initializer
+05-virtual-dispatch-and-the-virtual-destructor.md:
+  - virtual
+  - vtable
+  - polymorphism
+  - overriding
+  - dispatch
+06-the-rule-of-five-and-move-semantics.md:
+  - moving
+  - rvalue
+  - lvalue
+  - noexcept
+  - forwarding
+  - elision
+  - stealing
+07-templates-vs-csharp-generics.md:
+  - templates
+  - generics
+  - instantiation
+  - concepts
+  - typename
+08-error-handling.md:
+  - exceptions
+  - throwing
+  - catching
+  - expected
+  - errno
+  - unwinding
+  - assertion
+09-casts-conversions-and-strings.md:
+  - casting
+  - static_cast
+  - dynamic_cast
+  - reinterpret_cast
+  - const_cast
+  - encodings
+  - utf
+
+# --- Part III ----------------------------------------------------------
+10-modern-cpp-fluency.md:
+  - optional
+  - variant
+  - string_view
+  - lambdas
+  - constexpr
+  - decltype
+  - auto
+  - bindings
+11-stl-containers-and-algorithms.md:
+  - algorithms
+  - invalidation
+  - iterators
+  - unordered_map
+  - vectors
+  - LINQ
+
+# --- Part IV -----------------------------------------------------------
+12-the-compilation-model.md:
+  - linker
+  - mangling
+  - headers
+  - translation
+  - preprocessor
+  - ODR
+  - unresolved
+13-toolchain-quick-reference.md:
+  - flags
+  - MSVC
+  - compilers
+  - toolchain
+  - debuggers
+
+# --- Part V ------------------------------------------------------------
+14-exercise-the-lifetime-tracer.md:
+  - tracer
+  - lifetimes
+  - NRVO
+15-exercise-the-buffer.md:
+  - buffer
+  - sabotage
+16-the-sdk-bestiary.md:
+  - bestiary
+  - vendor
+  - SDK
+  - handles
+  - callbacks
+17-exercise-the-fakesdk.md:
+  - FakeSDK
+  - payload
+18-exercise-the-device-sdk.md:
+  - FakeDevice
+  - trampoline
+  - opaque
+19-exercise-the-word-counter.md:
+  - counting
+  - words
+20-exercise-slicing-and-polymorphism.md:
+  - slicing
+  - polymorphic
+21-exercise-iterator-invalidation.md:
+  - invalidation
+  - iterating
+22-exercise-lambda-lifetimes.md:
+  - lambdas
+  - captures
+  - closures
+  - dangling
+23-exercise-the-build-model-lab.md:
+  - breakages
+  - diagnostics
+25-findings-from-practice.md:
+  - gotchas
+  - findings
+  - mistakes
+
+# --- Part VI -----------------------------------------------------------
+26-build-systems-and-cmake.md:
+  - cmake
+  - CMakeLists
+  - presets
+  - generators
+  - targets
+27-dependency-management.md:
+  - dependencies
+  - vendoring
+  - FetchContent
+  - vcpkg
+  - Conan
+  - NuGet
+  - submodules
+28-testing.md:
+  - testing
+  - Catch2
+  - doctest
+  - mocking
+  - fixtures
+  - assertions
+29-concurrency.md:
+  - threading
+  - threads
+  - mutex
+  - deadlock
+  - atomics
+  - races
+  - TSan
+  - condition_variable
+30-authoring-an-abi-boundary.md:
+  - ABI
+  - PIMPL
+  - versioning
+  - exporting
+  - boundary
+31-reading-what-the-tools-tell-you.md:
+  - sanitizers
+  - ASan
+  - UBSan
+  - profiling
+  - profiler
+  - debugging
+  - use-after-free
+  - leaks
+  - symbolizer
+32-it-crashes-on-exit.md:
+  - shutdown
+  - statics
+  - fiasco
+  - atexit
+33-here-is-the-report.md:
+  - reallocation
+  - hot-plug
+34-parse-this-capture.md:
+  - endianness
+  - padding
+  - protocol
+  - aliasing
+  - wire
+35-still-live-at-unload.md:
+  - refcounting
+  - COM
+  - unload
+  - retain
+36-the-host-stutters.md:
+  - performance
+  - allocations
+  - stutter
+  - dropouts
+  - realtime
+37-no-repro-dump-attached.md:
+  - crashdump
+  - minidump
+  - symbols
+  - stripped
+  - inlining
+38-the-bridge-out.md:
+  - bridge
+  - IPC
+  - WebSocket
+  - deadlock
+  - queue
+  - transports
+39-the-round-trip-home.md:
+  - pinvoke
+  - DllImport
+  - marshalling
+  - interop
+  - blittable
+40-cmake-for-the-plug-in.md:
+  - visibility
+  - exports
+  - MODULE
+  - find-module
+  - dlopen
+41-templates-you-will-write.md:
+  - templates
+  - static_assert
+  - policies
+  - traits
+  - SFINAE
+  - constexpr
+42-the-formula-field.md:
+  - parsing
+  - tokenizer
+  - grammar
+  - evaluator
+  - recursion
+  - locale
+
+# --- Appendices --------------------------------------------------------
+A-fundamentals-refresher.md:
+  - pointers
+  - references
+  - explicit
+  - size_t
+  - naming
+  - unsigned
+B-core-principles.md:
+  - principles
+  - cheatsheet
+D-resources.md:
+  - resources
+  - reading
+  - books
+E-glossary.md:
+  - glossary
+  - terminology
+F-rosetta-cookbook.md:
+  # The one page whose sections are unrelated to each other: 49 recipes, and
+  # a tag would apply to all of them. Recipes are found by the C# API their
+  # own first line names, which is exactly what a reader types.
+  - cookbook
+  - recipes
+G-the-bridge-catalogue.md:
+  - gRPC
+  - transports
+  - bridge
+  - hosting
+H-choosing.md:
+  - choosing
+  - signatures
+  - parameters
+  - containers
+I-const.md:
+  - const
+  - constness
+  - mutable
+  - readonly
+J-cmake-catalogue.md:
+  - cmake
+  - target_link_libraries
+  - find_package
+  - install
+K-the-standards-catalogue.md:
+  - standards
+  - __cplusplus
+  - c++17
+  - c++20
+  - c++23
+  - versions
+  - macro
+
+# --- The pages that are neither chapter nor appendix -------------------
+README.md:
+  # The Contents. Every word on it belongs to some other page, and a tag here
+  # would put the table of contents above the page the reader asked for.
+  []
+components.md:
+  - components
+  - reusable
+symptoms.md:
+  - symptoms
+  - troubleshooting

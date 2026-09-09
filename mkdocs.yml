@@ -35,7 +35,29 @@ hooks:
   - scripts/site_hooks.py
 
 plugins:
-  - search
+  # Tuned against this corpus, and held to a fixture by
+  # scripts/check_search.sh: the numbers below are that fixture's, and every
+  # clause here earned its place by moving it. The separator is Material's
+  # own recommendation for code-heavy documentation MINUS its camelCase
+  # clause. Splitting on punctuation is what makes `std::optional`,
+  # `vector::reserve` and `Path.Combine` findable by either half, and it is
+  # worth 3 of the 53 queries. Splitting camelCase costs more than it pays
+  # here, because in a book written for C# developers the identifiers readers
+  # type ARE camelCase: with it, `FileSystemWatcher` becomes `File System
+  # Watcher` and lands on Chapter 26's build systems instead of Recipe 40.
+  # `_` is left alone for the same reason at the other end of the alphabet -
+  # `unique_ptr` and `push_back` are names, not two words.
+  #
+  # The pipeline stays Material's default, written down rather than inherited
+  # so that a default change is a visible diff. Adding the stemmer looks
+  # obvious and is wrong: Material appends a wildcard to every term, lunr
+  # skips the pipeline for a wildcard term, and the index would hold `reserv`
+  # while the query asked for `reserve*` - which matches nothing. Measured,
+  # not reasoned: turning the stemmer on costs 18 of the 53 queries.
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;'
+      pipeline:
+        - stopWordFilter
 
 markdown_extensions:
   - toc:

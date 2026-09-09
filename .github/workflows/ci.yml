@@ -387,3 +387,7 @@ jobs:
       - run: ./scripts/build_site.sh
       - run: test -f build/site/index.html
       - run: '! grep -rl "language-mermaid\|class=\"mermaid\"" build/site --include=*.html'
+      # And a third thing --strict cannot see: whether a reader can find the
+      # page at all. check_search.sh runs the site's own search worker over
+      # the index just built and holds it to scripts/search_queries.tsv.
+      - run: ./scripts/check_search.sh --require-node
