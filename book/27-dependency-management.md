@@ -95,6 +95,27 @@ What none of them decides for you is the half this book's reader meets first: th
 
 The same shift covers the maths, for a reader whose host is a CAD package, a game engine or an imaging tool. There is no linear algebra in the standard library — `<numeric>` has `inner_product` and `<valarray>` is a curiosity nobody reaches for — so a matrix type is a dependency like the rest, and the ecosystem's two answers are **Eigen** for general linear algebra and **glm** for the small fixed-size vectors and matrices that graphics APIs speak. Both are header-only, which makes them this chapter's second strategy at its most extreme: nothing to link, nothing to ship, and a compile time that grows in every translation unit that includes them — the price that section named, paid at its largest. What they compute is your domain's subject rather than this book's; what belongs here is the decision to take one, and the reason the answer is never "write my own `Matrix4`".
 
+### And the key itself
+
+Every one of those recipes takes a key as an argument and none of them says where it came from, which is the question a review will ask first. It is not a cryptography question and it has no library answer: **a secret at rest is a platform question**, and the platform is the one thing a plug-in inherits rather than chooses.
+
+Three rules before any of the options, because they close most of the ways this goes wrong and none of them costs anything:
+
+- **Not in the binary.** A key compiled into your plug-in is in every copy of it, extractable with `strings` in about a second, and unrotatable without shipping a release. Obfuscating it moves the work from one second to ten minutes. If a licence check is what you are reaching for, the answer is Recipe 54's asymmetric pair — ship the *public* key, which is meant to be readable.
+- **Not in the repository**, which includes the connection string this chapter's database paragraph left hanging, the `.env` beside the project, and the test fixture somebody will copy into production. A key that has been committed is disclosed, and rotating it is the only fix; history rewriting is not one.
+- **Not in a log, a crash report or a telemetry payload.** [Chapter 37](37-no-repro-dump-attached.md#chapter-37--crash-at-session-close-field-units-only)'s dump carries the process's memory to a machine you do not control, and a key held in a `std::string` for the life of the session is in it.
+
+Then the options, which are the platform's:
+
+| Where | What it is | Price |
+|---|---|---|
+| The OS credential store | macOS Keychain (`SecItemAdd`/`SecItemCopyMatching`), Windows DPAPI (`CryptProtectData`) or the Credential Manager, libsecret on Linux desktops | Three APIs, three idioms, and a Linux answer that assumes a desktop session — a headless build agent has no keyring to talk to |
+| The host's own facility | Some hosts store plug-in credentials for you, in the same place they keep the user's other settings | Free, portable across the platforms *the host* supports, and undocumented as often as not — ask before building anything |
+| An environment variable, read once at startup | Recipe 31's shape, with a secret in it | Fine for a build agent, poor on a desktop: it is visible to every process the user runs, and it lands in shell history and CI logs |
+| Never on this machine | The key stays on a server and the plug-in gets a short-lived token, or the operation itself happens on the other side of [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out)'s bridge | The most secure, and the only one that needs a network, an outage story and a server you now operate |
+
+The row to notice is the last one. A plug-in runs inside somebody else's process on a machine its user administers, which means **anything it can read, the user can read** — no store on that list defends against the machine's owner, and none is meant to. What they defend against is the other things on the disk: a backup, a sync folder, a support bundle, the next person to use the laptop. Sized that way the choice is usually easy, and the mistake is expecting more.
+
 One of them does appear in this repository: nlohmann/json is vendored under `exercises/third_party/`, with its version recorded beside it, for the three JSON recipes in [Appendix F](F-rosetta-cookbook.md#appendix-f--the-rosetta-cookbook) — this chapter's first strategy, practised once, so the README a vendored dependency should carry is there to read; libcrypto, libcurl and sqlite3, for the cookbook's probed recipes, are the fourth strategy practised three times — located on the system through `pkg-config`, never copied in; the CMake spelling of that step, `find_package`'s shipped modules and `FindPkgConfig`, is [Appendix J](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue)'s entry. Nothing under `solutions/` touches it; the standard-library-only rule for solutions stands. What the book trains is the part that transfers: the strategies above decide how one of these lands in your build, and the Bestiary shapes describe the API you will meet when it does.
 
 ### The diamond, and why C++ makes it dangerous
