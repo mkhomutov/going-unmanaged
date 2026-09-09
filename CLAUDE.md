@@ -169,9 +169,18 @@ Chapter 25's Finding 10.
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
   (files, strings, timing, handles, lookups, paths, async, events, logging,
   alternatives, errors, expected, json, containers, flags, ownership,
-  crypto, watch, http, database, shm, namespaces), each with a `main()`
-  asserting what its recipes claim; build_all.sh builds and runs all
-  twenty-two. `namespaces.cpp` is the one built from TWO translation units
+  crypto, watch, http, database, shm, namespaces, macros, attributes), each
+  with a `main()` asserting what its recipes claim; build_all.sh builds and
+  runs all twenty-four. Two of those are not recipes, like `standard.cpp`:
+  `macros.cpp` carries Chapter 12's four preprocessor hazards, and asserts
+  the BROKEN spelling of each as well as the fixed one, because the whole
+  point is that all four compile clean under `-Wall -Wextra` and answer
+  wrong. `attributes.cpp` is Recipe 51, and is judged the way constlab is —
+  an attribute changes no instruction, so build_all.sh compiles it three
+  more times with `-Werror` and one `-D` each and asserts the build is
+  REFUSED naming `nodiscard`, `return-type` and `deprecated`; delete any of
+  the three attributes and the clean build stays exactly as clean, which is
+  why the refusals are the check. `namespaces.cpp` is the one built from TWO translation units
   (`namespaces_other.cpp` beside it) and the pair is the subject rather than
   a build detail: an unnamed namespace's claim is about what happens ACROSS
   translation units — the same helper name defined twice with different
@@ -234,8 +243,8 @@ Chapter 25's Finding 10.
   each module's tests asserting what the recipe claims. On the page a recipe
   is two tabs, C++ and Rust, each an include. build_all.sh runs
   `cargo test --offline` with `RUSTFLAGS=-D warnings` behind a probe
-  (`--require-cargo`, which CI passes). All 50 recipes have the tab: 37
-  carry code (33 tests), and 13 carry a one-line note instead, because the
+  (`--require-cargo`, which CI passes). All 51 recipes have the tab: 38
+  carry code (35 tests), and 13 carry a one-line note instead, because the
   standard library has no JSON, calendar, cryptography, HTTP, SQLite, regex
   (Recipe 44 gets a std answer anyway), shared memory or memory mapping and
   the crate takes no dependency — the note opens with the reason there is no
@@ -244,8 +253,9 @@ Chapter 25's Finding 10.
   last section — Rust where it sharpens the C++ point, never woven into
   the explanation — and Chapters 38 and 39 point at Chapter 30's Rust
   client as one more consumer of the C ABI
-- `exercises/constlab/` — Appendix I's lab, and the only one in the repo whose
-  judge asserts a build FAILS. `counter.h` + `main.cpp` compile and run
+- `exercises/constlab/` — Appendix I's lab, and the first of the four places
+  in the repo whose judge asserts a build FAILS (`templatelab/`,
+  `cookbook/standard.cpp` and `cookbook/attributes.cpp` are the others). `counter.h` + `main.cpp` compile and run
   clean; five const violations behind `-DCONSTLAB_VIOLATION_1..5` must each
   be REFUSED, and the diagnostic must name const or read-only. Two rules keep
   that from being vacuous and are easy to undo: the clean build must succeed

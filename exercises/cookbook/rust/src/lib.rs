@@ -5,6 +5,7 @@
 //! and the page follows.
 pub mod alternatives;
 pub mod async_work;
+pub mod attributes;
 pub mod containers;
 pub mod errors;
 pub mod events;

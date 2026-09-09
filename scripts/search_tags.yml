@@ -143,6 +143,7 @@
   - headers
   - translation
   - preprocessor
+  - macros
   - ODR
   - unresolved
 13-toolchain-quick-reference.md:

@@ -15,7 +15,7 @@ where they appear. Each recipe carries a **Rust** tab beside its C++ one, and
 that tab has two shapes: code, where Rust's standard library answers the
 question, and a single line naming the crate that does, where it has no
 answer at all — no JSON, no calendar, no cryptography, no HTTP, no SQLite, no
-shared memory, no memory mapping. Thirteen of the fifty read that way,
+shared memory, no memory mapping. Thirteen of the fifty-one read that way,
 and the line says which crate and why there is nothing to show; the crate
 under `exercises/cookbook/rust/` takes no dependency, which is what makes the
 tested half tested. The recipes live as code in
@@ -76,6 +76,7 @@ stays right.
 | `HMACSHA256.HashData` / `CryptographicOperations.FixedTimeEquals` | `Mac.getInstance("HmacSHA256")` / `MessageDigest.isEqual` | [Recipe 48 — Sign and verify bytes](#recipe-48--sign-and-verify-bytes) |
 | `MemoryMappedFile.CreateFromFile` / `File.ReadAllBytes` on a large file | `FileChannel.map(READ_ONLY)` | [Recipe 49 — Read a large file without copying it](#recipe-49--read-a-large-file-without-copying-it) |
 | `internal` / a `private static` helper | package-private | [Recipe 50 — Keep a helper out of every other file](#recipe-50--keep-a-helper-out-of-every-other-file) |
+| `[DoesNotReturn]` / `[Obsolete]` / an analyzer attribute | `@Deprecated` / `@CheckReturnValue` | [Recipe 51 — Tell the compiler what a function promises](#recipe-51--tell-the-compiler-what-a-function-promises) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 **The clocks, by name.** The five things `System` gave you for time, and
@@ -2067,3 +2068,50 @@ the compiler rather than the linker is what enforces it.
 
 > [!WARNING]
 > **Trap:** a **unity build** ([Appendix J](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue)) concatenates translation units before compiling them, so two file-private helpers that never met are suddenly one translation unit apart — a redefinition error naming a file that exists in no directory, or, if the signatures differ, a silent change of which one a call reaches.
+
+### Recipe 51 — Tell the compiler what a function promises
+
+**In C#:** `[DoesNotReturn]` on the throw helper, `[Obsolete("use X")]` on the old overload, and — for "the caller must look at this" — an analyzer attribute from a package, because the language has none
+
+**The recipe:**
+
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/attributes.cpp:recipe-51"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/attributes.rs:recipe-51"
+    ```
+
+**Why it looks like this.** These are **standard attributes**: the same
+double-bracket syntax on every compiler since C++11, with no package and no
+analyzer to install, which is the part a C# developer will not expect —
+`[MustUseReturnValue]` comes from JetBrains and `[NotNull]` from somewhere
+else, and here the compiler has the whole set built in. Four of them earn
+their keep in SDK work.
+`[[nodiscard]]` is the one to reach for most: [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes)
+spends a page on the fact that an error returned as a value can be ignored,
+and this is the compiler declining to let it be. `[[noreturn]]` is for the
+function with nothing to return — a fatal handler, an abort wrapper, the
+`default:` that cannot happen — and it pays for itself immediately, because
+without it every caller needs a `return` after the call to keep
+`-Wreturn-type` quiet, and that unreachable `return` is the line a reader
+stops at. `[[maybe_unused]]` is the answer to a parameter Release does not
+read (Recipe 24's assert argument, exactly), and `[[fallthrough]]` says
+that a `switch` case falling into the next was meant, which `-Wimplicit-fallthrough`
+demands and which is otherwise a comment nobody enforces.
+`[[deprecated("use X")]]` is `[Obsolete]`, message included, and matters
+here for [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s
+reason: you may not delete an exported function, so saying so at every call
+site is the whole migration. Needs nothing — no header, no library. **In
+Rust** two of the four are not attributes at all: `!` as a return type is
+`[[noreturn]]` moved into the type system, and an exhaustive `match` makes
+`[[fallthrough]]` unnecessary by refusing the missing arm; `#[must_use]`
+and `#[deprecated]` are the same idea under the same names.
+
+> [!WARNING]
+> **Trap:** an attribute changes no instruction and no value, so nothing in a running program can tell you one is missing, or that a careless edit dropped it — the clean build stays exactly as clean. `exercises/cookbook/attributes.cpp` is therefore judged by three builds that must be **refused** under `-Werror`, one per attribute, each asserted to name its own warning.

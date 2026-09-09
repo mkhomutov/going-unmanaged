@@ -143,6 +143,14 @@ run "cb_ownership" $CXX $FLAGS  exercises/cookbook/ownership.cpp        -o $OUT/
 # demonstrate. The symbol half of the inline-namespace claim is read back
 # with nm further down, since a program cannot see its own mangled names.
 run "cb_namespaces" $CXX $FLAGS exercises/cookbook/namespaces.cpp exercises/cookbook/namespaces_other.cpp -o $OUT/cb_namespaces
+# Chapter 12's broken macros, kept beside their fixes. Every one of the three
+# compiles clean under -Wall -Wextra, runs, and answers wrong - which is the
+# chapter's point and the reason the BAD spellings are asserted too.
+run "cb_macros"   $CXX $FLAGS   exercises/cookbook/macros.cpp           -o $OUT/cb_macros
+# Recipe 51's attributes. This build is the boring half: an attribute changes
+# no instruction, so what it changes is a diagnostic, and the three builds
+# that must be REFUSED are further down.
+run "cb_attributes" $CXX $FLAGS exercises/cookbook/attributes.cpp       -o $OUT/cb_attributes
 run "cb_watch"    $CXX $FLAGS   exercises/cookbook/watch.cpp            -o $OUT/cb_watch
 # Recipe 43 is the platform, not a library: POSIX shm_open/mmap here, Win32
 # under check.ps1 in the buildlab-msvc job. glibc before 2.34 keeps
@@ -306,6 +314,35 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_containers > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_flags > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_ownership > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_namespaces > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_macros > /dev/null
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_attributes > /dev/null
+# Recipe 51's real judge: an attribute's whole effect is on what the compiler
+# SAYS, so the check is three builds that must fail, each naming its own
+# warning. Appendix I's constlab discipline, moved from const to warnings -
+# and the reason it is needed is that deleting any of the three attributes
+# leaves the clean build above just as clean.
+for attr_case in \
+    "ATTR_DISCARD_RESULT:nodiscard" \
+    "ATTR_NO_NORETURN:return-type" \
+    "ATTR_USE_DEPRECATED:deprecated"; do
+    attr_define=${attr_case%%:*}
+    attr_expect=${attr_case##*:}
+    echo "== cb_attributes -D$attr_define (must be refused)"
+    # shellcheck disable=SC2086
+    if $CXX $FLAGS -Werror -D"$attr_define" exercises/cookbook/attributes.cpp \
+            -o "$OUT/cb_attributes_neg" > "$OUT/attributes_$attr_define.log" 2>&1; then
+        echo "build_all.sh: attributes.cpp built with -D$attr_define and -Werror," >&2
+        echo "  but Recipe 51 says the compiler should refuse it." >&2
+        exit 1
+    fi
+    if ! grep -q -- "$attr_expect" "$OUT/attributes_$attr_define.log"; then
+        echo "build_all.sh: attributes.cpp was refused under -D$attr_define, but not" >&2
+        echo "  for '$attr_expect' - the diagnostic was:" >&2
+        sed 's/^/  /' "$OUT/attributes_$attr_define.log" >&2
+        exit 1
+    fi
+    echo "  ok   refused, naming $attr_expect"
+done
 # The half of Chapter 12's namespace section a running program cannot check:
 # what the compiler wrote into the SYMBOL. Both claims on the page are about
 # the object file, so nm is the only witness - internal linkage means the

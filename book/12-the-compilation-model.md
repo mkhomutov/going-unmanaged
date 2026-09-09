@@ -130,6 +130,51 @@ Since #include is paste, a header included twice via diamond paths would define 
 #endif
 ```
 
+### The preprocessor, and the four ways a macro lies
+
+Stage 1 of the pipeline is a text machine, and it is worth one section of its own because C# gave you a fraction of it. There, `#if DEBUG` and `#define TRACE` exist, the symbols have no values, and nothing substitutes into your source. Here the preprocessor runs *before the compiler sees anything* — before types, before scopes, before namespaces — and rewrites your file. That is its power and all four of its hazards.
+
+**Reach for it when nothing else can do the job**, which is a shorter list than the amount of macro code in the wild suggests: conditional compilation on a platform, a toolchain or a standard (`#ifdef _WIN32`, and the feature-test macros of [Appendix K](K-the-standards-catalogue.md#appendix-k--the-standards-catalogue)); include guards; quoting source text as a string, which no C++ feature can do; and stamping a call site with `__FILE__` and `__LINE__`, which nothing could do until C++20's `std::source_location`. Those last two are why [Chapter 28](28-testing.md#chapter-28--testing)'s test framework is macros and not functions. For everything else there is a better tool now: `constexpr` for a constant (the table above), `inline` for a small function, a template for a family of them, `enum class` for a set of names.
+
+Everything below compiles clean under `-Wall -Wextra`, runs, and answers wrong — which is the reason to know all four cold rather than two.
+
+**1. It substitutes text, so precedence is not yours.**
+
+```cpp
+--8<-- "exercises/cookbook/macros.cpp:macro-parens"
+```
+
+`SQUARE_BAD(1 + 2)` expands to `1 + 2 * 1 + 2`, which is **5**. No function could be wrong this way. Hence the rule: every parameter in parentheses, and the whole body in parentheses too.
+
+**2. It substitutes text *again*, so arguments are evaluated as many times as they appear.**
+
+```cpp
+--8<-- "exercises/cookbook/macros.cpp:macro-double-eval"
+```
+
+`MAX_BAD(next(), 0)` calls `next()` twice — once in the comparison, once in the result — and returns the *second* call's value. The parentheses of rule 1 do nothing about this, and no amount of care in the macro can fix it; only not being a macro can. `std::max` is a function for exactly this reason.
+
+**3. It has no idea what a statement is.**
+
+```cpp
+--8<-- "exercises/cookbook/macros.cpp:macro-do-while"
+```
+
+`if (cond) BUMP_TWICE_BAD(n);` gives the `if` the first increment and runs the second unconditionally. The `do { ... } while (0)` wrapper is not a superstition: it makes a multi-statement macro one statement that still takes a trailing semicolon, and it is why you will see that shape in every codebase that has been bitten.
+
+**4. It has no scope, no namespace and no type.** A macro is not in a namespace, cannot be qualified, and rewrites every matching token in every file that comes after it, at any include depth. This is why macros are `SCREAMING_CASE` and nothing else is ([Appendix A.8](A-fundamentals-refresher.md#appendix-a--fundamentals-refresher)) — the convention is the only collision protection there is. The canonical casualty: `<windows.h>` defines `min` and `max` as macros, so a header that includes it breaks `std::max(a, b)` in every file downstream, with an error pointing at the standard library. The fix is to define `NOMINMAX` before the include, and the reason you have to know that is rule 4.
+
+The one thing on the list that is a *capability* rather than a hazard is the stringifier, because it is the reason the preprocessor cannot simply be retired:
+
+```cpp
+--8<-- "exercises/cookbook/macros.cpp:macro-stringify"
+```
+
+`#expr` turns the argument's source text into a string literal — `NAME_OF(a + b)` is `"a + b"` — and `##` pastes two tokens into one identifier. Nothing in the language proper can see its own source text, which is why `CHECK(x == y)` can print `x == y` and a function taking a `bool` never could.
+
+> [!TIP]
+> **Key principle:** "A macro is a text substitution with no scope and no type, so I reach for one only where nothing else can do the job — conditional compilation, include guards, quoting source text, stamping a call site — and I write every parameter in parentheses and every multi-statement body in a do/while(0)."
+
 ### Forward declarations — the build-time optimization
 
 ```cpp
