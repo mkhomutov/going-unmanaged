@@ -10,6 +10,132 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [0.13.0] — 2026-09-09
+
+The fifth coverage review, and the biggest list yet — fifty-nine topics
+against 0.12.0 — came back thirty-four covered outright and nine already
+answered by earlier reviews' decisions. What was left divided cleanly, and
+the release is that division. Four small language subjects the book used
+correctly and never taught: the unnamed namespace it had filed in one table
+row, the inline namespace that appeared nowhere at all, the preprocessor's
+four ways of lying, and the standard attributes Appendix K listed by arrival
+and no page showed. Two halves of cryptography that ROADMAP item 24 had
+recorded as open in these words, now closed: the signature whose verifier
+cannot forge, and where the key actually lives. Two subjects taught in eight
+places and indexed in none, now Appendix L. And one thing that was not about
+content at all.
+
+That last one came first, because it decides whether any of the rest is
+found. The site is meant to be consulted daily rather than read once, which
+makes retrieval load-bearing, and it was the one part of the build nothing
+checked — `mkdocs build --strict` proves every link resolves and says nothing
+about whether a reader can find the page. Measured rather than assumed, the
+published index turned out to weight `tags` a million and carry none on any
+of its 522 documents, to split tokens on whitespace and hyphens only, and to
+weight chapter titles a thousand — titles this book writes as *Still Live at
+Unload*. Against a fixture of the queries a reader actually types it answered
+44 of 53. It now answers all of them, and `check_search.sh` runs the site's
+own search worker over the index CI just built, so what is checked is what a
+reader gets. Two of the three changes that got there were the opposite of
+what the review had recommended: the stemmer *costs* eighteen queries, and
+splitting camelCase sends `FileSystemWatcher` to the build-systems chapter.
+Both were found by running the fixture rather than by reasoning about it,
+which is the release's recurring lesson.
+
+It recurs in the code. Chapter 41's `decltype(auto)` demonstration first used
+`auto(x)`, which is C++23. Recipe 51's `[[noreturn]]` first sat after an
+exhaustive enum switch, where clang proves the end unreachable and warns
+about nothing — so removing the attribute changed no diagnostic and the
+must-fail build did not fail. Appendix L's false-sharing listing padded by
+64 on a machine whose `hardware_destructive_interference_size` reports 256,
+which is to say the example of the fix would not have fixed it. And Recipe
+52's integer guard is exact for `int` and silently wrong the moment a reader
+retypes it for `int64_t`, because `(double)INT64_MAX` rounds up past the end
+— measured, then written into the page as the trap it is.
+
+### Added
+
+- **The search, tuned and held to a fixture** (MINOR). `scripts/search_queries.tsv`
+  is the promise — a query a reader types and the page it must reach, in the
+  three groups `book/README.md` says readers arrive by — and
+  `scripts/check_search.sh` keeps it, in CI's `site` job. It does not
+  reimplement the ranking: it loads the site's own search worker and talks its
+  message protocol, so a Material upgrade needs no change here (the first
+  draft did reimplement it on lunr and got three things wrong that changed the
+  answer). `scripts/search_tags.yml` supplies the synonyms a page's own words
+  do not carry, applied by the hook rather than as front matter so `book/`
+  stays the files GitHub renders, and it must list every page or the build
+  fails. Two queries carry a widened tolerance instead of a fix, because
+  `Task.Run` is two of the commonest words in a book full of exercises —
+  recording the limit rather than hiding it.
+- **Chapter 12: namespaces, and the preprocessor** (MINOR). Two sections.
+  The first covers the three kinds and what C# has no counterpart for —
+  argument-dependent lookup, which Recipe 25's JSON conversions have depended
+  on since they were written; the unnamed namespace as the file-private one,
+  with the unity build that undoes it; and the inline namespace, which had
+  zero occurrences in the book and which Chapter 30's versioning list was
+  missing. It closes on a refusal worth writing down: a namespace cannot be a
+  feature toggle, because a namespace is resolved when the code is compiled
+  and a flag is a value read when it runs. The second is the preprocessor's
+  four lies, every one of which compiles clean under `-Wall -Wextra`, runs,
+  and answers wrong — so `exercises/cookbook/macros.cpp` asserts the broken
+  spelling of each beside its fix.
+- **Appendix F: Recipes 50–54** (MINOR — appended recipes). Keep a helper out
+  of every other file (`internal`, shown across the two translation units the
+  claim takes). Tell the compiler what a function promises — the standard
+  attributes, judged by three builds that must be refused under `-Werror`,
+  since deleting an attribute leaves a clean build exactly as clean. Round a
+  number and turn it into an integer, which exists because `Math.Round(2.5)`
+  is 2 and `std::round(2.5)` is 3. Serialize a type you do not own, through
+  `nlohmann::adl_serializer`, for the types whose namespace is not yours.
+  And sign so that the verifier cannot forge — Ed25519 through
+  `EVP_DigestSign`, held to RFC 8032's own vectors with the public keys
+  derived rather than stored, so the RFC checks the code instead of the code
+  checking itself.
+- **Chapter 41: asking the compiler about a type** (MINOR). `decltype`
+  worked rather than mentioned, including the parenthesis rule;
+  `decltype(auto)` with the accidental-copy bug it prevents; and
+  `std::decay_t` with the one moment you reach for it — when a deduced `T`
+  must be stored rather than passed on. Nine `static_assert`s in
+  `templatelab/main.cpp`, and the trap this decay actually costs people:
+  `std::thread` decays its arguments, so a thread handed a counter updates a
+  copy.
+- **Chapter 27: and the key itself** (MINOR). The other half of ROADMAP item
+  24, put where the reader meets the question rather than in the cookbook, as
+  that item said it should be. Three rules that cost nothing — not in the
+  binary, not in the repository, not in a log or a crash report — and a table
+  of the platform's options ending on the row that sizes the subject: a
+  plug-in runs on a machine its user administers, so no store on that list
+  defends against the machine's owner, and none is meant to. Chapter 27 also
+  gains a paragraph on maths libraries, which is the one part of the graphics
+  question that is this book's.
+- **Appendix L — What Things Cost** (MINOR). Chapter 36's lookup half, in
+  Appendix G and J's shape: what a copy, a `throw`, a `shared_ptr` and a heap
+  allocation cost, which of the repository's three instruments answers which
+  complaint — each listed with what it *cannot* see — and how to read a cost
+  claim without being lied to. Two rows nobody had written down get code:
+  `exercises/cost/allocating.cpp` measures 501 allocations becoming 1 through
+  an arena and 0 through a `std::pmr` container over a stack buffer, and the
+  false-sharing listing is deliberately structural — `sizeof` and `alignof`,
+  never a timing — because a timing here would measure the machine.
+  `build_all.sh` asserts the three counts the page quotes, since
+  `check_verbatim.sh` pins code fences and not program output.
+
+### Changed
+
+- **The Rust tab says why there is no code before saying which crate.**
+  Reported by a reader landing on Recipe 48 from a search: thirteen recipes
+  carry a one-line note instead of code, and six of them opened with a
+  back-reference to another recipe — on a page whose own first paragraph says
+  it is for looking up rather than reading. All six now lead with the reason,
+  the appendix says once that the tab has two shapes, and CONTRIBUTING's
+  recipe template carries the rule.
+- **ROADMAP item 24 is closed**, and four topics are recorded as out of
+  scope: image processing, 3D, animation and matrix maths are a different
+  product rather than a missing chapter, and low-level system development is
+  mostly taught already, with its one untaught slice being item 21 rather
+  than a new number.
+
 ## [0.12.0] — 2026-09-08
 
 The same instrument, run a fourth time — thirty-five topics against
