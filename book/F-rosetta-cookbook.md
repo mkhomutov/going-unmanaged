@@ -2142,10 +2142,10 @@ rounds a halfway value to the nearest *even* number, which is banker's
 rounding and the default nobody remembers choosing — while `std::round(2.5)`
 is **3**, because it rounds halves away from zero. `Math.Round(-2.5)` is
 `-2`; `std::round(-2.5)` is `-3`. The C++ spelling of C#'s default is
-`std::nearbyint`, and `Convert.ToInt32(2.5)` is `2` for the same reason the
-`(int)` cast is not: the cast truncates and `Convert` rounds to even, so the
-two disagree in C# before C++ is even involved. Nothing warns about any of
-it. The difference is one unit on a halfway value, it appears in a total
+`std::nearbyint`. And the split is already there in C# before C++ is
+involved: `Convert.ToInt32(3.5)` is `4` because it rounds to even, while
+`(int)3.5` is `3` because a cast truncates — two conversions, one language,
+different answers. Nothing warns about any of it. The difference is one unit on a halfway value, it appears in a total
 somewhere downstream, and it gets blamed on the data.
 The other four are the same function under a different name, and the one
 worth pausing on is that a **cast truncates toward zero while `floor` goes
@@ -2164,7 +2164,10 @@ process-wide mode, and `as` saturates at the target's bounds with NaN going
 to zero — defined where the C++ cast is not.
 
 > [!WARNING]
-> **Trap:** `std::nearbyint` reads the process's **floating-point rounding mode**, and a plug-in does not own that any more than it owns its locale ([Chapter 42](42-the-formula-field.md#chapter-42--the-formula-field)) — a host or a library that has called `fesetround(FE_UPWARD)` turns `nearbyint(2.5)` into `3`, silently, on that machine only. `round`, `floor`, `ceil` and `trunc` are defined by their own rule and ignore the mode; reach for them where the answer must not depend on who else is in the process.
+> **Trap:** `std::nearbyint` reads the process's **floating-point rounding mode**, and a plug-in does not own that any more than it owns its locale ([Chapter 42](42-the-formula-field.md#chapter-42--the-formula-field)) — a host or a library that has called `fesetround(FE_UPWARD)` turns `nearbyint(2.5)` into `3`, silently, in that process. `round`, `floor`, `ceil` and `trunc` are defined by their own rule and ignore the mode; reach for them where the answer must not depend on who else is in the process.
+
+> [!WARNING]
+> **Trap:** `to_int`'s bounds are exact for `int` and **only** for `int` — retype it for `int64_t` and it breaks silently. `INT64_MAX` is `2^63 - 1`, which no `double` holds, so `static_cast<double>(INT64_MAX)` rounds *up* to `2^63`: the guard admits a value one past the end and the cast it protects is undefined after all. Compare against the power of two instead — `whole >= 9223372036854775808.0` — or convert through `long double` where it is wider. The harness asserts the equality that makes the naive guard fail.
 
 > [!WARNING]
 > **Trap:** the unguarded `static_cast<int>(1e20)` is undefined behavior, and this is one of the rare traps in this appendix the tools *do* catch: under `-fsanitize=undefined` it reports `1e+20 is outside the range of representable values of type 'int'`. In a Release build with no sanitizer it is whatever the instruction happened to do — `2147483647` on this machine, and not a number you may rely on.

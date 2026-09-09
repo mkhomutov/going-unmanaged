@@ -26,8 +26,13 @@ double toward_zero(double v)     { return std::trunc(v); }      // Math.Truncate
 
 // And the conversion, which is where the undefined behavior lives: a double
 // that does not fit in an int is UB to cast - not wrapped, not clamped, not
-// an exception. The bounds compare exactly because INT_MIN and INT_MAX are
-// both powers of two either side, representable in a double to the bit.
+// an exception.
+//
+// The two comparisons are exact for `int` and only for `int`: INT_MIN is
+// -2^31 and INT_MAX is 2^31-1, and a double holds both to the bit. Retype
+// this for int64_t and it breaks silently - (double)INT64_MAX rounds UP to
+// 2^63, so the bound admits a value one past the end and the cast below is
+// undefined after all. The Trap in the appendix has the fix.
 std::optional<int> to_int(double value) {
     if (!std::isfinite(value)) {                   // NaN and the infinities
         return std::nullopt;
@@ -82,5 +87,12 @@ int main() {
     // is the shape to write when a total must match a report to the penny.
     assert(to_int(to_nearest_away(2.5)) == 3);
     assert(to_int(to_nearest_even(2.5)) == 2);
+
+    // The 64-bit hazard the comment above names, as a value rather than as a
+    // warning: the widest double below 2^63 converts, and 2^63 itself is one
+    // past what an int64_t holds while comparing equal to (double)INT64_MAX.
+    const double two_pow_63 = 9223372036854775808.0;
+    assert(static_cast<double>(std::numeric_limits<long long>::max()) == two_pow_63);
+    assert(!(two_pow_63 > static_cast<double>(std::numeric_limits<long long>::max())));
     return 0;
 }
