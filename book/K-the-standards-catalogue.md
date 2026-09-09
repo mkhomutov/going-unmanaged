@@ -62,6 +62,7 @@ The spelling this book teaches is the C++17 one, and the *newer spelling* column
 | rvalue references, `std::move`, the move operations | C++11 | [Chapter 6](06-the-rule-of-five-and-move-semantics.md#chapter-6--the-rule-of-five-and-move-semantics) |
 | `nullptr`, `enum class`, `override`, `final`, `= default`, `= delete`, `constexpr`, `static_assert` | C++11 | [Chapter 10](10-modern-cpp-fluency.md#chapter-10--modern-c-fluency), [Appendix A](A-fundamentals-refresher.md#appendix-a--fundamentals-refresher) |
 | inline namespaces (the version in the mangled symbol) | C++11 | [Chapter 12](12-the-compilation-model.md#chapter-12--the-compilation-model), [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary) |
+| `[[noreturn]]` (C++11) and `[[deprecated]]` (C++14) — the rest of the set is C++17, below | C++11 | Recipe 51 |
 | member initializers in the class body, delegating constructors | C++11 | [Chapter 4](04-classes-inheritance-interfaces.md#chapter-4--classes-inheritance-interfaces) |
 | `<thread>`, `<mutex>`, `<atomic>`, `<condition_variable>`, `<future>` | C++11 | [Chapter 29](29-concurrency.md#chapter-29--concurrency), Recipe 13 |
 | `<chrono>` | C++11 | Recipes 6, 28–30 |
@@ -81,7 +82,7 @@ The spelling this book teaches is the C++17 one, and the *newer spelling* column
 | `std::from_chars` / `std::to_chars` | Recipe 19; the `double` overloads came later to every library — libstdc++ 11, MSVC 2019 16.4, libc++ 20, and on Apple's libc++ only for a deployment target of macOS 26 or later — so [Chapter 42](42-the-formula-field.md#chapter-42--the-formula-field)'s number parse carries an `#if` |
 | `std::invoke`, `std::invoke_result_t` | Recipe 28, [Chapter 38](38-the-bridge-out.md#chapter-38--the-bridge-out) |
 | `std::scoped_lock`, `std::shared_mutex` | [Chapter 29](29-concurrency.md#chapter-29--concurrency) |
-| `[[maybe_unused]]`, `[[nodiscard]]`, `[[fallthrough]]` | Recipe 24 |
+| `[[maybe_unused]]`, `[[nodiscard]]`, `[[fallthrough]]` | Recipe 24, Recipe 51 |
 | `enable_shared_from_this` throwing `bad_weak_ptr` on an unowned object | [Chapter 1](01-ownership-and-raii.md#chapter-1--ownership-and-raii) |
 | **removed**: dynamic exception specifications (`throw(A, B)`), `std::auto_ptr`; **deprecated**: `<codecvt>` | [Chapter 8](08-error-handling.md#chapter-8--error-handling-exceptions-and-error-codes), Recipe 17 |
 
