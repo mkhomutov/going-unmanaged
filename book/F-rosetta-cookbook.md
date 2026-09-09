@@ -15,7 +15,7 @@ where they appear. Each recipe carries a **Rust** tab beside its C++ one, and
 that tab has two shapes: code, where Rust's standard library answers the
 question, and a single line naming the crate that does, where it has no
 answer at all — no JSON, no calendar, no cryptography, no HTTP, no SQLite, no
-shared memory, no memory mapping. Thirteen of the forty-nine read that way,
+shared memory, no memory mapping. Thirteen of the fifty read that way,
 and the line says which crate and why there is nothing to show; the crate
 under `exercises/cookbook/rust/` takes no dependency, which is what makes the
 tested half tested. The recipes live as code in
@@ -75,6 +75,7 @@ stays right.
 | `Rfc2898DeriveBytes.Pbkdf2` / `HKDF.DeriveKey` | `SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")` / `KDF.getInstance("HKDF-SHA256")` (JDK 25) | [Recipe 47 — Derive a key](#recipe-47--derive-a-key) |
 | `HMACSHA256.HashData` / `CryptographicOperations.FixedTimeEquals` | `Mac.getInstance("HmacSHA256")` / `MessageDigest.isEqual` | [Recipe 48 — Sign and verify bytes](#recipe-48--sign-and-verify-bytes) |
 | `MemoryMappedFile.CreateFromFile` / `File.ReadAllBytes` on a large file | `FileChannel.map(READ_ONLY)` | [Recipe 49 — Read a large file without copying it](#recipe-49--read-a-large-file-without-copying-it) |
+| `internal` / a `private static` helper | package-private | [Recipe 50 — Keep a helper out of every other file](#recipe-50--keep-a-helper-out-of-every-other-file) |
 | LINQ | Streams | the collections index predates this page: [the LINQ table of Chapter 11](11-stl-containers-and-algorithms.md#chapter-11--stl-containers-algorithms-and-iterator-invalidation) |
 
 **The clocks, by name.** The five things `System` gave you for time, and
@@ -2026,3 +2027,43 @@ made with `new char[]` would otherwise count as zero). Needs
 
 > [!WARNING]
 > **Trap:** a file that shrinks while it is mapped — another process truncating the log you are reading — is, on Linux, a `SIGBUS` on the first touch of a page past the new end: plain memory, no allocation site, none of Chapter 31's shapes, and no sanitizer names it; on macOS the same read completes with the old byte — `scripts/check_platform_claims.sh` holds each platform to its own answer. Map files nobody else writes, or copy what you need out of the view before anyone can — a mapping is not a copy, and the bytes change under you if the writer keeps writing.
+
+### Recipe 50 — Keep a helper out of every other file
+
+**In C#:** `internal static int ClampToRange(...)` — or `private static` on the class that uses it; either way the compiler decides who may call it, and the unit is the assembly
+
+**The recipe:**
+
+=== "C++"
+
+    ```cpp
+    --8<-- "exercises/cookbook/namespaces.cpp:recipe-50"
+    ```
+
+=== "Rust"
+
+    ```rust
+    --8<-- "exercises/cookbook/rust/src/namespaces.rs:recipe-50"
+    ```
+
+**Why it looks like this.** There is no access keyword for a free function,
+because the unit of privacy here is not a type or an assembly but a
+**translation unit** — the `.cpp` and everything it included
+([Chapter 12](12-the-compilation-model.md#chapter-12--the-compilation-model)).
+An unnamed namespace gives its contents *internal linkage*: the name is
+this file's, so another `.cpp` may define `clamp_to_range` with a different
+body and the linker is never asked to choose. That is the property the
+harness demonstrates the only way it can, with a second translation unit
+that does exactly that and a `main()` asserting each caller reached its own.
+`static` at namespace scope means the same thing and is the older spelling,
+still correct and everywhere in C; the unnamed namespace is preferred
+because it also works for *types*, which `static` cannot do. The gain is
+not privacy for its own sake: a name with internal linkage cannot collide,
+cannot be called by code you have not read, and does not appear in the
+symbol table for anyone to depend on. Needs nothing. **In Rust** the
+question does not reach the linker at all — items are private to their
+module unless marked `pub`, `pub(crate)` is C#'s `internal` exactly, and
+the compiler rather than the linker is what enforces it.
+
+> [!WARNING]
+> **Trap:** a **unity build** ([Appendix J](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue)) concatenates translation units before compiling them, so two file-private helpers that never met are suddenly one translation unit apart — a redefinition error naming a file that exists in no directory, or, if the signatures differ, a silent change of which one a call reaches.

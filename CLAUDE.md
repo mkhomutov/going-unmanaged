@@ -169,8 +169,18 @@ Chapter 25's Finding 10.
 - `exercises/cookbook/` — Appendix F's recipe listings, one TU per domain
   (files, strings, timing, handles, lookups, paths, async, events, logging,
   alternatives, errors, expected, json, containers, flags, ownership,
-  crypto, watch, http, database, shm), each with a `main()` asserting what
-  its recipes claim; build_all.sh builds and runs all twenty-one. `json.cpp`
+  crypto, watch, http, database, shm, namespaces), each with a `main()`
+  asserting what its recipes claim; build_all.sh builds and runs all
+  twenty-two. `namespaces.cpp` is the one built from TWO translation units
+  (`namespaces_other.cpp` beside it) and the pair is the subject rather than
+  a build detail: an unnamed namespace's claim is about what happens ACROSS
+  translation units — the same helper name defined twice with different
+  bodies, and no collision — which one file cannot demonstrate. It also
+  carries Chapter 12's inline-namespace listing, whose claim is about the
+  SYMBOL and so is read back with `nm` in build_all.sh: `v1` and `v2` both
+  emitted, no unqualified `audio::frame_size`, and `clamp_to_range` absent
+  from the table. Marking `v1::frame_size` static leaves every assertion in
+  the program green and fails the nm check, which is why the check exists. `json.cpp`
   is the one with a dependency — `exercises/third_party/nlohmann/`, vendored
   with its version recorded, included with `-isystem`. `expected.cpp` is
   the one cut by standard rather than domain — C++23, Chapter 8's chaining
@@ -224,11 +234,12 @@ Chapter 25's Finding 10.
   each module's tests asserting what the recipe claims. On the page a recipe
   is two tabs, C++ and Rust, each an include. build_all.sh runs
   `cargo test --offline` with `RUSTFLAGS=-D warnings` behind a probe
-  (`--require-cargo`, which CI passes). All 49 recipes have the tab: 36
-  carry code (32 tests), and 13 carry a one-line note instead, because the
+  (`--require-cargo`, which CI passes). All 50 recipes have the tab: 37
+  carry code (33 tests), and 13 carry a one-line note instead, because the
   standard library has no JSON, calendar, cryptography, HTTP, SQLite, regex
   (Recipe 44 gets a std answer anyway), shared memory or memory mapping and
-  the crate takes no dependency — the note names the ecosystem crate. Seven concept chapters (1, 4, 6, 7,
+  the crate takes no dependency — the note opens with the reason there is no
+  code and then names the ecosystem crate. Seven concept chapters (1, 4, 6, 7,
   8, 10, 41) close with a short `### In Rust` section placed before their
   last section — Rust where it sharpens the C++ point, never woven into
   the explanation — and Chapters 38 and 39 point at Chapter 30's Rust

@@ -139,6 +139,7 @@
 12-the-compilation-model.md:
   - linker
   - mangling
+  - namespaces
   - headers
   - translation
   - preprocessor
