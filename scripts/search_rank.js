@@ -27,7 +27,12 @@ const vm = require("vm");
 const [, , siteDir, second, third] = process.argv;
 
 const workerDir = path.join(siteDir, "assets", "javascripts", "workers");
-const workerFile = fs.readdirSync(workerDir).find((name) => /^search\..*\.min\.js$/.test(name));
+let workerFile = null;
+try {
+    workerFile = fs.readdirSync(workerDir).find((name) => /^search\..*\.min\.js$/.test(name));
+} catch (error) {
+    workerFile = null;
+}
 if (!workerFile) {
     console.error(`search_rank.js: no search worker under ${workerDir} - did the site build?`);
     process.exit(1);
@@ -93,8 +98,11 @@ async function search(query) {
     await setup();
 
     if (second === "--query") {
-        const limit = Number(third) || 10;
-        const groups = await search(process.argv[5] || process.argv[4] || "");
+        // `node search_rank.js <site-dir> --query <text> [n]`, so the text is
+        // argv[4] and the optional count argv[5] - not `third`, which is the
+        // text here rather than the count it is in fixture mode.
+        const groups = await search(process.argv[4] || "");
+        const limit = Number(process.argv[5]) || 10;
         for (const [i, locations] of groups.slice(0, limit).entries()) {
             console.log(`${String(i + 1).padStart(2)}. ${locations[0]}`);
         }
