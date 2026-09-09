@@ -62,7 +62,7 @@ The trade is in the missing function: there is no `Free`. An arena gives back ev
      0 allocations   500 nodes, pmr over a stack buffer
 ```
 
-The third line is the standard library's own spelling, and it is in every reader's toolchain already: **`std::pmr`** (C++17, `<memory_resource>`). A `std::pmr::vector` takes a *memory resource* rather than an allocator type, so the choice is a constructor argument instead of part of the type — `std::pmr::vector<Node>` is one type however it allocates, where `std::vector<Node, MyAlloc>` is a different type from `std::vector<Node>` and will not pass to a function expecting one. `monotonic_buffer_resource` over a stack buffer is the arena above with nothing left to write, and passing `null_memory_resource()` as its upstream turns "the buffer was too small" from a silent heap allocation into a `std::bad_alloc` you can see.
+The third line is the standard library's own spelling: **`std::pmr`** (C++17, `<memory_resource>`), shipped by all three standard libraries for years now — though not by every *pinned* toolchain, which is why the harness reaches it behind an `__has_include` and says so when it cannot. A `std::pmr::vector` takes a *memory resource* rather than an allocator type, so the choice is a constructor argument instead of part of the type — `std::pmr::vector<Node>` is one type however it allocates, where `std::vector<Node, MyAlloc>` is a different type from `std::vector<Node>` and will not pass to a function expecting one. `monotonic_buffer_resource` over a stack buffer is the arena above with nothing left to write, and passing `null_memory_resource()` as its upstream turns "the buffer was too small" from a silent heap allocation into a `std::bad_alloc` you can see.
 
 > [!WARNING]
 > **Trap:** an arena's objects are destroyed only if you destroy them — placement `new` does not register a destructor, and freeing the block does not run any. For trivially destructible types that is fine and is most of what arenas hold; for anything owning a resource it is a leak the allocation counter cannot see, because nothing was allocated to count.
@@ -71,15 +71,17 @@ The third line is the standard library's own spelling, and it is in every reader
 
 ### The cost that hides in the layout
 
-Two counters written by two threads, adjacent in one struct, share a cache line — and each write invalidates the other core's copy, so two threads touching two *different* variables pay for a shared one. This is **false sharing**, and it is the cost that never appears in a profile as itself: the subtree is simply slower than its arithmetic can explain.
+Two counters written by two threads, adjacent in one struct, land inside one cache line — and each write invalidates the other core's copy, so two threads touching two *different* variables pay for a shared one. This is **false sharing**, and it is the cost that never appears in a profile as itself: the subtree is simply slower than its arithmetic can explain.
 
 ```cpp
 --8<-- "exercises/cost/allocating.cpp:false-sharing"
 ```
 
-The fix is padding, and it is a *size* decision made deliberately: `sizeof(Adjacent)` is 16 and `sizeof(Separated)` is 128 on the machine this was written on, so separating two `long`s cost 112 bytes. Worth it for two hot counters in a queue; not worth it for a member nobody contends.
+Separating them is the fix, and it is a *size* decision made deliberately: `sizeof(Adjacent)` is 16 and `sizeof(Separated)` is 128, so separating two `long`s cost 112 bytes. Worth it for two hot counters in a queue; not worth it for a member nobody contends.
 
-And the constant is the part worth carrying, because everybody types 64. C++17 standardised `std::hardware_destructive_interference_size` for exactly this, and on the Apple-silicon machine this page was measured on it reports **256**, not 64. Two consequences: a hardcoded 64 does not separate anything on that hardware, and GCC warns if you use the standard constant in a type that crosses a binary boundary, because its value may change between compiler versions and take your struct's layout with it — [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s rule, arriving from an unexpected direction. Pick a constant, write it down in one place, and treat it as an ABI decision rather than a tuning one.
+**And the number is the interesting part, because everybody types 64.** C++17 standardised `std::hardware_destructive_interference_size` for exactly this question, and on the Apple-silicon machine this page was measured on it reports **256**. So the listing above, padding by 64, would *not* separate those counters onto different lines on that hardware — which is why its constant is called `kSeparation` and not `kCacheLine`: it is the distance that code chose, and choosing it is the work.
+
+Two reasons the standard constant does not simply settle it. It is a compile-time answer to a run-time question — one binary runs on machines with different lines — and **GCC warns if you use it in a type that crosses a binary boundary**, because its value may change between compiler versions and take your struct's layout with it, which is [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s rule arriving from an unexpected direction. The workable answer is the unglamorous one: pick a number, write it down in one place, treat changing it as an ABI change, and — since the cost of guessing high is bytes and the cost of guessing low is the bug you were fixing — do not guess low.
 
 ---
 

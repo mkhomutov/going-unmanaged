@@ -93,21 +93,26 @@ private:
 // --8<-- [end:arena]
 
 // --8<-- [start:false-sharing]
-// Two counters written by two threads. Adjacent, they share a cache line, and
-// each write invalidates the other core's copy - the cost that does not appear
-// in any profile as itself, only as a subtree that is slower than its
-// arithmetic. Padding is the fix, and it is a SIZE decision: the struct grows
-// by a whole line per field to stop the sharing.
+// Two counters written by two threads. Adjacent, they land within one cache
+// line, so each write invalidates the other core's copy - the cost that does
+// not appear in any profile as itself, only as a subtree slower than its
+// arithmetic. Separating them is the fix, and it is a SIZE decision: the
+// struct grows by the separation, per field.
 struct Adjacent {
     long produced = 0;
-    long consumed = 0;                          // one line, two writers
+    long consumed = 0;                          // 16 bytes, one line, two writers
 };
 
-inline constexpr std::size_t kCacheLine = 64;   // see the appendix: not a universal 64
+// Deliberately named for what it is - the distance THIS code chose - rather
+// than kCacheLine, because the cache line is not 64 everywhere and the
+// appendix's whole point is that picking this number is a decision. 64 keeps
+// the listing concrete; a codebase writes it down once and treats changing it
+// as an ABI change, since it is baked into every layout that uses it.
+inline constexpr std::size_t kSeparation = 64;
 
-struct alignas(kCacheLine) Separated {
-    alignas(kCacheLine) long produced = 0;
-    alignas(kCacheLine) long consumed = 0;      // its own line, by construction
+struct alignas(kSeparation) Separated {
+    alignas(kSeparation) long produced = 0;
+    alignas(kSeparation) long consumed = 0;     // its own kSeparation bytes
 };
 // --8<-- [end:false-sharing]
 
@@ -166,9 +171,9 @@ int main() {
 
     // 4. The layout claim, which is structural rather than timed: adjacent
     //    counters share a line, padded ones cannot.
-    check(sizeof(Adjacent) <= kCacheLine, "two adjacent counters fit in one cache line");
-    check(sizeof(Separated) >= 2 * kCacheLine, "padding costs a whole line per field");
-    check(alignof(Separated) >= kCacheLine, "and the struct starts on one");
+    check(sizeof(Adjacent) <= kSeparation, "two adjacent counters fit inside one separation");
+    check(sizeof(Separated) >= 2 * kSeparation, "separating them costs kSeparation per field");
+    check(alignof(Separated) >= kSeparation, "and the struct is aligned to it");
     std::printf("  sizeof(Adjacent) = %zu, sizeof(Separated) = %zu\n",
                 sizeof(Adjacent), sizeof(Separated));
 

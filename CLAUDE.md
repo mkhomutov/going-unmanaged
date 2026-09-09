@@ -274,6 +274,22 @@ Chapter 25's Finding 10.
   diagnostic's MESSAGE only, everything up to `error:` cut away first — the
   directory is called `constlab`, so any path left in the string matches
   `const` on its own
+- `exercises/cost/` — Appendix L's measurements, in `exercises/choosing/`'s
+  shape: `allocating.cpp`, no TASK.md, the numbers the page quotes. The
+  instrument is Chapter 36's replaced `operator new` in BOTH forms (under
+  ASan the array form does not route through the scalar one), because the
+  page's claims are counts and a timing would measure the machine, the run
+  and the sanitizers instead — 501 allocations become 1 through the arena and
+  0 through a `pmr` container over a stack buffer, and build_all.sh asserts
+  those three strings appear, since check_verbatim.sh pins cpp fences and not
+  a quoted block of program output. Judged by `CHECK`-style counting, never
+  `assert`, for choosing/'s reason. The false-sharing listing is deliberately
+  STRUCTURAL — `sizeof` and `alignof`, not a timing — and deliberately does
+  not use `std::hardware_destructive_interference_size`: GCC warns when it
+  reaches a type that crosses a binary boundary, and its value is 256 on
+  Apple silicon rather than the 64 everyone types, so the listing's constant
+  is called `kSeparation` (the distance that code chose) and the page owns
+  the argument about what the number should be
 - `exercises/choosing/` — Appendix H's measurements, the other non-exercise
   appendix directory: `counted.h` (a copy/move-counting type plus the
   `CHECK` judge), `passing.cpp` (procedures 2–3) and `storing.cpp`
