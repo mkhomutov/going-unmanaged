@@ -501,6 +501,30 @@ Chapter 25's Finding 10.
   `--required`, because the platform overclaims it exists to catch are exactly
   what a one-platform check cannot see. The broken programs are generated into
   a temp dir, never committed — `solutions/` stays clean
+- `scripts/check_search.sh`, `scripts/search_rank.js`,
+  `scripts/search_queries.tsv`, `scripts/search_tags.yml` — the search, held
+  to a fixture, because retrieval is what a daily reference is (SITE-PLAN.md)
+  and it was the one part of the build nothing checked: `--strict` proves
+  every link resolves and says nothing about whether a page can be *found*.
+  `search_queries.tsv` is the promise — a query a reader types, and the page
+  it must reach — in three groups, by the C# API, by the C++ spelling, and by
+  what is on the screen; a widened tolerance on a line is the honest record
+  of a query the corpus cannot rank higher (`Task.Run` is two of the
+  commonest words in a book full of exercises). `search_rank.js` does NOT
+  reimplement the ranking: it loads the site's own search worker, the file
+  the browser loads, and talks its message protocol, so what is checked is
+  what a reader gets and a Material bump needs no change here. The first
+  draft did reimplement it on lunr and got three things wrong that changed
+  the answer, which is the reason for the rule. `search_tags.yml` is the
+  synonyms — the words a reader types that a page's own words do not carry —
+  applied by the hook rather than written as front matter, so `book/` stays
+  the files GitHub renders; it lists EVERY page, and a page it does not list
+  fails the build the way a page in none of the README's three groups does.
+  Its own header carries the five rules, each learned by measuring: a tag
+  reaches every section of its page, a common word as a tag hijacks every
+  query containing it, tags are tokenized like everything else, every term
+  the reader types matches as a prefix, and a one-letter word reaches every
+  tag starting with it. CI runs it in the `site` job
 - `.github/workflows/ci.yml` — runs build_all.sh on every push/PR, plus a
   `platform-claims` job (check_platform_claims.sh on ubuntu and macos), a
   `buildlab-msvc` job (Chapter 26's CMakeLists under MSVC both ways, then
@@ -525,8 +549,9 @@ Chapter 25's Finding 10.
   `scripts/build_site.sh` — the book as a static site (MkDocs Material) over
   the unchanged `book/` files, built strictly into `build/site/`; the hooks
   file generates the nav from `book/README.md`'s three entry-point groups,
-  turns the GitHub alerts into admonitions, marks the `<details>` folds for
-  md_in_html, and `pymdownx.slugs` reproduces GitHub's anchors
+  applies `scripts/search_tags.yml` (below), turns the GitHub alerts into
+  admonitions, marks the `<details>` folds for md_in_html, and
+  `pymdownx.slugs` reproduces GitHub's anchors
   so no link changes. `SITE-PLAN.md` is the plan this serves — the book is
   becoming a reference consulted daily, not a book read once — with the
   measurements behind it and the next steps; read it before changing the
@@ -601,7 +626,10 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
    is down.
 6. The site stays buildable from `book/`: after ANY change there run
    `./scripts/build_site.sh`, which is strict — a link to a missing file or
-   anchor, or a page the generated nav does not know, fails it. CI runs it.
+   anchor, a page the generated nav does not know, or a page
+   `scripts/search_tags.yml` does not list, fails it. Then
+   `./scripts/check_search.sh`, which holds the search to its fixture. CI
+   runs both.
 
 ## Content conventions
 

@@ -1,6 +1,6 @@
 """MkDocs hooks for the site build (scripts/build_site.sh).
 
-Two jobs, both small on purpose, so that nothing but this file stands between
+Four jobs, all small on purpose, so that nothing but this file stands between
 the markdown under book/ and the renderer:
 
 1. on_config builds the navigation from book/README.md's three entry-point
@@ -22,7 +22,14 @@ the markdown under book/ and the renderer:
    is always the pre-rendered form. Renders are cached under build/ by the
    hash of the fence and the theme.
 
-3. on_page_markdown also turns GitHub alerts (`> [!TIP]` then a blockquote body)
+3. on_page_markdown sets each page's search tags from scripts/search_tags.yml
+   - the synonyms a reader types that the page's own words do not contain,
+   indexed as a third field and rendered nowhere. That file says why they are
+   not front matter and what makes a safe tag. A page under book/ that the
+   file does not list fails the build, the way a page in none of the README's
+   three groups already does.
+
+4. on_page_markdown also turns GitHub alerts (`> [!TIP]` then a blockquote body)
    into Material admonitions. Only the shape the book uses is handled; the
    marker line names the type and the body keeps its bold label, which is
    what check_markup.sh already enforces. It also marks every `<details>`
@@ -38,6 +45,8 @@ import re
 import shutil
 import subprocess
 import tempfile
+
+import yaml
 
 # Material has no "important" type - an unknown type renders in the plain
 # note style, which would give the book's two non-negotiable rules (CLAUDE.md:
@@ -81,6 +90,7 @@ def _headings(path):
 
 
 GROUPS = ("Reference", "Concepts", "Labs")
+SEARCH_TAGS = {}
 LINK = re.compile(r"\]\(([0-9A-Za-z][^)#]*\.md)#")
 
 
@@ -106,6 +116,19 @@ def on_config(config):
             _, h2 = _headings(docs / name)
             current.append({h2 or pathlib.Path(name).stem: name})
     config["nav"] = nav
+
+    tags_file = pathlib.Path(__file__).with_name("search_tags.yml")
+    tags = yaml.safe_load(tags_file.read_text(encoding="utf-8")) or {}
+    listed = set(tags)
+    present = {str(path.relative_to(docs)) for path in docs.rglob("*.md")}
+    missing, extra = sorted(present - listed), sorted(listed - present)
+    if missing or extra:
+        raise SystemExit(
+            f"{tags_file.name} must list every page under {docs}/, and only those.\n"
+            + "".join(f"  not listed: {name}\n" for name in missing)
+            + "".join(f"  no such page: {name}\n" for name in extra))
+    global SEARCH_TAGS
+    SEARCH_TAGS = {name: list(value or []) for name, value in tags.items()}
     return config
 
 
@@ -173,6 +196,9 @@ def _prerender_diagrams(markdown, config):
 
 
 def on_page_markdown(markdown, page, config, files):
+    tags = SEARCH_TAGS.get(page.file.src_uri)
+    if tags:
+        page.meta["tags"] = tags
     markdown = _prerender_diagrams(markdown, config)
     markdown = markdown.replace("<details>", '<details markdown="1">')
     markdown = markdown.replace("<summary>", '<summary markdown="1">')
