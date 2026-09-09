@@ -344,6 +344,11 @@ G-the-bridge-catalogue.md:
   - transports
   - bridge
   - hosting
+  # Family C: the runtime that loaded YOU. These arrive from readers who
+  # never meet the host-plug-in picture the rest of the book assumes.
+  - JNI
+  - pybind11
+  - embedding
 H-choosing.md:
   - choosing
   - signatures
@@ -364,7 +369,10 @@ L-what-things-cost.md:
   - performance
   - allocations
   - arena
-  - pmr
+  # NOT `pmr`: a tag is reachable by any query word it starts with, so it
+  # answered `p/invoke` too and took that query off Chapter 39 (rule 5, met
+  # in practice). The word is in this page's text twice and the fixture
+  # keeps it findable that way.
   - efficiency
   - benchmarking
 K-the-standards-catalogue.md:

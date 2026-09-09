@@ -825,10 +825,11 @@ stay on the list marked DONE so item numbers never shift. Short version:
 - Tier 3: C++/C# interop was item 9 and is now Chapter 39 + `exercises/
   interoplab/` — the publishing half of P/Invoke, judged with no .NET
   anywhere because `marshal.h` stands in for the marshaller the way
-  FakeSDK stands in for a vendor. Item 9's scope note stays OPEN: a full
-  treatment of being loaded BY a runtime (JNI, a Python extension, a Node
-  addon) is the shape two readers actually wanted, and Chapter 39 only
-  names it. SOLID without the runtime (item 13 — the
+  FakeSDK stands in for a vendor. Item 9's scope note is closed too: being
+  loaded BY a runtime (JNI, a Python extension, a Node addon) is Appendix
+  G's **Family C**, where every price of Family A inverts — you choose
+  neither the runtime nor the thread, their collector decides when your
+  pointers stop being valid, and errors travel by their conversion rules. SOLID without the runtime (item 13 — the
   reader's design vocabulary, un-fused from the .NET machinery; a
   gather-and-translate chapter like item 8), the retrofit (item 20, also
   after item 9 — no lab modernises working code whose callers must keep

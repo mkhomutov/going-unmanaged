@@ -35,6 +35,8 @@ One line each. If you can say these fluently and back them with code, the concep
 - "Unresolved external = definition missing at link time; undeclared identifier = declaration missing at compile time."
 - "I forward-declare in headers and include in .cpp files to keep build times sane."
 - "A header carries declarations, templates and inline bodies; everything else is defined once in a .cpp — and a .cpp includes its own header first."
+- "A macro is a text substitution with no scope and no type, so I reach for one only where nothing else can do the job — conditional compilation, include guards, quoting source text, stamping a call site — and I write every parameter in parentheses and every multi-statement body in a do/while(0)."
+- "A helper nobody else calls goes in an unnamed namespace in the .cpp, and a version I have published goes in an inline namespace, so the version travels in the symbol while the short name keeps compiling."
 
 **Reading a codebase**
 
@@ -97,6 +99,7 @@ One line each. If you can say these fluently and back them with code, the concep
 **Deadline code**
 
 - "On a deadline thread I treat the allocator as I/O: the hot path allocates nothing, locks nothing, and blocks on nothing — and I prove it with a counter, because a profiler's mean flatters while a deadline punishes the worst case."
+- "A cost claim without a baseline, a build description and an instrument is an opinion — I would rather have a count I can reproduce than a duration I cannot, and I take the measurement before I change anything."
 
 **Choosing signatures and storage**
 

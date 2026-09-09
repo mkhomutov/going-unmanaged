@@ -60,8 +60,9 @@ convergence is evidence — every item here has at least two. Second, the
 study's larger yield was corrections and cross-references, not new
 chapters; those move no numbers, need no entry here, and are tracked as
 issues under the `correction` label. Only the three gaps that need writing
-became items — a fourth, the managed-runtime-owns-the-process topology, is
-recorded as a scope note on item 9 rather than an item of its own.
+became items — a fourth, the managed-runtime-owns-the-process topology, was
+recorded as a scope note on item 9 rather than an item of its own, and is
+now Appendix G's Family C.
 
 ---
 
@@ -1098,11 +1099,20 @@ stack-buffer-overflow rather than a wrong value (the misdeclared struct is
 four bytes short), and a `Plugin_ClearSink` that stops clearing fails the
 window assertion.
 
-**Still open beside it:** the scope note below. The chapter carries a short
-*other direction* section naming the mirror topology and what changes in it,
-which was the cheap half; a full treatment of being loaded BY a runtime is
-not written and is the shape both the JNI and the pybind11/N-API readers
-actually wanted.
+**The scope note below is closed too, 2026-09-09.** The chapter's short
+*other direction* section named the mirror topology and what changes in it,
+which was the cheap half; the treatment the JNI and pybind11/N-API readers
+wanted is now **Appendix G's Family C** — the note's own suggested fix, and
+the right size for it, since G is where a topology gets priced rather than
+built. It states the thing that makes the family worth separating: every
+price in Family A *inverts* — you do not choose the runtime, do not fight
+another plug-in over its version, paid no startup tax, and never owned the
+crash domain — and what replaces them is shorter and harder: you own neither
+`main` nor the thread, their collector decides when your pointers stop being
+valid, errors travel by their conversion rules, and the generated middle
+marshals signatures while leaving every lifetime contract to you. Which is
+why the bugs in that family are lifetime bugs. A decision-table row and a
+new first question route to it, and Chapter 39's section points at it.
 
 **Missing:** P/Invoke, marshalling, and the round trip home.
 
