@@ -151,6 +151,11 @@ run "cb_macros"   $CXX $FLAGS   exercises/cookbook/macros.cpp           -o $OUT/
 # no instruction, so what it changes is a diagnostic, and the three builds
 # that must be REFUSED are further down.
 run "cb_attributes" $CXX $FLAGS exercises/cookbook/attributes.cpp       -o $OUT/cb_attributes
+# Recipe 52. Its main() is a value table, and half the rows are there because
+# C++ answers them differently from C# - Math.Round(2.5) is 2 and
+# std::round(2.5) is 3. The out-of-range cast the recipe guards is undefined
+# behavior and is NOT executed; UBSan's report on it is quoted in the Trap.
+run "cb_numbers"  $CXX $FLAGS   exercises/cookbook/numbers.cpp          -o $OUT/cb_numbers
 run "cb_watch"    $CXX $FLAGS   exercises/cookbook/watch.cpp            -o $OUT/cb_watch
 # Recipe 43 is the platform, not a library: POSIX shm_open/mmap here, Win32
 # under check.ps1 in the buildlab-msvc job. glibc before 2.34 keeps
@@ -343,6 +348,7 @@ for attr_case in \
     fi
     echo "  ok   refused, naming $attr_expect"
 done
+UBSAN_OPTIONS=halt_on_error=1 $OUT/cb_numbers > /dev/null
 # The half of Chapter 12's namespace section a running program cannot check:
 # what the compiler wrote into the SYMBOL. Both claims on the page are about
 # the object file, so nm is the only witness - internal linkage means the
