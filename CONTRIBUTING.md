@@ -122,9 +122,12 @@ and `// --8<-- [end:recipe-N]` comment lines, and each tab's fence holds one
 line, the include, which the site build replaces with the section (GitHub's
 rendering shows the directive; the site is the reading surface). Edit the
 code in the files, never on the page. A recipe with no idiomatic Rust answer
-says so in one line under the tab rather than carrying a strained one; where
-Rust sharpens the point, one sentence opening **In Rust** closes the Why
-paragraph. And the numbering is the Findings contract: add your
+says so in one line under the tab rather than carrying a strained one — and
+that line **opens with the reason there is no code**, then names the crate:
+a reader arrives at one recipe from a search, not at the appendix from the
+top, so a note beginning "As for Recipe 36" tells them nothing they can use.
+Where Rust sharpens the point, one sentence opening **In Rust** closes the
+Why paragraph. And the numbering is the Findings contract: add your
 recipe at the end with the next free number, add its row to the index table,
 never renumber existing ones.
 
