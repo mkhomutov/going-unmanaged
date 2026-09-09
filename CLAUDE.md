@@ -6,13 +6,13 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, chapters 1–42, appendices A–K — Chapter 24 and Appendix C were
+(6 parts, chapters 1–42, appendices A–L — Chapter 24 and Appendix C were
 retired by SITE-PLAN.md step 3; a retired number or letter is never reused,
 and the Contents keeps a one-line entry for each so the ordered list still
 renders true), indexed by `book/README.md`. There
 is no single-file build any more: the book is read on GitHub and as the
 static site `scripts/build_site.sh` renders from the same files (SITE-PLAN.md,
-step 2 retired the concatenated file). Appendices run A–K — E is the glossary (item 10), G the bridge catalogue (item 16's
+step 2 retired the concatenated file). Appendices run A–L — E is the glossary (item 10), G the bridge catalogue (item 16's
 lookup half: the mechanism survey and decision table; no C++ listings —
 check_verbatim.sh enforces that no cpp fence lands there), H the choosing
 procedures (item 17: which container, how to take a parameter, what to
@@ -25,7 +25,12 @@ refusals rather than results. J is the CMake catalogue — Chapters 26,
 one build_all.sh generates and holds both ways, pinned to that script's
 heredoc by check_verbatim.sh, and the system-library one,
 `exercises/cookbook/cmake/CMakeLists.txt`, pinned to the page both ways
-(banner-stripped) and run under CTest. K is the standards catalogue — the lookup
+(banner-stripped) and run under CTest. L is what things cost — Chapter 36's
+lookup half: the price of a copy, a throw, a `shared_ptr` and a heap
+allocation, which of the repository's three instruments answers which
+complaint, and the two rows nobody had written down (an arena and
+`std::pmr`; the cache line two counters share). Its measurements are
+`exercises/cost/`. K is the standards catalogue — the lookup
 half of Chapter 10's "check your standard" flags: which standard a
 toolchain speaks and how to ask (feature-test macros, MSVC's
 `/Zc:__cplusplus`), every feature the book names by the standard it
@@ -97,7 +102,7 @@ Chapter 25's Finding 10.
 ## Layout
 
 - `book/` — the book, canonical, one file per chapter and appendix:
-  `NN-<slug>.md` for chapters 01–42, `A-`…`K-<slug>.md` for the appendices
+  `NN-<slug>.md` for chapters 01–42, `A-`…`L-<slug>.md` for the appendices
   (digits sort before letters, so the listing is the reading order)
 - `book/README.md` — front matter and the Contents; GitHub renders it when
   someone opens `book/`, so it is the reader's entry point. The Contents
@@ -269,6 +274,22 @@ Chapter 25's Finding 10.
   diagnostic's MESSAGE only, everything up to `error:` cut away first — the
   directory is called `constlab`, so any path left in the string matches
   `const` on its own
+- `exercises/cost/` — Appendix L's measurements, in `exercises/choosing/`'s
+  shape: `allocating.cpp`, no TASK.md, the numbers the page quotes. The
+  instrument is Chapter 36's replaced `operator new` in BOTH forms (under
+  ASan the array form does not route through the scalar one), because the
+  page's claims are counts and a timing would measure the machine, the run
+  and the sanitizers instead — 501 allocations become 1 through the arena and
+  0 through a `pmr` container over a stack buffer, and build_all.sh asserts
+  those three strings appear, since check_verbatim.sh pins cpp fences and not
+  a quoted block of program output. Judged by `CHECK`-style counting, never
+  `assert`, for choosing/'s reason. The false-sharing listing is deliberately
+  STRUCTURAL — `sizeof` and `alignof`, not a timing — and deliberately does
+  not use `std::hardware_destructive_interference_size`: GCC warns when it
+  reaches a type that crosses a binary boundary, and its value is 256 on
+  Apple silicon rather than the 64 everyone types, so the listing's constant
+  is called `kSeparation` (the distance that code chose) and the page owns
+  the argument about what the number should be
 - `exercises/choosing/` — Appendix H's measurements, the other non-exercise
   appendix directory: `counted.h` (a copy/move-counting type plus the
   `CHECK` judge), `passing.cpp` (procedures 2–3) and `storing.cpp`
@@ -825,7 +846,7 @@ stay on the list marked DONE so item numbers never shift. Short version:
   `exercises/bridgelab/` (the main-thread queue under a bounded-wait
   judge), plus Appendix G, the survey of mechanisms and its decision
   table.
-  The glossary was item 10 and is now Appendix E (letters run A–K; C has
+  The glossary was item 10 and is now Appendix E (letters run A–L; C has
   since been retired). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
   timers), then 17 (UTF-8↔UTF-16), then 18–20 (find, optional, variant),

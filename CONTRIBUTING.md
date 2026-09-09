@@ -243,9 +243,10 @@ appendix section should have an answer to each; where the honest answer is
 
 The book is one file per chapter under [book/](book/README.md):
 `01-ownership-and-raii.md` … `42-the-formula-field.md`, then
-`A-`…`K-<slug>.md` for the appendices (A–K, no gap — E is the
+`A-`…`L-<slug>.md` for the appendices (A–L, no gap — E is the
 glossary, G the bridge catalogue, H the choosing procedures, I
-const-correctness, J the CMake catalogue, K the standards catalogue), with
+const-correctness, J the CMake catalogue, K the standards catalogue, L what
+things cost), with
 `book/README.md` carrying the
 front matter and the Contents. Concretely, for a contributor:
 
