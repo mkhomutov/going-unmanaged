@@ -130,6 +130,39 @@ constexpr int area = Square(12);    // computed by the COMPILER
 std::array<int, Square(4)> buffer;  // usable where constants are required
 ```
 
+### What does static_assert do, and how do I use it?
+
+`static_assert(condition, "message")` asks the compiler, not the running
+program, whether `condition` — anything usable where the `constexpr`
+section above required one — is true. If it is not, the build fails right
+there with your message attached, and the check costs nothing at run time
+because there is no run time yet: the failing build never produces a
+program to run. C++17 also allows the one-argument form,
+`static_assert(condition)`, which has no message and instead prints the
+condition's own source text when it fails. The two everyday uses are a
+portability assumption ("this platform's `int` is four bytes", the trap the
+"Small but telling details" list below names) and a configuration mistake a
+human could make that no type catches on its own — two named constants that
+must never collide.
+
+```cpp
+--8<-- "exercises/questions/q1.cpp:answer"
+```
+
+**In C#:** there is no compiler-time assert in the language itself; the
+nearest things are a `[Conditional("DEBUG")]` `Debug.Assert` or a unit
+test, and both run after the build — the compiler has no opinion on them.
+Roslyn analyzers and source generators can reject code at build time, but
+that is a separate project-level tool, not a keyword every method can
+reach for. Chapter 41 returns to `static_assert` paired with
+`<type_traits>`, once there is a type to ask questions about rather than a
+plain value.
+
+> [!TIP]
+> **Habit:** I write an invariant a config or a type must hold as a
+> `static_assert` next to the constants it governs, not as a comment above
+> them — a comment can drift silently, a `static_assert` cannot.
+
 ### Small but telling details
 
 ```cpp
