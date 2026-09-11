@@ -102,3 +102,5 @@ stack overflow	03-stack-heap-and-undefined-behavior/
 
 # --- The field questions' index (Appendix M) ---------------------------
 field questions	M-field-questions/
+cmake presets visual studio code	26-build-systems-and-cmake/
+dev uat prod configuration	26-build-systems-and-cmake/	5

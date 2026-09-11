@@ -14,3 +14,4 @@ Every listing an answer shows is code under `exercises/questions/`, included on 
 | The question | Where it is answered |
 |---|---|
 | Q1 — What does static_assert do, and how do I use it? | [Chapter 10](10-modern-cpp-fluency.md#what-does-static_assert-do-and-how-do-i-use-it) |
+| Q2 — Do dev/uat/prod differences belong in the CMake build configuration, or at runtime? | [Chapter 26](26-build-systems-and-cmake.md#do-devuatprod-differences-belong-in-the-cmake-build-configuration-or-at-runtime) |
