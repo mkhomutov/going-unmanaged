@@ -59,7 +59,12 @@ in either to attempt cold. `skeleton/` is the third: not an exercise but a
 starter — Chapter 26's project layout as a directory to copy, with the root
 files (`CMakeLists.txt`, `CMakePresets.json`, `.clang-format`,
 `.clang-tidy`) in place, which `build_all.sh` builds and tests through its
-own preset and CI holds to its own format and tidy rules.
+own preset and CI holds to its own format and tidy rules. `cost/` holds
+Appendix L's measurements the way `choosing/` holds H's, and `questions/`
+the listings the field questions' answers show (Appendix M is their index;
+the answers live in the owning chapters) — one `q<N>.cpp` per question,
+globbed by `build_all.sh` rather than listed, because they are appended
+unattended.
 
 Fifteen directories hold their reference in the open, rather than behind a
 fold. `templatelab/` is Chapter 41's: one `Session<Sdk>` compiled against

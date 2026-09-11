@@ -1,0 +1,26 @@
+name: Question
+description: A technical question, answered as a knowledge-base entry (CONTRIBUTING.md, "The Question template").
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask it raw; it will be restated as a reader would search for it.
+        But generalise: no product names, identifiers, ticket numbers,
+        dates or anything that names where the question came from
+        (open-source ecosystems named as study material are fine). The
+        answer goes into the chapter that owns the concept - or becomes a
+        Recipe or a Finding when it has that shape - and the question is
+        indexed in Appendix M. The `question` label starts the workflow
+        that writes it and opens the PR.
+  - type: textarea
+    id: question
+    attributes:
+      label: What I need to know
+      description: The question, phrased as if asking cppreference.
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What I already tried or read

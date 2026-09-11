@@ -144,6 +144,50 @@ the TASK cards' broken listings (book-and-card code with no compiled source)
 and two one-line quotations. Never spell the marker syntax literally in a
 comment or on a page: the snippet engine takes it for a marker.
 
+## The Question template
+
+A Question issue is a question the maintainer met at a desk with no one to
+ask, filed raw. The entry that answers it has three parts, and the rule for
+each is in CLAUDE.md, "Knowledge-base entries". First the question is
+**restated** as a reader would search for it — abstract, one line, nothing
+of the situation that produced it. Then the **answer goes into the chapter
+that owns the concept** — a new section, or a paragraph added to the section
+that already teaches it — unless it maps to a C# API (then it is a Recipe,
+Appendix F's shape) or arrives as a symptom (then a Finding, Chapter 25's
+shape). Last, the question is made **findable**: a row in Appendix M and a
+line in `scripts/search_queries.tsv`. A new section looks like this:
+
+````markdown
+### <The question, restated as you would ask cppreference>
+
+<The answer in plain terms: two to five sentences, in the chapter's own
+voice, cross-referencing rather than re-teaching what other chapters own.>
+
+```cpp
+--8<-- "exercises/questions/q<N>.cpp:answer"
+```
+
+**In C#:** <one or two sentences: what the same question's answer is
+there, and where the two differ.>
+
+> [!TIP]
+> **Habit:** <one line, first person: what to check in your own code>.
+````
+
+and the row in `book/M-field-questions.md` is
+`| Q<N> — <the restated question> | [Chapter K](<file>#<section-anchor>) |`,
+with the fixture line `<the words a reader would type>	<page>/#<anchor>`.
+
+The listing lives in `exercises/questions/q<N>.cpp`, fenced between
+`// --8<-- [start:answer]` and `// --8<-- [end:answer]` comment lines with
+a `main()` below the fence that asserts what the entry claims — a
+`CHECK`-style judge that counts failures and sets the exit code, never
+`assert`. `build_all.sh` globs the directory, so there is no line to add:
+every `q*.cpp` is built and run under the canonical flags on every push.
+Numbering is the Findings contract: the next free Q number, never
+renumbered. The entry names no product, company or system the question
+does not name.
+
 ## The questions every piece of material answers
 
 The handbook has four goals — learn, change the mindset, practice, help solve
@@ -243,10 +287,10 @@ appendix section should have an answer to each; where the honest answer is
 
 The book is one file per chapter under [book/](book/README.md):
 `01-ownership-and-raii.md` … `42-the-formula-field.md`, then
-`A-`…`L-<slug>.md` for the appendices (A–L, no gap — E is the
+`A-`…`M-<slug>.md` for the appendices (A–M, no gap — E is the
 glossary, G the bridge catalogue, H the choosing procedures, I
 const-correctness, J the CMake catalogue, K the standards catalogue, L what
-things cost), with
+things cost, M the index of field questions), with
 `book/README.md` carrying the
 front matter and the Contents. Concretely, for a contributor:
 
@@ -458,11 +502,16 @@ Contribute, and become a co-author — concretely:
 
 ## Submitting
 
-The issue forms know these rules: opening an issue offers a template for four
-of the contribution kinds — Finding, correction, new exercise, new chapter —
-and each asks for exactly the pieces this file describes and applies the
-matching label. (Recipes are Finding-sized: no form, go straight to PR under
-the template above.) The PR checklist does the same for the ground rules and
+The issue forms know these rules: opening an issue offers a template for five
+of the contribution kinds — Finding, correction, new exercise, new chapter,
+Question — and each asks for exactly the pieces this file describes and
+applies the matching label. (Recipes are Finding-sized: no form, go straight
+to PR under the template above.) A Question is the one kind that needs no
+PR from you: the `question` label starts a workflow that restates the
+question, writes the answer into the chapter that owns it (or a Recipe or
+Finding, by the rule under [the Question template](#the-question-template)),
+indexes it in Appendix M, runs every check below, and opens the PR for
+review. The PR checklist does the same for the ground rules and
 the scripts CI runs. Then:
 
 1. Fork, branch, make your change.
