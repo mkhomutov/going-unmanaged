@@ -276,6 +276,7 @@ run "cho_noelide"  $CXX $FLAGS -fno-elide-constructors exercises/choosing/passin
 run "cost_alloc"   $CXX $FLAGS   exercises/cost/allocating.cpp           -o $OUT/cost_alloc
 # The field questions' listings (Appendix M indexes them; the answers live in
 # the owning chapters), one translation unit per question. The directory is
+# GLOBBED rather than listed, on purpose: a listing is appended by the kb.yml
 # workflow unattended, and a line forgotten here would leave a listing the
 # page shows and nothing compiles - the hole "everything verifiable is wired
 # into build_all.sh" exists to close. The page includes the file
