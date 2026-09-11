@@ -1,13 +1,17 @@
 name: Question
-description: A technical question to be answered as a knowledge-base entry.
-title: "Q: "
+description: A technical question, answered as a knowledge-base entry (CONTRIBUTING.md, "The Question template").
 labels: ["question"]
 body:
   - type: markdown
     attributes:
       value: |
         Generalise. No product names, identifiers, ticket numbers, dates or
-        anything that names where the question came from.
+        anything that names where the question came from; open-source
+        ecosystems named as study material are fine. Where the answer lands
+        is decided by rule, not here: a C# API it maps to makes it a Recipe,
+        a symptom on the screen makes it a Finding, anything else an
+        Appendix M entry. The `question` label starts the workflow that
+        writes it and opens the PR.
   - type: textarea
     id: question
     attributes:
@@ -19,8 +23,3 @@ body:
     id: tried
     attributes:
       label: What I already tried or read
-  - type: input
-    id: where
-    attributes:
-      label: Where it should live
-      placeholder: e.g. a Rosetta recipe, Chapter 31, or "new"

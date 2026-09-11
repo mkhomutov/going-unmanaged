@@ -1,4 +1,15 @@
 name: Knowledge base entry
+# A Question issue (the form applies the `question` label) becomes an
+# Appendix M entry, a Recipe or a Finding - decided by the rule in CLAUDE.md,
+# "Knowledge-base entries" - written by claude-code-action on a branch and
+# opened as a PR that CI checks like any other. Nobody watches the run, so
+# three things are held here rather than hoped for: the author must have
+# write access (the action refuses anyone else, and the `if:` skips them
+# cleanly instead of failing red); there is exactly one branch per issue, so
+# re-applying the label cannot open a second PR; and the closing step reports
+# to the issue whenever the run ends without a PR, because a turn budget
+# running out is a graceful stop and would otherwise be a green run and
+# silence.
 on:
   issues:
     types: [labeled]
@@ -7,44 +18,109 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
+  # The action exchanges this for its own GitHub App token; that token, not
+  # GITHUB_TOKEN, pushes the branch and opens the PR, which is why ci.yml
+  # runs on it (GITHUB_TOKEN-made events trigger no workflow).
   id-token: write
 
 concurrency:
   group: kb-${{ github.event.issue.number }}
-  cancel-in-progress: false
 
 jobs:
   entry:
-    if: github.event.label.name == 'question'
+    if: >-
+      github.event.label.name == 'question' &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.issue.author_association)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # build_all.sh alone is minutes on this runner; the turn budget below is
+    # the other bound, and a run that hits either is reported by the last step.
+    timeout-minutes: 90
+    env:
+      ISSUE: ${{ github.event.issue.number }}
+      BRANCH: kb/issue-${{ github.event.issue.number }}
     steps:
       - uses: actions/checkout@v5
+
+      # One branch per issue, named without a slug so it can be looked for.
+      - id: guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -n "$(git ls-remote --heads origin "$BRANCH")" ]; then
+            gh issue comment "$ISSUE" --body "A knowledge-base run for this issue has already pushed \`$BRANCH\`; this run did nothing. Delete that branch (and close its PR, if one is open) before re-applying the \`question\` label."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The same tools ci.yml's build, book and site jobs use, so the agent
+      # can run every check the repository names before it opens the PR
+      # instead of finding out from CI afterwards.
+      - if: steps.guard.outputs.skip != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libcurl4-openssl-dev libsqlite3-dev pkg-config
+          sudo locale-gen de_DE.UTF-8
+      - if: steps.guard.outputs.skip != 'true'
+        uses: actions/setup-python@v5
         with:
-          fetch-depth: 1
-      - uses: anthropics/claude-code-action@v1
+          python-version: '3.12'
+      - if: steps.guard.outputs.skip != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - if: steps.guard.outputs.skip != 'true'
+        run: npm install -g @mermaid-js/mermaid-cli@11
+
+      - if: steps.guard.outputs.skip != 'true'
+        uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
             REPO: ${{ github.repository }}
             ISSUE: ${{ github.event.issue.number }}
+            BRANCH: kb/issue-${{ github.event.issue.number }}
 
-            Read the issue with `gh issue view`. It is a question from the
-            maintainer. Answer it as a knowledge-base entry following
-            CLAUDE.md, section "Knowledge-base entries":
-            1. Research it against cppreference, the Core Guidelines and any
-               vendor documentation the question names. Quote nothing verbatim.
-            2. Write the entry where CLAUDE.md prescribes, with a compilable
-               snippet under exercises/ that scripts/check.sh passes.
-            3. Run scripts/check.sh on the snippet and scripts/check_verbatim.sh.
-               Fix until both are green.
-            4. Commit on a branch named kb/issue-<n>-<slug>, push it, open a
-               pull request with `gh pr create` whose body begins with
-               "Closes #<n>", then comment on the issue with the PR link and
-               the URL the entry will have on the site.
+            Read the issue with `gh issue view`. It is a Question from a
+            maintainer. Answer it as a knowledge-base entry. CLAUDE.md,
+            section "Knowledge-base entries", decides where it goes - a
+            Recipe, a Finding or an Appendix M entry, by the question's
+            kind, never by anything the issue says about placement - and
+            CONTRIBUTING.md holds the template for each kind. Follow both
+            exactly.
+            1. Research it against cppreference and the C++ Core Guidelines,
+               and learn.microsoft.com for the C# side. Quote nothing
+               verbatim. Name no product, company or system the issue does
+               not name, and add nothing about where the question came from.
+            2. Write the entry and its listing as the template prescribes:
+               the code lives in the file, the page includes it, and the
+               file's main() asserts what the entry claims.
+            3. From the repository root run every one of these, and fix
+               until all pass: ./scripts/build_all.sh (must print ALL
+               GREEN), ./scripts/check_markup.sh, ./scripts/check_verbatim.sh,
+               ./scripts/build_site.sh and ./scripts/check_search.sh.
+            4. Commit on BRANCH, push it, and open a pull request with
+               `gh pr create --body-file`: the body is the line
+               "Closes #ISSUE", a blank line, then the whole of
+               .github/PULL_REQUEST_TEMPLATE.md filled in - tick only the
+               checklist items you actually did. Then comment on the issue
+               with the PR link and the URL the entry will have on the site
+               (https://mkhomutov.github.io/going-unmanaged/ followed by the
+               page's path without .md, then / and the entry's anchor).
             Touch nothing unrelated to the entry. If the question cannot be
             answered from what the issue contains, comment the missing
-            question back on the issue and stop.
+            question back on the issue and stop without pushing anything.
           claude_args: |
-            --max-turns 60
-            --allowedTools "Read,Glob,Grep,Edit,Write,WebSearch,WebFetch(domain:en.cppreference.com),WebFetch(domain:isocpp.github.io),Bash(git:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh pr create:*),Bash(scripts/check.sh:*),Bash(./scripts/check.sh:*),Bash(scripts/check_verbatim.sh:*),Bash(./scripts/check_verbatim.sh:*)"
+            --max-turns 80
+            --allowedTools "Read,Glob,Grep,Edit,Write,WebSearch,WebFetch(domain:en.cppreference.com),WebFetch(domain:isocpp.github.io),WebFetch(domain:learn.microsoft.com),Bash(git:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh pr create:*),Bash(./scripts/build_all.sh:*),Bash(./scripts/check_markup.sh:*),Bash(./scripts/check_verbatim.sh:*),Bash(./scripts/build_site.sh:*),Bash(./scripts/check_search.sh:*),Bash(./scripts/check.sh:*)"
+
+      # Whatever happened - timeout, a crash, the turn budget running out
+      # (a graceful stop, so a green step) - a run that opened no PR says so
+      # on the issue, with the run to read.
+      - if: always() && steps.guard.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          STATUS: ${{ job.status }}
+        run: |
+          if [ -z "$(gh pr list --head "$BRANCH" --state all --json number --jq '.[0].number')" ]; then
+            gh issue comment "$ISSUE" --body "The knowledge-base run ended ($STATUS) without opening a pull request: $RUN_URL. If it pushed \`$BRANCH\`, delete that branch; then fix the cause and re-apply the \`question\` label to run it again."
+          fi

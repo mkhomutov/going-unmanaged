@@ -6,13 +6,13 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, chapters 1–42, appendices A–L — Chapter 24 and Appendix C were
+(6 parts, chapters 1–42, appendices A–M — Chapter 24 and Appendix C were
 retired by SITE-PLAN.md step 3; a retired number or letter is never reused,
 and the Contents keeps a one-line entry for each so the ordered list still
 renders true), indexed by `book/README.md`. There
 is no single-file build any more: the book is read on GitHub and as the
 static site `scripts/build_site.sh` renders from the same files (SITE-PLAN.md,
-step 2 retired the concatenated file). Appendices run A–L — E is the glossary (item 10), G the bridge catalogue (item 16's
+step 2 retired the concatenated file). Appendices run A–M — E is the glossary (item 10), G the bridge catalogue (item 16's
 lookup half: the mechanism survey and decision table; no C++ listings —
 check_verbatim.sh enforces that no cpp fence lands there), H the choosing
 procedures (item 17: which container, how to take a parameter, what to
@@ -35,7 +35,11 @@ half of Chapter 10's "check your standard" flags: which standard a
 toolchain speaks and how to ask (feature-test macros, MSVC's
 `/Zc:__cplusplus`), every feature the book names by the standard it
 arrived in with the newer spelling beside the taught one, and the
-standards in one sitting. Its probe is `exercises/cookbook/standard.cpp`,
+standards in one sitting. M is the field questions — the third kind of
+question, no C# name attached and no symptom on the screen — filed one entry
+per Question issue by the `kb.yml` workflow (see "Knowledge-base entries"
+below); its listings are `exercises/questions/`, globbed by build_all.sh.
+K's probe is `exercises/cookbook/standard.cpp`,
 quoted by excerpt (check_verbatim holds page → file), built by
 build_all.sh at C++17, C++20 and — under the expected probe — C++23 with
 its printed readings asserted, refused at C++14 by its own static_assert
@@ -118,7 +122,8 @@ Chapter 25's Finding 10.
   pages that are neither chapter nor appendix; H2-titled like a chapter, no
   number or letter, linked from the Reference group
 - `exercises/` — one directory per exercise, each with a TASK.md task card
-  (three non-exercise directories aside: `cookbook/`, `choosing/`, `skeleton/`);
+  (five non-exercise directories aside: `cookbook/`, `choosing/`, `skeleton/`,
+  `cost/`, `questions/`);
   `exercises/README.md` is the index (exercise ↔ chapter ↔ solution)
 - `exercises/fakesdk/`, `exercises/fakedevice/` — also carry vendor-style code
   users must NOT edit (contracts included whole by chapters 17/18)
@@ -290,6 +295,11 @@ Chapter 25's Finding 10.
   Apple silicon rather than the 64 everyone types, so the listing's constant
   is called `kSeparation` (the distance that code chose) and the page owns
   the argument about what the number should be
+- `exercises/questions/` — Appendix M's answers, in `exercises/cost/`'s shape:
+  `q<N>.cpp` for entry Q<N>, its `answer` section included by the page, a
+  `CHECK`-style `main()` below it, no TASK.md. The one directory build_all.sh
+  GLOBS rather than lists: entries are appended unattended by `kb.yml`, and a
+  forgotten line would leave a listing the page shows and nothing compiles
 - `exercises/choosing/` — Appendix H's measurements, the other non-exercise
   appendix directory: `counted.h` (a copy/move-counting type plus the
   `CHECK` judge), `passing.cpp` (procedures 2–3) and `storing.cpp`
@@ -790,7 +800,7 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
 
 `ROADMAP.md` is the full ranked list of missing content, with evidence and a
 sketch of what each contribution looks like. Everything on it APPENDS
-(Chapter 43+, Appendix L+) — no item requires renumbering. Delivered items
+(Chapter 43+, Appendix N+) — no item requires renumbering. Delivered items
 stay on the list marked DONE so item numbers never shift. Short version:
 
 - Tier 1 (load-bearing): CLOSED. Build systems/CMake was item 1 and is now
@@ -847,7 +857,7 @@ stay on the list marked DONE so item numbers never shift. Short version:
   `exercises/bridgelab/` (the main-thread queue under a bounded-wait
   judge), plus Appendix G, the survey of mechanisms and its decision
   table.
-  The glossary was item 10 and is now Appendix E (letters run A–L; C has
+  The glossary was item 10 and is now Appendix E (letters run A–M; C has
   since been retired). The Rosetta Cookbook was item 12 and is now Appendix F — Recipes
   1–8, then 9–13 (files, paths, async), then 14–16 (events, logging,
   timers), then 17 (UTF-8↔UTF-16), then 18–20 (find, optional, variant),
@@ -907,6 +917,38 @@ REVIEW mode: critique their code against the chapter's pitfalls; don't write
 the solution for them unless they explicitly ask.
 
 ## Knowledge-base entries
-Where an entry lives. Your conventions are strict about chapter numbers, the Contents entry, and verbatim-pinned fences, so decide the home once: a new part or appendix for field questions, or a Rosetta recipe when the question maps to a C# API. Name the file pattern and the index file to update.
-The shape. Question first, the answer in plain terms, the snippet included from a tested file, the C# contrast, and a "check this in your own code" line, the same voice as the Findings.
-The privacy rule. Never infer or add context about where a question came from, and never name products, companies or systems the issue does not name.
+
+A Question issue (`.github/ISSUE_TEMPLATE/question.yml`, which applies the
+`question` label) is answered by `.github/workflows/kb.yml` unattended:
+claude-code-action writes the entry on a branch, runs every check, opens a
+PR that CI checks like any other, and reports back to the issue. Because no
+one is watching the run, the decisions are recorded here, not made per run:
+
+- **Where it lives is decided by rule, never by the issue.** A question
+  that maps to a C# API is Recipe N+1 in Appendix F, in that appendix's
+  strict shape with both tabs, its code in `exercises/cookbook/`. A question
+  that arrives as a symptom is Finding N+1 in Chapter 25, in that chapter's
+  strict shape, plus its row in `book/symptoms.md`. Anything else is entry
+  Q<N+1> in Appendix M, `book/M-field-questions.md`, its code in
+  `exercises/questions/q<N+1>.cpp`. All three append at the end with the
+  next free number and never renumber; the index to update is the page
+  itself (F's table, 25's list, M's Entries), since `book/README.md`'s
+  Contents and `scripts/search_tags.yml` already know all three pages.
+- **The Appendix M shape** is the Question template in CONTRIBUTING.md:
+  `### Q<N> — <the question>`, the answer in plain terms, one cpp fence
+  including the file's `answer` section, **In C#** for the contrast, and a
+  `[!TIP]` **Habit:** line — the Findings' voice, no new callout label.
+- **The listing is judged, not shown.** build_all.sh globs
+  `exercises/questions/`, so every `q*.cpp` is built and run under the
+  canonical flags without a line added by hand; its `main()` asserts what
+  the entry claims with a `CHECK`-style judge (counts failures, sets the
+  exit code), never `assert`; check_verbatim.sh holds the include.
+- **The privacy rule.** Never infer or add context about where a question
+  came from, and never name a product, company or system the issue does
+  not name. Open-source ecosystems named as study material are fine, as
+  everywhere in the book (hard invariant 4).
+- **What re-verifies it** is the same list as every PR: build_all.sh ALL
+  GREEN, check_markup.sh, check_verbatim.sh, build_site.sh strict and
+  check_search.sh. The workflow runs all five before it opens the PR, and
+  CI runs them again on it; a run that ends without a PR, for any reason,
+  is reported on the issue by the workflow's closing step.

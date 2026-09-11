@@ -6,6 +6,7 @@ One topic per PR: one Finding, one correction topic, or one exercise.
 - [ ] Correction
 - [ ] New exercise (+ solution + `build_all.sh` entry)
 - [ ] New chapter (opened an issue first — see ROADMAP.md)
+- [ ] Question entry (Appendix M, from a Question issue)
 - [ ] Tooling / docs
 
 ## Where does it belong?
@@ -27,6 +28,9 @@ One topic per PR: one Finding, one correction topic, or one exercise.
 - [ ] Recipes follow the Appendix F shape exactly:
       **In C# / The recipe / Why it looks like this / Trap**, and the
       listing is included from `exercises/cookbook/` by a marked section
+      (template in CONTRIBUTING.md)
+- [ ] Question entries follow the Appendix M shape exactly, and the listing
+      is included from `exercises/questions/` by its `answer` section
       (template in CONTRIBUTING.md)
 - [ ] New chapters, exercises, or appendix sections walked once against
       CONTRIBUTING's "The questions every piece of material answers" —

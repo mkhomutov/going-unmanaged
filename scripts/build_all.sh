@@ -274,6 +274,19 @@ run "cho_noelide"  $CXX $FLAGS -fno-elide-constructors exercises/choosing/passin
 # through a pmr container over a stack buffer. A timing could not check any
 # of it - it would measure this machine, this run and the sanitizers.
 run "cost_alloc"   $CXX $FLAGS   exercises/cost/allocating.cpp           -o $OUT/cost_alloc
+# Appendix M's answers, one translation unit per question. The directory is
+# GLOBBED rather than listed, on purpose: an entry is appended by the kb.yml
+# workflow unattended, and a line forgotten here would leave a listing the
+# page shows and nothing compiles - the hole "everything verifiable is wired
+# into build_all.sh" exists to close. The page includes the file
+# (check_verbatim.sh holds that), and this loop holds what the file claims.
+shopt -s nullglob
+for q in exercises/questions/q*.cpp; do
+    qname="$(basename "$q" .cpp)"
+    run "question $qname" $CXX $FLAGS "$q" -o "$OUT/question_$qname"
+    UBSAN_OPTIONS=halt_on_error=1 "$OUT/question_$qname" > /dev/null
+done
+shopt -u nullglob
 
 echo "== running =="
 $OUT/tracer > /dev/null

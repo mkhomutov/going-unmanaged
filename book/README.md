@@ -26,6 +26,7 @@ Three ways in. **Reference** is for the question in front of you; **Concepts** f
 - [Appendix G — The Bridge Catalogue](G-the-bridge-catalogue.md#appendix-g--the-bridge-catalogue) — every way to connect a foreign client to a native host, priced
 - [Appendix L — What Things Cost](L-what-things-cost.md#appendix-l--what-things-cost) — the price of the thing you are about to write, and the instrument that would tell you
 - [Appendix I — Const-Correctness](I-const.md#appendix-i--const-correctness) — const as one subject
+- [Appendix M — Field Questions](M-field-questions.md#appendix-m--field-questions) — the question that maps to no C# API and arrived as no symptom, answered once and filed
 - [Chapter 25 — Gotchas: the Findings Log](25-findings-from-practice.md#chapter-25--gotchas-the-findings-log) — the mistakes practice produced: symptom, theory, broken and fixed code, habit
 - [Chapter 31 — Reading What the Tools Tell You](31-reading-what-the-tools-tell-you.md#chapter-31--reading-what-the-tools-tell-you) — sanitizer reports line by line; the debugger and the profiler where they differ from C#
 - [Chapter 13 — Toolchain Quick Reference](13-toolchain-quick-reference.md#chapter-13--toolchain-quick-reference) — the flags, and what MSVC calls the thing you know
@@ -157,6 +158,7 @@ Each has a task card under `exercises/` so it can be attempted without the solut
 - J. [The CMake Catalogue](J-cmake-catalogue.md#appendix-j--the-cmake-catalogue) — Chapters 26, 27 and 40's lookup half: every verb they teach and the page that owns it, then the handful none of them needed, priced, with the decision table
 - K. [The Standards Catalogue](K-the-standards-catalogue.md#appendix-k--the-standards-catalogue) — which standard a toolchain is speaking and how to ask it, every feature the book names by the standard it arrived in with the newer spelling beside the one taught, and the standards in one sitting
 - L. [What Things Cost](L-what-things-cost.md#appendix-l--what-things-cost) — Chapter 36's lookup half: what a copy, a throw, a `shared_ptr` and a heap allocation cost, which instrument answers which complaint, and the two rows nobody had written down — an arena, and the cache line two counters share
+- M. [Field Questions](M-field-questions.md#appendix-m--field-questions) — the third kind of question: no C# name attached, no symptom on the screen; asked once, answered with a judged listing, filed where a search will find it
 
 *License:* this text is © 2026 Maksim Khomutov and licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) — share and adapt it with attribution to "Going Unmanaged — A Hands-On C++ Handbook for C# Developers" and a link to [the repository](https://github.com/mkhomutov/going-unmanaged). The code is MIT, including every code sample below: paste it into your own work freely.
 

@@ -144,6 +144,41 @@ the TASK cards' broken listings (book-and-card code with no compiled source)
 and two one-line quotations. Never spell the marker syntax literally in a
 comment or on a page: the snippet engine takes it for a marker.
 
+## The Question template
+
+Questions live in Appendix M — `book/M-field-questions.md` — and are the
+third of the three shapes, for the question that maps to no C# API (that
+would be a Recipe) and arrived as no symptom (that would be a Finding). The
+rule that decides between the three is in CLAUDE.md, "Knowledge-base
+entries", and it is decided by the question's kind, never by whoever asks:
+
+````markdown
+### Q<N> — <the question, stated plainly, as you would ask cppreference>
+
+<The answer in plain terms: two to five sentences, the chapter that owns
+the concept cross-referenced rather than re-taught.>
+
+```cpp
+--8<-- "exercises/questions/q<N>.cpp:answer"
+```
+
+**In C#:** <one or two sentences: what the same question's answer is
+there, and where the two differ.>
+
+> [!TIP]
+> **Habit:** <one line, first person: what to check in your own code>.
+````
+
+The listing lives in `exercises/questions/q<N>.cpp`, fenced between
+`// --8<-- [start:answer]` and `// --8<-- [end:answer]` comment lines with
+a `main()` below the fence that asserts what the entry claims — a
+`CHECK`-style judge that counts failures and sets the exit code, never
+`assert`. `build_all.sh` globs the directory, so there is no line to add:
+every `q*.cpp` is built and run under the canonical flags on every push.
+Numbering is the Findings contract: append with the next free number under
+Appendix M's **Entries**, never renumber. The entry names no product,
+company or system the question does not name.
+
 ## The questions every piece of material answers
 
 The handbook has four goals — learn, change the mindset, practice, help solve
@@ -243,10 +278,10 @@ appendix section should have an answer to each; where the honest answer is
 
 The book is one file per chapter under [book/](book/README.md):
 `01-ownership-and-raii.md` … `42-the-formula-field.md`, then
-`A-`…`L-<slug>.md` for the appendices (A–L, no gap — E is the
+`A-`…`M-<slug>.md` for the appendices (A–M, no gap — E is the
 glossary, G the bridge catalogue, H the choosing procedures, I
 const-correctness, J the CMake catalogue, K the standards catalogue, L what
-things cost), with
+things cost, M the field questions), with
 `book/README.md` carrying the
 front matter and the Contents. Concretely, for a contributor:
 
@@ -458,11 +493,15 @@ Contribute, and become a co-author — concretely:
 
 ## Submitting
 
-The issue forms know these rules: opening an issue offers a template for four
-of the contribution kinds — Finding, correction, new exercise, new chapter —
-and each asks for exactly the pieces this file describes and applies the
-matching label. (Recipes are Finding-sized: no form, go straight to PR under
-the template above.) The PR checklist does the same for the ground rules and
+The issue forms know these rules: opening an issue offers a template for five
+of the contribution kinds — Finding, correction, new exercise, new chapter,
+Question — and each asks for exactly the pieces this file describes and
+applies the matching label. (Recipes are Finding-sized: no form, go straight
+to PR under the template above.) A Question is the one kind that needs no
+PR from you: the `question` label starts a workflow that writes the entry —
+a Recipe, a Finding or an Appendix M entry, decided by the rule under
+[the Question template](#the-question-template) — runs every check below,
+and opens the PR for review. The PR checklist does the same for the ground rules and
 the scripts CI runs. Then:
 
 1. Fork, branch, make your change.
