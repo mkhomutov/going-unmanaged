@@ -1,8 +1,10 @@
 name: Knowledge base entry
-# A Question issue (the form applies the `question` label) becomes an
-# Appendix M entry, a Recipe or a Finding - decided by the rule in CLAUDE.md,
-# "Knowledge-base entries" - written by claude-code-action on a branch and
-# opened as a PR that CI checks like any other. Nobody watches the run, so
+# A Question issue (the form applies the `question` label) - a question the
+# maintainer met at work with no one to ask - is restated, answered into the
+# chapter that owns it (or as a Recipe or Finding), indexed in Appendix M and
+# the search fixture, all by the rules in CLAUDE.md, "Knowledge-base
+# entries", written by claude-code-action on a branch and opened as a PR that
+# CI checks like any other. Nobody watches the run, so
 # three things are held here rather than hoped for: the author must have
 # write access (the action refuses anyone else, and the `if:` skips them
 # cleanly instead of failing red); there is exactly one branch per issue, so
@@ -73,39 +75,53 @@ jobs:
       - if: steps.guard.outputs.skip != 'true'
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # The maintainer's Claude subscription, not an API key: the token
+          # comes from `claude setup-token` run locally (Pro and Max plans)
+          # and is stored as the CLAUDE_CODE_OAUTH_TOKEN repository secret.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
             ISSUE: ${{ github.event.issue.number }}
             BRANCH: kb/issue-${{ github.event.issue.number }}
 
-            Read the issue with `gh issue view`. It is a Question from a
-            maintainer. Answer it as a knowledge-base entry. CLAUDE.md,
-            section "Knowledge-base entries", decides where it goes - a
-            Recipe, a Finding or an Appendix M entry, by the question's
-            kind, never by anything the issue says about placement - and
-            CONTRIBUTING.md holds the template for each kind. Follow both
-            exactly.
-            1. Research it against cppreference and the C++ Core Guidelines,
+            Read the issue with `gh issue view`. It is a question the
+            maintainer met at work with no one to ask, filed raw; the book
+            is the knowledge base the answer goes into. CLAUDE.md, section
+            "Knowledge-base entries", holds every rule, and CONTRIBUTING.md
+            ("The Question template") the shapes. Follow both exactly:
+            1. Restate the question as a reader would search for it -
+               abstract, general, one line, nothing of the situation that
+               produced it. That line is the heading, the index row and
+               the search query.
+            2. Research it against cppreference and the C++ Core Guidelines,
                and learn.microsoft.com for the C# side. Quote nothing
                verbatim. Name no product, company or system the issue does
                not name, and add nothing about where the question came from.
-            2. Write the entry and its listing as the template prescribes:
-               the code lives in the file, the page includes it, and the
-               file's main() asserts what the entry claims.
-            3. From the repository root run every one of these, and fix
+            3. Write the answer into the chapter that owns the concept - a
+               new section where the chapter's flow puts it, or a paragraph
+               added to the section that already teaches it - unless it maps
+               to a C# API (then Recipe N+1, Appendix F's strict shape, both
+               tabs) or arrives as a symptom (then Finding N+1, Chapter 25's
+               strict shape, plus its symptoms.md row). Any code the answer
+               shows lives in exercises/questions/q<N>.cpp and is included,
+               with a main() that asserts what the answer claims.
+            4. Make it findable: append the row to Appendix M's table in
+               book/M-field-questions.md with the next free Q number, and a
+               line to scripts/search_queries.tsv - the words a reader
+               would type, and the location that answers them.
+            5. From the repository root run every one of these, and fix
                until all pass: ./scripts/build_all.sh (must print ALL
                GREEN), ./scripts/check_markup.sh, ./scripts/check_verbatim.sh,
                ./scripts/build_site.sh and ./scripts/check_search.sh.
-            4. Commit on BRANCH, push it, and open a pull request with
+            6. Commit on BRANCH, push it, and open a pull request with
                `gh pr create --body-file`: the body is the line
                "Closes #ISSUE", a blank line, then the whole of
                .github/PULL_REQUEST_TEMPLATE.md filled in - tick only the
                checklist items you actually did. Then comment on the issue
-               with the PR link and the URL the entry will have on the site
+               with the PR link and the URL the answer will have on the site
                (https://mkhomutov.github.io/going-unmanaged/ followed by the
-               page's path without .md, then / and the entry's anchor).
-            Touch nothing unrelated to the entry. If the question cannot be
+               page's path without .md, then / and the section's anchor).
+            Touch nothing unrelated to the answer. If the question cannot be
             answered from what the issue contains, comment the missing
             question back on the issue and stop without pushing anything.
           claude_args: |

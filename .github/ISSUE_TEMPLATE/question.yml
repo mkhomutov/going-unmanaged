@@ -5,13 +5,14 @@ body:
   - type: markdown
     attributes:
       value: |
-        Generalise. No product names, identifiers, ticket numbers, dates or
-        anything that names where the question came from; open-source
-        ecosystems named as study material are fine. Where the answer lands
-        is decided by rule, not here: a C# API it maps to makes it a Recipe,
-        a symptom on the screen makes it a Finding, anything else an
-        Appendix M entry. The `question` label starts the workflow that
-        writes it and opens the PR.
+        Ask it raw; it will be restated as a reader would search for it.
+        But generalise: no product names, identifiers, ticket numbers,
+        dates or anything that names where the question came from
+        (open-source ecosystems named as study material are fine). The
+        answer goes into the chapter that owns the concept - or becomes a
+        Recipe or a Finding when it has that shape - and the question is
+        indexed in Appendix M. The `question` label starts the workflow
+        that writes it and opens the PR.
   - type: textarea
     id: question
     attributes:

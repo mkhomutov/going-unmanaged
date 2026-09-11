@@ -1,15 +1,16 @@
 # exercises/questions/
 
-Appendix M's listings — not an exercise, in the shape of `../cost/` and
-`../choosing/`: one translation unit per entry, `q<N>.cpp` for entry Q<N>
-of `book/M-field-questions.md`, and nothing to attempt cold.
+The field questions' listings — not an exercise, in the shape of
+`../cost/` and `../choosing/`: one translation unit per question, `q<N>.cpp`
+for row Q<N> of `book/M-field-questions.md`'s index, included by the
+chapter section that answers the question, and nothing to attempt cold.
 
 The rules, each held by a script:
 
-- **The page includes the file.** Each `q<N>.cpp` fences the unit the entry
+- **The answering section includes the file.** Each `q<N>.cpp` fences the unit the entry
   shows between `answer` section-marker comments (the shape every listing in
   the book uses — see CONTRIBUTING.md, "The Question template"; the syntax
-  is spelled there, not here), and the entry's one cpp fence includes
+  is spelled there, not here), and the section's one cpp fence includes
   it. Edit the code here and the page follows; `scripts/check_verbatim.sh`
   refuses a marked section no page includes and a fence that copies one.
 - **`main()` judges the claim.** Below the marked section, a `main()`

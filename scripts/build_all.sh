@@ -274,8 +274,8 @@ run "cho_noelide"  $CXX $FLAGS -fno-elide-constructors exercises/choosing/passin
 # through a pmr container over a stack buffer. A timing could not check any
 # of it - it would measure this machine, this run and the sanitizers.
 run "cost_alloc"   $CXX $FLAGS   exercises/cost/allocating.cpp           -o $OUT/cost_alloc
-# Appendix M's answers, one translation unit per question. The directory is
-# GLOBBED rather than listed, on purpose: an entry is appended by the kb.yml
+# The field questions' listings (Appendix M indexes them; the answers live in
+# the owning chapters), one translation unit per question. The directory is
 # workflow unattended, and a line forgotten here would leave a listing the
 # page shows and nothing compiles - the hole "everything verifiable is wired
 # into build_all.sh" exists to close. The page includes the file

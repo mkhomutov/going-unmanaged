@@ -35,10 +35,12 @@ half of Chapter 10's "check your standard" flags: which standard a
 toolchain speaks and how to ask (feature-test macros, MSVC's
 `/Zc:__cplusplus`), every feature the book names by the standard it
 arrived in with the newer spelling beside the taught one, and the
-standards in one sitting. M is the field questions — the third kind of
-question, no C# name attached and no symptom on the screen — filed one entry
-per Question issue by the `kb.yml` workflow (see "Knowledge-base entries"
-below); its listings are `exercises/questions/`, globbed by build_all.sh.
+standards in one sitting. M is the field questions — an INDEX, in
+`symptoms.md`'s shape, of every question the maintainer asked from the
+field through a Question issue, rephrased, each pointing at the section
+of the chapter that answers it (see "Knowledge-base entries" below);
+the judged listings those sections include are `exercises/questions/`,
+globbed by build_all.sh.
 K's probe is `exercises/cookbook/standard.cpp`,
 quoted by excerpt (check_verbatim holds page → file), built by
 build_all.sh at C++17, C++20 and — under the expected probe — C++23 with
@@ -295,9 +297,10 @@ Chapter 25's Finding 10.
   Apple silicon rather than the 64 everyone types, so the listing's constant
   is called `kSeparation` (the distance that code chose) and the page owns
   the argument about what the number should be
-- `exercises/questions/` — Appendix M's answers, in `exercises/cost/`'s shape:
-  `q<N>.cpp` for entry Q<N>, its `answer` section included by the page, a
-  `CHECK`-style `main()` below it, no TASK.md. The one directory build_all.sh
+- `exercises/questions/` — the field questions' listings, in
+  `exercises/cost/`'s shape: `q<N>.cpp` for question Q<N> of Appendix M's
+  index, its `answer` section included by the chapter section that answers
+  the question, a `CHECK`-style `main()` below it, no TASK.md. The one directory build_all.sh
   GLOBS rather than lists: entries are appended unattended by `kb.yml`, and a
   forgotten line would leave a listing the page shows and nothing compiles
 - `exercises/choosing/` — Appendix H's measurements, the other non-exercise
@@ -918,31 +921,44 @@ the solution for them unless they explicitly ask.
 
 ## Knowledge-base entries
 
-A Question issue (`.github/ISSUE_TEMPLATE/question.yml`, which applies the
-`question` label) is answered by `.github/workflows/kb.yml` unattended:
+The maintainer works where no assistant is available and asks the questions
+that come up there as Question issues (`.github/ISSUE_TEMPLATE/question.yml`,
+which applies the `question` label); the book is the knowledge base the
+answers go into. `.github/workflows/kb.yml` answers them unattended:
 claude-code-action writes the entry on a branch, runs every check, opens a
 PR that CI checks like any other, and reports back to the issue. Because no
 one is watching the run, the decisions are recorded here, not made per run:
 
-- **Where it lives is decided by rule, never by the issue.** A question
-  that maps to a C# API is Recipe N+1 in Appendix F, in that appendix's
-  strict shape with both tabs, its code in `exercises/cookbook/`. A question
-  that arrives as a symptom is Finding N+1 in Chapter 25, in that chapter's
-  strict shape, plus its row in `book/symptoms.md`. Anything else is entry
-  Q<N+1> in Appendix M, `book/M-field-questions.md`, its code in
-  `exercises/questions/q<N+1>.cpp`. All three append at the end with the
-  next free number and never renumber; the index to update is the page
-  itself (F's table, 25's list, M's Entries), since `book/README.md`'s
-  Contents and `scripts/search_tags.yml` already know all three pages.
-- **The Appendix M shape** is the Question template in CONTRIBUTING.md:
-  `### Q<N> — <the question>`, the answer in plain terms, one cpp fence
-  including the file's `answer` section, **In C#** for the contrast, and a
-  `[!TIP]` **Habit:** line — the Findings' voice, no new callout label.
-- **The listing is judged, not shown.** build_all.sh globs
-  `exercises/questions/`, so every `q*.cpp` is built and run under the
-  canonical flags without a line added by hand; its `main()` asserts what
-  the entry claims with a `CHECK`-style judge (counts failures, sets the
-  exit code), never `assert`; check_verbatim.sh holds the include.
+- **Rephrase first.** The question as filed is raw; the entry carries it
+  restated as a reader would search for it — abstract, general, one line,
+  no trace of the situation that produced it — and that restatement is
+  the section heading, the index row and the search query below.
+- **The answer lives in the chapter that owns the concept**, integrated,
+  not appended to a catch-all: a new `###` section titled with the
+  rephrased question, placed where the chapter's flow puts the concept, or
+  a paragraph added to the section that already teaches it when that is
+  all the answer needs. Two shapes take precedence when they fit: a
+  question that maps to a C# API is Recipe N+1 in Appendix F, in that
+  appendix's strict shape with both tabs, code in `exercises/cookbook/`;
+  a question that arrives as a symptom is Finding N+1 in Chapter 25, in
+  that chapter's strict shape, plus its row in `book/symptoms.md`.
+- **Appendix M is the index, never the home.** `book/M-field-questions.md`
+  is a table in `symptoms.md`'s shape — the rephrased question, and the
+  link to the section, recipe or finding that answers it — one row per
+  question, appended with the next free number Q<N>, never renumbered.
+  Every answer gets its row, whichever shape it took.
+- **Findable by search, held by the fixture.** Each question adds a line
+  to `scripts/search_queries.tsv`: the words a reader would type for it,
+  and the location that answers it. check_search.sh then holds that
+  promise on every push; a tag in `scripts/search_tags.yml` is added only
+  when the fixture cannot be met without one (its header's five rules).
+- **The listing is judged, not shown.** A section that shows code includes
+  it from `exercises/questions/q<N>.cpp`'s `answer` section (template in
+  CONTRIBUTING.md, "The Question template"); build_all.sh globs that
+  directory, so every `q*.cpp` is built and run under the canonical flags
+  without a line added by hand, and its `main()` asserts what the entry
+  claims with a `CHECK`-style judge (counts failures, sets the exit code),
+  never `assert`. check_verbatim.sh holds the include.
 - **The privacy rule.** Never infer or add context about where a question
   came from, and never name a product, company or system the issue does
   not name. Open-source ecosystems named as study material are fine, as
