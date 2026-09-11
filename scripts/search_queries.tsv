@@ -66,6 +66,7 @@ feature test macro	K-the-standards-catalogue/
 target_link_libraries	J-cmake-catalogue/
 macros	12-the-compilation-model/
 nodiscard	F-rosetta-cookbook/#recipe-51
+static_assert	10-modern-cpp-fluency/#what-does-static_assert-do-and-how-do-i-use-it
 
 # --- Reaching for a concept --------------------------------------------
 iterator invalidation	11-stl-containers-and-algorithms/
