@@ -905,3 +905,8 @@ The maintainer also uses the exercises for personal training. When asked for
 help with an exercise ATTEMPT (as opposed to repo maintenance), default to
 REVIEW mode: critique their code against the chapter's pitfalls; don't write
 the solution for them unless they explicitly ask.
+
+## Knowledge-base entries
+Where an entry lives. Your conventions are strict about chapter numbers, the Contents entry, and verbatim-pinned fences, so decide the home once: a new part or appendix for field questions, or a Rosetta recipe when the question maps to a C# API. Name the file pattern and the index file to update.
+The shape. Question first, the answer in plain terms, the snippet included from a tested file, the C# contrast, and a "check this in your own code" line, the same voice as the Findings.
+The privacy rule. Never infer or add context about where a question came from, and never name products, companies or systems the issue does not name.

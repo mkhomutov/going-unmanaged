@@ -1,0 +1,50 @@
+name: Knowledge base entry
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: kb-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  entry:
+    if: github.event.label.name == 'question'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE: ${{ github.event.issue.number }}
+
+            Read the issue with `gh issue view`. It is a question from the
+            maintainer. Answer it as a knowledge-base entry following
+            CLAUDE.md, section "Knowledge-base entries":
+            1. Research it against cppreference, the Core Guidelines and any
+               vendor documentation the question names. Quote nothing verbatim.
+            2. Write the entry where CLAUDE.md prescribes, with a compilable
+               snippet under exercises/ that scripts/check.sh passes.
+            3. Run scripts/check.sh on the snippet and scripts/check_verbatim.sh.
+               Fix until both are green.
+            4. Commit on a branch named kb/issue-<n>-<slug>, push it, open a
+               pull request with `gh pr create` whose body begins with
+               "Closes #<n>", then comment on the issue with the PR link and
+               the URL the entry will have on the site.
+            Touch nothing unrelated to the entry. If the question cannot be
+            answered from what the issue contains, comment the missing
+            question back on the issue and stop.
+          claude_args: |
+            --max-turns 60
+            --allowedTools "Read,Glob,Grep,Edit,Write,WebSearch,WebFetch(domain:en.cppreference.com),WebFetch(domain:isocpp.github.io),Bash(git:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh pr create:*),Bash(scripts/check.sh:*),Bash(./scripts/check.sh:*),Bash(scripts/check_verbatim.sh:*),Bash(./scripts/check_verbatim.sh:*)"
