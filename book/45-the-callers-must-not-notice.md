@@ -42,7 +42,7 @@ READ of size 8 at 0x603000001c60 thread T0
     #0 in Catalog::Clear() catalog.cpp:82
     #1 in Catalog::~Catalog() catalog.cpp:12
     ...
-    #3 in main snapshot.cpp:57
+    #3 in main snapshot.cpp:61
 
 freed by thread T0 here:
     #0 in _ZdaPv (libclang_rt.asan_osx_dynamic.dylib)

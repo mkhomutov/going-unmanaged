@@ -44,9 +44,13 @@ int main() {
     live.Add("again", 1);
     Check(live.Count() == 1, "and usable");
 
-    Catalog* self = &moved;
-    moved = *self;                            // self-assignment through a pointer, so the compiler cannot see it
-    Check(moved.Count() == 103, "self-assignment changes nothing");
+    Catalog assigned;
+    assigned = std::move(moved);              // move ASSIGNMENT, which a move constructor check does not cover
+    Check(assigned.Count() == 103 && moved.Count() == 0, "a move assignment steals the same way");
+
+    Catalog* self = &assigned;
+    assigned = *self;                         // self-assignment through a pointer, so the compiler cannot see it
+    Check(assigned.Count() == 103, "self-assignment changes nothing");
 
     if (g_failures != 0) {
         std::printf("retrolab: %d FAILED\n", g_failures);
