@@ -75,7 +75,7 @@ panel down: 1 live nodes
 still live at unload: 0
 ```
 
-In the customer's order the plain build dies with a segmentation fault before it prints its second line, and the sanitized build says why:
+In the customer's order the plain build reports `document closed: 0 live nodes` and then dies with a segmentation fault at `delete panel`, and the sanitized build says why:
 
 ```text
 ==88106==ERROR: AddressSanitizer: heap-use-after-free on address 0x604000000490 ...

@@ -30,6 +30,7 @@
 namespace {
 thread_local bool t_on_deadline_path = false;
 long g_deadline_allocs = 0;              // written by the deadline thread only
+void* volatile g_sink = nullptr;         // an allocation stored here cannot be elided
 
 void* CountedAlloc(std::size_t size) {
     if (t_on_deadline_path) {
@@ -121,7 +122,8 @@ void WorkerToDeadlineThread() {
     // or the zero below would be the instrument's silence rather than the
     // code's innocence (the flag line above is one edit from making it so).
     const long control = g_deadline_allocs;
-    delete new int;
+    g_sink = new int;                            // through a volatile sink: a bare new/delete
+    delete static_cast<int*>(g_sink);            // pair is one the optimizer may elide
     Check(g_deadline_allocs == control + 1, "the counter sees an allocation on this thread");
     const long allocs_before = g_deadline_allocs;
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
@@ -197,7 +199,8 @@ void InterruptToMainLoop() {
 
     t_on_deadline_path = true;                      // the handler runs on THIS thread, so it is counted too
     const long control = g_deadline_allocs;         // the same positive control as phase 1
-    delete new int;
+    g_sink = new int;                            // through a volatile sink: a bare new/delete
+    delete static_cast<int*>(g_sink);            // pair is one the optimizer may elide
     Check(g_deadline_allocs == control + 1, "the counter sees an allocation on this thread");
     const long allocs_before = g_deadline_allocs;
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
