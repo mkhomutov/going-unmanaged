@@ -14,6 +14,24 @@ numbers may still move.
 
 ### Added
 
+- **Chapter 44 — Crash at Document Close, and `exercises/framelab/`** (MINOR
+  — ROADMAP item 18, issue #58). The Bestiary's fifth shape had four
+  sentences and no treatment; two readers of the 2026-09 study, from Qt and
+  from Unreal, stopped there. This is Chapter 35's move applied to it: a
+  C++-native framework in the `Fake*` house style — parent-owned nodes, a
+  document the host closes, a weak handle of the framework's own — and a
+  ticket whose 3.0 clean-up put a `unique_ptr` on every node the framework
+  already owned, exactly as every earlier chapter teaches. The bench's
+  order (unload, then close) reaches zero live nodes and looks correct;
+  the customer's (close, then unload) is a heap-use-after-free with the
+  framework's own teardown on the *freed by* stack. The fix holds what the
+  framework owns through its handle, owns a node only until it is
+  parented, and releases on that line; the harness runs both orders under
+  both judges. Chapter 1 gains the one exception to its rule, Chapter 16
+  the ticket its Shape 5 paragraph lacked, Chapter 35 its sibling; Appendix
+  B the principle, Appendix E two terms, the Symptom Index two rows and a
+  sentence in its triage paragraph, `check.sh`/`check.ps1` the `framelab`
+  vendor argument, the search fixture five queries.
 - **Chapter 43 — Below the Mutex, and `exercises/deadlinelab/`** (MINOR —
   ROADMAP items 19 and 21, issues #59 and #61). Chapter 29 fixes a callback
   on a foreign thread with a mutex and Chapter 36 forbids the mutex on a

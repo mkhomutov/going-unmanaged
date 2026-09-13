@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, chapters 1–43, appendices A–M — Chapter 24 and Appendix C were
+(6 parts, chapters 1–44, appendices A–M — Chapter 24 and Appendix C were
 retired by SITE-PLAN.md step 3; a retired number or letter is never reused,
 and the Contents keeps a one-line entry for each so the ordered list still
 renders true), indexed by `book/README.md`. There
@@ -110,6 +110,12 @@ relaxed ring is reported every time, and the lab's own harness is reported
 at no level; it is the harness's sequence check on a weak-memory machine,
 and check_platform_claims.sh asserts the one-lap-stale slot on arm64 and
 its absence on x86-64.
+Chapter 44 (item 18) is the seventh ticket and the Bestiary's fifth shape
+worked: FakeUi is a C++-native framework with parent-owned nodes, a document
+the host closes and its own weak handle, the card's 3.0 panel put a
+`unique_ptr` on every node the framework already owned, and the harness
+runs BOTH teardown orders because unload-then-close reaches zero and looks
+correct while close-then-unload is a use-after-free inside `default_delete`.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -476,6 +482,18 @@ Chapter 25's Finding 10.
   libc++ has it only for a deployment target of macOS 26 or later — and
   build_all.sh builds the lab a second time on macOS with
   `-mmacosx-version-min=15.0` so the `#else` branch is judged too
+- `exercises/framelab/` — Chapter 44's ticket lab. FakeUi.h/.cpp is NEW
+  vendor code (a C++-native framework: `Node` owned by its parent, a
+  document root the host opens and closes, `NodeRef` as the framework's own
+  weak handle; contract quoted whole in Ch 44, same rules as the other
+  Fake* files); TASK.md carries the broken 3.0 panel (book-only, it exists
+  to fail); panel.h + main.cpp are the FIXED state, quoted whole in the
+  chapter's fix section, and build_all.sh holds them to comlab's two judges
+  — the framework's live-node counter at 0 (an owner too few), the
+  sanitizers (an owner too many) — in BOTH teardown orders inside one run,
+  because unload-then-close reaches zero on its own and proves nothing about
+  close-then-unload. check.sh and check.ps1 link it via the `framelab`
+  argument
 - `exercises/deadlinelab/` — Chapter 43's lab: `spsc_queue.h` (the bounded
   SPSC ring, included whole by the chapter) and the judging `main.cpp`
   (Chapter 36's allocation counter behind a `thread_local` flag; a worker
@@ -548,7 +566,7 @@ Chapter 25's Finding 10.
   section a source marks is included by some page (a marked unit is a
   promise a page shows it); no cpp or cmake fence of four lines or more on
   any page is a copy of a source region (a listing pasted back instead of
-  included is refused); the eight ticket/lab TASK cards' broken listings
+  included is refused); the nine ticket/lab TASK cards' broken listings
   appear in their chapters (book-and-card code with no compiled source — it
   exists to fail — so it stays copied, held by containment); two one-line
   quotations (Chapter 39, Chapter 40) are held by containment; Appendix G
@@ -696,7 +714,7 @@ Part VI code debt is closed, and a future Part VI chapter reuses it.
    change to code; it must print ALL GREEN.
 2. `exercises/*/Fake*.h|.cpp` are "vendor code": the book includes their
    public contracts whole, so a change shows on Chapter 17/18's page (or
-   35's, for comlab's FakeSDK2) the moment it is made — and is almost never
+   35's, for comlab's FakeSDK2, or 44's, for framelab's FakeUi) the moment it is made — and is almost never
    the right move.
 3. Chapter numbering is load-bearing: the book cross-references chapters by
    number ("Chapter 6", "Finding 3 of Chapter 25"). Inserting a chapter means
@@ -851,18 +869,14 @@ stay on the list marked DONE so item numbers never shift. Short version:
   Chapter 26; dependency management was item 2 and is now Chapter 27;
   testing was item 3 and is now Chapter 28; concurrency was item 4 and is
   now Chapter 29
-- Tier 2: one item open — the framework shape (item 18: Bestiary Shape 5 is named in Chapter 16 and
-  taught nowhere — two readers of the 2026-09 study stopped there, and
-  Shape 4 has no lab either — though only its interrupt-context half is
-  genuinely untaught, which is item 21 — so this item is about the shape
-  with no treatment at all rather than the last shape without a lab; still
-  a legitimate candidate for out-of-scope-with-a-sentence). Below the
-  mutex was item 19 and is now Chapter 43 + `exercises/deadlinelab/` — the
+- Tier 2: CLOSED. The framework shape was item 18 and is now Chapter 44 +
+  `exercises/framelab/` — Bestiary Shape 5 worked as the seventh ticket,
+  with the out-of-scope close the entry allowed deliberately not taken.
+  Below the mutex was item 19 and is now Chapter 43 + `exercises/deadlinelab/` — the
   bounded SPSC ring and the two memory orders, measured per instruction set
   — and it closed item 21 (the interrupt-context callback) as one section,
   exactly as the ROADMAP said it might. Both were sequenced after item 9
-  (P/Invoke), which is **DONE as of 2026-09-02** — Chapter 39 — so item 18
-  is unblocked. Templates you will write was item 23 and is now Chapter 41 +
+  (P/Invoke), which is **DONE as of 2026-09-02** — Chapter 39. Templates you will write was item 23 and is now Chapter 41 +
   `exercises/templatelab/`, the second lab whose judge asserts a build
   FAILS. CMake for the plug-in was item 22 and is now Chapter 40 +
   `exercises/pluginlab/`. Consolidated const-correctness was item 8 and is now Appendix I

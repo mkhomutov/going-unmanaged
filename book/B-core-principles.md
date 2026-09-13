@@ -185,3 +185,4 @@ One line each. If you can say these fluently and back them with code, the concep
 - "A plug-in is a DLL: headers for the compiler, SDK .libs for the linker, the host exports the symbols at runtime."
 - "No exception crosses the plug-in boundary, and callbacks registered with the SDK must outlive their registration."
 - "In a refcounted API, the function's name tells me whether I own a release — acquired, copied or created means yes; peeked or borrowed means no. I encode each answer once, in a wrapper's named constructors — adopt or share — and after that no line of mine spells Retain or Release."
+- "Before I wrap an object in a smart pointer, I ask what already owns it. When a framework does, I hold its own handle instead, own a node only until I hand it over, and release on that line — inside their world, their rules, and mine at the boundary."

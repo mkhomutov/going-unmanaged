@@ -141,6 +141,8 @@ Ownership is not a discipline you adopt in Rust; it is what the type system chec
 
 ### In the wild: C-style SDKs
 
+One exception to *unique_ptr by default* before the C ones, because it is the one that looks most like this chapter's rule and is its opposite: a C++-native framework — a UI toolkit, a game engine — that owns the objects you create inside it, through a parent or a collector. There the single owner already exists, a `unique_ptr` is a second one, and the question before the wrapper is what already owns it. [Chapter 44](44-crash-at-document-close.md#chapter-44--crash-at-document-close) is that ticket.
+
 Vendor SDKs — plug-in APIs, device SDKs, OS APIs — hand you raw resources (allocated payloads, handles, sessions) that you must release manually via a matching dispose/close/free function. The pro move is a small RAII guard per resource type, so the release runs on every path, including early error returns. Here is the shape against the miniature SDK you will meet in Chapter 17 (`ThingData` is a struct whose payload the SDK allocates and you must dispose):
 
 ```cpp

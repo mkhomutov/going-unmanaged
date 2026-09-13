@@ -1,6 +1,6 @@
 # Build and run YOUR exercise attempt with the handbook's canonical flags - MSVC.
 #
-#   scripts\check.ps1 <your.cpp> [more.cpp...] [fakesdk|fakedevice|comlab] [args passed to the run...]
+#   scripts\check.ps1 <your.cpp> [more.cpp...] [fakesdk|fakedevice|comlab|framelab] [args passed to the run...]
 #
 #   scripts\check.ps1 attempt.cpp                     # plain exercise
 #   scripts\check.ps1 attempt.cpp fakesdk             # + vendor code
@@ -60,7 +60,7 @@ while ($i -lt $rest.Count -and $rest[$i] -like '*.cpp') {
     $i++
 }
 $sdk = ''
-if ($i -lt $rest.Count -and $rest[$i] -in @('fakesdk', 'fakedevice', 'comlab')) {
+if ($i -lt $rest.Count -and $rest[$i] -in @('fakesdk', 'fakedevice', 'comlab', 'framelab')) {
     $sdk = $rest[$i]
     $i++
 }

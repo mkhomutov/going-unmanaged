@@ -24,7 +24,7 @@
 #                           file: a listing pasted back into a page instead
 #                           of included is the drift this script was born
 #                           for, refused before it can happen
-#   4. cards              - the ticket, bridgelab and deadlinelab TASK cards'
+#   4. cards              - the ticket (32-37 and 44), bridgelab and deadlinelab TASK cards'
 #                           broken listings appear in their chapters verbatim: those
 #                           are book-and-card code with no compiled source
 #                           (they exist to fail), so they stay copied and are
@@ -125,7 +125,8 @@ TICKETS = [('exitlab', '32-it-crashes-on-exit'),
            ('perflab', '36-the-host-stutters'),
            ('dumplab', '37-no-repro-dump-attached'),
            ('bridgelab', '38-the-bridge-out'),
-           ('deadlinelab', '43-below-the-mutex')]
+           ('deadlinelab', '43-below-the-mutex'),
+           ('framelab', '44-crash-at-document-close')]
 card_fences = 0
 for lab, ch in TICKETS:
     chapter = open(f'book/{ch}.md').read()

@@ -314,6 +314,14 @@
   - evaluator
   - recursion
   - locale
+44-crash-at-document-close.md:
+  - framework
+  - Qt
+  - Unreal
+  - QObject
+  - UObject
+  - QPointer
+  - parented
 43-below-the-mutex.md:
   - lockfree
   - spsc

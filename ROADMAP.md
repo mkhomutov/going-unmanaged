@@ -815,7 +815,7 @@ in both directions: forward, every cpp fence on the page is in
 the page whole — the reverse that bridgelab gets from its TASK card, which
 a directory with no card had to get another way.
 
-### 18. The framework shape — Bestiary Shape 5, taught
+### 18. The framework shape — Bestiary Shape 5, taught — DONE (Chapter 44)
 
 **Missing:** the fifth SDK shape is named and never taught.
 
@@ -863,6 +863,31 @@ silence would.
 
 **Sequencing:** after item 9, alongside items 8 and 19. Nothing here blocks
 on those; the ordering is reader demand, and P/Invoke's is larger.
+
+**Delivered:** Chapter 44 — *Crash at Document Close* — and
+`exercises/framelab/`, Chapter 35's move applied to Shape 5 exactly as the
+entry sketched. `FakeUi.h`/`.cpp` is a C++-native framework in the `Fake*`
+house style: nodes owned by their parent, a document the host opens and
+closes, and the framework's own weak handle (`NodeRef`, which reads null
+once the node is gone). The card's 3.0 panel put a `unique_ptr` on every
+node the framework already owned — the smart-pointer reflex, applied as
+reviewed — and the harness shows the consequence in both teardown orders:
+unload-then-close reaches zero live nodes and looks correct, close-then-unload
+is a heap-use-after-free inside `default_delete` with the framework's teardown
+on the *freed by* stack. The fix holds what the framework owns through its
+handle, owns a node only until it is parented, and releases on that line;
+the judges are comlab's — the framework's live-node counter at zero (an
+owner too few) and the sanitizers (an owner too many) — run in both orders,
+because one order hides what the other shows. The out-of-scope close was not
+taken: the contradiction the entry names (a parented pointer overrides two
+chapters of Rule of Five) is now stated on Chapter 1's page, Chapter 16's,
+and Chapter 44's, and the habit is the question the entry asked for. Real
+frameworks are named as study material only, in "In the wild", with the
+three conventions they chose.
+
+**Still open from this item:** nothing. The collector variant (a GC where
+the parent was) is described, not modelled — the lab models parent
+ownership, and the chapter says which framework does which.
 
 ### 19. Below the mutex — the deadline path's other half — DONE (Chapter 43)
 

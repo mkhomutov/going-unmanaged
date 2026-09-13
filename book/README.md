@@ -61,7 +61,7 @@ Three ways in. **Reference** is for the question in front of you; **Concepts** f
 
 ### Labs
 
-Each has a task card under `exercises/` so it can be attempted without the solution on the next screen; the six from Chapter 32 on are tickets — a symptom and the code it happened to, the diagnosis behind a fold.
+Each has a task card under `exercises/` so it can be attempted without the solution on the next screen; the six from Chapter 32 on are tickets — a symptom and the code it happened to, the diagnosis behind a fold — and so is Chapter 44.
 
 - [Chapter 14 — Exercise: The Lifetime Tracer](14-exercise-the-lifetime-tracer.md#chapter-14--exercise-the-lifetime-tracer)
 - [Chapter 15 — Exercise: The Buffer](15-exercise-the-buffer.md#chapter-15--exercise-the-buffer)
@@ -82,6 +82,7 @@ Each has a task card under `exercises/` so it can be attempted without the solut
 - [Chapter 39 — The Round Trip Home](39-the-round-trip-home.md#chapter-39--the-round-trip-home)
 - [Chapter 40 — CMake for the Plug-in](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in)
 - [Chapter 42 — The Formula Field](42-the-formula-field.md#chapter-42--the-formula-field)
+- [Chapter 44 — Crash at Document Close](44-crash-at-document-close.md#chapter-44--crash-at-document-close)
 
 ### Reading order
 
@@ -145,6 +146,7 @@ Each has a task card under `exercises/` so it can be attempted without the solut
 41. [Templates You Will Write](41-templates-you-will-write.md#chapter-41--templates-you-will-write) — the working subset: the seam as a template parameter, static_assert as the judge, the three utilities, and how to read the error
 42. [The Formula Field](42-the-formula-field.md#chapter-42--the-formula-field) — user-typed text evaluated against the host's objects: tokens as a closed set, a tree behind unique_ptr, recursive descent with a value at every level, the provider seam, and a judge whose oracle is a table worked out by hand
 43. [Below the Mutex](43-below-the-mutex.md#chapter-43--below-the-mutex) — the hand-off to a deadline thread once a lock is forbidden: a bounded ring with one producer and one consumer, the two memory orders that make it correct and what they cost per instruction set, and the interrupt handler as the same rule with waiting removed
+44. [Crash at Document Close](44-crash-at-document-close.md#chapter-44--crash-at-document-close) — a C++-native framework with an object model of its own, and the ownership clean-up that put a second owner on every node: the ticket the Bestiary's fifth shape had never been worked as
 
 **[Appendices](A-fundamentals-refresher.md#appendices)**
 

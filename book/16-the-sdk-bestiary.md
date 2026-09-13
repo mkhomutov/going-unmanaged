@@ -22,7 +22,7 @@ A global or per-peripheral `X_Init(&config)` / `X_DeInit()` pair, status enums (
 
 ### Shape 5 — C++-native SDKs (engines and frameworks)
 
-Some SDKs are genuinely C++: **Qt**, **Unreal**, **JUCE**, many game and media engines. Here the vendor ships its own containers, strings, and smart pointers (Chapter 7's "In the wild"), its own object lifetime rules (Qt's parent-child ownership; Unreal's garbage collector for UObjects — yes, a GC in C++), and often its own build layer (moc, UnrealBuildTool). The transition skill: identify which of *their* mechanisms replaces which standard one, use theirs inside their world, and convert at the boundary. Fighting a framework's ownership model with raw standard idioms is a rite of passage best skipped.
+Some SDKs are genuinely C++: **Qt**, **Unreal**, **JUCE**, many game and media engines. Here the vendor ships its own containers, strings, and smart pointers (Chapter 7's "In the wild"), its own object lifetime rules (Qt's parent-child ownership; Unreal's garbage collector for UObjects — yes, a GC in C++), and often its own build layer (moc, UnrealBuildTool). The transition skill: identify which of *their* mechanisms replaces which standard one, use theirs inside their world, and convert at the boundary. Fighting a framework's ownership model with raw standard idioms is a rite of passage best skipped — and [Chapter 44](44-crash-at-document-close.md#chapter-44--crash-at-document-close) is the ticket that rite files, worked cold: a `unique_ptr` on a node the framework's parent already owned, and the question that should have come first.
 
 ### The universal checklist, whatever the shape
 

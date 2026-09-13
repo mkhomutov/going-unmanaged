@@ -239,6 +239,15 @@ run "comlab"      $CXX $FLAGS   exercises/comlab/FakeSDK2.cpp exercises/comlab/m
 # accidental copy, and a timing assert would measure the runner instead
 # of the code. Run twice below at different session lengths.
 run "perflab"     $CXX $FLAGS   exercises/perflab/meter.cpp exercises/perflab/main.cpp -o $OUT/perflab
+# Chapter 44's lab. FakeUi.* is vendor code (a C++-native framework with
+# parent-owned nodes and its own weak handle); panel.h and main.cpp are the
+# FIXED panel (the broken 3.0 panel lives in the lab's TASK.md and the
+# chapter - it exists to fail). comlab's two judges again - the framework's
+# live-node counter at 0 for an owner too few, the sanitizers for an owner
+# too many - and the harness runs BOTH teardown orders in one binary,
+# because unload-then-close reaches zero on its own and proves nothing
+# about close-then-unload, which is where the ticket lived.
+run "framelab"    $CXX $FLAGS   exercises/framelab/FakeUi.cpp exercises/framelab/main.cpp -o $OUT/framelab
 # Chapter 37's lab. The committed files are the FIXED state (the broken
 # 3.4.0 session.cpp lives in the lab's TASK.md and the chapter - it
 # exists to fail, at -O2, so the reader can hold a post-mortem on the
@@ -460,6 +469,9 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/comlab > /dev/null
 # claim of independence from session length, and one length cannot prove it.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/perflab 50 > /dev/null
 UBSAN_OPTIONS=halt_on_error=1 $OUT/perflab 1000 > /dev/null
+# The Chapter 44 lab: the counter assert inside the binary in both orders,
+# the sanitizers around it.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/framelab > /dev/null
 # The Chapter 37 lab under both device configurations - the bench's
 # calibrated unit and the field's base model. The crash lived only in the
 # second, and one configuration cannot prove a claim about both.
