@@ -102,8 +102,9 @@ void WorkerToDeadlineThread() {
 
     std::atomic<long> retries{0};                   // full-ring waits, on the worker's side
     std::atomic<bool> give_up{false};               // set when the consumer's deadline expires,
-    std::thread worker([&] {                        // so a ring that never delivers cannot
-        for (std::uint32_t i = 0; i < kItems; ++i) {   // leave join() waiting forever
+    std::thread worker([&] {                        // so a ring that never delivers cannot leave
+        for (std::uint32_t i = 0; i < kItems; ++i) {   // join() waiting forever: three broken rings
+                                                    // hung this harness rather than failing it
             const Sample s{i, static_cast<float>(i) * 0.5f};
             while (!queue.TryPush(s)) {             // full: the worker waits, the
                 if (give_up.load(std::memory_order_relaxed)) {   // deadline side never does
@@ -116,6 +117,12 @@ void WorkerToDeadlineThread() {
     });
 
     t_on_deadline_path = true;                      // from here to the join, this thread is the deadline thread
+    // A positive control first: one deliberate allocation must be counted,
+    // or the zero below would be the instrument's silence rather than the
+    // code's innocence (the flag line above is one edit from making it so).
+    const long control = g_deadline_allocs;
+    delete new int;
+    Check(g_deadline_allocs == control + 1, "the counter sees an allocation on this thread");
     const long allocs_before = g_deadline_allocs;
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
     std::uint32_t expect = 0;
@@ -143,6 +150,10 @@ void WorkerToDeadlineThread() {
     worker.join();
 
     Check(expect == kItems, "every sample the worker produced arrived (no deadline expired)");
+    // A wrong memory order shows up here as a stale slot - but only on a
+    // machine that reorders, and then not on every run. This check is the
+    // ring's judge for the CODE; the judge for the ORDER is
+    // check_platform_claims.sh's relaxed-ring section, a dozen runs on arm64.
     Check(in_order, "every sample arrived in the order it was produced, none twice");
     Check(allocs_during == 0, "the deadline thread allocated nothing across the whole session");
     std::printf("worker -> deadline thread: %u samples, %ld ticks (%ld empty), %ld full-ring retries by the worker, %ld allocations on the deadline thread\n",
@@ -185,6 +196,9 @@ void InterruptToMainLoop() {
     setitimer(ITIMER_REAL, &every_ms, nullptr);    // from here, the handler can run between any two lines
 
     t_on_deadline_path = true;                      // the handler runs on THIS thread, so it is counted too
+    const long control = g_deadline_allocs;         // the same positive control as phase 1
+    delete new int;
+    Check(g_deadline_allocs == control + 1, "the counter sees an allocation on this thread");
     const long allocs_before = g_deadline_allocs;
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
     std::uint32_t received = 0;
@@ -220,6 +234,10 @@ void InterruptToMainLoop() {
     while (g_from_interrupt.TryPop(s)) {            // what the last interrupts left in the ring
         ++received;
     }
+    const std::uint32_t after_stop = g_interrupts.load();
+    struct timespec settle = {0, 20 * 1000 * 1000};
+    nanosleep(&settle, nullptr);                    // twenty timer periods: any survivor would fire
+    Check(g_interrupts.load() == after_stop, "no interrupt arrived after the timer was stopped and the handler uninstalled");
 
     const std::uint32_t fired = g_interrupts.load();
     const std::uint32_t dropped = g_interrupt_drops.load();

@@ -781,7 +781,7 @@ if $CXX -std=c++17 -O2 -S "$OUT/orders.cpp" -o "$OUT/orders.s" 2>/dev/null; then
             fi
             for fn in _Z13store_releasem _Z13store_seq_cstm; do
                 if body "$fn" | grep -q 'stlr'; then
-                    pass "$fn is stlr on arm64   [Ch 43]"
+                    pass "$fn is stlr on arm64 (release and seq_cst alike here; the x86-64 leg tells them apart)   [Ch 43]"
                 else
                     fail "$fn is not stlr on arm64; Chapter 43 says release and the default store compile alike there   [Ch 43]"
                 fi

@@ -49,6 +49,7 @@ keychain	27-dependency-management/
 Regex.IsMatch	F-rosetta-cookbook/#recipe-44
 AesGcm	F-rosetta-cookbook/#recipe-37
 ConcurrentQueue	43-below-the-mutex/
+WinForms Controls	44-crash-at-document-close/
 
 # --- Reaching for a C++ spelling ---------------------------------------
 std::optional	10-modern-cpp-fluency/
@@ -71,6 +72,8 @@ static_assert	10-modern-cpp-fluency/#what-does-static_assert-do-and-how-do-i-use
 memory_order	43-below-the-mutex/
 memory_order_acquire	43-below-the-mutex/
 spsc queue	43-below-the-mutex/
+QPointer	44-crash-at-document-close/
+parent ownership	44-crash-at-document-close/
 
 # --- Reaching for a concept --------------------------------------------
 iterator invalidation	11-stl-containers-and-algorithms/
@@ -99,6 +102,8 @@ exceptions	08-error-handling/
 lock-free ring	43-below-the-mutex/
 interrupt context	43-below-the-mutex/
 priority inversion	43-below-the-mutex/
+framework owns it	44-crash-at-document-close/
+unique_ptr framework double free	44-crash-at-document-close/
 
 # --- Reaching from what is on the screen -------------------------------
 crash on exit	32-it-crashes-on-exit/
