@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, chapters 1–44, appendices A–M — Chapter 24 and Appendix C were
+(6 parts, chapters 1–45, appendices A–M — Chapter 24 and Appendix C were
 retired by SITE-PLAN.md step 3; a retired number or letter is never reused,
 and the Contents keeps a one-line entry for each so the ordered list still
 renders true), indexed by `book/README.md`. There
@@ -116,6 +116,15 @@ the host closes and its own weak handle, the card's 3.0 panel put a
 `unique_ptr` on every node the framework already owned, and the harness
 runs BOTH teardown orders because unload-then-close reaches zero and looks
 correct while close-then-unload is a use-after-free inside `default_delete`.
+Chapter 45 (item 20) is the retrofit — the one lab that starts from code
+that WORKS: a 2009 class with raw pointers and no declared copy, a caller
+that never changes, four seams each green against it, and the acceptance
+test the ROADMAP asked for mechanized — the same caller built against
+`before/` and `after/` with outputs compared byte for byte, then the
+snapshot feature's judge. Its lesson is that source compatibility is not
+behaviour compatibility: the value-storage seam compiles the caller
+unchanged and kills it at its own line, because `Find`'s address promise
+was part of the contract.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -482,6 +491,22 @@ Chapter 25's Finding 10.
   libc++ has it only for a deployment target of macOS 26 or later — and
   build_all.sh builds the lab a second time on macOS with
   `-mmacosx-version-min=15.0` so the `#else` branch is judged too
+- `exercises/retrolab/` — Chapter 45's ticket lab, the only one whose
+  starting point works. `before/catalog.h`/`.cpp` is the 2009 class, green
+  under the flags and committed as the STARTING POINT (like buildlab's
+  trio, not like a ticket lab's broken card); `main.cpp` is the caller that
+  NEVER changes; `after/` is the retrofit; `snapshot.cpp` is the 4.0 feature
+  with a CHECK judge. build_all.sh builds `main.cpp` against before/ and
+  against after/, runs both under the canonical flags and `cmp`s the two
+  outputs — the caller's file being identical is true by construction; its
+  OUTPUT being identical is the claim — then builds and runs snapshot.cpp
+  against after/ only (against before/ it is the ticket's use-after-free,
+  book-only). Two rules are load-bearing: after/ stores
+  `vector<unique_ptr<Entry>>`, never `vector<Entry>`, because `Find`'s
+  address-stability comment is part of the contract and the value seam
+  kills the unchanged caller (run and quoted in the chapter); and the seams
+  have an order — a defaulted destructor before the storage owns leaks
+  everything, silently on macOS
 - `exercises/framelab/` — Chapter 44's ticket lab. FakeUi.h/.cpp is NEW
   vendor code (a C++-native framework: `Node` owned by its parent, a
   document root the host opens and closes, `NodeRef` as the framework's own

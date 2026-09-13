@@ -12,6 +12,7 @@
 #   SAN=thread scripts/check.sh attempt.cpp fakedevice          # ThreadSanitizer
 #   SAN=none scripts/check.sh a.cpp b.cpp                       # no sanitizer at all
 #   SAN=none OPT=2 scripts/check.sh a.cpp b.cpp                 # ...and optimised
+#   INC=before scripts/check.sh before/catalog.cpp main.cpp      # a header in another directory (Ch 45)
 #
 # Every leading argument ending in .cpp is a source file; they are compiled
 # together IN THE ORDER GIVEN, which is also the link order - Chapter 32's
@@ -23,7 +24,9 @@
 #
 # Env overrides: CXX (default g++), STD (default c++17),
 # SAN (default address,undefined - the sanitizers, spelled as -fsanitize= takes
-# them) and OPT (default 0, spelled as -O takes it).
+# them), OPT (default 0, spelled as -O takes it) and INC (default empty:
+# colon-separated include directories, for the retrofit lab, whose caller sits
+# beside two directories that each hold a catalog.h).
 #
 # Threaded work (Chapter 29) needs SAN=thread as a SECOND run: TSan and ASan
 # cannot be combined, and they answer different questions.
@@ -61,6 +64,12 @@ OPT=${OPT:-0}
 FLAGS="-std=$STD -Wall -Wextra -O$OPT -g -isystem $root/exercises/third_party"
 if [[ $SAN != none ]]; then
     FLAGS="$FLAGS -fsanitize=$SAN"
+fi
+if [[ -n ${INC:-} ]]; then                 # bash 3.2 (macOS) trips on an empty array under -u
+    IFS=: read -ra incs <<< "$INC"
+    for inc in "${incs[@]}"; do
+        [[ -n $inc ]] && FLAGS="$FLAGS -I $inc"
+    done
 fi
 
 srcs=("$1")

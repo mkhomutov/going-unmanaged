@@ -248,6 +248,19 @@ run "perflab"     $CXX $FLAGS   exercises/perflab/meter.cpp exercises/perflab/ma
 # because unload-then-close reaches zero on its own and proves nothing
 # about close-then-unload, which is where the ticket lived.
 run "framelab"    $CXX $FLAGS   exercises/framelab/FakeUi.cpp exercises/framelab/main.cpp -o $OUT/framelab
+# Chapter 45's lab: the retrofit. The same caller, main.cpp, built against
+# the 2009 class and against the modernised one - the ticket's own
+# acceptance test, 'none of the callers may change', as a build. before/
+# is committed as a STARTING POINT that works (buildlab's kind, not a
+# ticket card's), so it is held green too. The outputs are compared byte
+# for byte in the run section: the caller's file being identical is true
+# by construction, its output being identical is the claim, and the
+# value-storage seam the chapter warns about would fail exactly there.
+run "retrolab before" $CXX $FLAGS -I exercises/retrolab/before exercises/retrolab/before/catalog.cpp exercises/retrolab/main.cpp -o $OUT/retro_before
+run "retrolab after"  $CXX $FLAGS -I exercises/retrolab/after  exercises/retrolab/after/catalog.cpp  exercises/retrolab/main.cpp -o $OUT/retro_after
+# The 4.0 feature and its judge, against the retrofit only: against
+# before/ it is the ticket's use-after-free, and stays book-only.
+run "retrolab snapshot" $CXX $FLAGS -I exercises/retrolab/after exercises/retrolab/after/catalog.cpp exercises/retrolab/snapshot.cpp -o $OUT/retro_snapshot
 # Chapter 37's lab. The committed files are the FIXED state (the broken
 # 3.4.0 session.cpp lives in the lab's TASK.md and the chapter - it
 # exists to fail, at -O2, so the reader can hold a post-mortem on the
@@ -472,6 +485,18 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/perflab 1000 > /dev/null
 # The Chapter 44 lab: the counter assert inside the binary in both orders,
 # the sanitizers around it.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/framelab > /dev/null
+# The Chapter 45 lab: the unchanged caller against both implementations,
+# and the two outputs compared byte for byte - the half of 'the callers
+# must not notice' that a successful compile cannot check.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/retro_before > "$OUT/retro_before.txt"
+UBSAN_OPTIONS=halt_on_error=1 $OUT/retro_after  > "$OUT/retro_after.txt"
+if ! cmp -s "$OUT/retro_before.txt" "$OUT/retro_after.txt"; then
+    echo "build_all.sh: retrolab's unchanged caller prints differently against before/ and after/:" >&2
+    diff "$OUT/retro_before.txt" "$OUT/retro_after.txt" >&2 || true
+    exit 1
+fi
+echo "  ok   retrolab: the same caller, two implementations, one output"
+UBSAN_OPTIONS=halt_on_error=1 $OUT/retro_snapshot > /dev/null
 # The Chapter 37 lab under both device configurations - the bench's
 # calibrated unit and the field's base model. The crash lived only in the
 # second, and one configuration cannot prove a claim about both.

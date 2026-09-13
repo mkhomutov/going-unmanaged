@@ -314,6 +314,13 @@
   - evaluator
   - recursion
   - locale
+45-the-callers-must-not-notice.md:
+  - retrofit
+  - modernise
+  - modernize
+  - legacy
+  - seam
+  - compatibility
 44-crash-at-document-close.md:
   - framework
   - Qt
