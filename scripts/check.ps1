@@ -8,6 +8,7 @@
 #   $env:STD='c++20'; scripts\check.ps1 attempt.cpp   # C++20 (words, invalid)
 #   $env:SAN='none'; scripts\check.ps1 a.cpp b.cpp    # no sanitizer at all
 #   $env:OPT='2'; scripts\check.ps1 a.cpp b.cpp       # optimised (/O2)
+#   $env:INC='before'; scripts\check.ps1 before\catalog.cpp main.cpp   # a header elsewhere (Ch 45)
 #
 # Every leading argument ending in .cpp is a source file; they are compiled
 # together in the order given (also the link order - Chapter 32's two-order
@@ -73,6 +74,7 @@ try {
     $out = Join-Path $tmp 'attempt.exe'
     $flags = @('/nologo', "/std:$std", '/W4', '/EHsc', '/Zi', $optFlag)
     if ($san -ne 'none') { $flags += "/fsanitize=$san" }
+    if ($env:INC) { foreach ($inc in ($env:INC -split ';')) { if ($inc) { $flags += "/I$inc" } } }
     if ($sdk) {
         $sdkDir = Join-Path $root "exercises/$sdk"
         # @(...) forces an array even for a single vendor file: splatting a

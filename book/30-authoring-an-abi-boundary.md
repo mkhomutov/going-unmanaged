@@ -182,7 +182,7 @@ The crate at `exercises/abilab/rust_client/` takes no dependency: its build scri
 
 ### Try it
 
-One more reason this chapter matters that the Bestiary never mentioned: modernising a class whose callers *cannot* recompile. [Chapter 45](45-the-callers-must-not-notice.md#chapter-45--the-callers-must-not-notice) modernises one whose callers can, one seam at a time; every one of its seams changes the class's size, and the day the callers are binaries you do not build, the first seam is the one above — a pointer to an implementation — and every other seam happens behind it.
+One more reason this chapter matters that the Bestiary never mentioned: modernising a class whose callers *cannot* recompile. [Chapter 45](45-the-callers-must-not-notice.md#chapter-45--the-callers-must-not-notice) modernises one whose callers can, one seam at a time; the seam that moves its storage changes the class's size, and the day the callers are binaries you do not build, the first seam is the one above — a pointer to an implementation — and every other seam happens behind it.
 
 Take something you have already written — the Chapter 15 Buffer is ideal, since it owns a resource and has real state — and publish it three ways. The three boundaries printed above are checked in as `exercises/abilab/`, each with a caller of its own, so do the Buffer versions cold first and compare afterwards.
 

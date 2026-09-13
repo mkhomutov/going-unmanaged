@@ -9,7 +9,7 @@
 
 Catalog::Catalog() = default;
 
-// Seam 1: the destructor no longer has anything to do by hand. Clear() is
+// Seam 3: the destructor no longer has anything to do by hand. Clear() is
 // still a public function, because callers call it; it just is not the
 // destructor's job any more.
 Catalog::~Catalog() = default;

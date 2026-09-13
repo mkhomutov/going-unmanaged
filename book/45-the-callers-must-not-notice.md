@@ -1,6 +1,6 @@
 ## Chapter 45 — The Callers Must Not Notice
 
-Every lab in this book so far started from one of three places: a blank file, a working trio handed over to be broken on purpose, or code already broken and waiting for a diagnosis. Not one started from the place the job most often does — code that *works*, has callers in three teams, and must still have them, unchanged, when you are done. The mandate arrives as a ticket, the way it does, and the first thing to notice about it is that the acceptance test is written into the ticket itself.
+Most of the code you are handed at work already works, has callers in three teams, and must still have them, unchanged, when you are done — a place none of the labs so far started from, and the one the job most often does. The mandate arrives as a ticket, the way it does, and the first thing to notice about it is that the acceptance test is written into the ticket itself.
 
 ### The ticket
 
@@ -41,6 +41,7 @@ Against the 2009 class, on this machine, the branch dies at the end of `main` wi
 READ of size 8 at 0x603000001c60 thread T0
     #0 in Catalog::Clear() catalog.cpp:82
     #1 in Catalog::~Catalog() catalog.cpp:12
+    ...
     #3 in main snapshot.cpp:57
 
 freed by thread T0 here:
@@ -75,7 +76,7 @@ The task card is `exercises/retrolab/TASK.md`; `before/` beside it is the 2009 c
 <details>
 <summary>Show the walkthrough — read the report against Chapter 6 first</summary>
 
-The class has three special members it never declared, and in 2009 the compiler wrote all of them — member-wise, which for `Entry** entries_` means *copy the pointer*. Nobody copied a `Catalog` for fifteen years, so the shallow copy was never wrong; it was never *run*. The snapshot feature runs it: two `Catalog` objects, one `entries_` array between them. Then the live catalog grows — `Grow` allocates a bigger array and deletes the old one, which is the `freed by` stack — and from that line the snapshot's `entries_` points at freed memory. Its destructor's `Clear` walks it, and that is the access stack. Chapter 6's Rule of Three, violated by omission in 2009, invoiced in 4.0: a class that owns a resource and does not say what a copy means gets a copy that means the wrong thing, on the day someone finally writes one.
+The class has two special members it never declared — the copy constructor and copy assignment — and in 2009 the compiler wrote both, member-wise, which for `Entry** entries_` means *copy the pointer*. Nobody copied a `Catalog` for fifteen years, so the shallow copy was never wrong; it was never *run*. The snapshot feature runs it: two `Catalog` objects, one `entries_` array between them. Then the live catalog grows — `Grow` allocates a bigger array and deletes the old one, which is the `freed by` stack — and from that line the snapshot's `entries_` points at freed memory. Its destructor's `Clear` walks it, and that is the access stack. Chapter 6's Rule of Five — its C++03 half, the Rule of Three — violated by omission in 2009, invoiced in 4.0: a class that owns a resource and does not say what a copy means gets a copy that means the wrong thing, on the day someone finally writes one.
 
 Read what the report does *not* say. Nothing in it is in `snapshot.cpp`'s copy line; the crime happened on line 38, in `Add`, where a perfectly ordinary growth freed something a second object still believed it owned. The report names the victim and the freer and never the moment of the shared ownership, because that moment was a compiler-generated function with no source line of its own. That is what "declare what the compiler was writing for you" means: seam 1 gives that function a line, and the line says `= delete`.
 
@@ -92,7 +93,7 @@ That is why the acceptance test has two halves. The first is a build: the caller
 
 ```text
 ==91866==ERROR: AddressSanitizer: heap-use-after-free on address 0x60d000000060 ...
-READ of size 8 at 0x60d000000060 thread T0
+READ of size 4 at 0x60d000000060 thread T0
     #0 in main main.cpp:30
 
 freed by thread T0 here:
@@ -104,9 +105,9 @@ freed by thread T0 here:
 SUMMARY: AddressSanitizer: heap-use-after-free main.cpp:30 in main
 ```
 
-The caller held `alpha` across ten `Add`s, as the header told it it could, and the vector moved every `Entry` on the third one. The caller did not change. Its behaviour did — which is the sentence the ticket ends on, and the reason the container is `std::vector<std::unique_ptr<Entry>>`: the vector may move, the entries do not, and the 2009 promise survives a change of storage it was never told about.
+The caller held `alpha` across ten `Add`s, as the header told it it could, and the vector moved every `Entry` on the second one. The caller did not change. Its behaviour did — which is the sentence the ticket ends on, and the reason the container is `std::vector<std::unique_ptr<Entry>>`: the vector may move, the entries do not, and the 2009 promise survives a change of storage it was never told about.
 
-And one boundary the retrofit does not cross. Everything above assumes the three teams *recompile* — source compatibility. The day `catalog.h` ships in an SDK and the callers' binaries cannot be rebuilt, `sizeof(Catalog)` is part of the contract too, and every seam here changes it. That is [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s subject, and its answer is the one seam that never moves again: a pointer to an implementation, behind which this whole chapter can happen without a caller relinking.
+And one boundary the retrofit does not cross. Everything above assumes the three teams *recompile* — source compatibility. The day `catalog.h` ships in an SDK and the callers' binaries cannot be rebuilt, `sizeof(Catalog)` is part of the contract too, and the seam that moves the storage changes it — the one every later seam is built on. That is [Chapter 30](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)'s subject, and its answer is the one seam that never moves again: a pointer to an implementation, behind which this whole chapter can happen without a caller relinking.
 
 ### The fix, seam by seam
 
@@ -135,7 +136,7 @@ Every caller still compiles, because none of them copied — that is the build p
 
 **Seam 3 — let the destructor go.** `~Catalog() = default;` — after seam 2, never before it: a defaulted destructor over a raw `Entry**` is a leak of every entry, and the sanitizers on this platform would not have said so (Chapter 31's macOS note). `Clear()` stays public and stays a member, because callers call it; it just is not the destructor's job any more.
 
-**Seam 4 — earn the copy.** Now that the storage owns, a correct copy is three short functions, and the move operations are the compiler's for the asking:
+**Seam 4 — earn the copy.** Now that the storage owns, a correct copy is two short functions, and the move operations are the compiler's for the asking:
 
 ```cpp
 --8<-- "exercises/retrolab/after/catalog.cpp:copy-and-move"
@@ -169,4 +170,4 @@ The judge for the feature, and for the retrofit's own promises — a copy that s
 
 ### In the wild
 
-The rule-of-zero retrofit is the commonest engineering task in a codebase that predates C++11, and the industry's tooling grew around exactly the seams above: `-Wdeprecated-copy` warns when a class with a user-declared destructor still relies on a compiler-generated copy, which is seam 1 as a diagnostic, and clang-tidy's `modernize-` checks will rewrite `new`/`delete` into `unique_ptr` for you — seam 2, mechanically, and without knowing which addresses your callers hold. The large codebases that did this at scale — the C++11 migrations of LLVM, Chromium, and the big game engines — did it the way this chapter does, one declaration at a time behind a build that compiled every caller, which is why "callers unchanged" is a claim they could make. And the boundary the chapter stops at is where a whole ecosystem lives: Qt's d-pointer is Chapter 30's PIMPL applied to every public class so that its insides could change for two decades while binaries built against 4.0 kept running, which is the retrofit at the scale of a framework — and the reason that, when the teams *cannot* recompile, the first seam is the one that moves everything behind a pointer and the rest of this chapter happens on the far side of it.
+The rule-of-zero retrofit is the commonest engineering task in a codebase that predates C++11, and the industry's tooling grew around exactly the seams above. The standard has deprecated generating a copy for a class with a user-declared destructor since C++11, and clang's `-Wdeprecated-copy-with-dtor` (GCC: `-Wdeprecated-copy-dtor`) says so — seam 1 as a diagnostic, and outside `-Wall -Wextra`, which is why the 2009 class is green under the canonical flags. clang-tidy's `cppcoreguidelines-owning-memory` names every owning raw pointer for you — seam 2's inventory, mechanically, and without knowing which addresses your callers hold. LLVM's and Chromium's C++11 migrations were incremental and gated on a build of every caller; where Chromium rewrote by tool, the tool ran over the whole tree in one change, because a build of every caller was the only acceptance test there was — "callers unchanged" is a claim a build makes, at any scale. And the boundary the chapter stops at is where a whole ecosystem lives: Qt's d-pointer is Chapter 30's PIMPL applied to every public class so that its insides can change for the life of a major series — a binary built against 5.0 in 2012 still loads against 5.15, and each new major is the one place the ABI is allowed to break — which is the retrofit at the scale of a framework, and the reason that, when the teams *cannot* recompile, the first seam is the one that moves everything behind a pointer and the rest of this chapter happens on the far side of it.

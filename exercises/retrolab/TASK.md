@@ -53,13 +53,13 @@ byte, then `snapshot.cpp` against `after/`. Do not start from it.
    output, under the full flags:
 
    ```bash
-   scripts/check.sh before/catalog.cpp main.cpp > out.2009
-   scripts/check.sh yours/catalog.cpp main.cpp > out.now && cmp out.2009 out.now
+   INC=before scripts/check.sh before/catalog.cpp main.cpp > out.2009
+   INC=yours scripts/check.sh yours/catalog.cpp main.cpp > out.now && cmp out.2009 out.now
    ```
 
-   (`check.sh` compiles the files in the order written and finds the
-   header next to the `.cpp`; keep each state's `catalog.h` beside its
-   `catalog.cpp`.)
+   (`INC` is where `main.cpp`'s `#include "catalog.h"` is resolved, since
+   the caller sits beside two directories that each hold one; keep each
+   state's `catalog.h` beside its `catalog.cpp`.)
 7. **Stretch: the boundary.** Suppose `catalog.h` shipped in an SDK and the
    three teams' binaries could not be rebuilt. Which of the four seams are
    still allowed? Take the answer to Chapter 30 and check it against
