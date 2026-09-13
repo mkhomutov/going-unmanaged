@@ -65,6 +65,20 @@ mod tests {
     use super::*;
     use std::sync::atomic::AtomicUsize;
 
+    // The poller sleeps 10 ms between looks, but a CI runner may not schedule
+    // it for far longer than that: a fixed sleep here was a flaky assertion.
+    // So every "it fired" claim waits, bounded, for the count to arrive - a
+    // deadline turns a hang into a failure and a slow machine into a pass -
+    // and only the "nothing fires" claims keep a plain sleep, since those can
+    // only ever be wrongly green, never wrongly red.
+    fn wait_for(fired: &AtomicUsize, expected: usize) -> usize {
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while fired.load(Ordering::Relaxed) < expected && std::time::Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        fired.load(Ordering::Relaxed)
+    }
+
     #[test]
     fn a_rewrite_and_a_removal_each_fire_once_and_nothing_fires_after_drop() {
         let path = std::env::temp_dir().join(format!("cookbook-rs-watch-{}.txt", std::process::id()));
@@ -78,11 +92,11 @@ mod tests {
             std::thread::sleep(Duration::from_millis(40));
             assert_eq!(fired.load(Ordering::Relaxed), 0);    // an unchanged file raises nothing
             std::fs::write(&path, "v2 - longer").unwrap();    // size changes even if the clock did not tick
-            std::thread::sleep(Duration::from_millis(60));
+            assert_eq!(wait_for(&fired, 1), 1);
+            std::thread::sleep(Duration::from_millis(40));     // and a rewrite fires once, not on every poll
             assert_eq!(fired.load(Ordering::Relaxed), 1);
             std::fs::remove_file(&path).unwrap();
-            std::thread::sleep(Duration::from_millis(60));
-            assert_eq!(fired.load(Ordering::Relaxed), 2);    // absence is a change too
+            assert_eq!(wait_for(&fired, 2), 2);               // absence is a change too
         }
         let after = fired.load(Ordering::Relaxed);
         std::fs::write(&path, "v3").unwrap();

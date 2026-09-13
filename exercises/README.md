@@ -40,6 +40,7 @@ chapter's pitfalls, never write the solution — and its code goes through
 | [The Plug-in Lab](pluginlab/TASK.md) | 40 | a MODULE with one exported symbol, an SDK located by a hand-written find-module, and a stand-in host that loads the result | ~2 h | the files themselves: [plugin/CMakeLists.txt](pluginlab/plugin/CMakeLists.txt), [plugin/cmake/FindHostSDK.cmake](pluginlab/plugin/cmake/FindHostSDK.cmake), [plugin/monitor.cpp](pluginlab/plugin/monitor.cpp) + the loading [host/host.cpp](pluginlab/host/host.cpp), the export table read back by `build_all.sh` |
 | [The Template Lab](templatelab/TASK.md) | 41 | one Session over two policies, the detection idiom, and a build that must fail by name | ~2 h | the files themselves: [session.h](templatelab/session.h), [policies.h](templatelab/policies.h), [util.h](templatelab/util.h) + the judging [main.cpp](templatelab/main.cpp), green against FakeDevice and refused under `-DTEMPLATELAB_BROKEN_POLICY` |
 | [The Formula Field](exprlab/TASK.md) | 42 | user-typed text against injected objects: tokens, recursive descent, a bounded depth, a hand-computed value table | ~3 h | the files themselves: [expr.h](exprlab/expr.h) + [expr.cpp](exprlab/expr.cpp) + [main.cpp](exprlab/main.cpp) |
+| [Crash at Document Close](framelab/TASK.md) | 44 | a ticket against a C++-native framework: parent ownership, the smart pointer that became a second owner, and the framework's own weak handle | ~90 min | the files themselves: [panel.h](framelab/panel.h) + the judging [main.cpp](framelab/main.cpp), at zero live nodes in both teardown orders |
 | [The Deadline Lab](deadlinelab/TASK.md) | 43 | the hand-off to a deadline thread: a bounded single-producer ring, the two memory orders, and an interrupt handler as the producer | ~2 h | the files themselves: [spsc_queue.h](deadlinelab/spsc_queue.h) + the judging [main.cpp](deadlinelab/main.cpp), green under both sanitizer builds |
 | [The Const Lab](constlab/TASK.md) | Appendix I | const as one subject, judged by five builds that must fail | ~45 min | the files themselves: [counter.h](constlab/counter.h) + [main.cpp](constlab/main.cpp), plus five builds that must be refused |
 
@@ -67,8 +68,13 @@ the answers live in the owning chapters) — one `q<N>.cpp` per question,
 globbed by `build_all.sh` rather than listed, because they are appended
 unattended.
 
-Sixteen directories hold their reference in the open, rather than behind a
-fold. `deadlinelab/` is Chapter 43's: a ring with one producer and one
+Seventeen directories hold their reference in the open, rather than behind a
+fold. `framelab/` is Chapter 44's, the seventh ticket: `FakeUi.h`/`.cpp` is a
+C++-native framework in the `Fake*` house style — parent-owned nodes, a
+document the host closes, a weak handle of the framework's own — and the
+broken 3.0 panel on its card put a `unique_ptr` on every node the framework
+already owned; the fix beside it is judged in both teardown orders, because
+the bench's order hides what the customer's shows. `deadlinelab/` is Chapter 43's: a ring with one producer and one
 consumer and no lock in it, judged by a harness that numbers every sample and
 counts allocations on the deadline thread alone — and judged twice, under
 ASan/UBSan and under TSan, with the shapes that fail (a relaxed ring, a lock
@@ -79,8 +85,8 @@ again — a second build that must be refused, with the `static_assert`'s own
 sentence as the first error. `pluginlab/` is Chapter 40's: three CMake projects — a vendor-style SDK
 drop, the plug-in, a stand-in host — that `build_all.sh` installs, builds,
 loads and inspects, asserting the module's export table holds the entry
-point and nothing of the plug-in's own or the SDK's. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/` and
-`dumplab/` are
+point and nothing of the plug-in's own or the SDK's. `exitlab/`, `reportlab/`, `capturelab/`, `comlab/`, `perflab/`,
+`dumplab/` and `framelab/` are
 the ticket-shaped ones: each TASK.md carries the broken code to work from
 plus the ticket's attached evidence (reportlab's sanitizer report,
 capturelab's bus capture and ICD table, comlab's migration notes,
@@ -140,6 +146,7 @@ scripts/check.sh path/to/your.cpp                 # plain exercises
 scripts/check.sh your.cpp fakesdk                 # links the FakeSDK vendor code
 scripts/check.sh your.cpp fakedevice              # links the FakeDevice vendor code
 scripts/check.sh your.cpp comlab                  # links the FakeSDK 2.0 vendor code (Ch 35)
+scripts/check.sh your.cpp framelab                # links the FakeUi framework (Ch 44)
 scripts/check.sh registry.cpp main.cpp 100        # several TUs (ticket labs) + a run arg
 STD=c++20 scripts/check.sh your.cpp file.txt      # C++20 + args passed to the run
 SAN=thread scripts/check.sh your.cpp fakedevice   # ThreadSanitizer instead
@@ -165,7 +172,8 @@ the link order, the thing Chapter 32's two-order test turns on. The first
 argument that is not a `.cpp` file (after the optional vendor name) starts the
 run arguments. `scripts\check.ps1` accepts the same shapes.
 
-Vendor code (`fakesdk/Fake*`, `fakedevice/Fake*`, `comlab/FakeSDK2.*`) is
+Vendor code (`fakesdk/Fake*`, `fakedevice/Fake*`, `comlab/FakeSDK2.*`,
+`framelab/FakeUi.*`) is
 read-only: read it, compile it, link it — never edit it. `threadlab/` has
 none of its own: it links `fakedevice/`'s from where it lives, which is what
 a second lab against the same SDK should do. `comlab/`'s is deliberately a

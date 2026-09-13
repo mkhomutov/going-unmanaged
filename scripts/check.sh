@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Build and run YOUR exercise attempt with the handbook's canonical flags.
 #
-#   scripts/check.sh <your.cpp> [more.cpp...] [fakesdk|fakedevice|comlab] [args passed to the run...]
+#   scripts/check.sh <your.cpp> [more.cpp...] [fakesdk|fakedevice|comlab|framelab] [args passed to the run...]
 #
 #   scripts/check.sh attempt.cpp                                # plain exercise
 #   scripts/check.sh attempt.cpp fakesdk                        # + vendor code
 #   scripts/check.sh attempt.cpp comlab                         # + the 2.0 SDK (Ch 35)
+#   scripts/check.sh attempt.cpp framelab                       # + the FakeUi framework (Ch 44)
 #   scripts/check.sh registry.cpp main.cpp 100                  # several TUs + run args
 #   STD=c++20 scripts/check.sh attempt.cpp words_sample.txt     # C++20 + run args
 #   SAN=thread scripts/check.sh attempt.cpp fakedevice          # ThreadSanitizer
@@ -43,7 +44,7 @@
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-    echo "usage: check.sh <your.cpp> [more.cpp...] [fakesdk|fakedevice|comlab] [run args...]" >&2
+    echo "usage: check.sh <your.cpp> [more.cpp...] [fakesdk|fakedevice|comlab|framelab] [run args...]" >&2
     exit 2
 fi
 
@@ -70,7 +71,7 @@ while [[ $# -gt 0 && $1 == *.cpp ]]; do
 done
 sdk=""
 case "${1:-}" in
-    fakesdk|fakedevice|comlab) sdk=$1; shift ;;
+    fakesdk|fakedevice|comlab|framelab) sdk=$1; shift ;;
 esac
 
 tmp=$(mktemp -d)
