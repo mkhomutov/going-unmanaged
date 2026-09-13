@@ -31,9 +31,10 @@ writing it down properly.
    dependency management, testing and concurrency landed as Chapters 26-29,
    authoring an ABI boundary as Chapter 30, the debugging chapter as Chapter
    31, the ticket arc (byte-level protocol work among them) as Chapters
-   32-37, the bridge out as Chapter 38 and P/Invoke as Chapter 39 — so the
-   framework shape now leads (item 18), then the deadline path's other half
-   (item 19); const-correctness was item 8 and landed as Appendix I. Open an issue before starting a large one, so nobody
+   32-37, the bridge out as Chapter 38, P/Invoke as Chapter 39 and the
+   deadline path's other half as Chapter 43 — so the framework shape now
+   leads (item 18), then the retrofit (item 20); const-correctness was item 8
+   and landed as Appendix I. Open an issue before starting a large one, so nobody
    writes the same chapter twice.
 6. **Translations and tooling** — build scripts, per-platform notes, anything
    that lowers friction.

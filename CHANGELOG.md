@@ -10,6 +10,37 @@ public contract — people cite them, so they version like an API.
 [CONTRIBUTING.md](CONTRIBUTING.md). Numbering freezes at v1.0 — until then,
 numbers may still move.
 
+## [Unreleased]
+
+### Added
+
+- **Chapter 43 — Below the Mutex, and `exercises/deadlinelab/`** (MINOR —
+  ROADMAP items 19 and 21, issues #59 and #61). Chapter 29 fixes a callback
+  on a foreign thread with a mutex and Chapter 36 forbids the mutex on a
+  deadline thread, and between them nothing said what to do instead. The
+  chapter is the hand-off: a bounded ring with one producer and one
+  consumer, two atomic indices with one writer each, `release` to publish
+  and `acquire` to consume, and a table of what each memory order compiles
+  to on arm64 and x86-64 that `check_platform_claims.sh` reads back from
+  the assembly on both. The relaxed ring's stale slot — exactly one lap old
+  — is asserted to appear on arm64 within a dozen runs and never on x86-64,
+  because that, and not the third sanitizer, turned out to be the judge for
+  a wrong memory order. The lab's harness is Chapter 36's allocation counter
+  given a thread by a `thread_local` flag, so the worker may allocate and
+  the deadline thread is judged alone; its second phase makes the producer a
+  timer signal, which is the desktop's interrupt, and pays the Bestiary's
+  one unpaid sentence: what an interrupt handler cannot do that a deadline
+  thread merely should not, with the lock-in-a-handler hang asserted,
+  bounded, since every sanitizer hangs with it. Chapters 16, 29 and 36 point
+  here; Appendix B gains the principle, Appendix E five terms, the Symptom
+  Index three rows, Components two, the search fixture eight queries.
+- **Appendix M: Q1 and Q2** (MINOR — the first two field questions,
+  answered unattended by the knowledge-base workflow and merged as #131
+  and #133): what `static_assert` does and how to use it, a section of
+  Chapter 10; and whether dev/UAT/prod belongs in the CMake build
+  configuration or at runtime, a section of Chapter 26. Each with its
+  judged listing under `exercises/questions/` and its search query.
+
 ## [0.13.0] — 2026-09-09
 
 The fifth coverage review, and the biggest list yet — fifty-nine topics
