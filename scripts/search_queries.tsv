@@ -74,6 +74,9 @@ memory_order_acquire	43-below-the-mutex/
 spsc queue	43-below-the-mutex/
 QPointer	44-crash-at-document-close/
 parent ownership	44-crash-at-document-close/
+modernise legacy class	45-the-callers-must-not-notice/
+retrofit	45-the-callers-must-not-notice/
+rule of zero	06-the-rule-of-five-and-move-semantics/#the-rule-of-zero-the-modern-ideal
 
 # --- Reaching for a concept --------------------------------------------
 iterator invalidation	11-stl-containers-and-algorithms/
@@ -104,6 +107,7 @@ interrupt context	43-below-the-mutex/
 priority inversion	43-below-the-mutex/
 framework owns it	44-crash-at-document-close/
 unique_ptr framework double free	44-crash-at-document-close/
+source compatibility	45-the-callers-must-not-notice/
 
 # --- Reaching from what is on the screen -------------------------------
 crash on exit	32-it-crashes-on-exit/

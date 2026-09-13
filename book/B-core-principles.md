@@ -155,6 +155,8 @@ One line each. If you can say these fluently and back them with code, the concep
 - "Copy assignment via copy-and-swap: strong exception guarantee, self-assignment safe for free."
 - "A named rvalue reference is an lvalue: std::move inside every move operation, never around a returned local, and never on a const."
 
+- "I modernise a working class one seam at a time — declare what the compiler was writing for me, move the ownership inside, then earn the copy — with the callers' files untouched and their output byte-identical at every seam, because source that still compiles is not behaviour that still holds."
+
 **OOP mechanics**
 
 - "Members are constructed in the initializer list, in declaration order — const and reference members can only be initialized, never assigned in the body."

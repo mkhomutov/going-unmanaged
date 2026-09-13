@@ -143,6 +143,8 @@ Take a working copy, break one thing at a time, build with `-fsanitize=address -
 3. **Remove the self-move guard**, run `b = std::move(b)` → reason first about whether your implementation gives use-after-free or silent data loss, then verify.
 4. **Simulate the unhappy path**: revert to release-before-acquire, insert `throw std::bad_alloc{};` after the `delete[]` — and, the step that matters, catch it in `main` (`try { c = a; } catch (const std::bad_alloc&) {}`) so the zombie outlives the failure. Thrown uncaught it just terminates, no unwinding, and ASan reports nothing; with the handler, the next touch of `c` is a loud use-after-free and its destructor the double-free — Finding 6 detonating on schedule.
 
+The Buffer is written from nothing here. The same class arrives at work already written, with callers, and the ticket says modernise it without breaking them — [Chapter 45](45-the-callers-must-not-notice.md#chapter-45--the-callers-must-not-notice) is that exercise, and the Rule of Five is applied there one declaration at a time to code that was silently missing it.
+
 ### Why you would never ship this class
 
 `std::vector<int>` already is this class, written by experts, tested for decades — holding one as the member gives all five operations for free. (`std::unique_ptr<int[]>` is the other candidate, but it is move-only: as a member it hands you the destructor and the two moves and *deletes* your copies, so the deep-copy semantics this chapter just built would still be yours to write.) Rule of Zero beats Rule of Five (Chapter 6). Hand-rolling the five is for the rare type that *is* the resource wrapper — and knowing how is precisely what makes the shortcut safe to take everywhere else.

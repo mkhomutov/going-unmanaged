@@ -14,6 +14,22 @@ numbers may still move.
 
 ### Added
 
+- **Chapter 45 — The Callers Must Not Notice, and `exercises/retrolab/`**
+  (MINOR — ROADMAP item 20, issue #60). No lab had started from code that
+  works, has callers, and must keep them. This one does: a 2009 `Catalog`
+  with raw pointers and no declared copy, a caller that never changes, and
+  a feature whose one copy line is a heap-use-after-free in `Clear`. The
+  chapter modernises it in four seams, each green against the unchanged
+  caller — delete the copy first, move the ownership inside without
+  breaking the address promise `Find` made in a comment, let the
+  destructor go, earn the copy — and shows the seam that compiles the
+  caller byte-identically and kills it at runtime. The acceptance test the
+  ROADMAP entry asked for is in `build_all.sh`: the same `main.cpp` against
+  `before/` and `after/`, outputs compared byte for byte, then the
+  feature's judge. Chapters 6, 15 and 30 point here; Appendix B the
+  principle, Appendix E two terms, the Symptom Index two rows, the search
+  fixture three queries (and one for Chapter 6's Rule of Zero, which the
+  first draft had promised to the wrong page).
 - **Chapter 44 — Crash at Document Close, and `exercises/framelab/`** (MINOR
   — ROADMAP item 18, issue #58). The Bestiary's fifth shape had four
   sentences and no treatment; two readers of the 2026-09 study, from Qt and

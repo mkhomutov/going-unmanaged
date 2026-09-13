@@ -61,7 +61,7 @@ Three ways in. **Reference** is for the question in front of you; **Concepts** f
 
 ### Labs
 
-Each has a task card under `exercises/` so it can be attempted without the solution on the next screen; the six from Chapter 32 on are tickets — a symptom and the code it happened to, the diagnosis behind a fold — and so is Chapter 44.
+Each has a task card under `exercises/` so it can be attempted without the solution on the next screen; the six from Chapter 32 on are tickets — a symptom and the code it happened to, the diagnosis behind a fold — and so are Chapters 44 and 45, the last of which is the one lab that starts from code that works.
 
 - [Chapter 14 — Exercise: The Lifetime Tracer](14-exercise-the-lifetime-tracer.md#chapter-14--exercise-the-lifetime-tracer)
 - [Chapter 15 — Exercise: The Buffer](15-exercise-the-buffer.md#chapter-15--exercise-the-buffer)
@@ -83,6 +83,7 @@ Each has a task card under `exercises/` so it can be attempted without the solut
 - [Chapter 40 — CMake for the Plug-in](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in)
 - [Chapter 42 — The Formula Field](42-the-formula-field.md#chapter-42--the-formula-field)
 - [Chapter 44 — Crash at Document Close](44-crash-at-document-close.md#chapter-44--crash-at-document-close)
+- [Chapter 45 — The Callers Must Not Notice](45-the-callers-must-not-notice.md#chapter-45--the-callers-must-not-notice)
 
 ### Reading order
 
@@ -147,6 +148,7 @@ Each has a task card under `exercises/` so it can be attempted without the solut
 42. [The Formula Field](42-the-formula-field.md#chapter-42--the-formula-field) — user-typed text evaluated against the host's objects: tokens as a closed set, a tree behind unique_ptr, recursive descent with a value at every level, the provider seam, and a judge whose oracle is a table worked out by hand
 43. [Below the Mutex](43-below-the-mutex.md#chapter-43--below-the-mutex) — the hand-off to a deadline thread once a lock is forbidden: a bounded ring with one producer and one consumer, the two memory orders that make it correct and what they cost per instruction set, and the interrupt handler as the same rule with waiting removed
 44. [Crash at Document Close](44-crash-at-document-close.md#chapter-44--crash-at-document-close) — a C++-native framework with an object model of its own, and the ownership clean-up that put a second owner on every node: the ticket the Bestiary's fifth shape had never been worked as
+45. [The Callers Must Not Notice](45-the-callers-must-not-notice.md#chapter-45--the-callers-must-not-notice) — the retrofit: a working 2009 class modernised one seam at a time, with the callers' files untouched and their output byte-identical, and the promise nobody wrote down that the obvious seam would have broken
 
 **[Appendices](A-fundamentals-refresher.md#appendices)**
 

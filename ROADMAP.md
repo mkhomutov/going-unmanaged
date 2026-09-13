@@ -1492,7 +1492,7 @@ pins the shape: a cpp fence landing in Appendix G fails the book job). The chapt
 from its families section and its transport-menu bullet, so the reading
 path and the lookup path meet where they should.
 
-### 20. The retrofit — modernising code you may not rewrite
+### 20. The retrofit — modernising code you may not rewrite — DONE (Chapter 45)
 
 **Missing:** no exercise in the book modernises working code whose callers
 must keep compiling.
@@ -1527,6 +1527,28 @@ boundary, and Chapter 30 already says why.
 
 **Sequencing:** after item 9. The same reader wants both, and P/Invoke has
 three independent votes for the chapter as scoped to this one's two.
+
+**Delivered:** Chapter 45 — *The Callers Must Not Notice* — and
+`exercises/retrolab/`, the one lab whose starting point works. `before/` is a
+2009 `Catalog` — raw `Entry**`, a hand-rolled array, a manual `Clear`, no
+declared copy — green under the flags with the caller as one of three teams
+wrote it (`main.cpp`, which never changes); the ticket is the 4.0 snapshot
+feature, whose one copy line is a heap-use-after-free in `Clear`, freed by
+the other copy's `Grow`. The chapter modernises it in four seams, each green
+against the unchanged caller: declare the copy operations deleted (the
+crash becomes a compile error, and every caller still compiles, which is the
+build proving the claim), move the ownership inside as
+`vector<unique_ptr<Entry>>` rather than `vector<Entry>` because `Find`'s
+address promise is part of the contract — the value-storage seam kills the
+byte-identical caller at its own line 30, run and quoted — let the destructor
+go, then earn the copy. The acceptance test is the one the entry asked for
+and is mechanized in `build_all.sh`: the same `main.cpp` built against
+`before/` and `after/`, both under the flags, the two outputs compared byte
+for byte, then `snapshot.cpp`'s judge against `after/`. Chapter 30's
+boundary is where the retrofit stops, and the chapter, Chapter 30 and the
+card's stretch step all say so.
+
+**Still open from this item:** nothing.
 
 ### 21. The interrupt-context callback — Bestiary Shape 4's other addition — DONE (Chapter 43, one section)
 

@@ -202,4 +202,5 @@ The Rule of Zero is the language. A move is a bitwise copy after which the sourc
 
 ### In the wild: C-style SDKs
 
+The commonest place this chapter is paid for is not a class you write but one you inherit: a 2009 class that owns a raw pointer, never declared its copy, and was never copied — until a feature copies it. [Chapter 45](45-the-callers-must-not-notice.md#chapter-45--the-callers-must-not-notice) is that ticket, and its first seam is two lines from this chapter: `= delete`, before anything else is touched.
 Large C++ SDKs often ship their own unique_ptr analog (an "Owner" or "ScopedRef" type) with the same move-only behavior. Any RAII guard you write around SDK handles is exactly the "class holding a raw resource" case — either delete copy/move entirely (simplest, as in Chapter 1's guard), or implement moves properly when guards must be stored in containers or returned from factories (as Chapter 18's DeviceSession does — with a subtle twist worth meeting there).

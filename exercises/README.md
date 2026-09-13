@@ -41,6 +41,7 @@ chapter's pitfalls, never write the solution — and its code goes through
 | [The Template Lab](templatelab/TASK.md) | 41 | one Session over two policies, the detection idiom, and a build that must fail by name | ~2 h | the files themselves: [session.h](templatelab/session.h), [policies.h](templatelab/policies.h), [util.h](templatelab/util.h) + the judging [main.cpp](templatelab/main.cpp), green against FakeDevice and refused under `-DTEMPLATELAB_BROKEN_POLICY` |
 | [The Formula Field](exprlab/TASK.md) | 42 | user-typed text against injected objects: tokens, recursive descent, a bounded depth, a hand-computed value table | ~3 h | the files themselves: [expr.h](exprlab/expr.h) + [expr.cpp](exprlab/expr.cpp) + [main.cpp](exprlab/main.cpp) |
 | [Crash at Document Close](framelab/TASK.md) | 44 | a ticket against a C++-native framework: parent ownership, the smart pointer that became a second owner, and the framework's own weak handle | ~90 min | the files themselves: [panel.h](framelab/panel.h) + the judging [main.cpp](framelab/main.cpp), at zero live nodes in both teardown orders |
+| [The Callers Must Not Notice](retrolab/TASK.md) | 45 | the retrofit: a working raw-pointer class modernised one seam at a time, the callers untouched, their output compared byte for byte | ~2 h | the files themselves: [after/catalog.h](retrolab/after/catalog.h) + [after/catalog.cpp](retrolab/after/catalog.cpp), judged by the unchanged [main.cpp](retrolab/main.cpp) against `before/` and `after/` and by [snapshot.cpp](retrolab/snapshot.cpp) |
 | [The Deadline Lab](deadlinelab/TASK.md) | 43 | the hand-off to a deadline thread: a bounded single-producer ring, the two memory orders, and an interrupt handler as the producer | ~2 h | the files themselves: [spsc_queue.h](deadlinelab/spsc_queue.h) + the judging [main.cpp](deadlinelab/main.cpp), green under both sanitizer builds |
 | [The Const Lab](constlab/TASK.md) | Appendix I | const as one subject, judged by five builds that must fail | ~45 min | the files themselves: [counter.h](constlab/counter.h) + [main.cpp](constlab/main.cpp), plus five builds that must be refused |
 
@@ -68,8 +69,13 @@ the answers live in the owning chapters) — one `q<N>.cpp` per question,
 globbed by `build_all.sh` rather than listed, because they are appended
 unattended.
 
-Seventeen directories hold their reference in the open, rather than behind a
-fold. `framelab/` is Chapter 44's, the seventh ticket: `FakeUi.h`/`.cpp` is a
+Eighteen directories hold their reference in the open, rather than behind a
+fold. `retrolab/` is Chapter 45's, and the only lab whose starting point
+works: `before/` is a 2009 class, green under the flags; `main.cpp` a caller
+that never changes; `after/` the retrofit; and the judge is the same
+`main.cpp` built against both and its two outputs compared byte for byte,
+then `snapshot.cpp` — the feature the 2009 class could not support — against
+`after/`. `framelab/` is Chapter 44's, the seventh ticket: `FakeUi.h`/`.cpp` is a
 C++-native framework in the `Fake*` house style — parent-owned nodes, a
 document the host closes, a weak handle of the framework's own — and the
 broken 3.0 panel on its card put a `unique_ptr` on every node the framework
