@@ -52,7 +52,10 @@ numbers may still move.
   thread merely should not, with the lock-in-a-handler hang asserted,
   bounded, since every sanitizer hangs with it. Chapters 16, 29 and 36 point
   here; Appendix B gains the principle, Appendix E five terms, the Symptom
-  Index three rows, Components two, the search fixture seven queries.
+  Index three rows, Components two, the search fixture seven queries. The
+  harness was hardened after the mutation-testing review: a positive
+  control of the counter before each phase, and a judge for the
+  timer-uninstall order.
 - **Appendix M: Q1 and Q2** (MINOR — the first two field questions,
   answered unattended by the knowledge-base workflow and merged as #131
   and #133): what `static_assert` does and how to use it, a section of

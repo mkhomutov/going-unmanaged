@@ -871,10 +871,10 @@ house style: nodes owned by their parent, a document the host opens and
 closes, and the framework's own weak handle (`NodeRef`, which reads null
 once the node is gone). The card's 3.0 panel put a `unique_ptr` on every
 node the framework already owned — the smart-pointer reflex, applied as
-reviewed — and the harness shows the consequence in both teardown orders:
-unload-then-close reaches zero live nodes and looks correct, close-then-unload
-is a heap-use-after-free inside `default_delete` with the framework's teardown
-on the *freed by* stack. The fix holds what the framework owns through its
+reviewed — and the card's 3.0 listing shows the consequence in both teardown
+orders: unload-then-close reaches zero live nodes and looks correct,
+close-then-unload is a heap-use-after-free inside `default_delete` with the
+framework's teardown on the *freed by* stack. The fix holds what the framework owns through its
 handle, owns a node only until it is parented, and releases on that line;
 the judges are comlab's — the framework's live-node counter at zero (an
 owner too few) and the sanitizers (an owner too many) — run in both orders,

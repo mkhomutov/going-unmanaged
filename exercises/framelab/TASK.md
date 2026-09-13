@@ -85,7 +85,8 @@ int main(int argc, char**) {
    meter, tooltip — who constructed it, who the guide says deletes it, and
    who the 3.0 code *thinks* deletes it. Count the owners per node.
 2. **Reproduce, in both orders.** Build the 3.0 panel plain and under the
-   handbook's flags, and run it with an argument (the bench's order) and
+   handbook's flags (`scripts/check.sh main.cpp framelab bench`, then
+   without the argument), and run it with an argument (the bench's order) and
    without (the customer's). Explain, from your ledger, why one order is
    clean down to zero live nodes and the other is not — and what the bench
    order's `panel down: 1 live nodes` line proves about who freed what.
@@ -95,8 +96,10 @@ int main(int argc, char**) {
    the two owners paid second, and why the answer depends on the order.
 4. **The obvious patch** — drop the smart pointers and keep raw pointers to
    nodes the framework owns. Predict what changes, run both orders, then
-   add one line that reads a node's name *after* the document closes and
-   run it again. Say what the patch traded the crash for.
+   add one line that reads a node's name *after* the document closes — and
+   construct the tooltip unparented in the constructor, parenting it only
+   in `ShowTooltip`, which this run never calls. Run it again, and read
+   the counter. Say what the patch traded the crash for.
 5. **The real fix: hold what you do not own through the framework's own
    handle.** `NodeRef` reads null once the node is gone — that is what it
    is for. Own a node with `unique_ptr` exactly until you hand it to a
