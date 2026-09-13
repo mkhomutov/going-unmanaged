@@ -24,8 +24,9 @@ numbers may still move.
   to on arm64 and x86-64 that `check_platform_claims.sh` reads back from
   the assembly on both. The relaxed ring's stale slot — exactly one lap old
   — is asserted to appear on arm64 within a dozen runs and never on x86-64,
-  because that, and not the third sanitizer, turned out to be the judge for
-  a wrong memory order. The lab's harness is Chapter 36's allocation counter
+  because that, and not the third sanitizer — whose verdict on the relaxed
+  ring depended on the optimisation level and the loop around it — turned
+  out to be the judge for a wrong memory order. The lab's harness is Chapter 36's allocation counter
   given a thread by a `thread_local` flag, so the worker may allocate and
   the deadline thread is judged alone; its second phase makes the producer a
   timer signal, which is the desktop's interrupt, and pays the Bestiary's
@@ -33,7 +34,7 @@ numbers may still move.
   thread merely should not, with the lock-in-a-handler hang asserted,
   bounded, since every sanitizer hangs with it. Chapters 16, 29 and 36 point
   here; Appendix B gains the principle, Appendix E five terms, the Symptom
-  Index three rows, Components two, the search fixture eight queries.
+  Index three rows, Components two, the search fixture seven queries.
 - **Appendix M: Q1 and Q2** (MINOR — the first two field questions,
   answered unattended by the knowledge-base workflow and merged as #131
   and #133): what `static_assert` does and how to use it, a section of

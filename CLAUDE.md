@@ -104,10 +104,12 @@ cache line, and what each order compiles to per instruction set, measured;
 its second half pays the Bestiary's interrupt-context sentence (Shape 4's
 other addition) with the same ring, a timer signal as the desktop's
 interrupt, and the lock-in-a-handler hang that every sanitizer shares. The
-judge for a wrong memory order is NOT TSan, which reported the ring's race
-in some builds and not others on the same machine; it is the harness's
-sequence check on a weak-memory machine, and check_platform_claims.sh
-asserts the one-lap-stale slot on arm64 and its absence on x86-64.
+judge for a wrong memory order is NOT TSan: at -O0 a struct slot copy is a
+memcpy this toolchain's TSan reports nothing for, at -O1 the script's
+relaxed ring is reported every time, and the lab's own harness is reported
+at no level; it is the harness's sequence check on a weak-memory machine,
+and check_platform_claims.sh asserts the one-lap-stale slot on arm64 and
+its absence on x86-64.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -485,10 +487,12 @@ Chapter 25's Finding 10.
   allocate, so a process-wide count would either fail on the worker or pass
   on nothing; the flag is what makes the judge see the deadline thread
   alone. (2) The stale-slot claim is NOT judged by TSan: the ring with every
-  order relaxed was reported by TSan with `int` indices and not with
-  `size_t` ones on the same machine, so the judge is the sequence check on
-  arm64 (check_platform_claims.sh, a dozen bounded runs) and the codegen
-  read back from the assembly. (3) The ISR-lock listing lives in
+  order relaxed goes unreported at -O0 (the struct slot copy is a memcpy)
+  and, in the lab's harness, at every level, so the judge is the sequence
+  check on arm64 (check_platform_claims.sh, a dozen bounded runs) and the
+  codegen read back from the assembly. The join() in the worker phase is
+  bounded by a give_up flag the consumer sets when its deadline expires,
+  or a ring that never delivers would stop CI instead of failing it. (3) The ISR-lock listing lives in
   check_platform_claims.sh's heredoc between markers and is INCLUDED by the
   chapter — not copied into the card — because it is compiled there and
   check_verbatim refuses a fence that copies a source region

@@ -45,8 +45,9 @@ start from them. Build your own in a scratch directory and compare after.
    waiting. Drain in the main loop until two hundred samples have arrived,
    stop the timer, restore the handler, and assert order and zero
    allocations on the thread — which now covers the handler too.
-6. **Break it, on the card's last listing below,** and watch what happens
-   under `scripts/check.sh`, then `SAN=thread`, then `SAN=none`.
+6. **Break it** — the lock-in-a-handler listing at the end of Chapter 43's
+   interrupt-context section — and watch what happens under
+   `scripts/check.sh`, then `SAN=thread`, then `SAN=none`.
 
 ## The shapes that fail
 
@@ -60,7 +61,7 @@ here and in Chapter 43, identically, and the third is compiled by
 silicon, a harness that numbers its samples printed, in six runs of eight:
 
 ```text
-stale: got seq 46983, expected 47047 (head 8, tail 12)
+stale: got seq 46983, expected 47047
 ```
 
 Sixty-four behind: the sample that occupied that slot one lap ago.
@@ -90,7 +91,7 @@ interrupted is holding, and `raise` delivers the signal while the lock is
 held. One thread, and it waits for itself. The listing is the last one in
 Chapter 43's interrupt-context section, and the only one of the three that
 is compiled anywhere: `check_platform_claims.sh` generates it and asserts
-that it never returns, bounded, because a demonstration whose only outcome
+that the plain build never returns, bounded, because a demonstration whose only outcome
 is silence needs a script that treats silence as the answer. It never
 prints. Plain, under ASan/UBSan and under TSan, the process sits there —
 every sanitizer is waiting too.

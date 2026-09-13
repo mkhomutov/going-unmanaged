@@ -920,14 +920,15 @@ arm64 and x86-64 is read back from the assembly by `check_platform_claims.sh`
 on both, and the relaxed ring's stale slot — exactly one lap old — is asserted
 to appear on arm64 within a dozen runs and never on x86-64. The judge for a
 wrong memory order turned out to be that sequence check on a weak-memory
-machine, because TSan reported the ring's race in some builds and not others
-on the same machine; the chapter says so. The lab's second phase closes item
+machine, because TSan's verdict on the relaxed ring depended on the
+optimisation level and the shape of the loop around it rather than on the
+bug; the chapter says so, with the mechanism measured. The lab's second phase closes item
 21 (below). The scope gate held: one structure, used, and the general problem
 stays under Deliberately out of scope.
 
-**Still open from this item:** nothing. RealtimeSanitizer as the judge that
-sees a *lock* on the deadline path — the allocation counter cannot — waits
-for the baseline toolchain, and both Chapter 36 and 43 name it.
+**Still open from this item:** only the tool. RealtimeSanitizer as the judge
+that sees a *lock* on the deadline path — the allocation counter cannot —
+waits for the baseline toolchain, and both Chapter 36 and 43 name it.
 
 ---
 
@@ -1667,8 +1668,8 @@ the memory-order proofs that make any of it true — is a research literature
 with its own books, and nothing in this handbook's job description asks the
 reader to produce one.
 
-**Out of scope because the reader's job is to *use* one.** Item 19's gap is
-the deadline path inside a plug-in that ships: a bounded SPSC queue between a
+**Out of scope because the reader's job is to *use* one.** Item 19's gap was
+the deadline path inside a plug-in that ships, now Chapter 43: a bounded SPSC queue between a
 worker thread and a real-time callback, and what `memory_order` buys over the
 default. That is a hand-off with two known ends and a measurable claim, which
 is why it is an item. The general problem has neither, and a chapter
@@ -1778,7 +1779,7 @@ its longest-compile warning, and they are the answer to "matrices" for
 nearly every plug-in author. The chapter names them in one sentence rather
 than teaching the maths.
 
-### Low-level system development — mostly taught, and the rest is item 21
+### Low-level system development — taught, the last slice by Chapter 43
 
 **Asked for as "low-level system development" in the fifth coverage
 review, and the honest answer is three answers.** Most of what the phrase

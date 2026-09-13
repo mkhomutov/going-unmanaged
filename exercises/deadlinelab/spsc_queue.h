@@ -15,8 +15,9 @@
 
 // The distance two counters must keep so that two cores do not fight over
 // one cache line. Appendix L owns the argument about the number: it is the
-// distance this code CHOSE, not a fact about every machine, and 128 covers
-// the common 64-byte line twice over and Apple silicon's once.
+// distance this code CHOSE, not a fact about every machine. 128 covers the
+// common 64-byte line twice over and Apple silicon's physical 128-byte line
+// once - the library's constant reports 256 there, deliberately generous.
 inline constexpr std::size_t kSeparation = 128;
 
 // A bounded single-producer, single-consumer queue. Exactly one thread ever
@@ -32,7 +33,7 @@ class SpscQueue {
     // throws would put the allocator back on the path this queue exists to
     // keep it off - and in interrupt context there is no path to put it on.
     static_assert(std::is_trivially_copyable_v<T>, "slots are copied on the deadline path: the element type must be trivially copyable");
-    // An atomic that is not lock-free is a mutex in disguise, and a mutex is
+    // An atomic that is not lock-free takes a lock in disguise, and a lock is
     // what this whole file exists to avoid. On every desktop target a size_t
     // is lock-free; the assert is for the target where it is not.
     static_assert(std::atomic<std::size_t>::is_always_lock_free, "the indices must be lock-free, or the queue takes a lock on the deadline path");
@@ -72,6 +73,6 @@ private:
     // writes head_, and two cores writing one line take turns owning it.
     alignas(kSeparation) std::atomic<std::size_t> head_{0};
     alignas(kSeparation) std::atomic<std::size_t> tail_{0};
-    alignas(kSeparation) T slots_[N] = {};
+    alignas(kSeparation) alignas(T) T slots_[N] = {};   // the stricter of the two wins
 };
 // --8<-- [end:listing]

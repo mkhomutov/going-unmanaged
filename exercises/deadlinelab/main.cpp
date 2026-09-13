@@ -19,6 +19,7 @@
 #include <thread>
 
 #include <sys/time.h>
+#include <time.h>
 
 // --8<-- [start:counter]
 // Chapter 36's instrument, given a thread. That harness counted the whole
@@ -100,11 +101,15 @@ void WorkerToDeadlineThread() {
     }
 
     std::atomic<long> retries{0};                   // full-ring waits, on the worker's side
-    std::thread worker([&] {
-        for (std::uint32_t i = 0; i < kItems; ++i) {
+    std::atomic<bool> give_up{false};               // set when the consumer's deadline expires,
+    std::thread worker([&] {                        // so a ring that never delivers cannot
+        for (std::uint32_t i = 0; i < kItems; ++i) {   // leave join() waiting forever
             const Sample s{i, static_cast<float>(i) * 0.5f};
             while (!queue.TryPush(s)) {             // full: the worker waits, the
-                retries.fetch_add(1, std::memory_order_relaxed);   // deadline side never does
+                if (give_up.load(std::memory_order_relaxed)) {   // deadline side never does
+                    return;
+                }
+                retries.fetch_add(1, std::memory_order_relaxed);
                 std::this_thread::yield();
             }
         }
@@ -134,6 +139,7 @@ void WorkerToDeadlineThread() {
     }
     const long allocs_during = g_deadline_allocs - allocs_before;
     t_on_deadline_path = false;
+    give_up.store(true, std::memory_order_relaxed);   // a no-op unless the deadline expired
     worker.join();
 
     Check(expect == kItems, "every sample the worker produced arrived (no deadline expired)");
@@ -185,6 +191,16 @@ void InterruptToMainLoop() {
     std::uint32_t last_seq = 0;
     bool in_order = true;
     Sample s{};
+    // First, the loop is BUSY for a quarter of a second - a long draw on a
+    // real main loop - while the interrupts keep coming: more of them than
+    // the ring has slots, so the drop policy is exercised rather than
+    // merely compiled. (The sleep returns early on each interrupt, so it
+    // is re-issued until the time has really passed.)
+    const auto busy_until = std::chrono::steady_clock::now() + std::chrono::milliseconds(250);
+    while (!Expired(busy_until)) {
+        struct timespec nap = {0, 5 * 1000 * 1000};
+        nanosleep(&nap, nullptr);
+    }
     while (received < kWanted && !Expired(deadline)) {
         while (g_from_interrupt.TryPop(s)) {        // a dropped sample leaves a gap in seq,
             if (received > 0 && s.seq <= last_seq) {   // never a repeat and never a step back
@@ -209,6 +225,7 @@ void InterruptToMainLoop() {
     const std::uint32_t dropped = g_interrupt_drops.load();
     Check(received >= kWanted, "the main loop received the samples the interrupts produced (no deadline expired)");
     Check(in_order, "every interrupt's sample arrived in order, none twice");
+    Check(dropped > 0, "the busy stretch overflowed the ring, so the drop policy was exercised");
     Check(received + dropped == fired, "every interrupt either delivered its sample or counted a drop");
     Check(allocs_during == 0, "neither the handler nor the loop it interrupted allocated");
     std::printf("interrupt -> main loop: %u interrupts, %u samples received, %u dropped on a full ring, %ld allocations\n",
