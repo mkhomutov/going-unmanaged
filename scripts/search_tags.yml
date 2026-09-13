@@ -314,6 +314,14 @@
   - evaluator
   - recursion
   - locale
+43-below-the-mutex.md:
+  - lockfree
+  - spsc
+  - memory_order
+  - interrupt
+  - ISR
+  - ring
+  - atomics
 
 # --- Appendices --------------------------------------------------------
 A-fundamentals-refresher.md:

@@ -253,6 +253,17 @@ run "dumplab"     $CXX $FLAGS   exercises/dumplab/session.cpp exercises/dumplab/
 # a stopped CI run. Built AGAIN under -fsanitize=thread further down: the
 # breaks split across the two builds, and each build alone checks half.
 run "bridgelab"   $CXX $FLAGS   exercises/bridgelab/main.cpp            -o $OUT/bridgelab
+# Chapter 43's lab: the hand-off to a deadline thread. The committed files
+# are the worked result (the three shapes that fail live in the lab's
+# TASK.md and the chapter). The harness numbers every sample and asserts
+# order, completeness and ZERO allocations on the deadline thread - Chapter
+# 36's counter given a thread, because the worker is allowed to allocate
+# and the deadline side is not - then does it again with a timer signal as
+# the producer, the desktop's stand-in for an interrupt. Every wait carries
+# a deadline (bridgelab's rule). Built AGAIN under -fsanitize=thread further
+# down: a wrong memory order is what TSan is for, even where it is not
+# reliable about it, and one build cannot check both.
+run "deadlinelab" $CXX $FLAGS   exercises/deadlinelab/main.cpp          -o $OUT/deadlinelab
 # Appendix H's measurements. Not an exercise - these are the numbers the
 # appendix quotes (what a sink costs against const&, what vector growth
 # does to element addresses, and what the copy/move tally cannot see: the
@@ -458,6 +469,10 @@ UBSAN_OPTIONS=halt_on_error=1 $OUT/dumplab 0 > /dev/null
 # sanitizers around it. Modal drains happen mid-run, so the HOST_BUSY
 # refusal path is genuinely exercised, not just compiled.
 UBSAN_OPTIONS=halt_on_error=1 $OUT/bridgelab > /dev/null
+# The Chapter 43 lab: the judge inside the binary (order, completeness, the
+# thread-local allocation counter at zero in both phases), the sanitizers
+# around it, every wait bounded.
+UBSAN_OPTIONS=halt_on_error=1 $OUT/deadlinelab > /dev/null
 # The Chapter 42 lab: the judge inside the binary (values, positions, depth,
 # locale), the sanitizers around it. The judge's last line says which German
 # locale it switched to, or that it skipped: a locale check that skipped in
@@ -1183,6 +1198,11 @@ if $CXX $TFLAGS "$OUT/tsan_probe.cpp" -o "$OUT/tsan_probe" > /dev/null 2>&1 \
     $CXX $TFLAGS exercises/bridgelab/main.cpp -o "$OUT/bridgelab_tsan"
     TSAN_OPTIONS=halt_on_error=1 "$OUT/bridgelab_tsan" > /dev/null
     echo "  ok   exercises/bridgelab/main.cpp under -fsanitize=thread"
+    # Chapter 43's ring under the same probe: two threads and one shared
+    # structure with no lock in it is the case TSan exists for.
+    $CXX $TFLAGS exercises/deadlinelab/main.cpp -o "$OUT/deadlinelab_tsan"
+    TSAN_OPTIONS=halt_on_error=1 "$OUT/deadlinelab_tsan" > /dev/null
+    echo "  ok   exercises/deadlinelab/main.cpp under -fsanitize=thread"
     # Recipe 40's watcher owns a thread and delivers on it: Chapter 29's
     # rule that threaded code needs both builds applies to a recipe too.
     $CXX $TFLAGS exercises/cookbook/watch.cpp -o "$OUT/cb_watch_tsan"

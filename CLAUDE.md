@@ -6,7 +6,7 @@
 exercise-driven handbook built by the maintainer (17y C# developer returning
 to C++ for SDK work) together with an AI assistant. The canonical content is
 the per-chapter files under `book/` — one file per chapter and appendix
-(6 parts, chapters 1–42, appendices A–M — Chapter 24 and Appendix C were
+(6 parts, chapters 1–43, appendices A–M — Chapter 24 and Appendix C were
 retired by SITE-PLAN.md step 3; a retired number or letter is never reused,
 and the Contents keeps a one-line entry for each so the ordered list still
 renders true), indexed by `book/README.md`. There
@@ -96,7 +96,20 @@ with a value-or-error at every level (a loop where right recursion gives
 7 for `8 - 3 - 2`), an RAII depth guard, and a provider seam whose dot
 belongs to the provider; exprlab's judge is a hand-computed value table,
 error positions, the depth limit at N and N+1, and a German locale
-switched on where the machine has it.
+switched on where the machine has it. Chapter 43 (items 19 and 21) is the
+hand-off to a deadline thread — the structure that goes where Chapter 29's
+mutex is forbidden by Chapter 36: a bounded single-producer, single-consumer
+ring, `release` to publish and `acquire` to consume, each index on its own
+cache line, and what each order compiles to per instruction set, measured;
+its second half pays the Bestiary's interrupt-context sentence (Shape 4's
+other addition) with the same ring, a timer signal as the desktop's
+interrupt, and the lock-in-a-handler hang that every sanitizer shares. The
+judge for a wrong memory order is NOT TSan: at -O0 a struct slot copy is a
+memcpy this toolchain's TSan reports nothing for, at -O1 the script's
+relaxed ring is reported every time, and the lab's own harness is reported
+at no level; it is the harness's sequence check on a weak-memory machine,
+and check_platform_claims.sh asserts the one-lap-stale slot on arm64 and
+its absence on x86-64.
 README.md carries the origin story and contribution invitation; the book
 itself stays free of meta-commentary.
 
@@ -463,6 +476,26 @@ Chapter 25's Finding 10.
   libc++ has it only for a deployment target of macOS 26 or later — and
   build_all.sh builds the lab a second time on macOS with
   `-mmacosx-version-min=15.0` so the `#else` branch is judged too
+- `exercises/deadlinelab/` — Chapter 43's lab: `spsc_queue.h` (the bounded
+  SPSC ring, included whole by the chapter) and the judging `main.cpp`
+  (Chapter 36's allocation counter behind a `thread_local` flag; a worker
+  phase and an interrupt phase, the second driven by `setitimer`/`SIGALRM`,
+  so POSIX only — the MSVC job does not build it; every wait bounded), plus
+  a TASK.md that carries the mutex-on-the-deadline-thread shape. Built under
+  the canonical flags and again in the TSan section. Three rules are
+  load-bearing. (1) The counter is per THREAD: the worker is allowed to
+  allocate, so a process-wide count would either fail on the worker or pass
+  on nothing; the flag is what makes the judge see the deadline thread
+  alone. (2) The stale-slot claim is NOT judged by TSan: the ring with every
+  order relaxed goes unreported at -O0 (the struct slot copy is a memcpy)
+  and, in the lab's harness, at every level, so the judge is the sequence
+  check on arm64 (check_platform_claims.sh, a dozen bounded runs) and the
+  codegen read back from the assembly. The join() in the worker phase is
+  bounded by a give_up flag the consumer sets when its deadline expires,
+  or a ring that never delivers would stop CI instead of failing it. (3) The ISR-lock listing lives in
+  check_platform_claims.sh's heredoc between markers and is INCLUDED by the
+  chapter — not copied into the card — because it is compiled there and
+  check_verbatim refuses a fence that copies a source region
 - `solutions/` — reference solutions for all exercises; plus `Buffer.h`, the
   Chapter 15 class extracted out of `buffer.cpp` so the testlab suite can
   include it (Chapter 28's structural point, applied)
@@ -515,7 +548,7 @@ Chapter 25's Finding 10.
   section a source marks is included by some page (a marked unit is a
   promise a page shows it); no cpp or cmake fence of four lines or more on
   any page is a copy of a source region (a listing pasted back instead of
-  included is refused); the seven ticket/lab TASK cards' broken listings
+  included is refused); the eight ticket/lab TASK cards' broken listings
   appear in their chapters (book-and-card code with no compiled source — it
   exists to fail — so it stays copied, held by containment); two one-line
   quotations (Chapter 39, Chapter 40) are held by containment; Appendix G
@@ -558,7 +591,15 @@ Chapter 25's Finding 10.
   is caught, naming `GetTimeout` — the one section whose first two claims
   are about the linker rather than a compiler-rt runtime and so hold on
   every platform alike; its two headers are the chapter's own listings,
-  pinned to the page by check_verbatim.sh. CI runs it on ubuntu AND macos with
+  pinned to the page by check_verbatim.sh. Three sections are Chapter 43's:
+  what each memory order compiles to, read back from the assembly per
+  instruction set (x86-64: only the seq_cst store carries `xchg`/`mfence`;
+  arm64: release and seq_cst stores are `stlr`, an acquire load `ldar` or
+  `ldapr`); the relaxed ring's one-lap-stale slot, asserted to appear on
+  arm64 within a dozen bounded runs and never on x86-64; and a lock in a
+  signal handler, asserted to hang (124 from the bounded runner) on both —
+  its listing is included by the chapter from the script's heredoc, like the
+  ODR ones. CI runs it on ubuntu AND macos with
   `--required`, because the platform overclaims it exists to catch are exactly
   what a one-platform check cannot see. The broken programs are generated into
   a temp dir, never committed — `solutions/` stays clean
@@ -810,18 +851,18 @@ stay on the list marked DONE so item numbers never shift. Short version:
   Chapter 26; dependency management was item 2 and is now Chapter 27;
   testing was item 3 and is now Chapter 28; concurrency was item 4 and is
   now Chapter 29
-- Tier 2: two items open — the framework shape (item 18: Bestiary Shape 5 is named in Chapter 16 and
+- Tier 2: one item open — the framework shape (item 18: Bestiary Shape 5 is named in Chapter 16 and
   taught nowhere — two readers of the 2026-09 study stopped there, and
   Shape 4 has no lab either — though only its interrupt-context half is
   genuinely untaught, which is item 21 — so this item is about the shape
   with no treatment at all rather than the last shape without a lab; still
-  a legitimate candidate for out-of-scope-with-a-sentence), and below
-  the mutex (item 19: Chapter 29 and Chapter 36 between them state the
-  deadline path's prohibition and never its alternative — their two opposite
-  defaults for a foreign thread now cross-reference each other, which is all
-  of the item that is done). Both were sequenced after item 9 (P/Invoke),
-  which is **DONE as of 2026-09-02** — Chapter 39 — so both are now
-  unblocked. Templates you will write was item 23 and is now Chapter 41 +
+  a legitimate candidate for out-of-scope-with-a-sentence). Below the
+  mutex was item 19 and is now Chapter 43 + `exercises/deadlinelab/` — the
+  bounded SPSC ring and the two memory orders, measured per instruction set
+  — and it closed item 21 (the interrupt-context callback) as one section,
+  exactly as the ROADMAP said it might. Both were sequenced after item 9
+  (P/Invoke), which is **DONE as of 2026-09-02** — Chapter 39 — so item 18
+  is unblocked. Templates you will write was item 23 and is now Chapter 41 +
   `exercises/templatelab/`, the second lab whose judge asserts a build
   FAILS. CMake for the plug-in was item 22 and is now Chapter 40 +
   `exercises/pluginlab/`. Consolidated const-correctness was item 8 and is now Appendix I
@@ -855,7 +896,7 @@ stay on the list marked DONE so item numbers never shift. Short version:
   The smallest item on the list, the only one filed with no reader
   evidence, and probably a section of item 19 rather than its own material:
   an ISR is item 19's deadline path with a harder deadline. Sequenced after
-  19, and closable by it), and the bridge out
+  19, and closed by it — DONE, one section of Chapter 43), and the bridge out
   was item 16 and is now DONE — Chapter 38 + stdlib-only
   `exercises/bridgelab/` (the main-thread queue under a bounded-wait
   judge), plus Appendix G, the survey of mechanisms and its decision

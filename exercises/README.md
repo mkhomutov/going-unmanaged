@@ -40,6 +40,7 @@ chapter's pitfalls, never write the solution — and its code goes through
 | [The Plug-in Lab](pluginlab/TASK.md) | 40 | a MODULE with one exported symbol, an SDK located by a hand-written find-module, and a stand-in host that loads the result | ~2 h | the files themselves: [plugin/CMakeLists.txt](pluginlab/plugin/CMakeLists.txt), [plugin/cmake/FindHostSDK.cmake](pluginlab/plugin/cmake/FindHostSDK.cmake), [plugin/monitor.cpp](pluginlab/plugin/monitor.cpp) + the loading [host/host.cpp](pluginlab/host/host.cpp), the export table read back by `build_all.sh` |
 | [The Template Lab](templatelab/TASK.md) | 41 | one Session over two policies, the detection idiom, and a build that must fail by name | ~2 h | the files themselves: [session.h](templatelab/session.h), [policies.h](templatelab/policies.h), [util.h](templatelab/util.h) + the judging [main.cpp](templatelab/main.cpp), green against FakeDevice and refused under `-DTEMPLATELAB_BROKEN_POLICY` |
 | [The Formula Field](exprlab/TASK.md) | 42 | user-typed text against injected objects: tokens, recursive descent, a bounded depth, a hand-computed value table | ~3 h | the files themselves: [expr.h](exprlab/expr.h) + [expr.cpp](exprlab/expr.cpp) + [main.cpp](exprlab/main.cpp) |
+| [The Deadline Lab](deadlinelab/TASK.md) | 43 | the hand-off to a deadline thread: a bounded single-producer ring, the two memory orders, and an interrupt handler as the producer | ~2 h | the files themselves: [spsc_queue.h](deadlinelab/spsc_queue.h) + the judging [main.cpp](deadlinelab/main.cpp), green under both sanitizer builds |
 | [The Const Lab](constlab/TASK.md) | Appendix I | const as one subject, judged by five builds that must fail | ~45 min | the files themselves: [counter.h](constlab/counter.h) + [main.cpp](constlab/main.cpp), plus five builds that must be refused |
 
 The table is in the order to do them: the nine Part V exercises plus the
@@ -66,8 +67,13 @@ the answers live in the owning chapters) — one `q<N>.cpp` per question,
 globbed by `build_all.sh` rather than listed, because they are appended
 unattended.
 
-Fifteen directories hold their reference in the open, rather than behind a
-fold. `templatelab/` is Chapter 41's: one `Session<Sdk>` compiled against
+Sixteen directories hold their reference in the open, rather than behind a
+fold. `deadlinelab/` is Chapter 43's: a ring with one producer and one
+consumer and no lock in it, judged by a harness that numbers every sample and
+counts allocations on the deadline thread alone — and judged twice, under
+ASan/UBSan and under TSan, with the shapes that fail (a relaxed ring, a lock
+on the deadline thread, a lock in a signal handler) on its card rather than
+in its directory. `templatelab/` is Chapter 41's: one `Session<Sdk>` compiled against
 FakeDevice and against a recording double, and — the constlab discipline
 again — a second build that must be refused, with the `static_assert`'s own
 sentence as the first error. `pluginlab/` is Chapter 40's: three CMake projects — a vendor-style SDK

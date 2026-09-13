@@ -864,7 +864,7 @@ silence would.
 **Sequencing:** after item 9, alongside items 8 and 19. Nothing here blocks
 on those; the ordering is reader demand, and P/Invoke's is larger.
 
-### 19. Below the mutex — the deadline path's other half
+### 19. Below the mutex — the deadline path's other half — DONE (Chapter 43)
 
 **Missing:** what to do instead, once the book has said what not to do.
 
@@ -904,6 +904,31 @@ this one: Shape 4's interrupt-context callback is this prohibition under a
 harder deadline, and a queue section written here may close it outright. The
 sharper half waited for none of them — the Chapter 29 ↔ Chapter 36
 cross-reference landed as a correction (issue #54).
+
+**Delivered:** Chapter 43 — *Below the Mutex* — and `exercises/deadlinelab/`:
+`spsc_queue.h`, a bounded single-producer, single-consumer ring with two
+atomic indices, `release` to publish and `acquire` to consume, each index
+on its own cache line (Appendix L's row, applied), three `static_assert`s
+for what the deadline path cannot afford (an element whose copy allocates,
+an index that takes a lock, a ring with no empty slot), and `TryPush` and
+`TryPop` that never wait; and `main.cpp`, Chapter 36's allocation counter
+given a thread by a `thread_local` flag, judging order, completeness and
+zero allocations on the deadline thread across two hundred thousand
+numbered samples, every wait bounded. What `memory_order` buys was measured
+rather than asserted: the chapter's table of what each order compiles to on
+arm64 and x86-64 is read back from the assembly by `check_platform_claims.sh`
+on both, and the relaxed ring's stale slot — exactly one lap old — is asserted
+to appear on arm64 within a dozen runs and never on x86-64. The judge for a
+wrong memory order turned out to be that sequence check on a weak-memory
+machine, because TSan's verdict on the relaxed ring depended on the
+optimisation level and the shape of the loop around it rather than on the
+bug; the chapter says so, with the mechanism measured. The lab's second phase closes item
+21 (below). The scope gate held: one structure, used, and the general problem
+stays under Deliberately out of scope.
+
+**Still open from this item:** only the tool. RealtimeSanitizer as the judge
+that sees a *lock* on the deadline path — the allocation counter cannot —
+waits for the baseline toolchain, and both Chapter 36 and 43 name it.
 
 ---
 
@@ -1478,7 +1503,7 @@ boundary, and Chapter 30 already says why.
 **Sequencing:** after item 9. The same reader wants both, and P/Invoke has
 three independent votes for the chapter as scoped to this one's two.
 
-### 21. The interrupt-context callback — Bestiary Shape 4's other addition
+### 21. The interrupt-context callback — Bestiary Shape 4's other addition — DONE (Chapter 43, one section)
 
 **Missing:** one of Shape 4's two additions to Shape 1, and only one.
 
@@ -1529,6 +1554,23 @@ study material, no lab targets a microcontroller, and none should —
 is ours is the sentence the Bestiary already wrote and did not pay, because
 this shape reaches the desktop too: a CAN stack or a Modbus library calls
 back from a driver context under the same three prohibitions.
+
+**Delivered:** exactly as sequenced — inside item 19. Chapter 43's section
+*From interrupt context — Shape 4's other addition* states what an interrupt
+handler cannot do that a deadline thread merely should not (it cannot block
+on anything, because what it would wait for is the code it interrupted; it
+takes no context pointer, so everything it touches is static storage that
+exists before `main`; everything it touches is lock-free or
+`sig_atomic_t`), and the hand-off out is the same ring with the handler as
+producer and a drop count in place of a wait. The lab's second phase is that
+hand-off on a desktop: a timer signal every millisecond, a handler pushing
+into a ring at namespace scope, the main loop draining, the thread-local
+counter covering handler and loop alike. The version that hangs — a lock in
+the handler, taken while the loop holds it — is compiled by
+`check_platform_claims.sh`, which asserts the hang, bounded, on both
+platforms, since every sanitizer hangs with it, and the chapter includes the
+listing from there. Chapter 16's Shape 4 paragraph now points here for the
+addition it had left unpaid.
 
 ---
 
@@ -1626,8 +1668,8 @@ the memory-order proofs that make any of it true — is a research literature
 with its own books, and nothing in this handbook's job description asks the
 reader to produce one.
 
-**Out of scope because the reader's job is to *use* one.** Item 19's gap is
-the deadline path inside a plug-in that ships: a bounded SPSC queue between a
+**Out of scope because the reader's job is to *use* one.** Item 19's gap was
+the deadline path inside a plug-in that ships, now Chapter 43: a bounded SPSC queue between a
 worker thread and a real-time callback, and what `memory_order` buys over the
 default. That is a hand-off with two known ends and a measurable claim, which
 is why it is an item. The general problem has neither, and a chapter
@@ -1737,7 +1779,7 @@ its longest-compile warning, and they are the answer to "matrices" for
 nearly every plug-in author. The chapter names them in one sentence rather
 than teaching the maths.
 
-### Low-level system development — mostly taught, and the rest is item 21
+### Low-level system development — taught, the last slice by Chapter 43
 
 **Asked for as "low-level system development" in the fifth coverage
 review, and the honest answer is three answers.** Most of what the phrase
@@ -1748,10 +1790,11 @@ aliasing (Chapter 34), the ABI and the loader (Chapters 30 and 40),
 threads and the memory model (Chapter 29), and reading a stripped crash
 report (Chapter 37).
 
-**The one untaught slice is already an item.** Code that runs in an
-interrupt context — no allocation, no lock, no unbounded wait — is item 21
-above, sequenced after item 19, and adding a second entry for it would
-split one gap across two numbers.
+**The one untaught slice was already an item, and is now taught.** Code that
+runs in an interrupt context — no allocation, no lock, no unbounded wait —
+was item 21 above, sequenced after item 19, and both landed together as
+Chapter 43; adding a second entry for it would have split one gap across two
+numbers.
 
 **Out of scope beyond that, because the reader is in user space.** Kernel
 modules, device drivers proper, and bare-metal firmware are a different

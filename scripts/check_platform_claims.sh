@@ -735,6 +735,204 @@ else
     skip "truncate-under-mapping is a POSIX demonstration ($OS)"
 fi
 
+# --- 10. what each memory order compiles to -----------------------------------
+# Chapter 43's table: on x86-64 a release store and an acquire load are
+# plain movs (total store order does the work) and only the seq_cst DEFAULT
+# costs a full barrier - an xchg, or a mov plus mfence, depending on the
+# compiler; on arm64 a release or seq_cst store is a distinct instruction
+# (stlr) that a relaxed store (str) is not, and an acquire load is ldar or
+# its RCpc cousin ldapr. Keyed by architecture, because the claim is about
+# the instruction set and the mistake it exists to catch is one ISA's
+# codegen written down as the rule.
+echo "== memory_order codegen =="
+cat > "$OUT/orders.cpp" <<'EOF'
+#include <atomic>
+std::atomic<unsigned long> g;
+void store_relaxed(unsigned long v) { g.store(v, std::memory_order_relaxed); }
+void store_release(unsigned long v) { g.store(v, std::memory_order_release); }
+void store_seq_cst(unsigned long v) { g.store(v, std::memory_order_seq_cst); }
+unsigned long load_relaxed() { return g.load(std::memory_order_relaxed); }
+unsigned long load_acquire() { return g.load(std::memory_order_acquire); }
+unsigned long load_seq_cst() { return g.load(std::memory_order_seq_cst); }
+EOF
+if $CXX -std=c++17 -O2 -S "$OUT/orders.cpp" -o "$OUT/orders.s" 2>/dev/null; then
+    # The body of one function: from its (possibly underscore-prefixed)
+    # mangled label to the next ret.
+    body() { awk -v f="$1" '$0 ~ "^_?" f ":" {p=1} p {print} p && /^[[:space:]]*ret/ {exit}' "$OUT/orders.s"; }
+    case "$ARCH" in
+        x86_64)
+            for fn in _Z13store_relaxedm _Z13store_releasem _Z12load_relaxedv _Z12load_acquirev _Z12load_seq_cstv; do
+                if body "$fn" | grep -qE 'xchg|mfence|lock '; then
+                    fail "$fn carries a barrier on x86-64; Chapter 43 says only the seq_cst store does   [Ch 43]"
+                else
+                    pass "$fn is a plain mov on x86-64   [Ch 43]"
+                fi
+            done
+            if body "_Z13store_seq_cstm" | grep -qE 'xchg|mfence'; then
+                pass "_Z13store_seq_cstm carries a full barrier on x86-64 (xchg or mfence)   [Ch 43]"
+            else
+                fail "_Z13store_seq_cstm carries no xchg/mfence on x86-64; Chapter 43 says the default store pays a barrier   [Ch 43]"
+            fi ;;
+        arm64|aarch64)
+            if body "_Z13store_relaxedm" | grep -qE '^[[:space:]]*str[[:space:]]' && ! body "_Z13store_relaxedm" | grep -q 'stlr'; then
+                pass "store_relaxed is a plain str on arm64   [Ch 43]"
+            else
+                fail "store_relaxed is not a plain str on arm64   [Ch 43]"
+            fi
+            for fn in _Z13store_releasem _Z13store_seq_cstm; do
+                if body "$fn" | grep -q 'stlr'; then
+                    pass "$fn is stlr on arm64   [Ch 43]"
+                else
+                    fail "$fn is not stlr on arm64; Chapter 43 says release and the default store compile alike there   [Ch 43]"
+                fi
+            done
+            if body "_Z12load_relaxedv" | grep -qE '^[[:space:]]*ldr[[:space:]]'; then
+                pass "load_relaxed is a plain ldr on arm64   [Ch 43]"
+            else
+                fail "load_relaxed is not a plain ldr on arm64   [Ch 43]"
+            fi
+            if body "_Z12load_acquirev" | grep -qE 'ldar|ldapr'; then
+                pass "load_acquire is ldar or ldapr on arm64   [Ch 43]"
+            else
+                fail "load_acquire is neither ldar nor ldapr on arm64   [Ch 43]"
+            fi ;;
+        *) skip "no codegen expectation for $ARCH" ;;
+    esac
+else
+    skip "$CXX cannot emit assembly for the memory-order probe"
+fi
+
+# --- 11. a relaxed ring reads a slot one lap stale ----------------------------
+# Chapter 43: with every order relaxed, the single-producer ring "passes
+# every run on x86-64" and on Apple silicon delivers "the sample that
+# occupied that slot one lap ago". The demonstration is the chapter's own
+# broken shape - two indices, relaxed everywhere, a plain slot write between
+# them - at -O0, so the compiler emits the stores in program order and what
+# is observed is the hardware's ordering and nothing else. A weak-memory
+# machine must show the stale read within a dozen runs; a total-store-order
+# machine must never show it in a dozen. Neither outcome is one run's to
+# prove, which is why the loop.
+echo "== relaxed ring on a weak-memory ISA =="
+cat > "$OUT/relaxed_ring.cpp" <<'EOF'
+#include <atomic>
+#include <cstdio>
+#include <cstdlib>
+#include <thread>
+struct Sample { unsigned seq; float value; };
+constexpr std::size_t N = 64;
+Sample slots[N];
+std::atomic<std::size_t> head{0}, tail{0};
+bool TryPush(const Sample& v) {
+    std::size_t t = tail.load(std::memory_order_relaxed);
+    std::size_t next = t + 1 == N ? 0 : t + 1;
+    if (next == head.load(std::memory_order_relaxed)) return false;
+    slots[t] = v;
+    tail.store(next, std::memory_order_relaxed);      // no release: nothing orders the slot before this
+    return true;
+}
+bool TryPop(Sample& out) {
+    std::size_t h = head.load(std::memory_order_relaxed);
+    if (h == tail.load(std::memory_order_relaxed)) return false;   // no acquire
+    out = slots[h];
+    head.store(h + 1 == N ? 0 : h + 1, std::memory_order_relaxed);
+    return true;
+}
+int main() {
+    std::thread p([] { for (unsigned i = 0; i < 100000; ++i) { Sample s{i, 0.f}; while (!TryPush(s)) std::this_thread::yield(); } });
+    unsigned expect = 0; Sample s{};
+    while (expect < 100000) {
+        if (TryPop(s)) {
+            if (s.seq != expect) { std::printf("stale: got seq %u, expected %u\n", s.seq, expect); std::fflush(stdout); std::_Exit(2); }
+            ++expect;
+        }
+    }
+    p.join();
+    std::printf("all %u arrived in order\n", expect);
+    return 0;
+}
+EOF
+if $CXX -std=c++17 -O0 -g "$OUT/relaxed_ring.cpp" -o "$OUT/relaxed_ring" 2>/dev/null; then
+    STALE=0; CLEAN=0; ODD=0; LAST=""
+    for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do
+        RC=$(run_rc_bounded "$OUT/relaxed_ring" "$OUT/relaxed_ring.log" 60)
+        case "$RC" in
+            2) STALE=$((STALE + 1)); LAST=$(head -n1 "$OUT/relaxed_ring.log") ;;
+            0) CLEAN=$((CLEAN + 1)) ;;
+            *) ODD=$((ODD + 1)) ;;
+        esac
+    done
+    if [ "$ODD" != 0 ]; then
+        fail "the relaxed ring hung or crashed in $ODD of 12 runs; it should read stale or pass   [Ch 43]"
+    fi
+    case "$ARCH" in
+        arm64|aarch64)
+            if [ "$STALE" -gt 0 ]; then
+                pass "relaxed ring: stale slot in $STALE of 12 runs on $ARCH ('$LAST')   [Ch 43]"
+            else
+                fail "relaxed ring: no stale read in 12 runs on $ARCH; Chapter 43 says a weak-memory machine shows one   [Ch 43]"
+            fi ;;
+        x86_64)
+            if [ "$STALE" = 0 ]; then
+                pass "relaxed ring: all 12 runs in order on x86-64 - the ISA hides the missing order   [Ch 43]"
+            else
+                fail "relaxed ring: a stale read on x86-64 ($STALE of 12); Chapter 43 says total store order hides it   [Ch 43]"
+            fi ;;
+        *) skip "no documented expectation for $ARCH" ;;
+    esac
+else
+    skip "$CXX cannot build the relaxed-ring demonstration"
+fi
+
+# --- 12. a lock in interrupt context ------------------------------------------
+# Chapter 43: a handler that takes a lock held by the code it interrupted
+# "never prints. Plain, under ASan/UBSan and under TSan, the process sits
+# there". One thread waiting for itself, and no sanitizer names it - the
+# section asserts the hang, bounded, and asserts it for the plain build only:
+# the sanitized builds hang the same way, and a minute of that per build is
+# the wrong price for a claim the chapter's card already carries. 124 is the
+# bounded runner's timeout.
+echo "== a lock in interrupt context =="
+# The listing is Chapter 43's, included by the chapter from between the
+# markers below, the way Chapters 26 and 27 include their ODR listings from
+# this script: one source, compiled here, shown there.
+cat > "$OUT/isr_lock.cpp" <<'EOF'
+// --8<-- [start:isr-lock]
+#include <csignal>
+#include <cstdio>
+#include <mutex>
+#include <vector>
+
+static std::mutex g_m;
+static std::vector<int> g_samples;
+
+static void OnTick(int) {
+    std::lock_guard<std::mutex> g(g_m);      // Chapter 29's fix, in a handler
+    g_samples.push_back(1);
+}
+
+int main() {
+    std::signal(SIGALRM, &OnTick);
+    {
+        std::lock_guard<std::mutex> g(g_m);  // the main loop is inside its critical section...
+        g_samples.push_back(0);
+        raise(SIGALRM);                      // ...when the interrupt arrives
+    }
+    std::printf("samples: %zu\n", g_samples.size());
+    return 0;
+}
+// --8<-- [end:isr-lock]
+EOF
+if $CXX -std=c++17 -g "$OUT/isr_lock.cpp" -o "$OUT/isr_lock" 2>/dev/null; then
+    RC=$(run_rc_bounded "$OUT/isr_lock" "$OUT/isr_lock.log" 8)
+    if [ "$RC" = 124 ]; then
+        pass "a lock taken in a signal handler deadlocks the one thread: still waiting after 8 s   [Ch 43]"
+    else
+        fail "a lock taken in a signal handler exited $RC; Chapter 43 says it never returns   [Ch 43]"
+    fi
+else
+    skip "$CXX cannot build the interrupt-lock demonstration"
+fi
+
 echo
 if [ "$FAILED" = 0 ]; then
     echo "platform claims OK ($OS/$ARCH, $STDLIB)"
@@ -747,6 +945,8 @@ else
     echo "  failure there means this toolchain differs from the chapter's transcript;" >&2
     echo "  section 6 is per standard library, keyed by the library's macro;" >&2
     echo "  section 8 asserts only what every platform and every run share;" >&2
-    echo "  section 9 is per-platform again, Recipe 49's truncated mapping." >&2
+    echo "  section 9 is per-platform again, Recipe 49's truncated mapping;" >&2
+    echo "  sections 10 and 11 are per instruction set, Chapter 43's memory orders;" >&2
+    echo "  section 12 is a hang every platform shares, Chapter 43's interrupt lock." >&2
     exit 1
 fi

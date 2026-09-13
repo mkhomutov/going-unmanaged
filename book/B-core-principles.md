@@ -99,6 +99,7 @@ One line each. If you can say these fluently and back them with code, the concep
 **Deadline code**
 
 - "On a deadline thread I treat the allocator as I/O: the hot path allocates nothing, locks nothing, and blocks on nothing — and I prove it with a counter, because a profiler's mean flatters while a deadline punishes the worst case."
+- "Data reaches a deadline thread through a bounded ring with one producer and one consumer, never through a lock: the writer publishes with release, the reader takes with acquire, the deadline side never waits, and an interrupt handler is the same rule with waiting removed entirely — nothing it touches may block, and everything it touches exists before main."
 - "A cost claim without a baseline, a build description and an instrument is an opinion — I would rather have a count I can reproduce than a duration I cannot, and I take the measurement before I change anything."
 
 **Choosing signatures and storage**

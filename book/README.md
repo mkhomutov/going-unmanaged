@@ -57,6 +57,7 @@ Three ways in. **Reference** is for the question in front of you; **Concepts** f
 - [Chapter 29 — Concurrency](29-concurrency.md#chapter-29--concurrency)
 - [Chapter 30 — Authoring an ABI Boundary](30-authoring-an-abi-boundary.md#chapter-30--authoring-an-abi-boundary)
 - [Chapter 41 — Templates You Will Write](41-templates-you-will-write.md#chapter-41--templates-you-will-write)
+- [Chapter 43 — Below the Mutex](43-below-the-mutex.md#chapter-43--below-the-mutex)
 
 ### Labs
 
@@ -143,6 +144,7 @@ Each has a task card under `exercises/` so it can be attempted without the solut
 40. [CMake for the Plug-in](40-cmake-for-the-plug-in.md#chapter-40--cmake-for-the-plug-in) — a MODULE with one exported symbol, an SDK that ships no config package, and the build decisions Chapter 26 never had to make
 41. [Templates You Will Write](41-templates-you-will-write.md#chapter-41--templates-you-will-write) — the working subset: the seam as a template parameter, static_assert as the judge, the three utilities, and how to read the error
 42. [The Formula Field](42-the-formula-field.md#chapter-42--the-formula-field) — user-typed text evaluated against the host's objects: tokens as a closed set, a tree behind unique_ptr, recursive descent with a value at every level, the provider seam, and a judge whose oracle is a table worked out by hand
+43. [Below the Mutex](43-below-the-mutex.md#chapter-43--below-the-mutex) — the hand-off to a deadline thread once a lock is forbidden: a bounded ring with one producer and one consumer, the two memory orders that make it correct and what they cost per instruction set, and the interrupt handler as the same rule with waiting removed
 
 **[Appendices](A-fundamentals-refresher.md#appendices)**
 

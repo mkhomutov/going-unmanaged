@@ -48,6 +48,7 @@ secrets at rest	27-dependency-management/
 keychain	27-dependency-management/
 Regex.IsMatch	F-rosetta-cookbook/#recipe-44
 AesGcm	F-rosetta-cookbook/#recipe-37
+ConcurrentQueue	43-below-the-mutex/
 
 # --- Reaching for a C++ spelling ---------------------------------------
 std::optional	10-modern-cpp-fluency/
@@ -67,6 +68,9 @@ target_link_libraries	J-cmake-catalogue/
 macros	12-the-compilation-model/
 nodiscard	F-rosetta-cookbook/#recipe-51
 static_assert	10-modern-cpp-fluency/#what-does-static_assert-do-and-how-do-i-use-it
+memory_order	43-below-the-mutex/
+memory_order_acquire	43-below-the-mutex/
+spsc queue	43-below-the-mutex/
 
 # --- Reaching for a concept --------------------------------------------
 iterator invalidation	11-stl-containers-and-algorithms/
@@ -92,6 +96,9 @@ pinvoke	39-the-round-trip-home/
 p/invoke	39-the-round-trip-home/	5
 templates	07-templates-vs-csharp-generics/
 exceptions	08-error-handling/
+lock-free ring	43-below-the-mutex/
+interrupt context	43-below-the-mutex/
+priority inversion	43-below-the-mutex/
 
 # --- Reaching from what is on the screen -------------------------------
 crash on exit	32-it-crashes-on-exit/
