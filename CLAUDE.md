@@ -1009,6 +1009,11 @@ claude-code-action writes the entry on a branch, runs every check, opens a
 PR that CI checks like any other, and reports back to the issue. Because no
 one is watching the run, the decisions are recorded here, not made per run:
 
+- **Consult the knowledge base first.** Before answering any question about
+  the repository, its tools, its code or C++ itself, search the kb (the
+  `kb` MCP's `search`, then `fetch` for the whole entry): an answer that is
+  already there is the one to give, and a question it does not answer is a
+  candidate for a Question issue, not a reason to answer from memory.
 - **Rephrase first.** The question as filed is raw; the entry carries it
   restated as a reader would search for it — abstract, general, one line,
   no trace of the situation that produced it — and that restatement is
