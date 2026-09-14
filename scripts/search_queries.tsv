@@ -120,3 +120,4 @@ stack overflow	03-stack-heap-and-undefined-behavior/
 field questions	M-field-questions/
 cmake presets visual studio code	26-build-systems-and-cmake/
 dev uat prod configuration	26-build-systems-and-cmake/	5
+cmake preset switch does nothing	26-build-systems-and-cmake/#why-doesnt-switching-a-cmake-preset-always-change-what-gets-built
