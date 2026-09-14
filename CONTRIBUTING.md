@@ -512,8 +512,10 @@ PR from you: the `question` label starts a workflow that restates the
 question, writes the answer into the chapter that owns it (or a Recipe or
 Finding, by the rule under [the Question template](#the-question-template)),
 indexes it in Appendix M, runs every check below, and opens the PR for
-review. The PR checklist does the same for the ground rules and
-the scripts CI runs. Then:
+review. That workflow runs only for the maintainer's own questions (it
+spends the maintainer's AI budget); anyone can file a Question, and one
+from anyone else waits for the maintainer to read it. The PR checklist
+does the same for the ground rules and the scripts CI runs. Then:
 
 1. Fork, branch, make your change.
 2. Run `./scripts/build_all.sh` — it must print `ALL GREEN`. If you touched
